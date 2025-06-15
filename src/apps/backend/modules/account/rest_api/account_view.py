@@ -10,6 +10,7 @@ from modules.account.types import (
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
     CreateAccountParams,
+    NotificationPreferences,
     PhoneNumber,
     ResetPasswordParams,
 )
@@ -40,7 +41,29 @@ class AccountView(MethodView):
 
     def patch(self, id: str) -> ResponseReturnValue:
         request_data = request.get_json()
-        reset_account_params = ResetPasswordParams(account_id=id, **request_data)
-        account = AccountService.reset_account_password(params=reset_account_params)
-        account_dict = asdict(account)
-        return jsonify(account_dict), 200
+
+        if "new_password" in request_data and "token" in request_data:
+            reset_account_params = ResetPasswordParams(account_id=id, **request_data)
+            account = AccountService.reset_account_password(params=reset_account_params)
+            account_dict = asdict(account)
+            return jsonify(account_dict), 200
+
+        elif "notification_preferences" in request_data:
+            notification_prefs_data = request_data["notification_preferences"]
+            notification_preferences = NotificationPreferences(**notification_prefs_data)
+
+            account = AccountService.update_notification_preferences(
+                account_id=id, notification_preferences=notification_preferences
+            )
+
+            account_dict = asdict(account)
+            return jsonify(account_dict), 200
+
+        return (
+            jsonify(
+                {
+                    "error": "Invalid request. Expected 'new_password' and 'token' for password reset, or 'notification_preferences' for preferences update."
+                }
+            ),
+            400,
+        )

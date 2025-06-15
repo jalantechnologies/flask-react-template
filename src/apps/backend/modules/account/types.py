@@ -31,6 +31,13 @@ class PhoneNumber:
 
 
 @dataclass(frozen=True)
+class NotificationPreferences:
+    email: bool = True
+    sms: bool = False
+    push: bool = False
+
+
+@dataclass(frozen=True)
 class CreateAccountByPhoneNumberParams:
     phone_number: PhoneNumber
 
@@ -52,6 +59,7 @@ class Account:
     hashed_password: str
     phone_number: Optional[PhoneNumber]
     username: str
+    notification_preferences: Optional[NotificationPreferences] = None
 
 
 @dataclass(frozen=True)

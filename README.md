@@ -274,4 +274,33 @@ Notes:
 ## Deployment
 
 This project deploys on Kubernetes via GitHub Actions using workflows defined in [GitHub CI](https://github.com/jalantechnologies/github-ci).
+
+## Notification Infrastructure
+
+The application supports sending push notifications to mobile devices using Firebase Cloud Messaging (FCM). This section explains how to set up and configure the notification system.
+
+### Prerequisites
+
+* A Firebase project with Firebase Cloud Messaging (FCM) enabled
+* A Firebase service account with permissions to send FCM messages
+
+### Configuration
+
+The notification module supports three methods for providing Firebase credentials:
+
+1. **Service Account File** - Place a `firebase-service-account.json` file in the project root directory
+2. **Environment Variable** - Set the `FIREBASE_SERVICE_ACCOUNT_JSON` environment variable with the JSON content of your service account
+3. **Configuration Service** - Add the service account JSON to your configuration files:
+
+```yaml
+# Add to your environment-specific config file (development.yml, production.yml, etc.)
+firebase:
+  service_account_json: '{"type":"service_account","project_id":"your-project-id",...}'
+```
+
+For `.env` file users, add the following to your `custom-environment-variables.yml`:
+
+```yaml
+firebase:
+  service_account_json: 'FIREBASE_SERVICE_ACCOUNT_JSON'
 ```

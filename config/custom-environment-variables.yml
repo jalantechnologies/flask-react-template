@@ -38,3 +38,6 @@ public:
     sessionReplaySampleRate: 'DATADOG_SESSION_REPLAY_SAMPLE_RATE'
     sessionSampleRate: 'DATADOG_SESSION_SAMPLE_RATE'
     site: 'DATADOG_SITE'
+
+firebase:
+  service_account_json: 'FIREBASE_SERVICE_ACCOUNT_JSON'

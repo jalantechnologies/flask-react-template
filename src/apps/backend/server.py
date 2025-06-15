@@ -13,6 +13,8 @@ from modules.authentication.rest_api.authentication_rest_api_server import Authe
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
+from modules.notification.notification_service import NotificationService
+from modules.notification.rest_api.notification_rest_api_server import NotificationRestApiServer
 
 load_dotenv()
 
@@ -21,6 +23,15 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Mount deps
 LoggerManager.mount_logger()
+
+try:
+    notification_initialized = NotificationService.initialize()
+    if notification_initialized:
+        Logger.info(message="Notification service initialized successfully")
+    else:
+        Logger.warn(message="Notification service initialization failed - some features may be unavailable")
+except Exception as e:
+    Logger.error(message=f"Error initializing notification service: {str(e)}")
 
 # Connect to Temporal Server
 try:
@@ -48,6 +59,15 @@ api_blueprint.register_blueprint(authentication_blueprint)
 # Register accounts apis
 account_blueprint = AccountRestApiServer.create()
 api_blueprint.register_blueprint(account_blueprint)
+
+# Register notification apis - with error handling
+try:
+    notification_blueprint = NotificationRestApiServer.create()
+    api_blueprint.register_blueprint(notification_blueprint)
+    Logger.info(message="Notification APIs registered successfully")
+except Exception as e:
+    Logger.error(message=f"Failed to register notification APIs: {str(e)}")
+
 app.register_blueprint(api_blueprint)
 
 # Register frontend elements

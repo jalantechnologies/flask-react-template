@@ -20,3 +20,6 @@ public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
   datadog:
     enabled: 'false'
+
+firebase:
+  service_account_json: null

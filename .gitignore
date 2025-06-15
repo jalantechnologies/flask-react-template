@@ -83,3 +83,6 @@ terraform/*.tfvars
 
 # environment file
 .env
+
+# Firebase service account credentials 
+firebase-service-account.json

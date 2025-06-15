@@ -6,6 +6,7 @@ from modules.account.types import (
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    NotificationPreferences,
     PhoneNumber,
     ResetPasswordParams,
 )
@@ -49,6 +50,24 @@ class AccountService:
         AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token_id=password_reset_token.id)
 
         return updated_account
+
+    @staticmethod
+    def update_notification_preferences(
+        *, account_id: str, notification_preferences: NotificationPreferences
+    ) -> Account:
+        """
+        Update notification preferences for a user account
+
+        Args:
+            account_id: ID of the account to update
+            notification_preferences: NotificationPreferences object with the user's preferences
+
+        Returns:
+            Updated Account object
+        """
+        return AccountWriter.update_notification_preferences(
+            account_id=account_id, notification_preferences=notification_preferences
+        )
 
     @staticmethod
     def get_account_by_id(*, params: AccountSearchByIdParams) -> Account:

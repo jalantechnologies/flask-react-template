@@ -13,6 +13,7 @@ from modules.account.types import (
     Account,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    NotificationPreferences,
     PhoneNumber,
 )
 from modules.authentication.errors import OTPRequestFailedError
@@ -32,6 +33,7 @@ class AccountWriter:
             last_name=params.last_name,
             phone_number=None,
             username=params.username,
+            notification_preferences=NotificationPreferences(),
         ).to_bson()
         query = AccountRepository.collection().insert_one(account_bson)
         account_bson = AccountRepository.collection().find_one({"_id": query.inserted_id})
@@ -49,7 +51,13 @@ class AccountWriter:
 
         AccountReader.check_phone_number_not_exist(phone_number=params.phone_number)
         account_bson = AccountModel(
-            first_name="", hashed_password="", id=None, last_name="", phone_number=phone_number, username=""
+            first_name="",
+            hashed_password="",
+            id=None,
+            last_name="",
+            phone_number=phone_number,
+            username="",
+            notification_preferences=NotificationPreferences(),
         ).to_bson()
         query = AccountRepository.collection().insert_one(account_bson)
         account_bson = AccountRepository.collection().find_one({"_id": query.inserted_id})
@@ -62,6 +70,31 @@ class AccountWriter:
         updated_account = AccountRepository.collection().find_one_and_update(
             {"_id": ObjectId(account_id)},
             {"$set": {"hashed_password": hashed_password}},
+            return_document=ReturnDocument.AFTER,
+        )
+        if updated_account is None:
+            raise AccountWithIdNotFoundError(id=account_id)
+
+        return AccountUtil.convert_account_bson_to_account(updated_account)
+
+    @staticmethod
+    def update_notification_preferences(account_id: str, notification_preferences: NotificationPreferences) -> Account:
+        """
+        Update notification preferences for a user account
+
+        Args:
+            account_id: ID of the account to update
+            notification_preferences: NotificationPreferences object with updated preferences
+
+        Returns:
+            Updated Account object
+
+        Raises:
+            AccountWithIdNotFoundError: If no account with the given ID exists
+        """
+        updated_account = AccountRepository.collection().find_one_and_update(
+            {"_id": ObjectId(account_id)},
+            {"$set": {"notification_preferences": asdict(notification_preferences)}},
             return_document=ReturnDocument.AFTER,
         )
         if updated_account is None:
