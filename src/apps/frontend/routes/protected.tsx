@@ -7,6 +7,7 @@ import { useAccountContext, useAuthContext } from 'frontend/contexts';
 import { Dashboard, NotFound } from 'frontend/pages';
 import AppLayout from 'frontend/pages/app-layout/app-layout';
 import { AsyncError } from 'frontend/types';
+import TodoPage from '../pages/todo/TodoPage';
 
 const App = () => {
   const { getAccountDetails } = useAccountContext();
@@ -36,5 +37,9 @@ export const protectedRoutes = [
       { path: '', element: <Dashboard /> },
       { path: '*', element: <NotFound /> },
     ],
+  },
+  {
+    path: '/todo',
+    element: <TodoPage />,
   },
 ];
