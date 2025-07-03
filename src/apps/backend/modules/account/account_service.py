@@ -8,6 +8,7 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
     ResetPasswordParams,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
@@ -61,3 +62,9 @@ class AccountService:
     @staticmethod
     def get_account_by_username_and_password(*, params: AccountSearchParams) -> Account:
         return AccountReader.get_account_by_username_and_password(params=params)
+
+    @staticmethod
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+        return AccountWriter.update_profile_by_account_id(
+            account_id=account_id, first_name=params.first_name, last_name=params.last_name
+        )

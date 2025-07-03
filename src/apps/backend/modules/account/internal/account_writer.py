@@ -68,3 +68,15 @@ class AccountWriter:
             raise AccountWithIdNotFoundError(id=account_id)
 
         return AccountUtil.convert_account_bson_to_account(updated_account)
+
+    @staticmethod
+    def update_profile_by_account_id(account_id: str, first_name: str, last_name: str) -> Account:
+        updated_account = AccountRepository.collection().find_one_and_update(
+            {"_id": ObjectId(account_id)},
+            {"$set": {"first_name": first_name, "last_name": last_name}},
+            return_document=ReturnDocument.AFTER,
+        )
+        if updated_account is None:
+            raise AccountWithIdNotFoundError(id=account_id)
+
+        return AccountUtil.convert_account_bson_to_account(updated_account)

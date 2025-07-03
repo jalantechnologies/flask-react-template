@@ -68,3 +68,9 @@ class AccountErrorCode:
     USERNAME_ALREADY_EXISTS: str = "ACCOUNT_ERR_01"
     BAD_REQUEST: str = "ACCOUNT_ERR_04"
     PHONE_NUMBER_ALREADY_EXISTS: str = "ACCOUNT_ERR_05"
+
+
+@dataclass(frozen=True)
+class UpdateAccountProfileParams:
+    first_name: str
+    last_name: str

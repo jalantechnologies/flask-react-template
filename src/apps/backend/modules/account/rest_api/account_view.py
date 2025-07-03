@@ -5,6 +5,7 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
+from modules.account.errors import AccountBadRequestError
 from modules.account.types import (
     AccountSearchByIdParams,
     CreateAccountByPhoneNumberParams,
@@ -12,6 +13,7 @@ from modules.account.types import (
     CreateAccountParams,
     PhoneNumber,
     ResetPasswordParams,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 
@@ -40,7 +42,19 @@ class AccountView(MethodView):
 
     def patch(self, id: str) -> ResponseReturnValue:
         request_data = request.get_json()
-        reset_account_params = ResetPasswordParams(account_id=id, **request_data)
-        account = AccountService.reset_account_password(params=reset_account_params)
+
+        if "token" in request_data and "new_password" in request_data:
+            reset_account_params = ResetPasswordParams(account_id=id, **request_data)
+            account = AccountService.reset_account_password(params=reset_account_params)
+
+        elif "first_name" in request_data or "last_name" in request_data:
+            update_profile_params = UpdateAccountProfileParams(
+                first_name=request_data.get("first_name", ""), last_name=request_data.get("last_name", "")
+            )
+            account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
+
+        else:
+            raise AccountBadRequestError("Invalid request data")
+
         account_dict = asdict(account)
         return jsonify(account_dict), 200
