@@ -20,6 +20,11 @@ class AccountService:
         return AccountWriter.create_account_by_username_and_password(params=params)
 
     @staticmethod
+    def delete_account_by_id(*, params: AccountSearchByIdParams) -> None:
+        AccountReader.get_account_by_id(params=params)
+        AccountWriter.delete_account_by_id(account_id=params.id)
+
+    @staticmethod
     def get_account_by_phone_number(*, phone_number: PhoneNumber) -> Account:
         return AccountReader.get_account_by_phone_number(phone_number=phone_number)
 
