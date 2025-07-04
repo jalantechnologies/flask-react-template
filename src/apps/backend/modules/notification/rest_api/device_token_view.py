@@ -35,7 +35,10 @@ class DeviceTokenView(MethodView):
         if not token:
             return jsonify({"message": "Token is required"}), 400
 
-        NotificationService.remove_device_token(token)
+        was_deleted = NotificationService.remove_device_token(token)
+
+        if not was_deleted:
+            return jsonify({"message": "Device token not found"}), 404
 
         return jsonify({"message": "Device token removed successfully"}), 200
 

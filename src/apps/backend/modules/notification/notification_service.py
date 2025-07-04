@@ -26,8 +26,8 @@ class NotificationService:
         return DeviceTokenReader.get_tokens_by_user_id(user_id)
 
     @staticmethod
-    def remove_device_token(token: str) -> None:
-        DeviceTokenWriter.remove_device_token(token)
+    def remove_device_token(token: str) -> bool:
+        return DeviceTokenWriter.remove_device_token(token)
 
     @staticmethod
     def cleanup_inactive_tokens(days: int = 60) -> int:

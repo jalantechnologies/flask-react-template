@@ -51,8 +51,9 @@ class DeviceTokenWriter:
         )
 
     @staticmethod
-    def remove_device_token(token: str) -> None:
-        DeviceTokenRepository.collection().delete_one({"token": token})
+    def remove_device_token(token: str) -> bool:
+        result = DeviceTokenRepository.collection().delete_one({"token": token})
+        return result.deleted_count > 0
 
     @staticmethod
     def cleanup_inactive_tokens(days: int = 60) -> int:
