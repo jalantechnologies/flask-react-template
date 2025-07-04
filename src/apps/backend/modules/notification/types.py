@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
 
@@ -39,3 +39,18 @@ class CommunicationErrorCode:
 class ValidationFailure:
     field: str
     message: str
+
+
+@dataclass(frozen=True)
+class DeviceTokenInfo:
+    token: str
+    device_type: str
+    app_version: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class RegisterDeviceTokenParams:
+    user_id: str
+    token: str
+    device_type: str
+    app_version: Optional[str] = None
