@@ -71,7 +71,9 @@ class AccountWriter:
         return AccountUtil.convert_account_bson_to_account(updated_account)
 
     @staticmethod
-    def update_profile_by_account_id(account_id: str, first_name: Optional[str], last_name: Optional[str]) -> Account:
+    def update_profile_by_account_id(
+        account_id: str, first_name: Optional[str] = None, last_name: Optional[str] = None
+    ) -> Account:
         update_fields = {}
 
         if first_name is not None:
