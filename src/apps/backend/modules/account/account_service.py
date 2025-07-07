@@ -12,13 +12,12 @@ from modules.account.types import (
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    NotificationPreferences,
     PhoneNumber,
     ResetPasswordParams,
-    UpdateNotificationPreferencesParams,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.notification.types import NotificationPreferences, UpdateNotificationPreferencesParams
 
 
 class AccountService:

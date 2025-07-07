@@ -1,9 +1,8 @@
 from typing import Optional
 
-from modules.account.types import NotificationPreferences
 from modules.logger.logger import Logger
 from modules.notification.internals.sendgrid_service import SendGridService
-from modules.notification.types import SendEmailParams
+from modules.notification.types import NotificationPreferences, SendEmailParams
 
 
 class EmailService:

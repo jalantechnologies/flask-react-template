@@ -1,10 +1,9 @@
 from typing import Optional
 
-from modules.account.types import NotificationPreferences
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.notification.internals.twilio_service import TwilioService
-from modules.notification.types import SendSMSParams
+from modules.notification.types import NotificationPreferences, SendSMSParams
 
 
 class SMSService:

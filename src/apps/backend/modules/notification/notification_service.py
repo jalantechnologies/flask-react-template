@@ -1,9 +1,8 @@
 from typing import Optional
 
-from modules.account.types import NotificationPreferences
 from modules.notification.email_service import EmailService
 from modules.notification.sms_service import SMSService
-from modules.notification.types import SendEmailParams, SendSMSParams
+from modules.notification.types import NotificationPreferences, SendEmailParams, SendSMSParams
 
 
 class NotificationService:

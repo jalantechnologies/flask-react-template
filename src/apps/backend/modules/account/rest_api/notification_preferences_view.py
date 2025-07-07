@@ -5,8 +5,8 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
-from modules.account.types import UpdateNotificationPreferencesParams
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
+from modules.notification.types import UpdateNotificationPreferencesParams
 
 
 class NotificationPreferencesView(MethodView):
