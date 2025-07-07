@@ -8,12 +8,12 @@ jobs:
   preview:
     # only run when updating an 'Open' PR
     if: github.event.pull_request.state == 'open'
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.1
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@amaan/feat/add-hosting-provider-switch
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: DIGITAL_OCEAN
+      hosting_provider: AWS
       analyze_base: main
       app_name: frm-boilerplate
       app_env: preview
@@ -26,9 +26,11 @@ jobs:
       docker_username: ${{ vars.DOCKER_USERNAME }}
       pull_request_number: ${{ github.event.number }}
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
-      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+      aws_region: ${{ vars.AWS_REGION }}
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
       doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}

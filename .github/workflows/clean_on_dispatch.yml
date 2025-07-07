@@ -4,18 +4,20 @@ on: workflow_dispatch
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.1
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@amaan/feat/add-hosting-provider-switch
     concurrency:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: DIGITAL_OCEAN
+      hosting_provider: AWS
       app_name: frm-boilerplate
       app_env: preview
       branch: ${{ github.event.ref }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
-      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+      aws_region: ${{ vars.AWS_REGION }}
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
-      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
