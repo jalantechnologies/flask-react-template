@@ -364,7 +364,6 @@ class TestAccountApi(BaseTestAccount):
             )
 
     def test_update_account_profile_invalid_object_id(self) -> None:
-        """Test updating profile with an invalid ObjectId format via API"""
         invalid_account_id = "invalid_object_id"
         update_params = {"first_name": "new_first_name", "last_name": "new_last_name"}
 
