@@ -49,7 +49,7 @@ class AccountView(MethodView):
 
         elif "first_name" in request_data or "last_name" in request_data:
             update_profile_params = UpdateAccountProfileParams(
-                first_name=request_data.get("first_name", ""), last_name=request_data.get("last_name", "")
+                first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
             )
             account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
 
