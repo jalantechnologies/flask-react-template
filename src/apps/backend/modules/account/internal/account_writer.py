@@ -58,13 +58,6 @@ class AccountWriter:
         return AccountUtil.convert_account_bson_to_account(account_bson)
 
     @staticmethod
-    def delete_account_by_id(account_id: str) -> None:
-        result = AccountRepository.collection().delete_one({"_id": ObjectId(account_id)})
-
-        if result.deleted_count == 0:
-            raise AccountWithIdNotFoundError(id=account_id)
-
-    @staticmethod
     def update_password_by_account_id(account_id: str, password: str) -> Account:
         hashed_password = AccountUtil.hash_password(password=password)
         updated_account = AccountRepository.collection().find_one_and_update(
