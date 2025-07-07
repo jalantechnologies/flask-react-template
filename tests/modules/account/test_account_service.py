@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from modules.account.account_service import AccountService
-from modules.account.errors import AccountNotFoundError
+from modules.account.errors import AccountNotFoundError, AccountWithIdNotFoundError
 from modules.account.types import (
     AccountErrorCode,
     AccountSearchByIdParams,
@@ -10,7 +10,7 @@ from modules.account.types import (
     PhoneNumber,
     UpdateAccountProfileParams,
 )
-from modules.authentication.types import AccessTokenPayload, AccountWithIdNotFoundError
+from modules.authentication.types import AccessTokenPayload
 from server import app
 
 from tests.modules.account.base_test_account import BaseTestAccount
