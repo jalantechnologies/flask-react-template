@@ -1,8 +1,6 @@
 import unittest
 from typing import Callable
 
-from modules.config.config_service import ConfigService
-
 
 class BaseTestConfig(unittest.TestCase):
     def setup_method(self, method: Callable) -> None:

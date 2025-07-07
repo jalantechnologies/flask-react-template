@@ -154,6 +154,23 @@ Steps:
 - Create a python file under - `src/apps/backend/scripts` (ex - `my-script.py`)
 - Run the script using npm - `npm run script --file=example_worker_script`
 
+## Code Formatting
+
+To ensure consistent code style across the project, both backend and test Python files are automatically formatted using autoflake, isort, and black.
+
+- To format all Python files (backend and tests), run:
+  ```sh
+  npm run fmt:py
+  ```
+- Pre-commit hooks (via lint-staged) will also auto-format any staged Python files before commit.
+
+Test files have their own formatting configuration in `tests/pyproject.toml`.
+
+For JavaScript/TypeScript files, Prettier is used and can be run with:
+  ```sh
+  npm run fmt:ts
+  ```
+
 ## Github Badges Configuration
 This project displays GitHub badges for SonarQube code coverage and the `production_on_push` workflow status, both referencing the `main` branch of the [`rflask-boilerplate`](https://github.com/jalantechnologies/rflask-boilerplate) repository. If you fork or host this project in a different GitHub repository, update the badge URLs to point to your repository to ensure accurate status and coverage reporting.
 
@@ -274,4 +291,3 @@ Notes:
 ## Deployment
 
 This project deploys on Kubernetes via GitHub Actions using workflows defined in [GitHub CI](https://github.com/jalantechnologies/github-ci).
-```

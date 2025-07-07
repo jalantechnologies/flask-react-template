@@ -1,16 +1,16 @@
 import json
 from unittest import mock
 
+from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountBadRequestError, AccountNotFoundError
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.notification.email_service import EmailService
+from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internals.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
-from modules.authentication.authentication_service import AuthenticationService
-from modules.authentication.types import CreatePasswordResetTokenParams
-from server import app
+from modules.notification.email_service import EmailService
 from tests.modules.authentication.base_test_password_reset_token import BaseTestPasswordResetToken
 
 ACCOUNT_API_URL = "http://127.0.0.1:8080/api/accounts"
@@ -55,7 +55,10 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertEqual(response.status_code, 404)
             self.assertIn("message", response.json)
             self.assertEqual(
-                response.json["message"], AccountNotFoundError(f"We could not find an account associated with username: {username}. Please verify it or you can create a new account.").message
+                response.json["message"],
+                AccountNotFoundError(
+                    f"We could not find an account associated with username: {username}. Please verify it or you can create a new account."
+                ).message,
             )
             self.assertFalse(mock_send_email.called)
 
@@ -108,7 +111,10 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertEqual(response.status_code, 404)
             self.assertIn("message", response.json)
             self.assertEqual(
-                response.json["message"], AccountNotFoundError(f"We could not find an account with id: {account_id}. Please verify and try again.").message
+                response.json["message"],
+                AccountNotFoundError(
+                    f"We could not find an account with id: {account_id}. Please verify and try again."
+                ).message,
             )
             self.assertFalse(mock_send_email.called)
 
@@ -143,9 +149,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
         )
 
-        password_reset_token = AuthenticationService.create_password_reset_token(
-            params=account
-        )
+        password_reset_token = AuthenticationService.create_password_reset_token(params=account)
 
         AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token.id)
 
@@ -176,9 +180,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
         )
 
-        AuthenticationService.create_password_reset_token(
-            params=account
-        )
+        AuthenticationService.create_password_reset_token(params=account)
 
         new_password = "new_password"
 
@@ -208,9 +210,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
         )
 
-        password_reset_token = AuthenticationService.create_password_reset_token(
-            params=account
-        )
+        password_reset_token = AuthenticationService.create_password_reset_token(params=account)
 
         mock_is_token_expired.return_value = True
 

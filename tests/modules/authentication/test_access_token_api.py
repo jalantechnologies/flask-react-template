@@ -1,5 +1,7 @@
 import json
 
+from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
@@ -10,7 +12,6 @@ from modules.account.types import (
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPErrorCode, VerifyOTPParams
-from server import app
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 API_URL = "http://127.0.0.1:8080/api/access-tokens"
@@ -126,7 +127,9 @@ class TestAccessTokenApi(BaseTestAccessToken):
 
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)))
 
-        AuthenticationService.verify_otp(params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=otp.otp_code))
+        AuthenticationService.verify_otp(
+            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=otp.otp_code)
+        )
 
         with app.test_client() as client:
             response = client.post(

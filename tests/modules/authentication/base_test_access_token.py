@@ -1,9 +1,9 @@
 import unittest
 from typing import Callable
 
-from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.account.internal.store.account_repository import AccountRepository
 from modules.authentication.internals.otp.store.otp_repository import OTPRepository
+from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 
 
 class BaseTestAccessToken(unittest.TestCase):

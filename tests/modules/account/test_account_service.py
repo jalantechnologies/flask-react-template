@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from modules.authentication.types import AccessTokenPayload
+from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountNotFoundError
 from modules.account.types import (
@@ -10,7 +11,7 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
 )
-from server import app
+from modules.authentication.types import AccessTokenPayload
 from tests.modules.account.base_test_account import BaseTestAccount
 
 
@@ -67,4 +68,7 @@ class TestAccountService(BaseTestAccount):
             AccountService.get_account_by_phone_number(phone_number=phone_number)
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND
-            assert exc.message == f"We could not find an account phone number: {phone_number}. Please verify it or you can create a new account."
+            assert (
+                exc.message
+                == f"We could not find an account phone number: {phone_number}. Please verify it or you can create a new account."
+            )

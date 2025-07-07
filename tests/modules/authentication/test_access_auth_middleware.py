@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from flask import request
+from server import app
 
 from modules.authentication.errors import (
     AccessTokenExpiredError,
@@ -11,7 +12,6 @@ from modules.authentication.errors import (
     UnauthorizedAccessError,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
-from server import app
 
 TEST_TOKEN = "your_test_token"
 
