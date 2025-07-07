@@ -17,3 +17,11 @@ public:
   default_otp:
     enabled: true
     code: '1234'
+
+account:
+  create_test_user_account: true
+  test_user:
+    first_name: "Dev"
+    last_name: "User"
+    username: "dev@example.com"
+    password: "devpassword"

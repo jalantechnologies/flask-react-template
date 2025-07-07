@@ -154,6 +154,28 @@ Steps:
 - Create a python file under - `src/apps/backend/scripts` (ex - `my-script.py`)
 - Run the script using npm - `npm run script --file=example_worker_script`
 
+## Test User Account for Development & Preview
+
+To improve developer experience, this boilerplate can automatically create a test user account on app startup in development and preview environments. This allows you to log in immediately without manual setup.
+
+**How it works:**
+- On startup, if the environment is `development` or `preview`, the backend checks config for the `account.create_test_user_account` flag.
+- If enabled and the test user does not already exist, it creates a user with credentials from config.
+
+**Default credentials:**
+- Development: `dev@example.com` / `devpassword`
+- Preview: `preview@example.com` / `previewpassword`
+- (You can change these in `config/development.yml` and `config/preview.yml`)
+
+**To disable:**
+- Set `account.create_test_user_account: false` in your environment's config file.
+
+**To customize:**
+- Edit the `account.test_user` section in your config file to set your own test user credentials.
+
+**Production:**
+- This feature is disabled by default in production and will not run unless explicitly enabled in config.
+
 ## Code Formatting
 
 To ensure consistent code style across the project, both backend and test Python files are automatically formatted using autoflake, isort, and black.
@@ -291,3 +313,5 @@ Notes:
 ## Deployment
 
 This project deploys on Kubernetes via GitHub Actions using workflows defined in [GitHub CI](https://github.com/jalantechnologies/github-ci).
+
+```

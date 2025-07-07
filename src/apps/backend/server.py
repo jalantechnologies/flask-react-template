@@ -19,8 +19,21 @@ load_dotenv()
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
+# Import the test user setup function
+def try_setup_test_user():
+    try:
+        from scripts.setup_test_user_account import setup_test_user_account
+        setup_test_user_account()
+    except Exception as e:
+        print(f"[Startup] Test user setup failed: {e}")
+
 # Mount deps
 LoggerManager.mount_logger()
+
+# Run test user setup in dev/preview environments
+app_env = ConfigService[str].get_value(key="APP_ENV", default="development")
+if app_env in ("development", "preview"):
+    try_setup_test_user()
 
 # Connect to Temporal Server
 try:
