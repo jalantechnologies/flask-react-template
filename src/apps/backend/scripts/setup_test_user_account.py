@@ -4,7 +4,7 @@ from modules.config.config_service import ConfigService
 from modules.account.errors import AccountWithUserNameExistsError
 from modules.logger.logger import Logger
 
-def setup_test_user_account():
+def setup_test_user_account() -> None:
     # Check if test user creation is enabled
     create_test_user = ConfigService[bool].get_value(key="account.create_test_user_account")
     if not create_test_user:

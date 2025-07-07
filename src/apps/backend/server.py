@@ -20,7 +20,7 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Import the test user setup function
-def try_setup_test_user():
+def try_setup_test_user() -> None:
     try:
         from scripts.setup_test_user_account import setup_test_user_account
         setup_test_user_account()
