@@ -7,15 +7,14 @@ from modules.notification.types import NotificationPreferences, SendEmailParams
 
 class EmailService:
     @staticmethod
-    def send_email(*, params: SendEmailParams) -> None:
-        return SendGridService.send_email(params)
-
-    @staticmethod
-    def send_email_with_preferences(
-        *, params: SendEmailParams, preferences: Optional[NotificationPreferences] = None
+    def send_email(
+        *,
+        params: SendEmailParams,
+        preferences: Optional[NotificationPreferences] = None,
+        bypass_preferences: bool = False,
     ) -> None:
-        if preferences and not preferences.email_enabled:
+        if not bypass_preferences and preferences and not preferences.email_enabled:
             Logger.info(message="Email notification skipped: disabled by user preferences")
             return
 
-        EmailService.send_email(params=params)
+        return SendGridService.send_email(params)
