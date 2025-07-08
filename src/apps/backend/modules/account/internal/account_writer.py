@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from typing import Optional
 
 from bson.objectid import ObjectId
 from phonenumbers import is_valid_number, parse
@@ -15,6 +14,7 @@ from modules.account.types import (
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.errors import OTPRequestFailedError
 
@@ -71,16 +71,14 @@ class AccountWriter:
         return AccountUtil.convert_account_bson_to_account(updated_account)
 
     @staticmethod
-    def update_profile_by_account_id(
-        account_id: str, first_name: Optional[str] = None, last_name: Optional[str] = None
-    ) -> Account:
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
         update_fields = {}
 
-        if first_name is not None:
-            update_fields["first_name"] = first_name
+        if params.first_name is not None:
+            update_fields["first_name"] = params.first_name
 
-        if last_name is not None:
-            update_fields["last_name"] = last_name
+        if params.last_name is not None:
+            update_fields["last_name"] = params.last_name
 
         if not update_fields:
             existing_account = AccountRepository.collection().find_one({"_id": ObjectId(account_id)})

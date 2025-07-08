@@ -65,6 +65,4 @@ class AccountService:
 
     @staticmethod
     def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
-        return AccountWriter.update_profile_by_account_id(
-            account_id=account_id, first_name=params.first_name, last_name=params.last_name
-        )
+        return AccountWriter.update_account_profile(account_id=account_id, params=params)
