@@ -14,6 +14,7 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
     ResetPasswordParams,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
@@ -119,3 +120,7 @@ class AccountService:
         return NotificationPreferences(
             email_enabled=params.email_enabled, push_enabled=params.push_enabled, sms_enabled=params.sms_enabled
         )
+      
+    @staticmethod
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+        return AccountWriter.update_account_profile(account_id=account_id, params=params)
