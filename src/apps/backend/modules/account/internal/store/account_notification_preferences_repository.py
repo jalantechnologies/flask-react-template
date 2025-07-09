@@ -5,16 +5,16 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.application.repository import ApplicationRepository
 from modules.logger.logger import Logger
 
-STRING_REQUIRED_DESCRIPTION = "must be a string and is required"
 BOOLEAN_REQUIRED_DESCRIPTION = "must be a boolean and is required"
 DATE_REQUIRED_DESCRIPTION = "must be a valid date"
+OBJECT_ID_REQUIRED_DESCRIPTION = "must be an ObjectId and is required"
 
 ACCOUNT_NOTIFICATION_PREFERENCES_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["account_id", "email_enabled", "push_enabled", "sms_enabled", "created_at", "updated_at"],
         "properties": {
-            "account_id": {"bsonType": "string", "description": STRING_REQUIRED_DESCRIPTION},
+            "account_id": {"bsonType": "string", "description": OBJECT_ID_REQUIRED_DESCRIPTION},
             "email_enabled": {"bsonType": "bool", "description": BOOLEAN_REQUIRED_DESCRIPTION},
             "push_enabled": {"bsonType": "bool", "description": BOOLEAN_REQUIRED_DESCRIPTION},
             "sms_enabled": {"bsonType": "bool", "description": BOOLEAN_REQUIRED_DESCRIPTION},
