@@ -80,12 +80,6 @@ class AccountWriter:
         if params.last_name is not None:
             update_fields["last_name"] = params.last_name
 
-        if not update_fields:
-            existing_account = AccountRepository.collection().find_one({"_id": ObjectId(account_id)})
-            if existing_account is None:
-                raise AccountWithIdNotFoundError(id=account_id)
-            return AccountUtil.convert_account_bson_to_account(existing_account)
-
         updated_account = AccountRepository.collection().find_one_and_update(
             {"_id": ObjectId(account_id)}, {"$set": update_fields}, return_document=ReturnDocument.AFTER
         )
