@@ -20,3 +20,7 @@ public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
   datadog:
     enabled: 'false'
+
+firebase:
+  enabled: false
+  cleanup_interval_days: 60
