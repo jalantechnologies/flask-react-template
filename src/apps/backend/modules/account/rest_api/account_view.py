@@ -38,6 +38,13 @@ class AccountView(MethodView):
         account_params = AccountSearchByIdParams(id=id)
         account = AccountService.get_account_by_id(params=account_params)
         account_dict = asdict(account)
+
+        include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
+
+        if include_notification_preferences:
+            notification_preferences = AccountService.get_notification_preferences(account_id=id)
+            account_dict["notification_preferences"] = asdict(notification_preferences)
+
         return jsonify(account_dict), 200
 
     def patch(self, id: str) -> ResponseReturnValue:
