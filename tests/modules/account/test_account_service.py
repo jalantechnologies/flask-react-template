@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountNotFoundError, AccountWithIdNotFoundError
 from modules.account.types import (
@@ -11,8 +13,6 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.types import AccessTokenPayload
-from server import app
-
 from tests.modules.account.base_test_account import BaseTestAccount
 
 

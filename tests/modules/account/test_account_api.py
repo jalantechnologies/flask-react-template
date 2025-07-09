@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from unittest import mock
 
 import jwt
+from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.types import (
     AccountErrorCode,
@@ -15,8 +17,6 @@ from modules.config.config_service import ConfigService
 from modules.authentication.types import AccessTokenErrorCode, OTPErrorCode
 from modules.config.config_service import ConfigService
 from modules.notification.sms_service import SMSService
-from server import app
-
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
