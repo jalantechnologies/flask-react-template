@@ -1,3 +1,5 @@
+from typing import Any
+
 from modules.account.internal.store.account_notification_preferences_model import AccountNotificationPreferencesModel
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
@@ -25,5 +27,5 @@ class AccountNotificationPreferenceReader:
         )
 
     @staticmethod
-    def get_existing_notification_preferences_by_account_id(account_id: str) -> dict | None:
+    def get_existing_notification_preferences_by_account_id(account_id: str) -> dict[str, Any] | None:
         return AccountNotificationPreferencesRepository.collection().find_one({"account_id": account_id})
