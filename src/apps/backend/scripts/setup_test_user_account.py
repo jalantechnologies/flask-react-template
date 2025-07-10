@@ -1,10 +1,21 @@
-from modules.account.account_service import AccountService
-from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.config.config_service import ConfigService
-from modules.account.errors import AccountWithUserNameExistsError
+#!/usr/bin/env python3
+"""
+App Bootstrap Script
+
+This script is intended to run one-time bootstrapping tasks when the app first boots up.
+Tasks may include seeding test users, initial data, or other setup required for development/preview environments.
+Extend this script with additional tasks as needed.
+"""
+
 from modules.logger.logger import Logger
 
-def setup_test_user_account() -> None:
+# --- Bootstrapping Tasks ---
+def seed_test_user():
+    from modules.account.account_service import AccountService
+    from modules.account.types import CreateAccountByUsernameAndPasswordParams
+    from modules.config.config_service import ConfigService
+    from modules.account.errors import AccountWithUserNameExistsError
+
     # Check if test user creation is enabled
     create_test_user = ConfigService[bool].get_value(key="account.create_test_user_account")
     if not create_test_user:
@@ -44,5 +55,12 @@ def setup_test_user_account() -> None:
     except Exception as e:
         Logger.error(message=f"Failed to create test user: {e}")
 
+# Add more bootstrapping tasks here as needed
+def run_bootstrap_tasks():
+    Logger.info(message="Running app bootstrap tasks...")
+    seed_test_user()
+    # Add calls to other bootstrapping functions here
+    Logger.info(message="App bootstrap tasks completed.")
+
 if __name__ == "__main__":
-    setup_test_user_account() 
+    run_bootstrap_tasks() 
