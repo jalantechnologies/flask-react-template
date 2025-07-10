@@ -14,6 +14,8 @@ from modules.account.types import (
 )
 from modules.authentication.types import AccessTokenErrorCode, OTPErrorCode
 from modules.config.config_service import ConfigService
+from modules.authentication.types import AccessTokenErrorCode, OTPErrorCode
+from modules.config.config_service import ConfigService
 from modules.notification.sms_service import SMSService
 from tests.modules.account.base_test_account import BaseTestAccount
 
@@ -178,3 +180,108 @@ class TestAccountApi(BaseTestAccount):
             assert response.status_code == 401
             assert "Access token has expired. Please login again." in response.json.get("message", "")
             assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_EXPIRED
+
+    def test_update_account_profile_first_name_only(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="old_first_name", last_name="old_last_name", password="password", username="username"
+            )
+        )
+
+        update_params = {"first_name": "new_first_name"}
+
+        with app.test_client() as client:
+            response = client.patch(f"{ACCOUNT_URL}/{account.id}", headers=HEADERS, data=json.dumps(update_params))
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("id") == account.id
+            assert response.json.get("username") == account.username
+            assert response.json.get("first_name") == "new_first_name"
+            assert response.json.get("last_name") == "old_last_name"
+
+    def test_update_account_profile_last_name_only(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="old_first_name", last_name="old_last_name", password="password", username="username"
+            )
+        )
+
+        update_params = {"last_name": "new_last_name"}
+
+        with app.test_client() as client:
+            response = client.patch(f"{ACCOUNT_URL}/{account.id}", headers=HEADERS, data=json.dumps(update_params))
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("id") == account.id
+            assert response.json.get("username") == account.username
+            assert response.json.get("first_name") == "old_first_name"
+            assert response.json.get("last_name") == "new_last_name"
+
+    def test_update_account_profile_both_names(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="old_first_name", last_name="old_last_name", password="password", username="username"
+            )
+        )
+
+        update_params = {"first_name": "new_first_name", "last_name": "new_last_name"}
+
+        with app.test_client() as client:
+            response = client.patch(f"{ACCOUNT_URL}/{account.id}", headers=HEADERS, data=json.dumps(update_params))
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("id") == account.id
+            assert response.json.get("username") == account.username
+            assert response.json.get("first_name") == "new_first_name"
+            assert response.json.get("last_name") == "new_last_name"
+
+    def test_update_account_profile_empty_string_values(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="original_first_name",
+                last_name="original_last_name",
+                password="password",
+                username="username",
+            )
+        )
+
+        update_params = {"first_name": "", "last_name": ""}
+
+        with app.test_client() as client:
+            response = client.patch(f"{ACCOUNT_URL}/{account.id}", headers=HEADERS, data=json.dumps(update_params))
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("id") == account.id
+            assert response.json.get("username") == account.username
+            assert response.json.get("first_name") == ""
+            assert response.json.get("last_name") == ""
+
+    def test_update_account_profile_account_not_found(self) -> None:
+        non_existent_account_id = "661e42ec98423703a299a899"
+        update_params = {"first_name": "new_first_name", "last_name": "new_last_name"}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{non_existent_account_id}", headers=HEADERS, data=json.dumps(update_params)
+            )
+
+            assert response.status_code == 404
+            assert response.json
+            assert "message" in response.json
+            assert response.json.get("code") == AccountErrorCode.NOT_FOUND
+            assert f"We could not find an account with id: {non_existent_account_id}" in response.json.get("message")
+
+    def test_update_account_profile_invalid_object_id(self) -> None:
+        invalid_account_id = "invalid_object_id"
+        update_params = {"first_name": "new_first_name", "last_name": "new_last_name"}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{invalid_account_id}", headers=HEADERS, data=json.dumps(update_params)
+            )
+
+            assert response.status_code == 500

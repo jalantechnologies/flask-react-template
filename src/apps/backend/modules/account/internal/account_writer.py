@@ -14,6 +14,7 @@ from modules.account.types import (
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.errors import OTPRequestFailedError
 
@@ -63,6 +64,24 @@ class AccountWriter:
             {"_id": ObjectId(account_id)},
             {"$set": {"hashed_password": hashed_password}},
             return_document=ReturnDocument.AFTER,
+        )
+        if updated_account is None:
+            raise AccountWithIdNotFoundError(id=account_id)
+
+        return AccountUtil.convert_account_bson_to_account(updated_account)
+
+    @staticmethod
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+        update_fields = {}
+
+        if params.first_name is not None:
+            update_fields["first_name"] = params.first_name
+
+        if params.last_name is not None:
+            update_fields["last_name"] = params.last_name
+
+        updated_account = AccountRepository.collection().find_one_and_update(
+            {"_id": ObjectId(account_id)}, {"$set": update_fields}, return_document=ReturnDocument.AFTER
         )
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)

@@ -3,13 +3,14 @@ from unittest.mock import patch
 from server import app
 
 from modules.account.account_service import AccountService
-from modules.account.errors import AccountNotFoundError
+from modules.account.errors import AccountNotFoundError, AccountWithIdNotFoundError
 from modules.account.types import (
     AccountErrorCode,
     AccountSearchByIdParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
+    UpdateAccountProfileParams,
 )
 from modules.authentication.types import AccessTokenPayload
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -72,3 +73,112 @@ class TestAccountService(BaseTestAccount):
                 exc.message
                 == f"We could not find an account phone number: {phone_number}. Please verify it or you can create a new account."
             )
+
+    def test_update_account_profile_first_name_only(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                password="password", username="username", first_name="old_first_name", last_name="old_last_name"
+            )
+        )
+
+        update_params = UpdateAccountProfileParams(first_name="new_first_name")
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.username == account.username
+        assert updated_account.first_name == "new_first_name"
+        assert updated_account.last_name == "old_last_name"
+
+    def test_update_account_profile_last_name_only(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                password="password", username="username", first_name="old_first_name", last_name="old_last_name"
+            )
+        )
+
+        update_params = UpdateAccountProfileParams(last_name="new_last_name")
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.username == account.username
+        assert updated_account.first_name == "old_first_name"
+        assert updated_account.last_name == "new_last_name"
+
+    def test_update_account_profile_both_names(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                password="password", username="username", first_name="old_first_name", last_name="old_last_name"
+            )
+        )
+
+        update_params = UpdateAccountProfileParams(first_name="new_first_name", last_name="new_last_name")
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.username == account.username
+        assert updated_account.first_name == "new_first_name"
+        assert updated_account.last_name == "new_last_name"
+
+    def test_update_account_profile_no_changes(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                password="password",
+                username="username",
+                first_name="original_first_name",
+                last_name="original_last_name",
+            )
+        )
+
+        update_params = UpdateAccountProfileParams(first_name=None, last_name=None)
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.username == account.username
+        assert updated_account.first_name == "original_first_name"
+        assert updated_account.last_name == "original_last_name"
+
+    def test_update_account_profile_empty_string_values(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                password="password",
+                username="username",
+                first_name="original_first_name",
+                last_name="original_last_name",
+            )
+        )
+
+        update_params = UpdateAccountProfileParams(first_name="", last_name="")
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.username == account.username
+        assert updated_account.first_name == ""
+        assert updated_account.last_name == ""
+
+    def test_update_account_profile_account_not_found(self) -> None:
+        non_existent_account_id = "5f7b1b7b4f3b9b1b3f3b9b1b"
+
+        update_params = UpdateAccountProfileParams(first_name="new_first_name", last_name="new_last_name")
+
+        try:
+            AccountService.update_account_profile(account_id=non_existent_account_id, params=update_params)
+            assert False, "Expected AccountWithIdNotFoundError to be raised"
+        except AccountWithIdNotFoundError as exc:
+            assert (
+                exc.message
+                == f"We could not find an account with id: {non_existent_account_id}. Please verify and try again."
+            )
+
+    def test_update_account_profile_with_phone_number_account(self) -> None:
+        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
+        account = AccountService.get_or_create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        update_params = UpdateAccountProfileParams(first_name="Phone", last_name="User")
+        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+
+        assert updated_account.id == account.id
+        assert updated_account.phone_number == phone_number
+        assert updated_account.first_name == "Phone"
+        assert updated_account.last_name == "User"
