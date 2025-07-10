@@ -1,0 +1,49 @@
+diff --git a/src/apps/backend/modules/account/account_service.py b/src/apps/backend/modules/account/account_service.py
+index 6e6a377..ad3e8bd 100644
+--- a/src/apps/backend/modules/account/account_service.py
++++ b/src/apps/backend/modules/account/account_service.py
+@@ -3,10 +3,7 @@ from datetime import datetime
+ from modules.account.internal.account_reader import AccountReader
+ from modules.account.internal.account_writer import AccountWriter
+ from modules.account.internal.account_notification_preference_reader import AccountNotificationPreferenceReader
+-from modules.account.internal.store.account_notification_preferences_model import AccountNotificationPreferencesModel
+-from modules.account.internal.store.account_notification_preferences_repository import (
+-    AccountNotificationPreferencesRepository,
+-)
++from modules.account.internal.account_notification_preference_writer import AccountNotificationPreferenceWriter
+ from modules.account.types import (
+     Account,
+     AccountSearchByIdParams,
+@@ -81,30 +78,10 @@ class AccountService:
+             params.account_id
+         )
+ 
+-        update_data = {
+-            "email_enabled": params.email_enabled,
+-            "push_enabled": params.push_enabled,
+-            "sms_enabled": params.sms_enabled,
+-            "updated_at": datetime.now(),
+-        }
+-
+         if existing_preferences is None:
+-            preferences_model = AccountNotificationPreferencesModel(
+-                account_id=params.account_id,
+-                id=None,
+-                email_enabled=params.email_enabled,
+-                push_enabled=params.push_enabled,
+-                sms_enabled=params.sms_enabled,
+-            ).to_bson()
+-            AccountNotificationPreferencesRepository.collection().insert_one(preferences_model)
++            return AccountNotificationPreferenceWriter.create_notification_preferences(params)
+         else:
+-            AccountNotificationPreferencesRepository.collection().update_one(
+-                {"account_id": params.account_id}, {"$set": update_data}
+-            )
+-
+-        return NotificationPreferences(
+-            email_enabled=params.email_enabled, push_enabled=params.push_enabled, sms_enabled=params.sms_enabled
+-        )
++            return AccountNotificationPreferenceWriter.update_notification_preferences(params)
+ 
+     @staticmethod
+     def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
