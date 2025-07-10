@@ -10,7 +10,7 @@ Extend this script with additional tasks as needed.
 from modules.logger.logger import Logger
 
 # --- Bootstrapping Tasks ---
-def seed_test_user():
+def seed_test_user() -> None:
     from modules.account.account_service import AccountService
     from modules.account.types import CreateAccountByUsernameAndPasswordParams
     from modules.config.config_service import ConfigService
@@ -56,7 +56,7 @@ def seed_test_user():
         Logger.error(message=f"Failed to create test user: {e}")
 
 # Add more bootstrapping tasks here as needed
-def run_bootstrap_tasks():
+def run_bootstrap_tasks() -> None:
     Logger.info(message="Running app bootstrap tasks...")
     seed_test_user()
     # Add calls to other bootstrapping functions here

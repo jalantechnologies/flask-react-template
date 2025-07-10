@@ -23,7 +23,7 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 try:
     from scripts.bootstrap_app import run_bootstrap_tasks
 except ImportError:
-    def run_bootstrap_tasks():
+    def run_bootstrap_tasks() -> None:
         pass
 
 # Mount deps
