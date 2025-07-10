@@ -19,20 +19,19 @@ load_dotenv()
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
-# Import the app bootstrap function for one-time bootstrapping tasks
+# Import the app bootstrap class for one-time bootstrapping tasks
 try:
-    from scripts.bootstrap_app import run_bootstrap_tasks
+    from scripts.bootstrap_app import BootstrapApp
 except ImportError:
-    def run_bootstrap_tasks() -> None:
-        pass
+    BootstrapApp = None
 
 # Mount deps
 LoggerManager.mount_logger()
 
 # Run bootstrap tasks in dev/preview environments
 app_env = ConfigService[str].get_value(key="APP_ENV", default="development")
-if app_env in ("development", "preview"):
-    run_bootstrap_tasks()
+if app_env in ("development", "preview") and BootstrapApp is not None:
+    BootstrapApp().run()
 
 # Connect to Temporal Server
 try:
