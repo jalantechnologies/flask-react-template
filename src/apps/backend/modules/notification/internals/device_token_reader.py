@@ -34,9 +34,3 @@ class DeviceTokenReader:
             return None
 
         return DeviceTokenModel.from_bson(token_doc)
-
-    @staticmethod
-    def update_token_activity(token: str) -> None:
-        DeviceTokenRepository.collection().update_one(
-            {"token": token}, {"$set": {"last_active": datetime.now(), "updated_at": datetime.now()}}
-        )

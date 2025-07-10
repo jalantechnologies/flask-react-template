@@ -64,3 +64,9 @@ class DeviceTokenWriter:
         Logger.info(message=f"Cleaned up {deleted_count} inactive device tokens older than {days} days")
 
         return deleted_count
+
+    @staticmethod
+    def update_token_activity(token: str) -> None:
+        DeviceTokenRepository.collection().update_one(
+            {"token": token}, {"$set": {"last_active": datetime.now(), "updated_at": datetime.now()}}
+        )
