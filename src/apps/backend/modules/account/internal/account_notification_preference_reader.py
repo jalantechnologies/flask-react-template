@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Optional
 from modules.account.internal.store.account_notification_preferences_model import AccountNotificationPreferencesModel
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
@@ -26,6 +26,17 @@ class AccountNotificationPreferenceReader:
         )
 
     @staticmethod
-    def get_existing_notification_preferences_by_account_id(account_id: str) -> dict[str, Any] | None:
-        result = AccountNotificationPreferencesRepository.collection().find_one({"account_id": account_id})
-        return cast(dict[str, Any] | None, result)
+    def get_existing_notification_preferences_by_account_id(account_id: str) -> Optional[NotificationPreferencesParams]:
+        notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
+            {"account_id": account_id}
+        )
+
+        if notification_preferences is None:
+            return None
+
+        preferences_model = AccountNotificationPreferencesModel.from_bson(notification_preferences)
+        return NotificationPreferencesParams(
+            email_enabled=preferences_model.email_enabled,
+            push_enabled=preferences_model.push_enabled,
+            sms_enabled=preferences_model.sms_enabled,
+        )
