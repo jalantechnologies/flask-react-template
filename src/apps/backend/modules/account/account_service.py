@@ -35,10 +35,6 @@ class AccountService:
             return AccountNotificationPreferenceWriter.update_notification_preferences(account_id, preferences)
 
     @staticmethod
-    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
-        return AccountWriter.update_account_profile(account_id=account_id, params=params)
-
-    @staticmethod
     def get_account_by_phone_number(*, phone_number: PhoneNumber) -> Account:
         return AccountReader.get_account_by_phone_number(phone_number=phone_number)
 
