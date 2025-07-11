@@ -4,10 +4,10 @@ from flask import jsonify, request
 from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
-from modules.account.account_service import AccountService
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.notification.errors import ValidationError
 from modules.notification.types import NotificationPreferencesParams
+from modules.notification.notification_service import NotificationService
 
 
 class NotificationPreferencesView(MethodView):
@@ -28,7 +28,7 @@ class NotificationPreferencesView(MethodView):
             sms_enabled=request_data.get("sms_enabled", True),
         )
 
-        updated_preferences = AccountService.create_or_update_notification_preferences(
+        updated_preferences = NotificationService.create_or_update_notification_preferences(
             account_id=account_id, preferences=preferences
         )
         return jsonify(asdict(updated_preferences)), 200

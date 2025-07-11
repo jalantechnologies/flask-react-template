@@ -16,6 +16,7 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
+from modules.notification.notification_service import NotificationService
 
 
 class AccountView(MethodView):
@@ -42,7 +43,7 @@ class AccountView(MethodView):
         include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
 
         if include_notification_preferences:
-            notification_preferences = AccountService.get_notification_preferences(account_id=id)
+            notification_preferences = NotificationService.get_account_notification_preferences(account_id=id)
             account_dict["notification_preferences"] = asdict(notification_preferences)
 
         return jsonify(account_dict), 200
