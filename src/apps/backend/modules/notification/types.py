@@ -16,6 +16,13 @@ class EmailRecipient:
 
 
 @dataclass(frozen=True)
+class NotificationPreferencesParams:
+    email_enabled: bool = True
+    push_enabled: bool = True
+    sms_enabled: bool = True
+
+
+@dataclass(frozen=True)
 class SendEmailParams:
     recipient: EmailRecipient
     sender: EmailSender
@@ -33,6 +40,11 @@ class SendSMSParams:
 class CommunicationErrorCode:
     VALIDATION_ERROR = "COMMUNICATION_ERR_01"
     SERVICE_ERROR = "COMMUNICATION_ERR_02"
+
+
+@dataclass(frozen=True)
+class NotificationErrorCode:
+    PREFERENCES_NOT_FOUND = "NOTIFICATION_ERR_01"
 
 
 @dataclass(frozen=True)
