@@ -1,5 +1,5 @@
-from modules.account.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
-from modules.account.internal.account_notification_preferences_writer import AccountNotificationPreferenceWriter
+from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.internals.account_notification_preferences_writer import AccountNotificationPreferenceWriter
 from modules.account.internal.account_reader import AccountReader
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
