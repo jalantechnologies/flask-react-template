@@ -28,7 +28,7 @@ class NotificationPreferencesView(MethodView):
             sms_enabled=request_data.get("sms_enabled", True),
         )
 
-        updated_preferences = AccountService.update_notification_preferences(
+        updated_preferences = AccountService.create_or_update_notification_preferences(
             account_id=account_id, preferences=preferences
         )
         return jsonify(asdict(updated_preferences)), 200

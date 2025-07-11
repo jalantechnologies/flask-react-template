@@ -21,7 +21,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
         )
 
         default_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
-        AccountService.update_notification_preferences(account_id=account.id, preferences=default_preferences)
+        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=default_preferences)
 
         with app.test_client() as client:
             access_token_response = client.post(

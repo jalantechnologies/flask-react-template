@@ -25,7 +25,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
-        AccountService.update_notification_preferences(account_id=account.id, preferences=update_preferences)
+        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=update_preferences)
 
         preferences = AccountService.get_notification_preferences(account_id=account.id)
 
@@ -42,7 +42,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=True)
 
-        preferences = AccountService.update_notification_preferences(
+        preferences = AccountService.create_or_update_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 
@@ -63,11 +63,11 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         initial_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
-        AccountService.update_notification_preferences(account_id=account.id, preferences=initial_preferences)
+        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=initial_preferences)
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
 
-        preferences = AccountService.update_notification_preferences(
+        preferences = AccountService.create_or_update_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 
@@ -89,7 +89,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=False)
 
-        preferences = AccountService.update_notification_preferences(
+        preferences = AccountService.create_or_update_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 

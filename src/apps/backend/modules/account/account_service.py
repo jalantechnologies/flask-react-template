@@ -23,6 +23,22 @@ class AccountService:
         return AccountWriter.create_account_by_username_and_password(params=params)
 
     @staticmethod
+    def create_or_update_notification_preferences(
+        *, account_id: str, preferences: NotificationPreferencesParams
+    ) -> NotificationPreferencesParams:
+        existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
+            account_id
+        )
+        if existing_preferences is None:
+            return AccountNotificationPreferenceWriter.create_notification_preferences(account_id, preferences)
+        else:
+            return AccountNotificationPreferenceWriter.update_notification_preferences(account_id, preferences)
+
+    @staticmethod
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+        return AccountWriter.update_account_profile(account_id=account_id, params=params)
+
+    @staticmethod
     def get_account_by_phone_number(*, phone_number: PhoneNumber) -> Account:
         return AccountReader.get_account_by_phone_number(phone_number=phone_number)
 
@@ -69,19 +85,3 @@ class AccountService:
     @staticmethod
     def get_notification_preferences(account_id: str) -> NotificationPreferencesParams:
         return AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
-
-    @staticmethod
-    def update_notification_preferences(
-        *, account_id: str, preferences: NotificationPreferencesParams
-    ) -> NotificationPreferencesParams:
-        existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
-            account_id
-        )
-        if existing_preferences is None:
-            return AccountNotificationPreferenceWriter.create_notification_preferences(account_id, preferences)
-        else:
-            return AccountNotificationPreferenceWriter.update_notification_preferences(account_id, preferences)
-
-    @staticmethod
-    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
-        return AccountWriter.update_account_profile(account_id=account_id, params=params)
