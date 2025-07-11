@@ -73,7 +73,7 @@ class AccountService:
         return AccountReader.get_account_by_username_and_password(params=params)
 
     @staticmethod
-    def get_notification_preferences(account_id: str) -> NotificationPreferencesParams:
+    def get_account_notification_preferences(account_id: str) -> NotificationPreferencesParams:
         return AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
 
     @staticmethod
