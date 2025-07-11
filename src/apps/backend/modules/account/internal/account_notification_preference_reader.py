@@ -4,6 +4,7 @@ from modules.account.internal.store.account_notification_preferences_repository 
     AccountNotificationPreferencesRepository,
 )
 from modules.account.internal.account_notification_preference_util import AccountNotificationPreferenceUtil
+from modules.notification.errors import NotificationPreferencesNotFoundError
 from modules.notification.types import NotificationPreferencesParams
 
 
@@ -13,13 +14,8 @@ class AccountNotificationPreferenceReader:
         notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
             {"account_id": account_id}
         )
-
         if notification_preferences is None:
-            default_preferences = AccountNotificationPreferencesModel(account_id=account_id, id=None).to_bson()
-            query = AccountNotificationPreferencesRepository.collection().insert_one(default_preferences)
-            notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
-                {"_id": query.inserted_id}
-            )
+            raise NotificationPreferencesNotFoundError(account_id=account_id)
 
         return AccountNotificationPreferenceUtil.convert_notification_preferences_bson_to_params(
             notification_preferences

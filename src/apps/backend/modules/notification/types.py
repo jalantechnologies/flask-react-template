@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Any, Dict
-
 from modules.account.types import PhoneNumber
 
 
@@ -40,6 +39,11 @@ class SendSMSParams:
 class CommunicationErrorCode:
     VALIDATION_ERROR = "COMMUNICATION_ERR_01"
     SERVICE_ERROR = "COMMUNICATION_ERR_02"
+
+
+@dataclass(frozen=True)
+class NotificationErrorCode:
+    PREFERENCES_NOT_FOUND = "NOTIFICATION_ERR_01"
 
 
 @dataclass(frozen=True)
