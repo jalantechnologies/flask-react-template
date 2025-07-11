@@ -85,3 +85,7 @@ class AccountService:
     @staticmethod
     def get_notification_preferences(account_id: str) -> NotificationPreferencesParams:
         return AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
+
+    @staticmethod
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+        return AccountWriter.update_account_profile(account_id=account_id, params=params)
