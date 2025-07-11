@@ -2,7 +2,7 @@ from typing import Optional
 
 from modules.logger.logger import Logger
 from modules.notification.internals.sendgrid_service import SendGridService
-from modules.notification.types import NotificationPreferences, SendEmailParams
+from modules.notification.types import NotificationPreferencesParams, SendEmailParams
 
 
 class EmailService:
@@ -10,7 +10,7 @@ class EmailService:
     def send_email(
         *,
         params: SendEmailParams,
-        preferences: Optional[NotificationPreferences] = None,
+        preferences: Optional[NotificationPreferencesParams] = None,
         bypass_preferences: bool = False,
     ) -> None:
         if not bypass_preferences and preferences and not preferences.email_enabled:

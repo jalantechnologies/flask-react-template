@@ -3,12 +3,12 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from modules.notification.types import NotificationPreferences
+from modules.notification.types import NotificationPreferencesParams
 
 
 class AccountNotificationPreferenceReader:
     @staticmethod
-    def get_notification_preferences_by_account_id(account_id: str) -> NotificationPreferences:
+    def get_notification_preferences_by_account_id(account_id: str) -> NotificationPreferencesParams:
         notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
             {"account_id": account_id}
         )
@@ -16,10 +16,10 @@ class AccountNotificationPreferenceReader:
         if notification_preferences is None:
             default_preferences = AccountNotificationPreferencesModel(account_id=account_id, id=None).to_bson()
             AccountNotificationPreferencesRepository.collection().insert_one(default_preferences)
-            return NotificationPreferences()
+            return NotificationPreferencesParams()
 
         preferences_model = AccountNotificationPreferencesModel.from_bson(notification_preferences)
-        return NotificationPreferences(
+        return NotificationPreferencesParams(
             email_enabled=preferences_model.email_enabled,
             push_enabled=preferences_model.push_enabled,
             sms_enabled=preferences_model.sms_enabled,

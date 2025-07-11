@@ -3,7 +3,7 @@ from typing import Optional
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.notification.internals.twilio_service import TwilioService
-from modules.notification.types import NotificationPreferences, SendSMSParams
+from modules.notification.types import NotificationPreferencesParams, SendSMSParams
 
 
 class SMSService:
@@ -11,7 +11,7 @@ class SMSService:
     def send_sms(
         *,
         params: SendSMSParams,
-        preferences: Optional[NotificationPreferences] = None,
+        preferences: Optional[NotificationPreferencesParams] = None,
         bypass_preferences: bool = False,
     ) -> None:
         is_sms_enabled = ConfigService[bool].get_value(key="sms.enabled")
