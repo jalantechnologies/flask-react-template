@@ -5,7 +5,7 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from apps.backend.modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil
+from modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.types import NotificationPreferencesParams
 
 
@@ -33,7 +33,7 @@ class AccountNotificationPreferenceWriter:
     def create_or_update_notification_preferences(
         account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
-        from apps.backend.modules.account.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
+        from modules.account.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
 
         existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
             account_id

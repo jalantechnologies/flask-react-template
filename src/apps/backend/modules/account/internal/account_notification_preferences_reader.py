@@ -3,7 +3,7 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from apps.backend.modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil
+from modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.errors import NotificationPreferencesNotFoundError
 from modules.notification.types import NotificationPreferencesParams
 
