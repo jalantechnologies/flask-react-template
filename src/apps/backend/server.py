@@ -14,6 +14,7 @@ from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.notification.rest_api.notification_rest_api_server import NotificationRestApiServer
+from modules.notification.workers.token_cleanup_worker import TokenCleanupWorker
 
 load_dotenv()
 
@@ -30,6 +31,22 @@ try:
     # Start the health check worker
     # In production, it is optional to run this worker
     ApplicationService.schedule_worker_as_cron(cls=HealthCheckWorker, cron_schedule="*/10 * * * *")
+
+    is_cleanup_enabled = ConfigService[bool].get_value(key="notification.token_cleanup_enabled", default=True)
+
+    if is_cleanup_enabled:
+        cleanup_schedule = ConfigService[str].get_value(key="notification.token_cleanup_schedule", default="0 2 * * 0")
+
+        cleanup_days = ConfigService[int].get_value(key="notification.token_cleanup_days", default=60)
+
+        ApplicationService.schedule_worker_as_cron(cls=TokenCleanupWorker, cron_schedule=cleanup_schedule)
+
+        Logger.info(
+            message=f"Token cleanup worker scheduled: {cleanup_schedule} "
+            f"(will clean tokens inactive for {cleanup_days} days)"
+        )
+    else:
+        Logger.info(message="Token cleanup worker is disabled via configuration")
 
 except WorkerClientConnectionError as e:
     Logger.critical(message=e.message)
