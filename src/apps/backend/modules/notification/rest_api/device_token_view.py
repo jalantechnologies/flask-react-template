@@ -12,22 +12,6 @@ from modules.notification.types import RegisterDeviceTokenParams
 
 class DeviceTokenView(MethodView):
     @access_auth_middleware
-    def post(self) -> ResponseReturnValue:
-        account_id = cast(str, getattr(request, "account_id", None))
-        request_data = request.get_json()
-
-        token_params = RegisterDeviceTokenParams(
-            user_id=account_id,
-            token=request_data.get("token"),
-            device_type=request_data.get("device_type"),
-            app_version=request_data.get("app_version"),
-        )
-
-        device_token = NotificationService.register_device_token(params=token_params)
-
-        return jsonify(asdict(device_token)), 201
-
-    @access_auth_middleware
     def delete(self) -> ResponseReturnValue:
         request_data = request.get_json()
         token = request_data.get("token")
@@ -49,3 +33,19 @@ class DeviceTokenView(MethodView):
         tokens = NotificationService.get_device_tokens_by_user_id(account_id)
 
         return jsonify({"tokens": tokens}), 200
+
+    @access_auth_middleware
+    def post(self) -> ResponseReturnValue:
+        account_id = cast(str, getattr(request, "account_id", None))
+        request_data = request.get_json()
+
+        token_params = RegisterDeviceTokenParams(
+            user_id=account_id,
+            token=request_data.get("token"),
+            device_type=request_data.get("device_type"),
+            app_version=request_data.get("app_version"),
+        )
+
+        device_token = NotificationService.register_device_token(params=token_params)
+
+        return jsonify(asdict(device_token)), 201
