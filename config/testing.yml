@@ -11,3 +11,7 @@ mailer:
 
 sms:
   enabled: false
+
+notification:
+  token_cleanup_enabled: false
+  token_cleanup_days: 7

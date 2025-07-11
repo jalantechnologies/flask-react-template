@@ -11,3 +11,7 @@ is_server_running_behind_proxy: true
 public:
   datadog:
     enabled: 'true'
+
+notification:
+  token_cleanup_days: 90
+  token_cleanup_schedule: "0 3 * * 0"
