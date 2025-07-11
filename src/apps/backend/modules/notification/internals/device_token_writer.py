@@ -10,6 +10,16 @@ from modules.notification.types import DeviceTokenInfo, RegisterDeviceTokenParam
 
 class DeviceTokenWriter:
     @staticmethod
+    def cleanup_inactive_tokens(days: int = 60) -> int:
+        cutoff_date = datetime.now() - timedelta(days=days)
+        result = DeviceTokenRepository.collection().delete_many({"last_active": {"$lt": cutoff_date}})
+
+        deleted_count = int(result.deleted_count)
+        Logger.info(message=f"Cleaned up {deleted_count} inactive device tokens older than {days} days")
+
+        return deleted_count
+
+    @staticmethod
     def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceTokenInfo:
         now = datetime.now()
 
@@ -54,16 +64,6 @@ class DeviceTokenWriter:
     def remove_device_token(token: str) -> bool:
         result = DeviceTokenRepository.collection().delete_one({"token": token})
         return int(result.deleted_count) > 0
-
-    @staticmethod
-    def cleanup_inactive_tokens(days: int = 60) -> int:
-        cutoff_date = datetime.now() - timedelta(days=days)
-        result = DeviceTokenRepository.collection().delete_many({"last_active": {"$lt": cutoff_date}})
-
-        deleted_count = int(result.deleted_count)
-        Logger.info(message=f"Cleaned up {deleted_count} inactive device tokens older than {days} days")
-
-        return deleted_count
 
     @staticmethod
     def update_token_activity(token: str) -> None:

@@ -5,21 +5,21 @@ from modules.application.repository import ApplicationRepository
 from modules.logger.logger import Logger
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 
-STRING_REQUIRED = "must be a string and is required"
-STRING_OPTIONAL = "must be a string if present"
-DATE_REQUIRED = "must be a date and is required"
 DATE_OPTIONAL = "must be a date"
+DATE_REQUIRED = "must be a date and is required"
+STRING_OPTIONAL = "must be a string if present"
+STRING_REQUIRED = "must be a string and is required"
 
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["token", "user_id", "device_type", "last_active"],
         "properties": {
+            "app_version": {"bsonType": "string", "description": STRING_OPTIONAL},
+            "device_type": {"bsonType": "string", "description": STRING_REQUIRED},
+            "last_active": {"bsonType": "date", "description": DATE_REQUIRED},
             "token": {"bsonType": "string", "description": STRING_REQUIRED},
             "user_id": {"bsonType": "string", "description": STRING_REQUIRED},
-            "device_type": {"bsonType": "string", "description": STRING_REQUIRED},
-            "app_version": {"bsonType": "string", "description": STRING_OPTIONAL},
-            "last_active": {"bsonType": "date", "description": DATE_REQUIRED},
             "created_at": {"bsonType": "date", "description": DATE_OPTIONAL},
             "updated_at": {"bsonType": "date", "description": DATE_OPTIONAL},
         },
@@ -32,9 +32,9 @@ class DeviceTokenRepository(ApplicationRepository):
 
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
+        collection.create_index("last_active")
         collection.create_index("token", unique=True)
         collection.create_index("user_id")
-        collection.create_index("last_active")
 
         add_validation_command = {
             "collMod": cls.collection_name,

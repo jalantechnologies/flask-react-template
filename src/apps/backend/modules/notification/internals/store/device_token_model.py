@@ -9,24 +9,24 @@ from modules.application.base_model import BaseModel
 
 @dataclass
 class DeviceTokenModel(BaseModel):
+    app_version: Optional[str]
+    device_type: str
+    id: Optional[ObjectId | str]
+    last_active: datetime
     token: str
     user_id: str
-    device_type: str
-    app_version: Optional[str]
-    last_active: datetime
-    id: Optional[ObjectId | str]
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
 
     @classmethod
     def from_bson(cls, bson_data: dict) -> "DeviceTokenModel":
         return cls(
+            app_version=bson_data.get("app_version"),
+            device_type=bson_data.get("device_type", ""),
             id=bson_data.get("_id"),
+            last_active=bson_data.get("last_active", datetime.now()),
             token=bson_data.get("token", ""),
             user_id=bson_data.get("user_id", ""),
-            device_type=bson_data.get("device_type", ""),
-            app_version=bson_data.get("app_version"),
-            last_active=bson_data.get("last_active", datetime.now()),
             created_at=bson_data.get("created_at"),
             updated_at=bson_data.get("updated_at"),
         )

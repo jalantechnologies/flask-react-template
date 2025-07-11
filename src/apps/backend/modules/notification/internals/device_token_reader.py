@@ -7,15 +7,6 @@ from modules.notification.internals.store.device_token_repository import DeviceT
 
 class DeviceTokenReader:
     @staticmethod
-    def get_tokens_by_user_id(user_id: str) -> List[str]:
-        cursor = DeviceTokenRepository.collection().find({"user_id": user_id})
-        tokens: List[str] = []
-        for doc in cursor:
-            if doc.get("token"):
-                tokens.append(doc["token"])
-        return tokens
-
-    @staticmethod
     def get_all_active_tokens(days: int = 30) -> List[str]:
         cutoff_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         cutoff_date = cutoff_date.replace(day=cutoff_date.day - days)
@@ -34,3 +25,12 @@ class DeviceTokenReader:
             return None
 
         return DeviceTokenModel.from_bson(token_doc)
+
+    @staticmethod
+    def get_tokens_by_user_id(user_id: str) -> List[str]:
+        cursor = DeviceTokenRepository.collection().find({"user_id": user_id})
+        tokens: List[str] = []
+        for doc in cursor:
+            if doc.get("token"):
+                tokens.append(doc["token"])
+        return tokens
