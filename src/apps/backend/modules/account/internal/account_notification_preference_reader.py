@@ -3,6 +3,7 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
+from modules.account.internal.account_notification_preference_util import AccountNotificationPreferenceUtil
 from modules.notification.types import NotificationPreferencesParams
 
 
@@ -15,14 +16,13 @@ class AccountNotificationPreferenceReader:
 
         if notification_preferences is None:
             default_preferences = AccountNotificationPreferencesModel(account_id=account_id, id=None).to_bson()
-            AccountNotificationPreferencesRepository.collection().insert_one(default_preferences)
-            return NotificationPreferencesParams()
+            query = AccountNotificationPreferencesRepository.collection().insert_one(default_preferences)
+            notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
+                {"_id": query.inserted_id}
+            )
 
-        preferences_model = AccountNotificationPreferencesModel.from_bson(notification_preferences)
-        return NotificationPreferencesParams(
-            email_enabled=preferences_model.email_enabled,
-            push_enabled=preferences_model.push_enabled,
-            sms_enabled=preferences_model.sms_enabled,
+        return AccountNotificationPreferenceUtil.convert_notification_preferences_bson_to_params(
+            notification_preferences
         )
 
     @staticmethod
@@ -34,9 +34,6 @@ class AccountNotificationPreferenceReader:
         if notification_preferences is None:
             return None
 
-        preferences_model = AccountNotificationPreferencesModel.from_bson(notification_preferences)
-        return NotificationPreferencesParams(
-            email_enabled=preferences_model.email_enabled,
-            push_enabled=preferences_model.push_enabled,
-            sms_enabled=preferences_model.sms_enabled,
+        return AccountNotificationPreferenceUtil.convert_notification_preferences_bson_to_params(
+            notification_preferences
         )
