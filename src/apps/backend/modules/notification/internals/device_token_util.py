@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, List
+from typing import List
 
 from pymongo.cursor import Cursor
 
@@ -8,15 +8,6 @@ from modules.notification.types import DeviceTokenInfo
 
 
 class DeviceTokenUtil:
-    @staticmethod
-    def convert_device_token_bson_to_device_token_info(device_token_bson: dict[str, Any]) -> DeviceTokenInfo:
-        validated_device_token_data = DeviceTokenModel.from_bson(device_token_bson)
-        return DeviceTokenInfo(
-            token=validated_device_token_data.token,
-            device_type=validated_device_token_data.device_type,
-            app_version=validated_device_token_data.app_version,
-        )
-
     @staticmethod
     def convert_device_token_model_to_device_token_info(device_token_model: DeviceTokenModel) -> DeviceTokenInfo:
         return DeviceTokenInfo(

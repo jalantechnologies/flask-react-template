@@ -18,12 +18,20 @@ class NotificationService:
         return DeviceTokenReader.get_tokens_by_user_id(user_id)
 
     @staticmethod
+    def get_active_tokens(days: int = 30) -> List[str]:
+        return DeviceTokenReader.get_all_active_tokens(days)
+
+    @staticmethod
     def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceTokenInfo:
         return DeviceTokenWriter.register_device_token(params=params)
 
     @staticmethod
     def remove_device_token(token: str) -> bool:
         return DeviceTokenWriter.remove_device_token(token)
+
+    @staticmethod
+    def update_token_activity(token: str) -> None:
+        DeviceTokenWriter.update_token_activity(token)
 
     @staticmethod
     def send_email(*, params: SendEmailParams) -> None:
