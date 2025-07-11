@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Any, List
 
+from pymongo.cursor import Cursor
+
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.types import DeviceTokenInfo
 
@@ -24,7 +26,7 @@ class DeviceTokenUtil:
         )
 
     @staticmethod
-    def extract_tokens_from_cursor(cursor) -> List[str]:
+    def extract_tokens_from_cursor(cursor: Cursor) -> List[str]:
         tokens: List[str] = []
         for doc in cursor:
             if doc.get("token"):
