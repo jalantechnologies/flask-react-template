@@ -1,6 +1,5 @@
 from typing import Optional
-from modules.account.internal.store.account_notification_preferences_model import AccountNotificationPreferencesModel
-from modules.account.internal.store.account_notification_preferences_repository import (
+from modules.notification.internals.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
 from modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil

@@ -1,8 +1,8 @@
 from datetime import datetime
 from pymongo import ReturnDocument
 
-from modules.account.internal.store.account_notification_preferences_model import AccountNotificationPreferencesModel
-from modules.account.internal.store.account_notification_preferences_repository import (
+from modules.notification.internals.store.account_notification_preferences_model import AccountNotificationPreferencesModel
+from modules.notification.internals.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
 from modules.account.internal.account_notification_preferences_util import AccountNotificationPreferenceUtil
