@@ -1,6 +1,6 @@
-from datetime import datetime
 from typing import List, Optional
 
+from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
 
@@ -8,15 +8,9 @@ from modules.notification.internals.store.device_token_repository import DeviceT
 class DeviceTokenReader:
     @staticmethod
     def get_all_active_tokens(days: int = 30) -> List[str]:
-        cutoff_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        cutoff_date = cutoff_date.replace(day=cutoff_date.day - days)
-
+        cutoff_date = DeviceTokenUtil.calculate_activity_cutoff_date(days)
         cursor = DeviceTokenRepository.collection().find({"last_active": {"$gt": cutoff_date}})
-        tokens: List[str] = []
-        for doc in cursor:
-            if doc.get("token"):
-                tokens.append(doc["token"])
-        return tokens
+        return DeviceTokenUtil.extract_tokens_from_cursor(cursor)
 
     @staticmethod
     def get_token_by_value(token: str) -> Optional[DeviceTokenModel]:
@@ -29,8 +23,4 @@ class DeviceTokenReader:
     @staticmethod
     def get_tokens_by_user_id(user_id: str) -> List[str]:
         cursor = DeviceTokenRepository.collection().find({"user_id": user_id})
-        tokens: List[str] = []
-        for doc in cursor:
-            if doc.get("token"):
-                tokens.append(doc["token"])
-        return tokens
+        return DeviceTokenUtil.extract_tokens_from_cursor(cursor)

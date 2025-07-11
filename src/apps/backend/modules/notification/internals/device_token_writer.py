@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
-
 from pymongo import ReturnDocument
 
 from modules.logger.logger import Logger
+from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
 from modules.notification.types import DeviceTokenInfo, RegisterDeviceTokenParams
@@ -11,7 +10,7 @@ from modules.notification.types import DeviceTokenInfo, RegisterDeviceTokenParam
 class DeviceTokenWriter:
     @staticmethod
     def cleanup_inactive_tokens(days: int = 60) -> int:
-        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = DeviceTokenUtil.calculate_cutoff_date(days)
         result = DeviceTokenRepository.collection().delete_many({"last_active": {"$lt": cutoff_date}})
 
         deleted_count = int(result.deleted_count)
@@ -21,7 +20,7 @@ class DeviceTokenWriter:
 
     @staticmethod
     def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceTokenInfo:
-        now = datetime.now()
+        now = DeviceTokenUtil.get_current_timestamp()
 
         existing_token = DeviceTokenRepository.collection().find_one({"token": params.token})
 
@@ -54,11 +53,7 @@ class DeviceTokenWriter:
             inserted_token = DeviceTokenRepository.collection().find_one({"_id": result.inserted_id})
             device_token_model = DeviceTokenModel.from_bson(inserted_token)
 
-        return DeviceTokenInfo(
-            token=device_token_model.token,
-            device_type=device_token_model.device_type,
-            app_version=device_token_model.app_version,
-        )
+        return DeviceTokenUtil.convert_device_token_model_to_device_token_info(device_token_model)
 
     @staticmethod
     def remove_device_token(token: str) -> bool:
@@ -67,6 +62,7 @@ class DeviceTokenWriter:
 
     @staticmethod
     def update_token_activity(token: str) -> None:
+        now = DeviceTokenUtil.get_current_timestamp()
         DeviceTokenRepository.collection().update_one(
-            {"token": token}, {"$set": {"last_active": datetime.now(), "updated_at": datetime.now()}}
+            {"token": token}, {"$set": {"last_active": now, "updated_at": now}}
         )
