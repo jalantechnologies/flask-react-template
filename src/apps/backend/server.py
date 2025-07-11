@@ -22,6 +22,15 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 # Mount deps
 LoggerManager.mount_logger()
 
+# Run bootstrap tasks in dev/preview environments
+app_env = ConfigService[str].get_value(key="APP_ENV", default="development")
+if app_env in ("development", "preview"):
+    try:
+        from scripts.bootstrap_app import BootstrapApp
+        BootstrapApp().run()
+    except ImportError:
+        pass
+
 # Connect to Temporal Server
 try:
     ApplicationService.connect_temporal_server()

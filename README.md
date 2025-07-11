@@ -154,6 +154,46 @@ Steps:
 - Create a python file under - `src/apps/backend/scripts` (ex - `my-script.py`)
 - Run the script using npm - `npm run script --file=example_worker_script`
 
+## App Bootstrapping & Seeding
+
+To improve developer experience and automate one-time setup, this project provides a generic bootstrapping script:
+
+- **Location:** `src/apps/backend/scripts/bootstrap_app.py`
+- **Purpose:** Runs one-time bootstrapping tasks when the app first boots up (e.g., seeding a test user, initial data, etc.).
+- **How it works:**
+  - On startup, if the environment is `development` or `preview`, the backend runs all tasks defined in `bootstrap_app.py`.
+  - Each task (such as seeding a test user) is implemented as a function and called from `run_bootstrap_tasks()`.
+  - The script is extensible—add more bootstrapping tasks as needed.
+
+**Default Task: Seed Test User**
+- Seeds a test user account if `account.create_test_user_account` is enabled in config and the user does not already exist.
+- Credentials are read from `account.test_user` in your environment config (see below).
+
+**To add more tasks:**
+- Edit `src/apps/backend/scripts/bootstrap_app.py` and add your function to `run_bootstrap_tasks()`.
+
+**To run manually:**
+- You can run the script directly:
+  ```sh
+  cd src/apps/backend && pipenv run python scripts/bootstrap_app.py
+  ```
+
+**Configuration Example:**
+```yaml
+# config/development.yml
+account:
+  create_test_user_account: true
+  test_user:
+    first_name: "Dev"
+    last_name: "User"
+    username: "dev@example.com"
+    password: "devpassword"
+```
+
+## Test User Account for Development & Preview
+
+This is now handled by the bootstrapping script above. See the section on App Bootstrapping & Seeding for details.
+
 ## Code Formatting
 
 To ensure consistent code style across the project, both backend and test Python files are automatically formatted using autoflake, isort, and black.
@@ -291,3 +331,5 @@ Notes:
 ## Deployment
 
 This project deploys on Kubernetes via GitHub Actions using workflows defined in [GitHub CI](https://github.com/jalantechnologies/github-ci).
+
+```
