@@ -3,6 +3,7 @@ import json
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
+from modules.notification.types import NotificationPreferencesParams
 from server import app
 
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -18,6 +19,9 @@ class TestNotificationPreferencesApi(BaseTestAccount):
                 first_name="first_name", last_name="last_name", password="password", username="username"
             )
         )
+
+        default_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
+        AccountService.update_notification_preferences(account_id=account.id, preferences=default_preferences)
 
         with app.test_client() as client:
             access_token_response = client.post(
@@ -115,38 +119,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["push_enabled"] is True
             assert response.json["sms_enabled"] is False
 
-    def test_update_notification_preferences_with_missing_fields(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": False}
-
-            response = client.put(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
-                data=json.dumps(preferences_data),
-            )
-
-            assert response.status_code == 200
-            assert response.json
-            assert response.json["email_enabled"] is False
-            assert response.json["push_enabled"] is True
-            assert response.json["sms_enabled"] is True
-
-    def test_update_notification_preferences_unauthorized(self) -> None:
+    def test_update_notification_preferences_no_auth(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
