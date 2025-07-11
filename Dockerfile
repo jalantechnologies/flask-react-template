@@ -17,7 +17,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
   apt-get install python3.12 python3-pip -y && \
   pip install pipenv
 
-  RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
   bash nodesource_setup.sh && \
   cat /etc/apt/sources.list.d/nodesource.list
 

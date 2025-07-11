@@ -31,7 +31,7 @@ services:
       - '--logpath'
       - '/var/log/mongod.log'
     ports:
-      - '27018:27017'
+      - '27017:27017'
     volumes:
       - './data/mongodb:/data/db'
       - './logs/mongodb:/var/log'
