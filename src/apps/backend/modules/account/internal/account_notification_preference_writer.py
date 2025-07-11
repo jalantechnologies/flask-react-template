@@ -4,34 +4,40 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from modules.notification.types import NotificationPreferences
+from modules.notification.types import NotificationPreferencesParams
 
 
 class AccountNotificationPreferenceWriter:
     @staticmethod
-    def create_notification_preferences(account_id: str, params: NotificationPreferences) -> NotificationPreferences:
+    def create_notification_preferences(
+        account_id: str, preferences: NotificationPreferencesParams
+    ) -> NotificationPreferencesParams:
         preferences_model = AccountNotificationPreferencesModel(
             account_id=account_id,
             id=None,
-            email_enabled=params.email_enabled,
-            push_enabled=params.push_enabled,
-            sms_enabled=params.sms_enabled,
+            email_enabled=preferences.email_enabled,
+            push_enabled=preferences.push_enabled,
+            sms_enabled=preferences.sms_enabled,
             created_at=datetime.now(),
             updated_at=datetime.now(),
         ).to_bson()
 
         AccountNotificationPreferencesRepository.collection().insert_one(preferences_model)
 
-        return NotificationPreferences(
-            email_enabled=params.email_enabled, push_enabled=params.push_enabled, sms_enabled=params.sms_enabled
+        return NotificationPreferencesParams(
+            email_enabled=preferences.email_enabled,
+            push_enabled=preferences.push_enabled,
+            sms_enabled=preferences.sms_enabled,
         )
 
     @staticmethod
-    def update_notification_preferences(account_id: str, params: NotificationPreferences) -> NotificationPreferences:
+    def update_notification_preferences(
+        account_id: str, preferences: NotificationPreferencesParams
+    ) -> NotificationPreferencesParams:
         update_data = {
-            "email_enabled": params.email_enabled,
-            "push_enabled": params.push_enabled,
-            "sms_enabled": params.sms_enabled,
+            "email_enabled": preferences.email_enabled,
+            "push_enabled": preferences.push_enabled,
+            "sms_enabled": preferences.sms_enabled,
             "updated_at": datetime.now(),
         }
 
@@ -39,6 +45,8 @@ class AccountNotificationPreferenceWriter:
             {"account_id": account_id}, {"$set": update_data}
         )
 
-        return NotificationPreferences(
-            email_enabled=params.email_enabled, push_enabled=params.push_enabled, sms_enabled=params.sms_enabled
+        return NotificationPreferencesParams(
+            email_enabled=preferences.email_enabled,
+            push_enabled=preferences.push_enabled,
+            sms_enabled=preferences.sms_enabled,
         )

@@ -16,7 +16,7 @@ from modules.account.types import (
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
-from modules.notification.types import NotificationPreferences
+from modules.notification.types import NotificationPreferencesParams
 
 
 class AccountService:
@@ -69,13 +69,13 @@ class AccountService:
         return AccountReader.get_account_by_username_and_password(params=params)
 
     @staticmethod
-    def get_notification_preferences(account_id: str) -> NotificationPreferences:
+    def get_notification_preferences(account_id: str) -> NotificationPreferencesParams:
         return AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
 
     @staticmethod
     def update_notification_preferences(
-        *, account_id: str, preferences: NotificationPreferences
-    ) -> NotificationPreferences:
+        *, account_id: str, preferences: NotificationPreferencesParams
+    ) -> NotificationPreferencesParams:
         existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
             account_id
         )
