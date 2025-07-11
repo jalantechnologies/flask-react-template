@@ -1,6 +1,6 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.notification.types import NotificationPreferences, UpdateNotificationPreferencesParams
+from modules.notification.types import NotificationPreferencesParams
 
 from tests.modules.account.base_test_account import BaseTestAccount
 
@@ -26,10 +26,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_params = UpdateNotificationPreferencesParams(
-            account_id=account.id, email_enabled=False, push_enabled=True, sms_enabled=False
-        )
-        AccountService.update_notification_preferences(params=update_params)
+        update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
+        AccountService.update_notification_preferences(account_id=account.id, preferences=update_preferences)
 
         preferences = AccountService.get_notification_preferences(account_id=account.id)
 
@@ -44,11 +42,11 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_params = UpdateNotificationPreferencesParams(
-            account_id=account.id, email_enabled=False, push_enabled=False, sms_enabled=True
-        )
+        update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=True)
 
-        preferences = AccountService.update_notification_preferences(params=update_params)
+        preferences = AccountService.update_notification_preferences(
+            account_id=account.id, preferences=update_preferences
+        )
 
         assert preferences.email_enabled is False
         assert preferences.push_enabled is False
@@ -66,16 +64,14 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        initial_params = UpdateNotificationPreferencesParams(
-            account_id=account.id, email_enabled=True, push_enabled=True, sms_enabled=True
-        )
-        AccountService.update_notification_preferences(params=initial_params)
+        initial_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
+        AccountService.update_notification_preferences(account_id=account.id, preferences=initial_preferences)
 
-        update_params = UpdateNotificationPreferencesParams(
-            account_id=account.id, email_enabled=False, push_enabled=True, sms_enabled=False
-        )
+        update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
 
-        preferences = AccountService.update_notification_preferences(params=update_params)
+        preferences = AccountService.update_notification_preferences(
+            account_id=account.id, preferences=update_preferences
+        )
 
         assert preferences.email_enabled is False
         assert preferences.push_enabled is True
@@ -93,11 +89,11 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_params = UpdateNotificationPreferencesParams(
-            account_id=account.id, email_enabled=False, push_enabled=False, sms_enabled=False
-        )
+        update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=False)
 
-        preferences = AccountService.update_notification_preferences(params=update_params)
+        preferences = AccountService.update_notification_preferences(
+            account_id=account.id, preferences=update_preferences
+        )
 
         assert preferences.email_enabled is False
         assert preferences.push_enabled is False
