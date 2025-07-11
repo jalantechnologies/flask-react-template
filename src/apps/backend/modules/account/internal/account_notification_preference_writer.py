@@ -30,6 +30,21 @@ class AccountNotificationPreferenceWriter:
         return AccountNotificationPreferenceUtil.convert_notification_preferences_bson_to_params(created_preferences)
 
     @staticmethod
+    def create_or_update_notification_preferences(
+        account_id: str, preferences: NotificationPreferencesParams
+    ) -> NotificationPreferencesParams:
+        from modules.account.internal.account_notification_preference_reader import AccountNotificationPreferenceReader
+
+        existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
+            account_id
+        )
+
+        if existing_preferences is None:
+            return AccountNotificationPreferenceWriter.create_notification_preferences(account_id, preferences)
+        else:
+            return AccountNotificationPreferenceWriter.update_notification_preferences(account_id, preferences)
+
+    @staticmethod
     def update_notification_preferences(
         account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
