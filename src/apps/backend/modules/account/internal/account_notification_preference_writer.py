@@ -4,14 +4,14 @@ from modules.account.internal.store.account_notification_preferences_model impor
 from modules.account.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from modules.notification.types import NotificationPreferences, UpdateNotificationPreferencesParams
+from modules.notification.types import NotificationPreferences
 
 
 class AccountNotificationPreferenceWriter:
     @staticmethod
-    def create_notification_preferences(params: UpdateNotificationPreferencesParams) -> NotificationPreferences:
+    def create_notification_preferences(account_id: str, params: NotificationPreferences) -> NotificationPreferences:
         preferences_model = AccountNotificationPreferencesModel(
-            account_id=params.account_id,
+            account_id=account_id,
             id=None,
             email_enabled=params.email_enabled,
             push_enabled=params.push_enabled,
@@ -27,7 +27,7 @@ class AccountNotificationPreferenceWriter:
         )
 
     @staticmethod
-    def update_notification_preferences(params: UpdateNotificationPreferencesParams) -> NotificationPreferences:
+    def update_notification_preferences(account_id: str, params: NotificationPreferences) -> NotificationPreferences:
         update_data = {
             "email_enabled": params.email_enabled,
             "push_enabled": params.push_enabled,
@@ -36,7 +36,7 @@ class AccountNotificationPreferenceWriter:
         }
 
         AccountNotificationPreferencesRepository.collection().update_one(
-            {"account_id": params.account_id}, {"$set": update_data}
+            {"account_id": account_id}, {"$set": update_data}
         )
 
         return NotificationPreferences(

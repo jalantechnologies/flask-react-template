@@ -7,7 +7,7 @@ from flask.views import MethodView
 from modules.account.account_service import AccountService
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.notification.errors import ValidationError
-from modules.notification.types import UpdateNotificationPreferencesParams
+from modules.notification.types import NotificationPreferences
 
 
 class NotificationPreferencesView(MethodView):
@@ -22,12 +22,13 @@ class NotificationPreferencesView(MethodView):
             if field in request_data and not isinstance(request_data[field], bool):
                 raise ValidationError(f"{field} must be a boolean")
 
-        update_params = UpdateNotificationPreferencesParams(
-            account_id=account_id,
+        update_params = NotificationPreferences(
             email_enabled=request_data.get("email_enabled", True),
             push_enabled=request_data.get("push_enabled", True),
             sms_enabled=request_data.get("sms_enabled", True),
         )
 
-        preferences = AccountService.update_notification_preferences(params=update_params)
-        return jsonify(asdict(preferences)), 200
+        updated_preferences = AccountService.update_notification_preferences(
+            account_id=account_id, params=update_params
+        )
+        return jsonify(asdict(updated_preferences)), 200

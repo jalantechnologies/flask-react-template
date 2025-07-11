@@ -43,14 +43,6 @@ class CommunicationErrorCode:
 
 
 @dataclass(frozen=True)
-class UpdateNotificationPreferencesParams:
-    account_id: str
-    email_enabled: bool
-    push_enabled: bool
-    sms_enabled: bool
-
-
-@dataclass(frozen=True)
 class ValidationFailure:
     field: str
     message: str
