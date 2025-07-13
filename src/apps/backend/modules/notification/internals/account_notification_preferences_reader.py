@@ -3,7 +3,7 @@ from modules.notification.internals.store.account_notification_preferences_repos
     AccountNotificationPreferencesRepository,
 )
 from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
-from modules.notification.errors import NotificationPreferencesNotFoundError
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import NotificationPreferencesParams
 
 
@@ -14,7 +14,7 @@ class AccountNotificationPreferenceReader:
             {"account_id": account_id, "active": True}
         )
         if notification_preferences is None:
-            raise NotificationPreferencesNotFoundError(account_id=account_id)
+            raise AccountNotificationPreferencesNotFoundError(account_id=account_id)
 
         return AccountNotificationPreferenceUtil.convert_notification_preferences_bson_to_params(
             notification_preferences

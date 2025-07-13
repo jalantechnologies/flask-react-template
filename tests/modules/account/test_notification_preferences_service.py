@@ -1,6 +1,6 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.notification.errors import NotificationPreferencesNotFoundError
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import NotificationPreferencesParams
 
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -14,7 +14,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        with self.assertRaises(NotificationPreferencesNotFoundError):
+        with self.assertRaises(AccountNotificationPreferencesNotFoundError):
             AccountService.get_notification_preferences(account_id=account.id)
 
     def test_get_notification_preferences_returns_existing_preferences(self) -> None:

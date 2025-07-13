@@ -16,7 +16,7 @@ class ValidationError(AppError):
         self.http_code = 400
 
 
-class NotificationPreferencesNotFoundError(AppError):
+class AccountNotificationPreferencesNotFoundError(AppError):
     def __init__(self, account_id: str) -> None:
         super().__init__(
             code=NotificationErrorCode.PREFERENCES_NOT_FOUND,
