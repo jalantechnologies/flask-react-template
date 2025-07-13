@@ -5,7 +5,7 @@ from modules.notification.types import NotificationPreferencesParams
 
 class AccountNotificationPreferenceUtil:
     @staticmethod
-    def convert_notification_preferences_bson_to_params(
+    def convert_account_notification_preferences_bson_to_params(
         notification_preferences_bson: dict[str, Any],
     ) -> NotificationPreferencesParams:
         validated_preferences_data = AccountNotificationPreferencesModel.from_bson(notification_preferences_bson)
