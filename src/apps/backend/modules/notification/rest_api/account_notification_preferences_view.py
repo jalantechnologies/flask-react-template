@@ -10,7 +10,7 @@ from modules.notification.types import NotificationPreferencesParams
 from modules.notification.notification_service import NotificationService
 
 
-class NotificationPreferencesView(MethodView):
+class AccountNotificationPreferencesView(MethodView):
     @access_auth_middleware
     def put(self, account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()

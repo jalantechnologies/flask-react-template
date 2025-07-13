@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from modules.account.rest_api.account_view import AccountView
-from modules.notification.rest_api.account_notification_preferences_view import NotificationPreferencesView
+from modules.notification.rest_api.account_notification_preferences_view import AccountNotificationPreferencesView
 
 
 class AccountRouter:
@@ -13,7 +13,7 @@ class AccountRouter:
 
         blueprint.add_url_rule(
             "/accounts/<account_id>/notification-preferences",
-            view_func=NotificationPreferencesView.as_view("notification_preferences_update"),
+            view_func=AccountNotificationPreferencesView.as_view("notification_preferences_update"),
             methods=["PUT"],
         )
 
