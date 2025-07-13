@@ -3,21 +3,25 @@ from typing import Optional
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.notification.internals.twilio_service import TwilioService
-from modules.notification.types import NotificationPreferencesParams, SendSMSParams
+from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.types import SendSMSParams
 
 
 class SMSService:
     @staticmethod
-    def send_sms(
-        *,
-        params: SendSMSParams,
-        preferences: Optional[NotificationPreferencesParams] = None,
-        bypass_preferences: bool = False,
-    ) -> None:
+    def send_sms(*, params: SendSMSParams, account_id: Optional[str] = None, bypass_preferences: bool = False) -> None:
         is_sms_enabled = ConfigService[bool].get_value(key="sms.enabled")
         if not is_sms_enabled:
             Logger.warn(message=f"SMS is disabled. Could not send message - {params.message_body}")
             return
+
+        preferences = None
+        if account_id:
+            try:
+                preferences = AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
+            except Exception as e:
+                Logger.warn(message=f"Could not retrieve notification preferences for account {account_id}: {e}")
+                preferences = None
 
         if not bypass_preferences and preferences and not preferences.sms_enabled:
             Logger.info(message="SMS notification skipped: disabled by user preferences")
