@@ -16,7 +16,8 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
-from modules.notification.notification_service import NotificationService
+from modules.notification.errors import ValidationError
+from modules.notification.types import NotificationPreferencesParams
 
 
 class AccountView(MethodView):
@@ -43,7 +44,9 @@ class AccountView(MethodView):
         include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
 
         if include_notification_preferences:
-            notification_preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=id)
+            notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
+                account_id=account.id
+            )
             account_dict["notification_preferences"] = asdict(notification_preferences)
 
         return jsonify(account_dict), 200
@@ -66,3 +69,26 @@ class AccountView(MethodView):
 
         account_dict = asdict(account)
         return jsonify(account_dict), 200
+
+    @access_auth_middleware
+    def put(self, account_id: str) -> ResponseReturnValue:
+        request_data = request.get_json()
+
+        if not request_data:
+            raise AccountBadRequestError("Request body is required")
+
+        for field in ["email_enabled", "push_enabled", "sms_enabled"]:
+            if field in request_data and not isinstance(request_data[field], bool):
+                raise ValidationError(f"{field} must be a boolean")
+
+        preferences_params = NotificationPreferencesParams(
+            email_enabled=request_data.get("email_enabled", True),
+            push_enabled=request_data.get("push_enabled", True),
+            sms_enabled=request_data.get("sms_enabled", True),
+        )
+
+        updated_preferences = AccountService.create_or_update_account_notification_preferences(
+            account_id=account_id, preferences=preferences_params
+        )
+
+        return jsonify(asdict(updated_preferences)), 200
