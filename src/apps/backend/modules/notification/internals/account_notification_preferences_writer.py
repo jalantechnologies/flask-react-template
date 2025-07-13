@@ -13,7 +13,7 @@ from modules.notification.types import NotificationPreferencesParams
 
 class AccountNotificationPreferenceWriter:
     @staticmethod
-    def create_notification_preferences(
+    def create_account_notification_preferences(
         account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
         preferences_model = AccountNotificationPreferencesModel(
@@ -33,7 +33,7 @@ class AccountNotificationPreferenceWriter:
         return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_params(created_preferences)
 
     @staticmethod
-    def create_or_update_notification_preferences(
+    def create_or_update_account_notification_preferences(
         account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
         from modules.notification.internals.account_notification_preferences_reader import (
@@ -45,12 +45,12 @@ class AccountNotificationPreferenceWriter:
         )
 
         if existing_preferences is None:
-            return AccountNotificationPreferenceWriter.create_notification_preferences(account_id, preferences)
+            return AccountNotificationPreferenceWriter.create_account_notification_preferences(account_id, preferences)
         else:
-            return AccountNotificationPreferenceWriter.update_notification_preferences(account_id, preferences)
+            return AccountNotificationPreferenceWriter.update_account_notification_preferences(account_id, preferences)
 
     @staticmethod
-    def update_notification_preferences(
+    def update_account_notification_preferences(
         account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
         update_data = {

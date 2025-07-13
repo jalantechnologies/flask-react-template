@@ -16,11 +16,11 @@ class NotificationService:
         return SMSService.send_sms(params=params)
 
     @staticmethod
-    def create_or_update_notification_preferences(
+    def create_or_update_account_notification_preferences(
         *, account_id: str, preferences: NotificationPreferencesParams
     ) -> NotificationPreferencesParams:
-        return AccountNotificationPreferenceWriter.create_or_update_notification_preferences(account_id, preferences)
+        return AccountNotificationPreferenceWriter.create_or_update_account_notification_preferences(account_id, preferences)
 
     @staticmethod
-    def get_account_notification_preferences(*, account_id: str) -> NotificationPreferencesParams:
+    def get_account_notification_preferences_by_account_id(*, account_id: str) -> NotificationPreferencesParams:
         return AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
