@@ -20,7 +20,11 @@ class EmailService:
                 preferences = None
 
         if not bypass_preferences and preferences and not preferences.email_enabled:
-            Logger.info(message="Email notification skipped: disabled by user preferences")
+            Logger.info(
+                message=f"Email notification skipped for {params.recipient.email}"
+                + (f" (account {account_id})" if account_id else "")
+                + f" using template {params.template_id}: disabled by user preferences"
+            )
             return
 
         return SendGridService.send_email(params)
