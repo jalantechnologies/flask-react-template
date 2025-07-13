@@ -14,6 +14,7 @@ class AccountNotificationPreferencesModel(BaseModel):
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True
+    active: bool = True
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
 
@@ -25,6 +26,7 @@ class AccountNotificationPreferencesModel(BaseModel):
             email_enabled=bson_data.get("email_enabled", True),
             push_enabled=bson_data.get("push_enabled", True),
             sms_enabled=bson_data.get("sms_enabled", True),
+            active=bson_data.get("active", True),
             created_at=bson_data.get("created_at"),
             updated_at=bson_data.get("updated_at"),
         )
