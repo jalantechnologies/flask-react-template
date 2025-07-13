@@ -14,7 +14,7 @@ class EmailService:
         preferences = None
         if account_id:
             try:
-                preferences = AccountNotificationPreferenceReader.get_notification_preferences_by_account_id(account_id)
+                preferences = AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
             except Exception as e:
                 Logger.warn(message=f"Could not retrieve notification preferences for account {account_id}: {e}")
                 preferences = None

@@ -40,7 +40,7 @@ class AccountNotificationPreferenceWriter:
             AccountNotificationPreferenceReader,
         )
 
-        existing_preferences = AccountNotificationPreferenceReader.get_existing_notification_preferences_by_account_id(
+        existing_preferences = AccountNotificationPreferenceReader.get_existing_account_notification_preferences_by_account_id(
             account_id
         )
 

@@ -9,7 +9,7 @@ from modules.notification.types import NotificationPreferencesParams
 
 class AccountNotificationPreferenceReader:
     @staticmethod
-    def get_notification_preferences_by_account_id(account_id: str) -> NotificationPreferencesParams:
+    def get_account_notification_preferences_by_account_id(account_id: str) -> NotificationPreferencesParams:
         notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
             {"account_id": account_id, "active": True}
         )
@@ -21,7 +21,7 @@ class AccountNotificationPreferenceReader:
         )
 
     @staticmethod
-    def get_existing_notification_preferences_by_account_id(account_id: str) -> Optional[NotificationPreferencesParams]:
+    def get_existing_account_notification_preferences_by_account_id(account_id: str) -> Optional[NotificationPreferencesParams]:
         notification_preferences = AccountNotificationPreferencesRepository.collection().find_one(
             {"account_id": account_id, "active": True}
         )
