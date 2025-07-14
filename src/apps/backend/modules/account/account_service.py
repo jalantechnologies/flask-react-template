@@ -13,7 +13,7 @@ from modules.account.types import (
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import NotificationPreferencesParams
+from modules.notification.types import NotificationPreferences
 
 
 class AccountService:
@@ -71,12 +71,12 @@ class AccountService:
 
     @staticmethod
     def create_or_update_account_notification_preferences(
-        *, account_id: str, preferences: NotificationPreferencesParams
-    ) -> NotificationPreferencesParams:
+        *, account_id: str, preferences: NotificationPreferences
+    ) -> NotificationPreferences:
         return NotificationService.create_or_update_account_notification_preferences(
             account_id=account_id, preferences=preferences
         )
 
     @staticmethod
-    def get_account_notification_preferences_by_account_id(*, account_id: str) -> NotificationPreferencesParams:
+    def get_account_notification_preferences_by_account_id(*, account_id: str) -> NotificationPreferences:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)

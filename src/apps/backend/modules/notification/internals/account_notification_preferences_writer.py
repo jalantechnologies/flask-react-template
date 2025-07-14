@@ -9,14 +9,14 @@ from modules.notification.internals.store.account_notification_preferences_repos
 )
 from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
-from modules.notification.types import NotificationPreferencesParams
+from modules.notification.types import NotificationPreferences
 
 
 class AccountNotificationPreferenceWriter:
     @staticmethod
     def create_account_notification_preferences(
-        account_id: str, preferences: NotificationPreferencesParams
-    ) -> NotificationPreferencesParams:
+        account_id: str, preferences: NotificationPreferences
+    ) -> NotificationPreferences:
         preferences_model = AccountNotificationPreferencesModel(
             account_id=account_id,
             id=None,
@@ -37,8 +37,8 @@ class AccountNotificationPreferenceWriter:
 
     @staticmethod
     def create_or_update_account_notification_preferences(
-        account_id: str, preferences: NotificationPreferencesParams
-    ) -> NotificationPreferencesParams:
+        account_id: str, preferences: NotificationPreferences
+    ) -> NotificationPreferences:
         from modules.notification.internals.account_notification_preferences_reader import (
             AccountNotificationPreferenceReader,
         )
@@ -51,8 +51,8 @@ class AccountNotificationPreferenceWriter:
 
     @staticmethod
     def update_account_notification_preferences(
-        account_id: str, preferences: NotificationPreferencesParams
-    ) -> NotificationPreferencesParams:
+        account_id: str, preferences: NotificationPreferences
+    ) -> NotificationPreferences:
         update_data = {
             "email_enabled": preferences.email_enabled,
             "push_enabled": preferences.push_enabled,
