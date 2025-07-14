@@ -10,7 +10,7 @@ from modules.application.base_model import BaseModel
 @dataclass
 class AccountNotificationPreferencesModel(BaseModel):
     account_id: str
-    id: Optional[ObjectId | str]
+    id: Optional[ObjectId | str] = None
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True
