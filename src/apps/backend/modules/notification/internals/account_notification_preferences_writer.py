@@ -7,6 +7,7 @@ from modules.notification.internals.store.account_notification_preferences_model
 from modules.notification.internals.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
+from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferences, AccountNotificationPreferences
@@ -39,9 +40,6 @@ class AccountNotificationPreferenceWriter:
     def create_or_update_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferences
     ) -> AccountNotificationPreferences:
-        from modules.notification.internals.account_notification_preferences_reader import (
-            AccountNotificationPreferenceReader,
-        )
 
         try:
             AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
