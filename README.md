@@ -17,7 +17,7 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 - [Workers](docs/workers.md)
 - [Deployment](docs/deployment.md)
 
-# Best Practices
+## Best Practices
 
 Once you have familiarized yourself with the documentation, head over to the [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md) to learn about the best practices we follow at Better Software.
 
