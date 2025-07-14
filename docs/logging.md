@@ -33,3 +33,24 @@ Logger.error(message=f"Failed to process item {item_id}")
 
 * Both `console.*` and any custom logger integrations are forwarded to Datadog when logging is enabled.
 * RUM auto-collects page views, errors, and performance metrics. Emit custom events for business-specific insights.
+
+### Usage Example
+
+```typescript jsx
+import React, { useEffect } from 'react';
+import { Logger } from './utils/logger';
+
+Logger.init();
+
+export default function App(): React.ReactElement {
+  Logger.info("This is a logger info message");
+  console.log("This is a console log"); // can also be captured by Datadog
+
+  return (
+    <div>
+      <h1>Sample App</h1>
+      {/* Your components go here */}
+    </div>
+  );
+}
+```
