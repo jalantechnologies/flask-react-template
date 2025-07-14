@@ -4,7 +4,7 @@ from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferences
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from server import app
 
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -21,7 +21,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             )
         )
 
-        default_preferences = CreateOrUpdateAccountNotificationPreferences(
+        default_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
