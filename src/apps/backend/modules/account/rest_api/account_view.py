@@ -48,9 +48,7 @@ class AccountView(MethodView):
                 notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
                     account_id=account.id
                 )
-                preferences_dict = asdict(notification_preferences)
-                preferences_dict.pop("account_id", None)
-                account_dict["notification_preferences"] = preferences_dict
+                account_dict["notification_preferences"] = asdict(notification_preferences)
             except AccountNotificationPreferencesNotFoundError:
                 pass
 
@@ -96,7 +94,4 @@ class AccountView(MethodView):
             account_id=account_id, preferences=preferences_params
         )
 
-        preferences_dict = asdict(updated_preferences)
-        preferences_dict.pop("account_id", None)
-
-        return jsonify(preferences_dict), 200
+        return jsonify(asdict(updated_preferences)), 200
