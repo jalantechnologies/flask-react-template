@@ -10,7 +10,10 @@ from modules.notification.internals.store.account_notification_preferences_repos
 from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams, AccountNotificationPreferences
+from modules.notification.types import (
+    CreateOrUpdateAccountNotificationPreferencesParams,
+    AccountNotificationPreferences,
+)
 
 
 class AccountNotificationPreferenceWriter:
@@ -24,9 +27,6 @@ class AccountNotificationPreferenceWriter:
             email_enabled=preferences.email_enabled,
             push_enabled=preferences.push_enabled,
             sms_enabled=preferences.sms_enabled,
-            active=True,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
         ).to_bson()
 
         query = AccountNotificationPreferencesRepository.collection().insert_one(preferences_model)
