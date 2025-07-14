@@ -44,7 +44,6 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["notification_preferences"]["email_enabled"] is True
             assert response.json["notification_preferences"]["push_enabled"] is True
             assert response.json["notification_preferences"]["sms_enabled"] is True
-            # account_id should not be included in the nested notification_preferences
             assert "account_id" not in response.json["notification_preferences"]
 
     def test_get_account_without_notification_preferences_parameter(self) -> None:
@@ -147,6 +146,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["email_enabled"] is False
             assert response.json["push_enabled"] is True
             assert response.json["sms_enabled"] is False
+            assert "account_id" not in response.json
 
     def test_update_notification_preferences_no_auth(self) -> None:
         account = AccountService.create_account_by_username_and_password(
@@ -249,3 +249,4 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["email_enabled"] is False
             assert response.json["push_enabled"] is False
             assert response.json["sms_enabled"] is False
+            assert "account_id" not in response.json

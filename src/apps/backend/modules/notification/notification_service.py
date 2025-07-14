@@ -23,7 +23,7 @@ class NotificationService:
     @staticmethod
     def create_or_update_account_notification_preferences(
         *, account_id: str, preferences: NotificationPreferences
-    ) -> NotificationPreferences:
+    ) -> AccountNotificationPreferences:
         return AccountNotificationPreferenceWriter.create_or_update_account_notification_preferences(
             account_id, preferences
         )
