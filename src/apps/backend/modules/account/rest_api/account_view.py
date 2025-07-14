@@ -16,7 +16,7 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
-from modules.notification.errors import ValidationError
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError, ValidationError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferences
 
 
@@ -44,10 +44,13 @@ class AccountView(MethodView):
         include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
 
         if include_notification_preferences:
-            notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
-                account_id=account.id
-            )
-            account_dict["notification_preferences"] = asdict(notification_preferences)
+            try:
+                notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
+                    account_id=account.id
+                )
+                account_dict["notification_preferences"] = asdict(notification_preferences)
+            except AccountNotificationPreferencesNotFoundError:
+                pass
 
         return jsonify(account_dict), 200
 
