@@ -9,11 +9,11 @@ class NotificationService:
 
     @staticmethod
     def send_email(*, params: SendEmailParams) -> None:
-        return EmailService.send_email(params=params)
+        return EmailService.send_email_for_account(params=params)
 
     @staticmethod
     def send_sms(*, params: SendSMSParams) -> None:
-        return SMSService.send_sms(params=params)
+        return SMSService.send_sms_for_account(params=params)
 
     @staticmethod
     def create_or_update_account_notification_preferences(

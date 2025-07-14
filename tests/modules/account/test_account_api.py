@@ -58,7 +58,7 @@ class TestAccountApi(BaseTestAccount):
         assert response.json
         assert response.json.get("code") == AccountErrorCode.USERNAME_ALREADY_EXISTS
 
-    @mock.patch.object(SMSService, "send_sms")
+    @mock.patch.object(SMSService, "send_sms_for_account")
     def test_create_account_by_phone_number_and_send_otp(self, mock_send_sms) -> None:
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
 
@@ -77,7 +77,7 @@ class TestAccountApi(BaseTestAccount):
                 mock_send_sms.call_args.kwargs["params"].message_body,
             )
 
-    @mock.patch.object(SMSService, "send_sms")
+    @mock.patch.object(SMSService, "send_sms_for_account")
     def test_get_account_with_existing_phone_number_and_send_otp(self, mock_send_sms) -> None:
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(
@@ -102,7 +102,7 @@ class TestAccountApi(BaseTestAccount):
             "is your One Time Password (OTP) for verification.", mock_send_sms.call_args.kwargs["params"].message_body
         )
 
-    @mock.patch.object(SMSService, "send_sms")
+    @mock.patch.object(SMSService, "send_sms_for_account")
     def test_get_or_create_account_with_invalid_phone_number(self, mock_send_sms) -> None:
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "999999999"}})
         with app.test_client() as client:

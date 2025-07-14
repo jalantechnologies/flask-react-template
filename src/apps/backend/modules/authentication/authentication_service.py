@@ -131,7 +131,7 @@ class AuthenticationService:
             template_data=template_data,
         )
 
-        EmailService.send_email(params=password_reset_email_params)
+        EmailService.send_email_for_account(params=password_reset_email_params)
 
     @staticmethod
     def create_otp(*, params: CreateOTPParams) -> OTP:
@@ -143,7 +143,7 @@ class AuthenticationService:
             recipient_phone=recipient_phone_number,
         )
         if not OTPUtil.is_default_otp_enabled():
-            SMSService.send_sms(params=send_sms_params)
+            SMSService.send_sms_for_account(params=send_sms_params)
 
         return otp
 

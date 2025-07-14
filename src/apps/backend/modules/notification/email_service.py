@@ -8,7 +8,7 @@ from modules.notification.types import SendEmailParams
 
 class EmailService:
     @staticmethod
-    def send_email(
+    def send_email_for_account(
         *, account_id: Optional[str] = None, bypass_preferences: bool = False, params: SendEmailParams
     ) -> None:
         preferences = None

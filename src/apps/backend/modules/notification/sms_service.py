@@ -9,7 +9,7 @@ from modules.notification.types import SendSMSParams
 
 class SMSService:
     @staticmethod
-    def send_sms(*, account_id: Optional[str] = None, bypass_preferences: bool = False, params: SendSMSParams) -> None:
+    def send_sms_for_account(*, account_id: Optional[str] = None, bypass_preferences: bool = False, params: SendSMSParams) -> None:
         is_sms_enabled = ConfigService[bool].get_value(key="sms.enabled")
         if not is_sms_enabled:
             Logger.warn(
