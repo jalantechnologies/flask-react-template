@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Optional
 
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
@@ -54,7 +55,7 @@ class AccountView(MethodView):
 
         return jsonify(account_dict), 200
 
-    def patch(self, id: str = None, account_id: str = None) -> ResponseReturnValue:
+    def patch(self, id: Optional[str] = None, account_id: Optional[str] = None) -> ResponseReturnValue:
         request_data = request.get_json()
 
         if id is not None:
