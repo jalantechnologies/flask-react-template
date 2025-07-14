@@ -31,7 +31,7 @@ class AccountNotificationPreferenceWriter:
         query = AccountNotificationPreferencesRepository.collection().insert_one(preferences_model)
         created_preferences = AccountNotificationPreferencesRepository.collection().find_one({"_id": query.inserted_id})
 
-        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_params(
+        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_account_params(
             created_preferences
         )
 
@@ -64,6 +64,6 @@ class AccountNotificationPreferenceWriter:
             {"account_id": account_id, "active": True}, {"$set": update_data}, return_document=ReturnDocument.AFTER
         )
 
-        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_params(
+        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_account_params(
             updated_preferences
         )

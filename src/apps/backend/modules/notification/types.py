@@ -23,6 +23,14 @@ class NotificationPreferences:
 
 
 @dataclass(frozen=True)
+class AccountNotificationPreferences:
+    account_id: str
+    email_enabled: bool = True
+    push_enabled: bool = True
+    sms_enabled: bool = True
+
+
+@dataclass(frozen=True)
 class SendEmailParams:
     recipient: EmailRecipient
     sender: EmailSender

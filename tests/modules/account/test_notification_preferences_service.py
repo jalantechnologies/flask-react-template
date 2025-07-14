@@ -32,6 +32,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
 
+        assert preferences.account_id == account.id
         assert preferences.email_enabled is False
         assert preferences.push_enabled is True
         assert preferences.sms_enabled is False
@@ -56,6 +57,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
             account_id=account.id
         )
+        assert retrieved_preferences.account_id == account.id
         assert retrieved_preferences.email_enabled is False
         assert retrieved_preferences.push_enabled is False
         assert retrieved_preferences.sms_enabled is True
@@ -85,6 +87,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
             account_id=account.id
         )
+        assert retrieved_preferences.account_id == account.id
         assert retrieved_preferences.email_enabled is False
         assert retrieved_preferences.push_enabled is True
         assert retrieved_preferences.sms_enabled is False
