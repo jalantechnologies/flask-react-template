@@ -11,3 +11,8 @@ mailer:
 
 sms:
   enabled: false
+
+public:
+  default_otp:
+    enabled: false
+    code: '1234'

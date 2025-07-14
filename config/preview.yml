@@ -15,6 +15,7 @@ public:
     code: '1234'
 
 account:
+  enable_bootstrap_tasks: true
   create_test_user_account: true
   test_user:
     first_name: "Preview"

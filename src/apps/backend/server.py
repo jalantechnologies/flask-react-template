@@ -13,6 +13,7 @@ from modules.authentication.rest_api.authentication_rest_api_server import Authe
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
+from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
 
@@ -22,14 +23,8 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 # Mount deps
 LoggerManager.mount_logger()
 
-# Run bootstrap tasks in dev/preview environments
-app_env = ConfigService[str].get_value(key="APP_ENV", default="development")
-if app_env in ("development", "preview"):
-    try:
-        from scripts.bootstrap_app import BootstrapApp
-        BootstrapApp().run()
-    except ImportError:
-        pass
+if ConfigService[bool].get_value(key="account.enable_bootstrap_tasks", default=False):
+    BootstrapApp().run()
 
 # Connect to Temporal Server
 try:
