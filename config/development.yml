@@ -26,3 +26,5 @@ account:
     last_name: "User"
     username: "dev@example.com"
     password: "devpassword"
+
+BOOTSTRAP_APP: true

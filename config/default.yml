@@ -26,3 +26,5 @@ public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
   datadog:
     enabled: 'false'
+
+BOOTSTRAP_APP: false

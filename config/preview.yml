@@ -22,3 +22,5 @@ account:
     last_name: "User"
     username: "preview@example.com"
     password: "previewpassword"
+
+BOOTSTRAP_APP: true

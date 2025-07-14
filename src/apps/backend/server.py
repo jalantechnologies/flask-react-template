@@ -23,8 +23,8 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 # Mount deps
 LoggerManager.mount_logger()
 
-if ConfigService[bool].get_value(key="account.enable_bootstrap_tasks", default=False):
-    BootstrapApp().run()
+# Run bootstrap tasks if enabled by config flag
+BootstrapApp().run()
 
 # Connect to Temporal Server
 try:
