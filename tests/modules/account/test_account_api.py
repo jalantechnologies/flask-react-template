@@ -68,18 +68,17 @@ class TestAccountApi(BaseTestAccount):
             self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "9999999999"})
             self.assertIn("id", response.json)
             self.assertTrue(mock_send_sms.called)
+            call_args = mock_send_sms.call_args
+            self.assertIn("account_id", call_args.kwargs)
+            self.assertEqual(call_args.kwargs["account_id"], response.json.get("id"))
             self.assertEqual(
-                mock_send_sms.call_args.kwargs["params"].recipient_phone,
-                PhoneNumber(country_code="+91", phone_number="9999999999"),
+                call_args.kwargs["params"].recipient_phone, PhoneNumber(country_code="+91", phone_number="9999999999")
             )
-            self.assertIn(
-                "is your One Time Password (OTP) for verification.",
-                mock_send_sms.call_args.kwargs["params"].message_body,
-            )
+            self.assertIn("is your One Time Password (OTP) for verification.", call_args.kwargs["params"].message_body)
 
     @mock.patch.object(SMSService, "send_sms_for_account")
     def test_get_account_with_existing_phone_number_and_send_otp(self, mock_send_sms) -> None:
-        AccountService.get_or_create_account_by_phone_number(
+        account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(
                 phone_number=PhoneNumber(**{"country_code": "+91", "phone_number": "9999999999"})
             )
@@ -94,13 +93,13 @@ class TestAccountApi(BaseTestAccount):
         self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "9999999999"})
         self.assertIn("id", response.json)
         self.assertTrue(mock_send_sms.called)
+        call_args = mock_send_sms.call_args
+        self.assertIn("account_id", call_args.kwargs)
+        self.assertEqual(call_args.kwargs["account_id"], account.id)
         self.assertEqual(
-            mock_send_sms.call_args.kwargs["params"].recipient_phone,
-            PhoneNumber(country_code="+91", phone_number="9999999999"),
+            call_args.kwargs["params"].recipient_phone, PhoneNumber(country_code="+91", phone_number="9999999999")
         )
-        self.assertIn(
-            "is your One Time Password (OTP) for verification.", mock_send_sms.call_args.kwargs["params"].message_body
-        )
+        self.assertIn("is your One Time Password (OTP) for verification.", call_args.kwargs["params"].message_body)
 
     @mock.patch.object(SMSService, "send_sms_for_account")
     def test_get_or_create_account_with_invalid_phone_number(self, mock_send_sms) -> None:
