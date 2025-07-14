@@ -17,7 +17,7 @@ from modules.account.types import (
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.notification.errors import ValidationError
-from modules.notification.types import NotificationPreferences
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferences
 
 
 class AccountView(MethodView):
@@ -81,7 +81,7 @@ class AccountView(MethodView):
             if field in request_data and not isinstance(request_data[field], bool):
                 raise ValidationError(f"{field} must be a boolean")
 
-        preferences_params = NotificationPreferences(
+        preferences_params = CreateOrUpdateAccountNotificationPreferences(
             email_enabled=request_data.get("email_enabled", True),
             push_enabled=request_data.get("push_enabled", True),
             sms_enabled=request_data.get("sms_enabled", True),

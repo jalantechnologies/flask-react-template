@@ -16,7 +16,7 @@ class EmailRecipient:
 
 
 @dataclass(frozen=True)
-class NotificationPreferences:
+class CreateOrUpdateAccountNotificationPreferences:
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True

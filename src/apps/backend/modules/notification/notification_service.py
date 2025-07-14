@@ -5,7 +5,7 @@ from modules.notification.internals.account_notification_preferences_reader impo
 from modules.notification.types import (
     SendEmailParams,
     SendSMSParams,
-    NotificationPreferences,
+    CreateOrUpdateAccountNotificationPreferences,
     AccountNotificationPreferences,
 )
 
@@ -22,7 +22,7 @@ class NotificationService:
 
     @staticmethod
     def create_or_update_account_notification_preferences(
-        *, account_id: str, preferences: NotificationPreferences
+        *, account_id: str, preferences: CreateOrUpdateAccountNotificationPreferences
     ) -> AccountNotificationPreferences:
         return AccountNotificationPreferenceWriter.create_or_update_account_notification_preferences(
             account_id, preferences

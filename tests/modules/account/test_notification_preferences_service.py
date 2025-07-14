@@ -2,7 +2,7 @@ from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import NotificationPreferences
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferences
 
 from tests.modules.account.base_test_account import BaseTestAccount
 
@@ -25,7 +25,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_preferences = NotificationPreferences(email_enabled=False, push_enabled=True, sms_enabled=False)
+        update_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=False, push_enabled=True, sms_enabled=False)
         NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
@@ -44,7 +44,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_preferences = NotificationPreferences(email_enabled=False, push_enabled=False, sms_enabled=True)
+        update_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=False, push_enabled=False, sms_enabled=True)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
@@ -70,12 +70,12 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        initial_preferences = NotificationPreferences(email_enabled=True, push_enabled=True, sms_enabled=True)
+        initial_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=True, push_enabled=True, sms_enabled=True)
         NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=initial_preferences
         )
 
-        update_preferences = NotificationPreferences(email_enabled=False, push_enabled=True, sms_enabled=False)
+        update_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=False, push_enabled=True, sms_enabled=False)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
@@ -101,7 +101,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             )
         )
 
-        update_preferences = NotificationPreferences(email_enabled=False, push_enabled=False, sms_enabled=False)
+        update_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=False, push_enabled=False, sms_enabled=False)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
