@@ -21,7 +21,9 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             )
         )
 
-        default_preferences = CreateOrUpdateAccountNotificationPreferences(email_enabled=True, push_enabled=True, sms_enabled=True)
+        default_preferences = CreateOrUpdateAccountNotificationPreferences(
+            email_enabled=True, push_enabled=True, sms_enabled=True
+        )
         NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=default_preferences
         )
