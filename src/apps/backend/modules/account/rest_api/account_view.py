@@ -54,44 +54,44 @@ class AccountView(MethodView):
 
         return jsonify(account_dict), 200
 
-    def patch(self, id: str) -> ResponseReturnValue:
+    def patch(self, id: str = None, account_id: str = None) -> ResponseReturnValue:
         request_data = request.get_json()
 
-        if "token" in request_data and "new_password" in request_data:
-            reset_account_params = ResetPasswordParams(account_id=id, **request_data)
-            account = AccountService.reset_account_password(params=reset_account_params)
+        if id is not None:
+            if "token" in request_data and "new_password" in request_data:
+                reset_account_params = ResetPasswordParams(account_id=id, **request_data)
+                account = AccountService.reset_account_password(params=reset_account_params)
 
-        elif "first_name" in request_data or "last_name" in request_data:
-            update_profile_params = UpdateAccountProfileParams(
-                first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
+            elif "first_name" in request_data or "last_name" in request_data:
+                update_profile_params = UpdateAccountProfileParams(
+                    first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
+                )
+                account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
+
+            else:
+                raise AccountBadRequestError("Invalid request data")
+
+            account_dict = asdict(account)
+            return jsonify(account_dict), 200
+
+        elif account_id is not None:
+            if not request_data:
+                raise AccountBadRequestError("Request body is required")
+
+            for field in ["email_enabled", "push_enabled", "sms_enabled"]:
+                if field in request_data and not isinstance(request_data[field], bool):
+                    raise ValidationError(f"{field} must be a boolean")
+
+            preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(
+                email_enabled=request_data.get("email_enabled", True),
+                push_enabled=request_data.get("push_enabled", True),
+                sms_enabled=request_data.get("sms_enabled", True),
             )
-            account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
 
-        else:
-            raise AccountBadRequestError("Invalid request data")
+            updated_preferences = AccountService.create_or_update_account_notification_preferences(
+                account_id=account_id, preferences=preferences_params
+            )
 
-        account_dict = asdict(account)
-        return jsonify(account_dict), 200
+            return jsonify(asdict(updated_preferences)), 200
 
-    @access_auth_middleware
-    def put(self, account_id: str) -> ResponseReturnValue:
-        request_data = request.get_json()
-
-        if not request_data:
-            raise AccountBadRequestError("Request body is required")
-
-        for field in ["email_enabled", "push_enabled", "sms_enabled"]:
-            if field in request_data and not isinstance(request_data[field], bool):
-                raise ValidationError(f"{field} must be a boolean")
-
-        preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(
-            email_enabled=request_data.get("email_enabled", True),
-            push_enabled=request_data.get("push_enabled", True),
-            sms_enabled=request_data.get("sms_enabled", True),
-        )
-
-        updated_preferences = AccountService.create_or_update_account_notification_preferences(
-            account_id=account_id, preferences=preferences_params
-        )
-
-        return jsonify(asdict(updated_preferences)), 200
+        raise AccountBadRequestError("Invalid endpoint")

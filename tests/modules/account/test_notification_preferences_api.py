@@ -135,7 +135,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
 
             preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
-            response = client.put(
+            response = client.patch(
                 f"{ACCOUNT_URL}/{account.id}/notification-preferences",
                 headers={
                     "Content-Type": "application/json",
@@ -162,7 +162,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
         with app.test_client() as client:
             preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
-            response = client.put(
+            response = client.patch(
                 f"{ACCOUNT_URL}/{account.id}/notification-preferences",
                 headers=HEADERS,
                 data=json.dumps(preferences_data),
@@ -180,7 +180,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
         with app.test_client() as client:
             preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
-            response = client.put(
+            response = client.patch(
                 f"{ACCOUNT_URL}/{account.id}/notification-preferences",
                 headers={"Content-Type": "application/json", "Authorization": "Bearer invalid_token"},
                 data=json.dumps(preferences_data),
@@ -212,7 +212,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
 
             preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
-            response = client.put(
+            response = client.patch(
                 f"{ACCOUNT_URL}/{account2.id}/notification-preferences",
                 headers={
                     "Content-Type": "application/json",
@@ -239,7 +239,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
 
             preferences_data = {"email_enabled": False, "push_enabled": False, "sms_enabled": False}
 
-            response = client.put(
+            response = client.patch(
                 f"{ACCOUNT_URL}/{account.id}/notification-preferences",
                 headers={
                     "Content-Type": "application/json",
