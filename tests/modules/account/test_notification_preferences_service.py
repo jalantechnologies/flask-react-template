@@ -1,6 +1,7 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
+from modules.notification.notification_service import NotificationService
 from modules.notification.types import NotificationPreferencesParams
 
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -15,7 +16,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         with self.assertRaises(AccountNotificationPreferencesNotFoundError):
-            AccountService.get_notification_preferences(account_id=account.id)
+            NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
 
     def test_get_notification_preferences_returns_existing_preferences(self) -> None:
         account = AccountService.create_account_by_username_and_password(
@@ -25,9 +26,11 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
-        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=update_preferences)
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=update_preferences
+        )
 
-        preferences = AccountService.get_notification_preferences(account_id=account.id)
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
 
         assert preferences.email_enabled is False
         assert preferences.push_enabled is True
@@ -42,7 +45,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=True)
 
-        preferences = AccountService.create_or_update_notification_preferences(
+        preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 
@@ -50,7 +53,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.push_enabled is False
         assert preferences.sms_enabled is True
 
-        retrieved_preferences = AccountService.get_notification_preferences(account_id=account.id)
+        retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id
+        )
         assert retrieved_preferences.email_enabled is False
         assert retrieved_preferences.push_enabled is False
         assert retrieved_preferences.sms_enabled is True
@@ -63,11 +68,13 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         initial_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
-        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=initial_preferences)
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=initial_preferences
+        )
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=True, sms_enabled=False)
 
-        preferences = AccountService.create_or_update_notification_preferences(
+        preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 
@@ -75,7 +82,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.push_enabled is True
         assert preferences.sms_enabled is False
 
-        retrieved_preferences = AccountService.get_notification_preferences(account_id=account.id)
+        retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id
+        )
         assert retrieved_preferences.email_enabled is False
         assert retrieved_preferences.push_enabled is True
         assert retrieved_preferences.sms_enabled is False
@@ -89,7 +98,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         update_preferences = NotificationPreferencesParams(email_enabled=False, push_enabled=False, sms_enabled=False)
 
-        preferences = AccountService.create_or_update_notification_preferences(
+        preferences = NotificationService.create_or_update_account_notification_preferences(
             account_id=account.id, preferences=update_preferences
         )
 

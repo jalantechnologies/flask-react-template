@@ -3,6 +3,7 @@ import json
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
+from modules.notification.notification_service import NotificationService
 from modules.notification.types import NotificationPreferencesParams
 from server import app
 
@@ -21,7 +22,9 @@ class TestNotificationPreferencesApi(BaseTestAccount):
         )
 
         default_preferences = NotificationPreferencesParams(email_enabled=True, push_enabled=True, sms_enabled=True)
-        AccountService.create_or_update_notification_preferences(account_id=account.id, preferences=default_preferences)
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=default_preferences
+        )
 
         with app.test_client() as client:
             access_token_response = client.post(
