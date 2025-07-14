@@ -8,6 +8,7 @@ from modules.notification.internals.store.account_notification_preferences_repos
     AccountNotificationPreferencesRepository,
 )
 from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import NotificationPreferencesParams
 
 
@@ -42,14 +43,11 @@ class AccountNotificationPreferenceWriter:
             AccountNotificationPreferenceReader,
         )
 
-        existing_preferences = AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(
-            account_id
-        )
-
-        if existing_preferences is None:
-            return AccountNotificationPreferenceWriter.create_account_notification_preferences(account_id, preferences)
-        else:
+        try:
+            AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
             return AccountNotificationPreferenceWriter.update_account_notification_preferences(account_id, preferences)
+        except AccountNotificationPreferencesNotFoundError:
+            return AccountNotificationPreferenceWriter.create_account_notification_preferences(account_id, preferences)
 
     @staticmethod
     def update_account_notification_preferences(
