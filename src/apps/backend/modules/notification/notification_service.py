@@ -13,12 +13,16 @@ from modules.notification.types import (
 class NotificationService:
 
     @staticmethod
-    def send_email(*, params: SendEmailParams) -> None:
-        return EmailService.send_email_for_account(params=params)
+    def send_email_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendEmailParams) -> None:
+        return EmailService.send_email_for_account(
+            account_id=account_id, bypass_preferences=bypass_preferences, params=params
+        )
 
     @staticmethod
-    def send_sms(*, params: SendSMSParams) -> None:
-        return SMSService.send_sms_for_account(params=params)
+    def send_sms_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendSMSParams) -> None:
+        return SMSService.send_sms_for_account(
+            account_id=account_id, bypass_preferences=bypass_preferences, params=params
+        )
 
     @staticmethod
     def create_or_update_account_notification_preferences(

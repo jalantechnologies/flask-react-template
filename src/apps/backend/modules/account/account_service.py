@@ -33,7 +33,7 @@ class AccountService:
             account = AccountWriter.create_account_by_phone_number(params=params)
 
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
-        AuthenticationService.create_otp(params=create_otp_params)
+        AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
 
         return account
 
