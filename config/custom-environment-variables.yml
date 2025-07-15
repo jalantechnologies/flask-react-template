@@ -38,3 +38,9 @@ public:
     sessionReplaySampleRate: 'DATADOG_SESSION_REPLAY_SAMPLE_RATE'
     sessionSampleRate: 'DATADOG_SESSION_SAMPLE_RATE'
     site: 'DATADOG_SITE'
+  default_otp:
+    enabled: 'DEFAULT_OTP_ENABLED'
+    code: 'DEFAULT_OTP_CODE'
+    # Whitelist is handled as a comma-separated string in environment variables
+    # and will be parsed by the application
+    whitelist: 'DEFAULT_OTP_WHITELIST'
