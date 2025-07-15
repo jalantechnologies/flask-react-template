@@ -8,7 +8,7 @@ from modules.config.errors import MissingKeyError
 
 class BootstrapApp:
     def __init__(self) -> None:
-        self.should_bootstrap = ConfigService[bool].get_value(key="BOOTSTRAP_APP", default=False)
+        self.should_bootstrap = ConfigService[bool].get_value(key="BOOTSTRAP_APP")
 
     def run(self) -> None:
         if not self.should_bootstrap:
@@ -22,13 +22,13 @@ class BootstrapApp:
             create_test_user = ConfigService[bool].get_value(key="accounts.create_test_user_account")
             if not create_test_user:
                 return
-            test_user = ConfigService[dict].get_value(key="accounts.test_user")
-            username = test_user.get("username")
-            password = test_user.get("password")
-            first_name = test_user.get("first_name", "Test")
-            last_name = test_user.get("last_name", "User")
-            if not isinstance(username, str) or not isinstance(password, str):
-                Logger.error(message="Test user 'username' and 'password' must be set in config and be strings.")
+            try:
+                username = ConfigService[str].get_value(key="accounts.test_user.username")
+                password = ConfigService[str].get_value(key="accounts.test_user.password")
+                first_name = ConfigService[str].get_value(key="accounts.test_user.first_name")
+                last_name = ConfigService[str].get_value(key="accounts.test_user.last_name")
+            except MissingKeyError as e:
+                Logger.info(message=f"Skipping test user seeding: {e}")
                 return
             params = CreateAccountByUsernameAndPasswordParams(
                 username=username, password=password, first_name=first_name, last_name=last_name

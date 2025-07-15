@@ -11,5 +11,3 @@ is_server_running_behind_proxy: true
 public:
   datadog:
     enabled: 'true'
-
-BOOTSTRAP_APP: false
