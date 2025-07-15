@@ -24,6 +24,10 @@ accounts:
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
+  default_otp:
+    enabled: false
+    code: '1234'
+    whitelist: []
   datadog:
     enabled: 'false'
 

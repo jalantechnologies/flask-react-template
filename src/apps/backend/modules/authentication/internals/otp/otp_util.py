@@ -1,6 +1,6 @@
 import secrets
 import string
-from typing import Any
+from typing import Any, List
 
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
@@ -11,7 +11,7 @@ class OTPUtil:
 
     @staticmethod
     def generate_otp(length: int, phone_number: str) -> str:
-        if OTPUtil.is_default_otp_enabled():
+        if OTPUtil.is_default_otp_enabled(phone_number):
             default_otp = ConfigService[str].get_value(key="public.default_otp.code")
             return default_otp
         return "".join(secrets.choice(string.digits) for _ in range(length))
@@ -27,6 +27,22 @@ class OTPUtil:
         )
 
     @staticmethod
-    def is_default_otp_enabled() -> bool:
+    def is_default_otp_enabled(phone_number: str = None) -> bool:
         default_otp_enabled = ConfigService[bool].get_value(key="public.default_otp.enabled", default=False)
-        return default_otp_enabled
+
+        if not default_otp_enabled:
+            return False
+
+        if phone_number is None:
+            return default_otp_enabled
+
+        try:
+            whitelist = ConfigService[List[str]].get_value(key="public.default_otp.whitelist", default=[])
+            if not whitelist:
+                return True
+            return phone_number in whitelist
+        except (TypeError, ValueError, KeyError) as e:
+            from modules.logger.logger import Logger
+
+            Logger.warn(message=f"Error checking OTP whitelist: {str(e)}")
+            return default_otp_enabled
