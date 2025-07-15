@@ -10,5 +10,3 @@ is_server_running_behind_proxy: true
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
-  default_otp:
-    enabled: false
