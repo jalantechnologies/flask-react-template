@@ -1,6 +1,6 @@
+from typing import Any, List, Optional
 import secrets
 import string
-from typing import Any, List
 
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
@@ -27,7 +27,7 @@ class OTPUtil:
         )
 
     @staticmethod
-    def is_default_otp_enabled(phone_number: str = None) -> bool:
+    def is_default_otp_enabled(phone_number: Optional[str] = None) -> bool:
         default_otp_enabled = ConfigService[bool].get_value(key="public.default_otp.enabled", default=False)
 
         if not default_otp_enabled:
