@@ -34,6 +34,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -64,6 +67,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -93,6 +99,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -128,6 +137,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -166,6 +178,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -203,6 +218,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": False,  # Disabled
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -240,6 +258,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": [],  # Empty whitelist
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -277,6 +298,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888", "7777777777"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -316,6 +340,9 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999"],  # Exact match required
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 

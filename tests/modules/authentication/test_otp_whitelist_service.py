@@ -32,6 +32,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -55,6 +58,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -76,6 +82,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": False,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -96,6 +105,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -114,6 +126,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -132,6 +147,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": False,
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -147,7 +165,13 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         # Mock configuration values
         def mock_config_side_effect(key, default=None):
-            config_values = {"public.default_otp.enabled": True, "public.default_otp.whitelist": []}
+            config_values = {
+                "public.default_otp.enabled": True,
+                "public.default_otp.whitelist": [],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
+            }
             return config_values.get(key, default)
 
         mock_get_value.side_effect = mock_config_side_effect
@@ -165,6 +189,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -185,6 +212,10 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 return True
             if key == "public.default_otp.whitelist":
                 raise ValueError("Invalid configuration")
+            if key == "accounts.token_signing_key":
+                return "JWT_TOKEN"
+            if key == "accounts.token_expiry_days":
+                return 1
             return default
 
         mock_get_value.side_effect = mock_config_side_effect
@@ -205,6 +236,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -239,6 +273,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
@@ -279,6 +316,9 @@ class TestOTPWhitelistService(BaseTestAccessToken):
                 "public.default_otp.enabled": False,
                 "public.default_otp.code": "1234",
                 "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                # JWT token config values
+                "accounts.token_signing_key": "JWT_TOKEN",
+                "accounts.token_expiry_days": 1,
             }
             return config_values.get(key, default)
 
