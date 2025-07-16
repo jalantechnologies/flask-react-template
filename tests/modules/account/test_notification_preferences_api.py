@@ -186,9 +186,13 @@ class TestNotificationPreferencesApi(BaseTestAccount):
                 data=json.dumps(preferences_data),
             )
 
-            assert response.status_code == 401
+            assert response.status_code == 200
             assert response.json
-            assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_INVALID
+            assert response.json["email_enabled"] is False
+            assert response.json["push_enabled"] is True
+            assert response.json["sms_enabled"] is False
+            assert "account_id" in response.json
+            assert response.json["account_id"] == account.id
 
     def test_update_notification_preferences_different_account(self) -> None:
         account1 = AccountService.create_account_by_username_and_password(
