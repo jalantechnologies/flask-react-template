@@ -12,7 +12,7 @@ class OTPUtil:
 
     @staticmethod
     def generate_otp(length: int, phone_number: str) -> str:
-        if OTPUtil.is_phone_number_whitelisted_for_default_otp(phone_number):
+        if OTPUtil.should_use_default_otp_for_phone_number(phone_number):
             default_otp = ConfigService[str].get_value(key="public.default_otp.code")
             return default_otp
         return "".join(secrets.choice(string.digits) for _ in range(length))
@@ -28,7 +28,7 @@ class OTPUtil:
         )
 
     @staticmethod
-    def is_phone_number_whitelisted_for_default_otp(phone_number: str) -> bool:
+    def should_use_default_otp_for_phone_number(phone_number: str) -> bool:
         default_otp_enabled = ConfigService[bool].get_value(key="public.default_otp.enabled", default=False)
 
         if not default_otp_enabled:
@@ -38,6 +38,7 @@ class OTPUtil:
             key="public.default_otp.whitelisted_phone_numbers_with_country_code"
         )
 
+        # If no whitelist config exists, all numbers should get default OTP
         if not has_whitelist_config:
             return True
 
