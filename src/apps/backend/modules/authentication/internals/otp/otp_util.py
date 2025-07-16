@@ -31,11 +31,8 @@ class OTPUtil:
     def is_default_otp_enabled(phone_number: Optional[str] = None) -> bool:
         default_otp_enabled = ConfigService[bool].get_value(key="public.default_otp.enabled", default=False)
 
-        if not default_otp_enabled:
+        if not default_otp_enabled or phone_number is None:
             return False
-
-        if phone_number is None:
-            return default_otp_enabled
 
         try:
             whitelist = ConfigService[List[str]].get_value(key="public.default_otp.whitelist", default=[])
