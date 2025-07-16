@@ -95,7 +95,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled("9999999999")
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp("9999999999")
         self.assertTrue(result)
 
     @patch.object(ConfigService, "get_value")
@@ -112,7 +112,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled("7777777777")
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp("7777777777")
         self.assertFalse(result)
 
     @patch.object(ConfigService, "get_value")
@@ -129,7 +129,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled("9999999999")
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp("9999999999")
         self.assertFalse(result)
 
     @patch.object(ConfigService, "get_value")
@@ -146,7 +146,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled("9999999999")
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp("9999999999")
         self.assertFalse(result)
 
     @patch.object(ConfigService, "get_value")
@@ -163,7 +163,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled(None)
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp(None)
         self.assertFalse(result)
 
     @patch.object(ConfigService, "get_value")
@@ -183,7 +183,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         mock_get_value.side_effect = mock_config_side_effect
 
-        result = OTPUtil.is_default_otp_enabled("9999999999")
+        result = OTPUtil.is_phone_number_whitelisted_for_default_otp("9999999999")
         self.assertFalse(result)
         mock_warn.assert_called_once()
 

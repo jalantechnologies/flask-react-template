@@ -142,7 +142,7 @@ class AuthenticationService:
             message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
             recipient_phone=recipient_phone_number,
         )
-        if not OTPUtil.is_default_otp_enabled(recipient_phone_number.phone_number):
+        if not OTPUtil.is_phone_number_whitelisted_for_default_otp(recipient_phone_number.phone_number):
             SMSService.send_sms(params=send_sms_params)
 
         return otp
