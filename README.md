@@ -12,7 +12,7 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 - [Logging](docs/logging.md)
 - [Configuration](docs/configuration.md)
 - [Secrets](docs/secrets.md)
-- [BootStrapping](docs/bootstrap.md)
+- [Bootstrapping](docs/bootstrapping.md)
 - [Scripts](docs/scripts.md)
 - [Code Formatting](docs/code-formatting.md)
 - [Workers](docs/workers.md)
