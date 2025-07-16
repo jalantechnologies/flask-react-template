@@ -1,6 +1,6 @@
-from typing import Any, List, Optional
 import secrets
 import string
+from typing import Any, List, Optional
 
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
