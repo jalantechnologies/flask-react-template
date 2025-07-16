@@ -29,7 +29,10 @@ class CustomEnvConfig:
             elif isinstance(value, str):
                 result = CustomEnvConfig._search_and_get_str_value_from_env(value)
                 if result is not None:
-                    updated_data[key] = result
+                    if key == "phone_numbers":
+                        updated_data[key] = CustomEnvConfig._parse_phone_numbers_list(result)
+                    else:
+                        updated_data[key] = result
 
         return updated_data
 
@@ -64,3 +67,11 @@ class CustomEnvConfig:
             return parser(value)
         except Exception as e:
             raise ValueError(f"Error parsing value '{value}' as {value_format}: {e}") from e
+
+    @staticmethod
+    def _parse_phone_numbers_list(phone_numbers_str: str) -> list[str]:
+        if not phone_numbers_str or phone_numbers_str.strip() == "":
+            return []
+
+        phone_numbers = [phone.strip() for phone in phone_numbers_str.split(",")]
+        return [phone for phone in phone_numbers if phone]

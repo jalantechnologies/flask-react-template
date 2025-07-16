@@ -38,3 +38,8 @@ public:
     sessionReplaySampleRate: 'DATADOG_SESSION_REPLAY_SAMPLE_RATE'
     sessionSampleRate: 'DATADOG_SESSION_SAMPLE_RATE'
     site: 'DATADOG_SITE'
+  default_otp:
+    code: 'DEFAULT_OTP_CODE'
+  test_whitelist:
+    enabled: 'TEST_WHITELIST_ENABLED'
+    phone_numbers: 'TEST_WHITELIST_PHONE_NUMBERS'

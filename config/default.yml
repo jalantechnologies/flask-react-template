@@ -20,3 +20,6 @@ public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
   datadog:
     enabled: 'false'
+  test_whitelist:
+    enabled: false
+    phone_numbers: []

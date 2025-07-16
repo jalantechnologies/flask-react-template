@@ -11,3 +11,13 @@ mailer:
 
 sms:
   enabled: false
+
+public:
+  test_whitelist:
+    enabled: true
+    phone_numbers:
+      - '+919999999999'
+      - '+911234567890'
+  default_otp:
+    enabled: true
+    code: '1234'

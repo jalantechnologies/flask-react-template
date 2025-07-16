@@ -23,6 +23,7 @@ from modules.authentication.types import (
     VerifyOTPParams,
 )
 from modules.config.config_service import ConfigService
+from modules.logger.logger import Logger
 from modules.notification.email_service import EmailService
 from modules.notification.sms_service import SMSService
 from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams, SendSMSParams
@@ -138,12 +139,17 @@ class AuthenticationService:
         recipient_phone_number = PhoneNumber(**asdict(params)["phone_number"])
         otp = OTPWriter.create_new_otp(params=params)
 
-        send_sms_params = SendSMSParams(
-            message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
-            recipient_phone=recipient_phone_number,
-        )
-        if not OTPUtil.is_default_otp_enabled():
+        phone_number_str = str(recipient_phone_number)
+
+        if OTPUtil.should_send_sms(phone_number_str):
+            send_sms_params = SendSMSParams(
+                message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
+                recipient_phone=recipient_phone_number,
+            )
             SMSService.send_sms(params=send_sms_params)
+            Logger.info(message=f"SMS sent to {phone_number_str} with OTP: {otp.otp_code}")
+        else:
+            Logger.info(message=f"SMS not sent to {phone_number_str} - using default OTP or SMS disabled")
 
         return otp
 

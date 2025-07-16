@@ -24,7 +24,8 @@ class OTPWriter:
     def create_new_otp(*, params: CreateOTPParams) -> OTP:
         OTPWriter.expire_previous_otps(phone_number=params.phone_number)
         phone_number = PhoneNumber(**asdict(params)["phone_number"])
-        otp_code = OTPUtil.generate_otp(length=4, phone_number=phone_number.phone_number)
+        full_phone_number = str(phone_number)
+        otp_code = OTPUtil.generate_otp(length=4, phone_number=full_phone_number)
         otp_bson = OTPModel(
             active=True, id=None, phone_number=phone_number, otp_code=otp_code, status=str(OTPStatus.PENDING)
         ).to_bson()
