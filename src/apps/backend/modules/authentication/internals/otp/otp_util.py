@@ -5,6 +5,7 @@ import string
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
 from modules.config.config_service import ConfigService
+from modules.logger.logger import Logger
 
 
 class OTPUtil:
@@ -42,7 +43,6 @@ class OTPUtil:
                 return True
             return phone_number in whitelist
         except (TypeError, ValueError, KeyError) as e:
-            from modules.logger.logger import Logger
 
             Logger.warn(message=f"Error checking OTP whitelist: {str(e)}")
             return default_otp_enabled
