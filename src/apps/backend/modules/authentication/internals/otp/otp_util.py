@@ -1,6 +1,6 @@
 import secrets
 import string
-from typing import Any, List, Optional
+from typing import Any, List
 
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
@@ -28,10 +28,10 @@ class OTPUtil:
         )
 
     @staticmethod
-    def is_phone_number_whitelisted_for_default_otp(phone_number: Optional[str] = None) -> bool:
+    def is_phone_number_whitelisted_for_default_otp(phone_number: str) -> bool:
         default_otp_enabled = ConfigService[bool].get_value(key="public.default_otp.enabled", default=False)
 
-        if not default_otp_enabled or phone_number is None:
+        if not default_otp_enabled:
             return False
 
         try:
