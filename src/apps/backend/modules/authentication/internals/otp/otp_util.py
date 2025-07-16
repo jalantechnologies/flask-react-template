@@ -43,5 +43,8 @@ class OTPUtil:
 
             return phone_number in whitelisted_phone_numbers_with_country_code
         except (TypeError, ValueError, KeyError) as e:
-            Logger.warn(message=f"Error checking OTP whitelisted_phone_numbers_with_country_code: {str(e)}")
+            Logger.warn(
+                message=f"Error while checking if phone number '{phone_number}' is whitelisted for default OTP: {type(e).__name__}: {str(e)}"
+            )
+
             return False
