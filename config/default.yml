@@ -27,7 +27,7 @@ public:
   default_otp:
     enabled: false
     code: '1234'
-    whitelist: []
+    whitelisted_phone_numbers_with_country_code: []
   datadog:
     enabled: 'false'
 

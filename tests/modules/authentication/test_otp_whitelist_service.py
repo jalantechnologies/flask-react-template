@@ -27,7 +27,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -48,7 +48,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -68,7 +68,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": False,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -87,7 +87,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             config_values = {
                 "public.default_otp.enabled": True,
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -104,7 +104,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             config_values = {
                 "public.default_otp.enabled": True,
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -121,7 +121,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             config_values = {
                 "public.default_otp.enabled": False,
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -138,7 +138,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             config_values = {
                 "public.default_otp.enabled": True,
-                "public.default_otp.whitelist": [],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": [],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -155,7 +155,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             config_values = {
                 "public.default_otp.enabled": True,
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -173,7 +173,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         def mock_config_side_effect(key, default=None):
             if key == "public.default_otp.enabled":
                 return True
-            if key == "public.default_otp.whitelist":
+            if key == "public.default_otp.whitelisted_phone_numbers_with_country_code":
                 raise ValueError("Invalid configuration")
             if key == "accounts.token_signing_key":
                 return "JWT_TOKEN"
@@ -195,7 +195,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -224,7 +224,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": True,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }
@@ -258,7 +258,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
             config_values = {
                 "public.default_otp.enabled": False,
                 "public.default_otp.code": "1234",
-                "public.default_otp.whitelist": ["9999999999", "8888888888"],
+                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
                 "accounts.token_signing_key": "JWT_TOKEN",
                 "accounts.token_expiry_days": 1,
             }

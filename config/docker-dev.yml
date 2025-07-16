@@ -17,4 +17,4 @@ public:
   default_otp:
     enabled: true
     code: '1234'
-    whitelist: ['9999999999', '8888888888']
+    whitelisted_phone_numbers_with_country_code: ['9999999999', '8888888888']

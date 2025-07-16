@@ -35,11 +35,11 @@ class OTPUtil:
             return False
 
         try:
-            whitelist = ConfigService[List[str]].get_value(key="public.default_otp.whitelist", default=[])
-            if not whitelist:
+            whitelisted_phone_numbers_with_country_code = ConfigService[List[str]].get_value(key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=[])
+            if not whitelisted_phone_numbers_with_country_code:
                 return False
 
-            return phone_number in whitelist
+            return phone_number in whitelisted_phone_numbers_with_country_code
         except (TypeError, ValueError, KeyError) as e:
-            Logger.warn(message=f"Error checking OTP whitelist: {str(e)}")
+            Logger.warn(message=f"Error checking OTP whitelisted_phone_numbers_with_country_code: {str(e)}")
             return False
