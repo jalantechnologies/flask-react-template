@@ -38,7 +38,6 @@ class OTPUtil:
             key="public.default_otp.whitelisted_phone_numbers_with_country_code"
         )
 
-        # If no whitelist config exists, all numbers should get default OTP
         if not has_whitelist_config:
             return True
 

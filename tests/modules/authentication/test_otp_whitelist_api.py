@@ -1,5 +1,6 @@
+import os
 import json
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from typing import Callable
 
 from server import app
@@ -7,8 +8,6 @@ from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByPhoneNumberParams, PhoneNumber
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
-from modules.config.config_service import ConfigService
-from modules.notification.sms_service import SMSService
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -22,62 +21,51 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
 
     def teardown_method(self, method: Callable) -> None:
         super().teardown_method(method)
+        env_vars_to_clean = [
+            "DEFAULT_OTP_ENABLED",
+            "DEFAULT_OTP_CODE",
+            "DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE",
+        ]
+        for var in env_vars_to_clean:
+            os.environ.pop(var, None)
 
-    @patch.object(SMSService, "send_sms")
-    @patch.object(ConfigService, "get_value")
-    def test_account_creation_with_whitelisted_number_uses_default_otp(self, mock_get_value, mock_send_sms) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    @patch("modules.notification.internals.twilio_service.Client")
+    def test_account_creation_with_whitelisted_number_uses_default_otp(self, mock_twilio_client) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
+        mock_client_instance = MagicMock()
+        mock_twilio_client.return_value = mock_client_instance
+
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
         with app.test_client() as client:
             response = client.post(ACCOUNT_URL, headers=HEADERS, data=payload)
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "9999999999"})
-            mock_send_sms.assert_not_called()
+            mock_client_instance.messages.create.assert_not_called()
 
-    @patch.object(SMSService, "send_sms")
-    @patch.object(ConfigService, "get_value")
-    def test_account_creation_with_non_whitelisted_number_sends_sms(self, mock_get_value, mock_send_sms) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    @patch("modules.notification.internals.twilio_service.Client")
+    def test_account_creation_with_non_whitelisted_number_sends_sms(self, mock_twilio_client) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
+        mock_client_instance = MagicMock()
+        mock_twilio_client.return_value = mock_client_instance
+
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "7777777777"}})
         with app.test_client() as client:
             response = client.post(ACCOUNT_URL, headers=HEADERS, data=payload)
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "7777777777"})
-            mock_send_sms.assert_called_once()
+            mock_client_instance.messages.create.assert_called_once()
 
-    @patch.object(ConfigService, "get_value")
-    def test_access_token_creation_with_whitelisted_number_default_otp(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_access_token_creation_with_whitelisted_number_default_otp(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
@@ -92,19 +80,15 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertEqual(response.json.get("account_id"), account.id)
             self.assertIn("expires_at", response.json)
 
-    @patch.object(ConfigService, "get_value")
-    def test_access_token_creation_with_non_whitelisted_number_random_otp(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    @patch("modules.notification.internals.twilio_service.Client")
+    def test_access_token_creation_with_non_whitelisted_number_random_otp(self, mock_twilio_client) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
+        mock_client_instance = MagicMock()
+        mock_twilio_client.return_value = mock_client_instance
+
         phone_number = PhoneNumber(country_code="+91", phone_number="7777777777")
         account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
@@ -120,19 +104,11 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertEqual(response.json.get("account_id"), account.id)
             self.assertIn("expires_at", response.json)
 
-    @patch.object(ConfigService, "get_value")
-    def test_access_token_creation_with_wrong_default_otp_for_non_whitelisted_number(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_access_token_creation_with_wrong_default_otp_for_non_whitelisted_number(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
         phone_number = PhoneNumber(country_code="+91", phone_number="7777777777")
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
@@ -146,19 +122,11 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertIn("code", response.json)
             self.assertEqual(response.json.get("message"), "Please provide the correct OTP to login.")
 
-    @patch.object(ConfigService, "get_value")
-    def test_access_token_creation_with_disabled_default_otp(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": False,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999", "8888888888"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_access_token_creation_with_disabled_default_otp(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
 
-        mock_get_value.side_effect = mock_config_side_effect
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
@@ -172,19 +140,11 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertIn("code", response.json)
             self.assertEqual(response.json.get("message"), "Please provide the correct OTP to login.")
 
-    @patch.object(ConfigService, "get_value")
-    def test_access_token_creation_with_empty_whitelist(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": [],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_access_token_creation_with_empty_whitelist(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = ""
 
-        mock_get_value.side_effect = mock_config_side_effect
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
@@ -198,23 +158,11 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertIn("code", response.json)
             self.assertEqual(response.json.get("message"), "Please provide the correct OTP to login.")
 
-    @patch.object(ConfigService, "get_value")
-    def test_multiple_whitelisted_numbers_work(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": [
-                    "9999999999",
-                    "8888888888",
-                    "7777777777",
-                ],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_multiple_whitelisted_numbers_work(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888,7777777777"
 
-        mock_get_value.side_effect = mock_config_side_effect
         for number in ["9999999999", "8888888888", "7777777777"]:
             with self.subTest(number=number):
                 phone_number = PhoneNumber(country_code="+91", phone_number=number)
@@ -231,19 +179,11 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
                     self.assertEqual(response.json.get("account_id"), account.id)
                     self.assertIn("expires_at", response.json)
 
-    @patch.object(ConfigService, "get_value")
-    def test_case_sensitivity_in_whitelist(self, mock_get_value) -> None:
-        def mock_config_side_effect(key, default=None):
-            config_values = {
-                "public.default_otp.enabled": True,
-                "public.default_otp.code": "1234",
-                "public.default_otp.whitelisted_phone_numbers_with_country_code": ["9999999999"],
-                "accounts.token_signing_key": "JWT_TOKEN",
-                "accounts.token_expiry_days": 1,
-            }
-            return config_values.get(key, default)
+    def test_case_sensitivity_in_whitelist(self) -> None:
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999"
 
-        mock_get_value.side_effect = mock_config_side_effect
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
