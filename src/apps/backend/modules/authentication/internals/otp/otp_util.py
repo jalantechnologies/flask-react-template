@@ -34,22 +34,15 @@ class OTPUtil:
         if not default_otp_enabled:
             return False
 
-        try:
-            has_whitelist_config = ConfigService.has_value(
-                key="public.default_otp.whitelisted_phone_numbers_with_country_code"
-            )
+        has_whitelist_config = ConfigService.has_value(
+            key="public.default_otp.whitelisted_phone_numbers_with_country_code"
+        )
 
-            if not has_whitelist_config:
-                return True
+        if not has_whitelist_config:
+            return True
 
-            whitelisted_phone_numbers_with_country_code = ConfigService[List[str]].get_value(
-                key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=[]
-            )
+        whitelisted_phone_numbers_with_country_code = ConfigService[List[str]].get_value(
+            key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=[]
+        )
 
-            return phone_number in whitelisted_phone_numbers_with_country_code
-        except (TypeError, ValueError, KeyError) as e:
-            Logger.warn(
-                message=f"Error while checking if phone number '{phone_number}' is whitelisted for default OTP: {type(e).__name__}: {str(e)}"
-            )
-
-            return False
+        return phone_number in whitelisted_phone_numbers_with_country_code
