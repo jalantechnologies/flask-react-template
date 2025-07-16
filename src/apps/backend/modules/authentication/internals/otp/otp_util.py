@@ -37,9 +37,9 @@ class OTPUtil:
         try:
             whitelist = ConfigService[List[str]].get_value(key="public.default_otp.whitelist", default=[])
             if not whitelist:
-                return True
+                return False
+
             return phone_number in whitelist
         except (TypeError, ValueError, KeyError) as e:
-
             Logger.warn(message=f"Error checking OTP whitelist: {str(e)}")
-            return default_otp_enabled
+            return False
