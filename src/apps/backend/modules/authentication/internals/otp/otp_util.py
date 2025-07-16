@@ -35,11 +35,16 @@ class OTPUtil:
             return False
 
         try:
+            has_whitelist_config = ConfigService.has_value(
+                key="public.default_otp.whitelisted_phone_numbers_with_country_code"
+            )
+
+            if not has_whitelist_config:
+                return True
+
             whitelisted_phone_numbers_with_country_code = ConfigService[List[str]].get_value(
                 key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=[]
             )
-            if not whitelisted_phone_numbers_with_country_code:
-                return False
 
             return phone_number in whitelisted_phone_numbers_with_country_code
         except (TypeError, ValueError, KeyError) as e:
