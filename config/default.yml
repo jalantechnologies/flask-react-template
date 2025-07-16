@@ -24,8 +24,6 @@ accounts:
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
-  default_otp:
-    enabled: false
   datadog:
     enabled: 'false'
 
