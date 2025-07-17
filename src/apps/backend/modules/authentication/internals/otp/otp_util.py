@@ -42,7 +42,7 @@ class OTPUtil:
             key="public.default_otp.whitelisted_phone_number", default=""
         )
 
-        if not whitelisted_phone_number.strip():
+        if not whitelisted_phone_number:
             return True
 
-        return phone_number == whitelisted_phone_number.strip()
+        return phone_number == whitelisted_phone_number
