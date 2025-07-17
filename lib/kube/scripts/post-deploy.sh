@@ -31,43 +31,27 @@ for DEPLOYMENT in "${FAILED_DEPLOYMENTS[@]}"; do
   fi
 
   echo "Getting pods for $DEPLOYMENT"
-  pods=$(kubectl get pods -n "$KUBE_NS" -l "$selector" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n')
+  pods=$(kubectl get pods -n "$KUBE_NS" -l "$selector" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | sort -u)
 
   if [ -z "$pods" ]; then
     echo "No pods found for $DEPLOYMENT — possible issue with rollout"
     continue
   fi
 
-  PODS_WITH_ISSUES=()
-
   for pod in $pods; do
-    # Check if any container is in a failed or waiting state
-    has_issue=$(kubectl get pod "$pod" -n "$KUBE_NS" -o json | jq '
-      .status.containerStatuses[]? |
-      select(
-        (.state.waiting.reason != null and (.state.waiting.reason | test("CrashLoopBackOff|Error|ImagePullBackOff|RunContainerError"))) or
-        (.state.terminated.reason != null)
-      )
-    ')
+    echo -e "\nLogs for pod: $pod"
 
-    if [ -n "$has_issue" ]; then
-      PODS_WITH_ISSUES+=("$pod")
-    fi
-  done
+    echo "::group::kubectl describe pod $pod"
+    kubectl describe pod "$pod" -n "$KUBE_NS" || echo "Failed to describe pod $pod"
+    echo "::endgroup::"
 
-  if [ ${#PODS_WITH_ISSUES[@]} -eq 0 ]; then
-    echo "No crashing containers found for $DEPLOYMENT — issue may be unrelated to pod/container state"
-  else
-    for pod in "${PODS_WITH_ISSUES[@]}"; do
-      echo -e "\nLogs for pod: $pod"
+    # Get container names from the pod
+    container_names=$(kubectl get pod "$pod" -n "$KUBE_NS" -o json | jq -r '.spec.containers[].name')
 
-      echo "::group::kubectl describe pod $pod"
-      kubectl describe pod "$pod" -n "$KUBE_NS" || echo "Failed to describe pod $pod"
-      echo "::endgroup::"
-
-      echo "::group::kubectl logs $pod --all-containers"
-      kubectl logs "$pod" -n "$KUBE_NS" --all-containers=true --tail=100 || echo "Failed to fetch logs for $pod"
+    for container in $container_names; do
+      echo "::group::Logs for container $container in pod $pod"
+      kubectl logs "$pod" -n "$KUBE_NS" -c "$container" --tail=-1 || echo "Failed to fetch logs for container $container in $pod"
       echo "::endgroup::"
     done
-  fi
+  done
 done
