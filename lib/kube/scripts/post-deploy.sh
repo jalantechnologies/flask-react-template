@@ -19,11 +19,10 @@ ROLL_OUT_SUCCESS=true
 # Function to collect logs from a deployment using label filters
 collect_logs_from_deployment() {
   local DEPLOYMENT_NAME=$1
-  local COMPONENT=$2
 
-  echo -e "\nFetching pods for: $DEPLOYMENT_NAME (component=$COMPONENT)"
+  echo -e "\nFetching pods for: $DEPLOYMENT_NAME"
 
-  PODS=$(kubectl get pods -n "$KUBE_NS" -l "app=$KUBE_APP,component=$COMPONENT" \
+  PODS=$(kubectl get pods -n "$KUBE_NS" -l "app=$KUBE_APP" \
     --field-selector=status.phase!=Succeeded \
     -o jsonpath='{.items[*].metadata.name}')
 
@@ -45,12 +44,11 @@ collect_logs_from_deployment() {
 # Function to wait for rollout and fetch logs if it fails
 wait_for_rollout() {
   local DEPLOYMENT_NAME=$1
-  local COMPONENT=$2
 
   echo "Waiting for rollout of $DEPLOYMENT_NAME"
   if ! kubectl rollout status deploy/"$DEPLOYMENT_NAME" -n "$KUBE_NS"; then
     echo "Rollout failed for $DEPLOYMENT_NAME"
-    collect_logs_from_deployment "$DEPLOYMENT_NAME" "$COMPONENT"
+    collect_logs_from_deployment "$DEPLOYMENT_NAME"
     ROLL_OUT_SUCCESS=false
   fi
 }
