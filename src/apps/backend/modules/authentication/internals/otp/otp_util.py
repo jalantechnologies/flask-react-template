@@ -33,9 +33,7 @@ class OTPUtil:
         if not default_otp_enabled:
             return False
 
-        has_whitelist_config = ConfigService.has_value(
-            key="public.default_otp.whitelisted_phone_number"
-        )
+        has_whitelist_config = ConfigService.has_value(key="public.default_otp.whitelisted_phone_number")
 
         if not has_whitelist_config:
             return True
@@ -44,4 +42,7 @@ class OTPUtil:
             key="public.default_otp.whitelisted_phone_number", default=""
         )
 
-        return phone_number in whitelisted_phone_number
+        if not whitelisted_phone_number.strip():
+            return True
+
+        return phone_number == whitelisted_phone_number.strip()
