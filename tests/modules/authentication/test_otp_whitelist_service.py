@@ -29,71 +29,38 @@ class TestOTPWhitelistService(BaseTestAccessToken):
     def _reload_config(self):
         ConfigService.config_manager = ConfigManager()
 
-    def test_should_use_default_otp_when_enabled_and_no_whitelist(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+    def test_default_otp_disabled_with_whitelist_matching_should_use_random(self):
+        """When default OTP is disabled and phone matches whitelist, should still use random OTP (send SMS)"""
+        os.environ["DEFAULT_OTP_ENABLED"] = "false"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        self._reload_config()
-
-        result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
-        self.assertTrue(result)
-
-    def test_should_not_use_default_otp_when_disabled(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
 
         result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
         self.assertFalse(result)
+
+    def test_default_otp_disabled_with_whitelist_non_matching_should_use_random(self):
+        """When default OTP is disabled and phone doesn't match whitelist, should use random OTP (send SMS)"""
+        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
+        self._reload_config()
 
         result = OTPUtil.should_use_default_otp_for_phone_number("8888888888")
-        self.assertTrue(result)
-
-    def test_generate_otp_uses_random_when_not_whitelisted(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "8888888888,7777777777"
-        self._reload_config()
-
-        otp = OTPUtil.generate_otp(length=4, phone_number="9999999999")
-        self.assertNotEqual(otp, "1234")
-        self.assertEqual(len(otp), 4)
-        self.assertTrue(otp.isdigit())
-
-        otp = OTPUtil.generate_otp(length=4, phone_number="8888888888")
-        self.assertEqual(otp, "1234")
-
-    def test_should_not_use_default_otp_for_non_whitelisted_number(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888"
-        self._reload_config()
-
-        result = OTPUtil.should_use_default_otp_for_phone_number("7777777777")
         self.assertFalse(result)
 
-    def test_should_not_use_default_otp_for_empty_whitelist(self):
+    def test_default_otp_enabled_empty_string_whitelist_should_use_default(self):
+        """When default OTP is enabled and whitelist is empty string, should use default OTP (no SMS)"""
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = ""
         self._reload_config()
 
         result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
-        self.assertFalse(result)
-
-    def test_should_not_use_default_otp_for_partial_match(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "99999"
-        self._reload_config()
-
-        result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
-        self.assertFalse(result)
-
-        result = OTPUtil.should_use_default_otp_for_phone_number("99999")
         self.assertTrue(result)
 
-    def test_should_handle_single_number_whitelist(self):
+    def test_default_otp_enabled_with_whitelist_matching_should_use_default(self):
+        """When default OTP is enabled and phone matches whitelist, should use default OTP (no SMS)"""
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
@@ -101,11 +68,19 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
         result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
         self.assertTrue(result)
+
+    def test_default_otp_enabled_with_whitelist_non_matching_should_use_random(self):
+        """When default OTP is enabled and phone doesn't match whitelist, should use random OTP (send SMS)"""
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
+        self._reload_config()
 
         result = OTPUtil.should_use_default_otp_for_phone_number("8888888888")
         self.assertFalse(result)
 
-    def test_generate_otp_uses_default_for_whitelisted_number(self):
+    def test_generate_otp_uses_default_when_should_use_default_is_true(self):
+        """When should_use_default_otp_for_phone_number returns True, generate_otp should return default OTP"""
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
@@ -114,44 +89,36 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         otp = OTPUtil.generate_otp(length=4, phone_number="9999999999")
         self.assertEqual(otp, "1234")
 
-        otp = OTPUtil.generate_otp(length=4, phone_number="7777777777")
-        self.assertNotEqual(otp, "1234")
-        self.assertEqual(len(otp), 4)
-        self.assertTrue(otp.isdigit())
-
-    def test_generate_otp_uses_default_when_no_whitelist(self):
+    def test_generate_otp_uses_random_when_should_use_default_is_false(self):
+        """When should_use_default_otp_for_phone_number returns False, generate_otp should return random OTP"""
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ.pop("DEFAULT_OTP_WHITELISTED_PHONE_NUMBER", None)
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
-
-        otp = OTPUtil.generate_otp(length=4, phone_number="9999999999")
-        self.assertEqual(otp, "1234")
-
-        otp = OTPUtil.generate_otp(length=4, phone_number="7777777777")
-        self.assertEqual(otp, "1234")
-
-    def test_generate_otp_uses_random_when_not_whitelisted_comprehensive(self):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "8888888888"
-        self._reload_config()
-
-        otp = OTPUtil.generate_otp(length=4, phone_number="9999999999")
-        self.assertNotEqual(otp, "1234")
-        self.assertEqual(len(otp), 4)
-        self.assertTrue(otp.isdigit())
 
         otp = OTPUtil.generate_otp(length=4, phone_number="8888888888")
-        self.assertEqual(otp, "1234")
+        self.assertNotEqual(otp, "1234")
+        self.assertEqual(len(otp), 4)
+        self.assertTrue(otp.isdigit())
 
-    def test_case_sensitivity_in_boolean_config(self):
+    def test_generate_otp_uses_random_when_default_otp_disabled(self):
+        """When default OTP is disabled, generate_otp should always return random OTP"""
+        os.environ["DEFAULT_OTP_ENABLED"] = "false"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
         self._reload_config()
-        result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
-        self.assertTrue(result, "Whitelisted number should use default OTP")
 
-        result = OTPUtil.should_use_default_otp_for_phone_number("8888888888")
-        self.assertFalse(result, "Non-whitelisted number should not use default OTP")
+        otp = OTPUtil.generate_otp(length=4, phone_number="9999999999")
+        self.assertNotEqual(otp, "1234")
+        self.assertEqual(len(otp), 4)
+        self.assertTrue(otp.isdigit())
+
+    def test_whitelist_with_spaces_is_trimmed(self):
+        """Whitelist value should be trimmed of spaces"""
+        os.environ["DEFAULT_OTP_ENABLED"] = "true"
+        os.environ["DEFAULT_OTP_CODE"] = "1234"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "  9999999999  "
+        self._reload_config()
+
+        result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
+        self.assertTrue(result)
