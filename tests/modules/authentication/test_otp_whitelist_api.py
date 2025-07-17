@@ -22,7 +22,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
         env_vars = [
             "DEFAULT_OTP_ENABLED",
             "DEFAULT_OTP_CODE",
-            "DEFAULT_OTP_WHITELISTED_NUMBER",
+            "DEFAULT_OTP_WHITELISTED_PHONE_NUMBER",
             "SMS_ENABLED",
         ]
         for var in env_vars:
@@ -44,7 +44,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_create_account_with_whitelisted_phone_number_no_sms(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "9999999999,8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888"
         self._reload_config()
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
         with app.test_client() as client:
@@ -58,7 +58,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_create_account_with_non_whitelisted_phone_number_sends_sms(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "9999999999,8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888"
         self._reload_config()
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "7777777777"}})
         with app.test_client() as client:
@@ -76,7 +76,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_create_account_default_otp_disabled_sends_sms(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "8888888888,7777777777"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "8888888888,7777777777"
         self._reload_config()
         payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
         with app.test_client() as client:
@@ -90,7 +90,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_sms_service_behavior_when_disabled_config(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "8888888888"
         self._reload_config()
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number))
@@ -105,7 +105,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_create_otp_directly_with_whitelisted_number(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "9999999999,8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888"
         self._reload_config()
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number))
@@ -117,7 +117,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_create_otp_directly_with_non_whitelisted_number(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "9999999999,8888888888"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888"
         self._reload_config()
         phone_number = PhoneNumber(country_code="+91", phone_number="7777777777")
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number))
@@ -131,7 +131,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_whitelist_with_empty_string_config(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = ""
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = ""
         self._reload_config()
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number))
@@ -145,7 +145,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_whitelist_partial_match_does_not_work(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "99999"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "99999"
         self._reload_config()
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number))
@@ -159,7 +159,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     def test_multiple_whitelisted_numbers(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBER"] = "9999999999,8888888888,7777777777"
+        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999,8888888888,7777777777"
         self._reload_config()
         phone_number_1 = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp_1 = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number_1))
