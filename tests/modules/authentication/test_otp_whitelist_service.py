@@ -31,7 +31,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
     def test_default_otp_disabled_with_whitelist_matching_should_use_random(self):
         """When default OTP is disabled and phone matches whitelist, should still use random OTP (send SMS)"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
@@ -41,7 +41,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
     def test_default_otp_disabled_with_whitelist_non_matching_should_use_random(self):
         """When default OTP is disabled and phone doesn't match whitelist, should use random OTP (send SMS)"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
@@ -103,7 +103,7 @@ class TestOTPWhitelistService(BaseTestAccessToken):
 
     def test_generate_otp_uses_random_when_default_otp_disabled(self):
         """When default OTP is disabled, generate_otp should always return random OTP"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()

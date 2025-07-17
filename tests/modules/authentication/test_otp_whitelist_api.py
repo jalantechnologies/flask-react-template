@@ -38,7 +38,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     @mock.patch.object(SMSService, "send_sms")
     def test_default_otp_disabled_matching_whitelist_sends_sms(self, mock_send_sms):
         """When default OTP is disabled and phone matches whitelist, should still send SMS with random OTP"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
@@ -54,7 +54,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     @mock.patch.object(SMSService, "send_sms")
     def test_default_otp_disabled_non_matching_whitelist_sends_sms(self, mock_send_sms):
         """When default OTP is disabled and phone doesn't match whitelist, should send SMS with random OTP"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
@@ -138,7 +138,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
     @mock.patch.object(SMSService, "send_sms")
     def test_create_otp_directly_default_disabled(self, mock_send_sms):
         """When calling create_otp directly with disabled default OTP, should always send SMS"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "false"
+        os.environ["DEFAULT_OTP_ENABLED"] = ""
         os.environ["DEFAULT_OTP_CODE"] = "1234"
         os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "9999999999"
         self._reload_config()
