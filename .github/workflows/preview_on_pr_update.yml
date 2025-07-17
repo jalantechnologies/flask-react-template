@@ -1,4 +1,5 @@
 name: preview_on_pr_update
+# only run when updating an 'Open' PR  # retry fix
 
 on:
   pull_request:
