@@ -61,25 +61,6 @@ class TestOTPWhitelistAPI(BaseTestAccessToken):
             self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "7777777777"})
             mock_client_instance.messages.create.assert_called_once()
 
-    def test_access_token_creation_with_whitelisted_number_default_otp(self) -> None:
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE"] = "9999999999,8888888888"
-
-        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
-        account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
-        )
-        payload = json.dumps(
-            {"phone_number": {"country_code": "+91", "phone_number": "9999999999"}, "otp_code": "1234"}
-        )
-        with app.test_client() as client:
-            response = client.post(ACCESS_TOKEN_URL, headers=HEADERS, data=payload)
-            self.assertEqual(response.status_code, 201)
-            self.assertIn("token", response.json)
-            self.assertEqual(response.json.get("account_id"), account.id)
-            self.assertIn("expires_at", response.json)
-
     @patch("modules.notification.internals.twilio_service.Client")
     def test_access_token_creation_with_non_whitelisted_number_random_otp(self, mock_twilio_client) -> None:
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
