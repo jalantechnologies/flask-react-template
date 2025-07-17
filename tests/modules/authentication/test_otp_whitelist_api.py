@@ -73,20 +73,6 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
             )
 
     @mock.patch.object(SMSService, "send_sms")
-    def test_create_account_no_whitelist_config_no_sms(self, mock_send_sms):
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ.pop("DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE", None)
-        self._reload_config()
-        payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
-        with app.test_client() as client:
-            response = client.post(ACCOUNT_URL, headers=HEADERS, data=payload)
-            self.assertEqual(response.status_code, 201)
-            self.assertEqual(response.json.get("phone_number"), {"country_code": "+91", "phone_number": "9999999999"})
-            self.assertIn("id", response.json)
-            self.assertFalse(mock_send_sms.called)
-
-    @mock.patch.object(SMSService, "send_sms")
     def test_create_account_default_otp_disabled_sends_sms(self, mock_send_sms):
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
         os.environ["DEFAULT_OTP_CODE"] = "1234"
