@@ -4,30 +4,36 @@ set -e
 
 echo "Deployment rollout status for $KUBE_APP in namespace $KUBE_NS"
 
-
+# Ensure required env vars are set
 if [[ -z "$KUBE_APP" || -z "$KUBE_NS" ]]; then
   echo "KUBE_APP or KUBE_NS is not set."
   exit 1
 fi
 
+# Set deployment names
 WEB_DEPLOYMENT="$KUBE_APP-deployment"
 TEMPORAL_DEPLOYMENT="$KUBE_APP-temporal-deployment"
 
-# Function to wait for rollout and handle failure gracefully
+# Track rollout success state
+ROLL_OUT_SUCCESS=true
+
+# Function to wait for rollout and set flag if failed
 wait_for_rollout() {
   local DEPLOYMENT_NAME=$1
   echo "Waiting for rollout of $DEPLOYMENT_NAME"
   if ! kubectl rollout status deploy/"$DEPLOYMENT_NAME" -n "$KUBE_NS"; then
-    echo "⚠️ Rollout failed or timed out for $DEPLOYMENT_NAME. Continuing to collect logs..."
+    echo "Rollout failed for $DEPLOYMENT_NAME"
+    ROLL_OUT_SUCCESS=false
   fi
 }
 
-# Function to collect logs from a deployment
+# Function to collect logs from a deployment (without assuming label match)
 collect_logs_from_deployment() {
   local DEPLOYMENT_NAME=$1
   echo -e "\nFetching pods for: $DEPLOYMENT_NAME"
 
-  PODS=$(kubectl get pods -n "$KUBE_NS" -l "app.kubernetes.io/name=$DEPLOYMENT_NAME" -o name)
+  PODS=$(kubectl get pods -n "$KUBE_NS" -o json \
+    | jq -r --arg name "$DEPLOYMENT_NAME" '.items[] | select(.metadata.ownerReferences[].name == $name) | .metadata.name')
 
   if [[ -z "$PODS" ]]; then
     echo "No pods found for: $DEPLOYMENT_NAME"
@@ -36,20 +42,26 @@ collect_logs_from_deployment() {
 
   for pod in $PODS; do
     echo -e "\nLogs from pod: $pod"
-    containers=$(kubectl get "$pod" -n "$KUBE_NS" -o jsonpath='{.spec.containers[*].name}')
+    containers=$(kubectl get pod "$pod" -n "$KUBE_NS" -o jsonpath='{.spec.containers[*].name}')
     for container in $containers; do
-      echo "🔹 Container: $container"
-      kubectl logs "$pod" -c "$container" -n "$KUBE_NS" || echo "⚠️ Failed to get logs for $container"
+      echo "Container: $container"
+      kubectl logs "$pod" -c "$container" -n "$KUBE_NS" || echo "Failed to get logs for $container"
     done
   done
 }
 
-# Wait for rollouts without exiting on failure
+# Wait for rollouts
 wait_for_rollout "$WEB_DEPLOYMENT"
 wait_for_rollout "$TEMPORAL_DEPLOYMENT"
 
-# Collect logs from both deployments
+# Collect logs
 collect_logs_from_deployment "$WEB_DEPLOYMENT"
 collect_logs_from_deployment "$TEMPORAL_DEPLOYMENT"
 
-echo -e "\nPost-deployment rollout and log collection complete."
+# Final status
+if [ "$ROLL_OUT_SUCCESS" = true ]; then
+  echo -e "\nAll deployments rolled out successfully"
+else
+  echo -e "\nOne or more deployments failed to roll out"
+  exit 1
+fi
