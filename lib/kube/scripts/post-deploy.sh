@@ -8,7 +8,7 @@ DEPLOYMENTS=(
 for DEPLOYMENT in "${DEPLOYMENTS[@]}"; do
   echo "Waiting for deployment rollout: $DEPLOYMENT in $KUBE_NS..."
 
-  if kubectl rollout status deployment "$DEPLOYMENT" -n "$KUBE_NS"; then
+  if kubectl rollout status deployment "$DEPLOYMENT" -n "$KUBE_NS" --timeout=300s; then
     echo "Rollout successful for $DEPLOYMENT"
   else
     echo "Rollout failed or stuck for $DEPLOYMENT — checking pod logs"
