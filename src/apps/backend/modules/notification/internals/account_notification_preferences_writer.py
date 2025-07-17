@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from pymongo import ReturnDocument
 
 from modules.notification.internals.store.account_notification_preferences_model import (
@@ -51,7 +52,7 @@ class AccountNotificationPreferenceWriter:
     def update_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
-        update_data = {"updated_at": datetime.now()}
+        update_data: dict[str, Any] = {"updated_at": datetime.now()}
 
         if preferences.email_enabled is not None:
             update_data["email_enabled"] = preferences.email_enabled
