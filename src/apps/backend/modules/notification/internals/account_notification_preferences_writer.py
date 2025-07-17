@@ -24,9 +24,9 @@ class AccountNotificationPreferenceWriter:
         preferences_model = AccountNotificationPreferencesModel(
             account_id=account_id,
             id=None,
-            email_enabled=preferences.email_enabled,
-            push_enabled=preferences.push_enabled,
-            sms_enabled=preferences.sms_enabled,
+            email_enabled=preferences.email_enabled if preferences.email_enabled is not None else True,
+            push_enabled=preferences.push_enabled if preferences.push_enabled is not None else True,
+            sms_enabled=preferences.sms_enabled if preferences.sms_enabled is not None else True,
         ).to_bson()
 
         query = AccountNotificationPreferencesRepository.collection().insert_one(preferences_model)
@@ -51,12 +51,16 @@ class AccountNotificationPreferenceWriter:
     def update_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
-        update_data = {
-            "email_enabled": preferences.email_enabled,
-            "push_enabled": preferences.push_enabled,
-            "sms_enabled": preferences.sms_enabled,
-            "updated_at": datetime.now(),
-        }
+        update_data = {"updated_at": datetime.now()}
+
+        if preferences.email_enabled is not None:
+            update_data["email_enabled"] = preferences.email_enabled
+
+        if preferences.push_enabled is not None:
+            update_data["push_enabled"] = preferences.push_enabled
+
+        if preferences.sms_enabled is not None:
+            update_data["sms_enabled"] = preferences.sms_enabled
 
         updated_preferences = AccountNotificationPreferencesRepository.collection().find_one_and_update(
             {"account_id": account_id, "active": True}, {"$set": update_data}, return_document=ReturnDocument.AFTER

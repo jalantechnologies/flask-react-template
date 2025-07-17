@@ -87,11 +87,23 @@ class AccountView(MethodView):
 
         self._validate_notification_preferences(request_data)
 
-        preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(
-            email_enabled=request_data.get("email_enabled", True),
-            push_enabled=request_data.get("push_enabled", True),
-            sms_enabled=request_data.get("sms_enabled", True),
-        )
+        preferences_kwargs = {}
+
+        if "email_enabled" in request_data:
+            preferences_kwargs["email_enabled"] = request_data["email_enabled"]
+
+        if "push_enabled" in request_data:
+            preferences_kwargs["push_enabled"] = request_data["push_enabled"]
+
+        if "sms_enabled" in request_data:
+            preferences_kwargs["sms_enabled"] = request_data["sms_enabled"]
+
+        if not preferences_kwargs:
+            raise AccountBadRequestError(
+                "At least one preference field (email_enabled, push_enabled, sms_enabled) must be provided"
+            )
+
+        preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(**preferences_kwargs)
 
         updated_preferences = AccountService.create_or_update_account_notification_preferences(
             account_id=account_id, preferences=preferences_params

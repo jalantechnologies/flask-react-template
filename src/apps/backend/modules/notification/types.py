@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
 
@@ -17,9 +17,9 @@ class EmailRecipient:
 
 @dataclass(frozen=True)
 class CreateOrUpdateAccountNotificationPreferencesParams:
-    email_enabled: bool = True
-    push_enabled: bool = True
-    sms_enabled: bool = True
+    email_enabled: Optional[bool] = None
+    push_enabled: Optional[bool] = None
+    sms_enabled: Optional[bool] = None
 
 
 @dataclass(frozen=True)
