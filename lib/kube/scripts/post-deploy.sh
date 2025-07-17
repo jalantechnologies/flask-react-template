@@ -2,43 +2,47 @@
 
 set -e
 
-echo "deploy :: running post deploy hook - app/lib/kube/scripts/post-deploy.sh"
+echo "Deployment rollout status for $KUBE_APP in namespace $KUBE_NS"
 
-DEPLOYMENTS=$(kubectl get deployments -n "$KUBE_NS" -l app.kubernetes.io/instance="$KUBE_APP" -o json | jq -r '.items[].metadata.name')
-
-FAILED_DEPLOYMENTS=()
-
-for DEPLOYMENT in $DEPLOYMENTS; do
-  echo "Waiting for deployment rollout: $DEPLOYMENT in $KUBE_NS..."
-  if ! kubectl rollout status deployment "$DEPLOYMENT" -n "$KUBE_NS" --timeout=60s; then
-    echo "Rollout failed for $DEPLOYMENT"
-    FAILED_DEPLOYMENTS+=("$DEPLOYMENT")
-  fi
-done
-
-if [ ${#FAILED_DEPLOYMENTS[@]} -eq 0 ]; then
-  echo "Deployment finished successfully"
-  exit 0
+# Ensure required env vars are set
+if [[ -z "$KUBE_APP" || -z "$KUBE_NS" ]]; then
+  echo "KUBE_APP or KUBE_NS is not set."
+  exit 1
 fi
 
-for DEPLOYMENT in "${FAILED_DEPLOYMENTS[@]}"; do
-  echo "Checking failed rollout for $DEPLOYMENT"
+# Set deployment names
+WEB_DEPLOYMENT="$KUBE_APP-deployment"
+TEMPORAL_DEPLOYMENT="$KUBE_APP-temporal-deployment"
 
-  PODS=$(kubectl get pods -n "$KUBE_NS" -l app.kubernetes.io/name="$DEPLOYMENT" -o jsonpath='{.items[*].metadata.name}')
+# Wait for both rollouts to complete
+echo "Waiting for rollout of $WEB_DEPLOYMENT and $TEMPORAL_DEPLOYMENT"
+kubectl rollout status deploy/"$WEB_DEPLOYMENT" -n "$KUBE_NS"
+kubectl rollout status deploy/"$TEMPORAL_DEPLOYMENT" -n "$KUBE_NS"
 
-  if [ -z "$PODS" ]; then
-    echo "No pods found for deployment $DEPLOYMENT"
-    continue
+# Function to collect logs from a deployment
+collect_logs_from_deployment() {
+  local DEPLOYMENT_NAME=$1
+  echo "Fetching pods for: $DEPLOYMENT_NAME"
+  
+  PODS=$(kubectl get pods -n "$KUBE_NS" -l "app.kubernetes.io/name=$DEPLOYMENT_NAME" -o name)
+
+  if [[ -z "$PODS" ]]; then
+    echo "No pods found for: $DEPLOYMENT_NAME"
+    return
   fi
 
-  for POD in $PODS; do
-    echo "kubectl describe pod $POD -n $KUBE_NS"
-    kubectl describe pod "$POD" -n "$KUBE_NS"
-
-    echo "Logs for pod: $POD"
-    kubectl logs "$POD" -n "$KUBE_NS"
+  for pod in $PODS; do
+    echo -e "\nLogs from pod: $pod"
+    containers=$(kubectl get "$pod" -n "$KUBE_NS" -o jsonpath='{.spec.containers[*].name}')
+    for container in $containers; do
+      echo "Container: $container"
+      kubectl logs "$pod" -c "$container" -n "$KUBE_NS" || echo "Failed to get logs for $container"
+    done
   done
-done
+}
 
-echo "One or more deployments failed rollout. Exiting with error."
-exit 1
+# Collect logs from both deployments
+collect_logs_from_deployment "$WEB_DEPLOYMENT"
+collect_logs_from_deployment "$TEMPORAL_DEPLOYMENT"
+
+echo -e "\n Deployment finished successfully"
