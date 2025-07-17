@@ -67,6 +67,24 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert retrieved_preferences.push_enabled is False
         assert retrieved_preferences.sms_enabled is True
 
+    def test_create_notification_preferences_with_defaults_for_none_values(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
+
+        preferences = NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=update_preferences
+        )
+
+        assert preferences.account_id == account.id
+        assert preferences.email_enabled is False
+        assert preferences.push_enabled is True
+        assert preferences.sms_enabled is True
+
     def test_update_notification_preferences_updates_existing(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -101,6 +119,56 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert retrieved_preferences.email_enabled is False
         assert retrieved_preferences.push_enabled is True
         assert retrieved_preferences.sms_enabled is False
+
+    def test_partial_update_notification_preferences_only_updates_provided_fields(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+            email_enabled=True, push_enabled=True, sms_enabled=True
+        )
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=initial_preferences
+        )
+
+        partial_update = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
+
+        preferences = NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=partial_update
+        )
+
+        assert preferences.account_id == account.id
+        assert preferences.email_enabled is False
+        assert preferences.push_enabled is True
+        assert preferences.sms_enabled is True
+
+    def test_partial_update_multiple_fields(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+            email_enabled=True, push_enabled=True, sms_enabled=True
+        )
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=initial_preferences
+        )
+
+        partial_update = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False, sms_enabled=False)
+
+        preferences = NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=partial_update
+        )
+
+        assert preferences.account_id == account.id
+        assert preferences.email_enabled is False
+        assert preferences.push_enabled is True
+        assert preferences.sms_enabled is False
 
     def test_update_notification_preferences_all_disabled(self) -> None:
         account = AccountService.create_account_by_username_and_password(
