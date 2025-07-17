@@ -30,13 +30,35 @@ for DEPLOYMENT in "${FAILED_DEPLOYMENTS[@]}"; do
     continue
   fi
 
-  pods=$(kubectl get pods -n "$KUBE_NS" -l "$selector" --field-selector=status.phase!=Running \
-    -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n')
+  echo "Getting pods for $DEPLOYMENT"
+  pods=$(kubectl get pods -n "$KUBE_NS" -l "$selector" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n')
 
   if [ -z "$pods" ]; then
-    echo "No failing pods found for $DEPLOYMENT — rollout issue might be unrelated to pod status."
+    echo "No pods found for $DEPLOYMENT — possible issue with rollout"
+    continue
+  fi
+
+  PODS_WITH_ISSUES=()
+
+  for pod in $pods; do
+    # Check if any container is in a failed or waiting state
+    has_issue=$(kubectl get pod "$pod" -n "$KUBE_NS" -o json | jq '
+      .status.containerStatuses[]? |
+      select(
+        (.state.waiting.reason != null and (.state.waiting.reason | test("CrashLoopBackOff|Error|ImagePullBackOff|RunContainerError"))) or
+        (.state.terminated.reason != null)
+      )
+    ')
+
+    if [ -n "$has_issue" ]; then
+      PODS_WITH_ISSUES+=("$pod")
+    fi
+  done
+
+  if [ ${#PODS_WITH_ISSUES[@]} -eq 0 ]; then
+    echo "No crashing containers found for $DEPLOYMENT — issue may be unrelated to pod/container state"
   else
-    for pod in $pods; do
+    for pod in "${PODS_WITH_ISSUES[@]}"; do
       echo -e "\nLogs for pod: $pod"
 
       echo "::group::kubectl describe pod $pod"
@@ -44,7 +66,7 @@ for DEPLOYMENT in "${FAILED_DEPLOYMENTS[@]}"; do
       echo "::endgroup::"
 
       echo "::group::kubectl logs $pod --all-containers"
-      kubectl logs "$pod" -n "$KUBE_NS" --all-containers=true || echo "Failed to fetch logs for $pod"
+      kubectl logs "$pod" -n "$KUBE_NS" --all-containers=true --tail=100 || echo "Failed to fetch logs for $pod"
       echo "::endgroup::"
     done
   fi
