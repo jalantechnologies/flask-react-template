@@ -41,4 +41,4 @@ public:
   default_otp:
     enabled: 'DEFAULT_OTP_ENABLED'
     code: 'DEFAULT_OTP_CODE'
-    whitelisted_phone_numbers_with_country_code: 'DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE'
+    whitelisted_phone_number_with_country_code: 'DEFAULT_OTP_WHITELISTED_NUMBERS_WITH_COUNTRY_CODE'
