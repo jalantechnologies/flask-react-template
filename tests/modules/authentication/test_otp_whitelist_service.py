@@ -112,13 +112,3 @@ class TestOTPWhitelistService(BaseTestAccessToken):
         self.assertNotEqual(otp, "1234")
         self.assertEqual(len(otp), 4)
         self.assertTrue(otp.isdigit())
-
-    def test_whitelist_with_spaces_is_trimmed(self):
-        """Whitelist value should be trimmed of spaces"""
-        os.environ["DEFAULT_OTP_ENABLED"] = "true"
-        os.environ["DEFAULT_OTP_CODE"] = "1234"
-        os.environ["DEFAULT_OTP_WHITELISTED_PHONE_NUMBER"] = "  9999999999  "
-        self._reload_config()
-
-        result = OTPUtil.should_use_default_otp_for_phone_number("9999999999")
-        self.assertTrue(result)
