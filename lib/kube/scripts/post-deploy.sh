@@ -17,17 +17,7 @@ TEMPORAL_DEPLOYMENT="$KUBE_APP-temporal-deployment"
 # Track rollout success state
 ROLL_OUT_SUCCESS=true
 
-# Function to wait for rollout and set flag if failed
-wait_for_rollout() {
-  local DEPLOYMENT_NAME=$1
-  echo "Waiting for rollout of $DEPLOYMENT_NAME"
-  if ! kubectl rollout status deploy/"$DEPLOYMENT_NAME" -n "$KUBE_NS"; then
-    echo "Rollout failed for $DEPLOYMENT_NAME"
-    ROLL_OUT_SUCCESS=false
-  fi
-}
-
-# Function to collect logs from a deployment (without assuming label match)
+# Function to collect logs from a deployment
 collect_logs_from_deployment() {
   local DEPLOYMENT_NAME=$1
   echo -e "\nFetching pods for: $DEPLOYMENT_NAME"
@@ -50,11 +40,22 @@ collect_logs_from_deployment() {
   done
 }
 
-# Wait for rollouts
+# Function to wait for rollout and collect logs if failed
+wait_for_rollout() {
+  local DEPLOYMENT_NAME=$1
+  echo "Waiting for rollout of $DEPLOYMENT_NAME"
+  if ! kubectl rollout status deploy/"$DEPLOYMENT_NAME" -n "$KUBE_NS"; then
+    echo "Rollout failed for $DEPLOYMENT_NAME"
+    collect_logs_from_deployment "$DEPLOYMENT_NAME"  # <-- Print logs immediately on failure
+    ROLL_OUT_SUCCESS=false
+  fi
+}
+
+# Run rollouts (logs on failure printed inline)
 wait_for_rollout "$WEB_DEPLOYMENT"
 wait_for_rollout "$TEMPORAL_DEPLOYMENT"
 
-# Collect logs
+# Optional: Collect logs again even if rollouts succeeded (for audit/debug)
 collect_logs_from_deployment "$WEB_DEPLOYMENT"
 collect_logs_from_deployment "$TEMPORAL_DEPLOYMENT"
 
@@ -62,6 +63,6 @@ collect_logs_from_deployment "$TEMPORAL_DEPLOYMENT"
 if [ "$ROLL_OUT_SUCCESS" = true ]; then
   echo -e "\nAll deployments rolled out successfully"
 else
-  echo -e "\nOne or more deployments failed to roll out"
+  echo -e "\nOne or more deployments failed. Exiting with error."
   exit 1
 fi
