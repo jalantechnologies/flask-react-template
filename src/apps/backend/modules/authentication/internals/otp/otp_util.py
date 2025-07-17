@@ -1,11 +1,10 @@
 import secrets
 import string
-from typing import Any, List
+from typing import Any
 
 from modules.authentication.internals.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP
 from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
 
 
 class OTPUtil:
