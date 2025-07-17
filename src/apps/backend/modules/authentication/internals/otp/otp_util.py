@@ -41,8 +41,8 @@ class OTPUtil:
         if not has_whitelist_config:
             return True
 
-        whitelisted_phone_numbers_with_country_code = ConfigService[List[str]].get_value(
-            key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=[]
+        whitelisted_phone_numbers_with_country_code = ConfigService[str].get_value(
+            key="public.default_otp.whitelisted_phone_numbers_with_country_code", default=""
         )
 
         return phone_number in whitelisted_phone_numbers_with_country_code
