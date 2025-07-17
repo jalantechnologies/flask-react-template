@@ -67,7 +67,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
             self.assertIn("id", response.json)
             self.assertTrue(mock_send_sms.called)
 
-    @mock.patch.object(SMSService, "send_sms")test_create_account_with_whitelisted_phone_number_no_sms
+    @mock.patch.object(SMSService, "send_sms")
     def test_default_otp_enabled_matching_whitelist_no_sms(self, mock_send_sms):
         """When default OTP is enabled and phone matches whitelist, should not send SMS"""
         os.environ["DEFAULT_OTP_ENABLED"] = "true"
