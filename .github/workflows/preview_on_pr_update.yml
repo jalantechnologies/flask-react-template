@@ -8,7 +8,7 @@ jobs:
   preview:
     # only run when updating an 'Open' PR
     if: github.event.pull_request.state == 'open'
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.1
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
