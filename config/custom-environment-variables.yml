@@ -39,8 +39,6 @@ public:
     sessionSampleRate: 'DATADOG_SESSION_SAMPLE_RATE'
     site: 'DATADOG_SITE'
   default_otp:
-    enabled:
-      __name: 'DEFAULT_OTP_ENABLED'
-      __format: 'boolean'
+    enabled: 'DEFAULT_OTP_ENABLED'
     code: 'DEFAULT_OTP_CODE'
     whitelisted_phone_number: 'DEFAULT_OTP_WHITELISTED_PHONE_NUMBER'  # e.g., "9999999999"
