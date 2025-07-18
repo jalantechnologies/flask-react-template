@@ -13,6 +13,7 @@ from modules.authentication.rest_api.authentication_rest_api_server import Authe
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
+from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
 
@@ -21,6 +22,9 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Mount deps
 LoggerManager.mount_logger()
+
+# Run bootstrap tasks
+BootstrapApp().run()
 
 # Connect to Temporal Server
 try:
