@@ -37,7 +37,7 @@ services:
       - './logs/mongodb:/var/log'
 
   temporal:
-    image: temporalio/auto-setup:1.27.0
+    image: temporalio/server:1.27.0
     depends_on:
       - temporal-db
     environment:
