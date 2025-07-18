@@ -27,7 +27,6 @@ class TestDeviceTokenApi(BaseTestNotification):
         return {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
     def test_register_device_token(self) -> None:
-        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name",
@@ -36,38 +35,26 @@ class TestDeviceTokenApi(BaseTestNotification):
                 username="unique_username_for_register_test",
             )
         )
-
-        # Prepare request data
         token_data = {"token": "fcm-token-123", "device_type": "android", "app_version": "1.0.0"}
 
         with app.test_client() as client:
-            # Make the request with authentication
             response = client.post(API_URL, headers=self._get_auth_headers(account.id), data=json.dumps(token_data))
-
-            # Verify response
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json["token"], "fcm-token-123")
             self.assertEqual(response.json["device_type"], "android")
             self.assertEqual(response.json["app_version"], "1.0.0")
-
-            # Verify token was stored in database with correct user ID
             stored_token = DeviceTokenReader.get_token_by_value("fcm-token-123")
             self.assertIsNotNone(stored_token)
             self.assertEqual(stored_token.user_id, account.id)
 
     def test_register_device_token_unauthorized(self) -> None:
-        # Prepare request data
         token_data = {"token": "fcm-token-123", "device_type": "android", "app_version": "1.0.0"}
 
         with app.test_client() as client:
-            # Make the request without authentication
             response = client.post(API_URL, headers=HEADERS, data=json.dumps(token_data))
-
-            # Verify unauthorized response
             self.assertEqual(response.status_code, 401)
 
     def test_get_device_tokens(self) -> None:
-        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name",
@@ -76,8 +63,6 @@ class TestDeviceTokenApi(BaseTestNotification):
                 username="unique_username_for_get_tokens_test",
             )
         )
-
-        # Register some tokens for this user
         NotificationService.register_device_token(
             params=RegisterDeviceTokenParams(
                 user_id=account.id, token="token1", device_type="android", app_version="1.0"
@@ -88,10 +73,7 @@ class TestDeviceTokenApi(BaseTestNotification):
         )
 
         with app.test_client() as client:
-            # Make the request with authentication
             response = client.get(API_URL, headers=self._get_auth_headers(account.id))
-
-            # Verify response
             self.assertEqual(response.status_code, 200)
             self.assertIn("tokens", response.json)
             self.assertEqual(len(response.json["tokens"]), 2)
@@ -100,14 +82,10 @@ class TestDeviceTokenApi(BaseTestNotification):
 
     def test_get_device_tokens_unauthorized(self) -> None:
         with app.test_client() as client:
-            # Make the request without authentication
             response = client.get(API_URL, headers=HEADERS)
-
-            # Verify unauthorized response
             self.assertEqual(response.status_code, 401)
 
     def test_delete_device_token(self) -> None:
-        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name",
@@ -116,32 +94,22 @@ class TestDeviceTokenApi(BaseTestNotification):
                 username="unique_username_for_delete_token_test",
             )
         )
-
-        # Register a token
         NotificationService.register_device_token(
             params=RegisterDeviceTokenParams(
                 user_id=account.id, token="token-to-delete", device_type="android", app_version="1.0"
             )
         )
-
-        # Verify token exists
         self.assertIsNotNone(DeviceTokenReader.get_token_by_value("token-to-delete"))
 
         with app.test_client() as client:
-            # Make the delete request
             response = client.delete(
                 API_URL, headers=self._get_auth_headers(account.id), data=json.dumps({"token": "token-to-delete"})
             )
-
-            # Verify response
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json["message"], "Device token removed successfully")
-
-            # Verify token was removed
             self.assertIsNone(DeviceTokenReader.get_token_by_value("token-to-delete"))
 
     def test_delete_nonexistent_token(self) -> None:
-        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name",
@@ -152,17 +120,13 @@ class TestDeviceTokenApi(BaseTestNotification):
         )
 
         with app.test_client() as client:
-            # Make the delete request for a nonexistent token
             response = client.delete(
                 API_URL, headers=self._get_auth_headers(account.id), data=json.dumps({"token": "nonexistent-token"})
             )
-
-            # Verify response
             self.assertEqual(response.status_code, 404)
             self.assertEqual(response.json["message"], "Device token not found")
 
     def test_delete_device_token_missing_token(self) -> None:
-        # Create a test account
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
@@ -170,17 +134,11 @@ class TestDeviceTokenApi(BaseTestNotification):
         )
 
         with app.test_client() as client:
-            # Make the delete request without specifying a token
             response = client.delete(API_URL, headers=self._get_auth_headers(account.id), data=json.dumps({}))
-
-            # Verify response
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.json["message"], "Token is required")
 
     def test_delete_device_token_unauthorized(self) -> None:
         with app.test_client() as client:
-            # Make the delete request without authentication
             response = client.delete(API_URL, headers=HEADERS, data=json.dumps({"token": "token-to-delete"}))
-
-            # Verify unauthorized response
             self.assertEqual(response.status_code, 401)
