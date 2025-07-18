@@ -28,3 +28,7 @@ account:
     password: "devpassword"
 
 BOOTSTRAP_APP: true
+
+notification:
+  token_cleanup_days: 30
+  token_cleanup_enabled: false

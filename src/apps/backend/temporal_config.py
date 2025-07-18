@@ -4,10 +4,11 @@ from temporalio import activity, workflow
 
 from modules.application.types import BaseWorker, RegisteredWorker
 from modules.application.workers.health_check_worker import HealthCheckWorker
+from modules.notification.workers.token_cleanup_worker import TokenCleanupWorker
 
 
 class TemporalConfig:
-    WORKERS: List[Type[BaseWorker]] = [HealthCheckWorker]
+    WORKERS: List[Type[BaseWorker]] = [HealthCheckWorker, TokenCleanupWorker]
 
     REGISTERED_WORKERS: List[RegisteredWorker] = []
 
