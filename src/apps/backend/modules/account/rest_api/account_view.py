@@ -82,7 +82,7 @@ class AccountView(MethodView):
         return jsonify(account_dict), 200
 
     def _handle_notification_preferences_update(self, account_id: str, request_data: dict) -> ResponseReturnValue:
-        if not request_data:
+        if request_data is None:
             raise AccountBadRequestError("Request body is required")
 
         self._validate_notification_preferences(request_data)
