@@ -45,14 +45,10 @@ class SendSMSParams:
 
 
 @dataclass(frozen=True)
-class CommunicationErrorCode:
-    VALIDATION_ERROR = "COMMUNICATION_ERR_01"
-    SERVICE_ERROR = "COMMUNICATION_ERR_02"
-
-
-@dataclass(frozen=True)
 class NotificationErrorCode:
     PREFERENCES_NOT_FOUND = "NOTIFICATION_ERR_01"
+    VALIDATION_ERROR = "NOTIFICATION_ERR_02"
+    SERVICE_ERROR = "NOTIFICATION_ERR_03"
 
 
 @dataclass(frozen=True)
