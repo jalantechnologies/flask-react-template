@@ -62,7 +62,7 @@ class AccountView(MethodView):
             return self._handle_account_update(id, request_data)
 
         if account_id is not None:
-            return self._handle_notification_preferences_update(account_id, request_data)
+            return self._handle_account_notification_preferences_update(account_id, request_data)
 
         raise AccountBadRequestError("Invalid endpoint")
 
@@ -70,18 +70,22 @@ class AccountView(MethodView):
         if "token" in request_data and "new_password" in request_data:
             reset_account_params = ResetPasswordParams(account_id=id, **request_data)
             account = AccountService.reset_account_password(params=reset_account_params)
+
         elif "first_name" in request_data or "last_name" in request_data:
             update_profile_params = UpdateAccountProfileParams(
                 first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
             )
             account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
+
         else:
             raise AccountBadRequestError("Invalid request data")
 
         account_dict = asdict(account)
         return jsonify(account_dict), 200
 
-    def _handle_notification_preferences_update(self, account_id: str, request_data: dict) -> ResponseReturnValue:
+    def _handle_account_notification_preferences_update(
+        self, account_id: str, request_data: dict
+    ) -> ResponseReturnValue:
         if request_data is None:
             raise AccountBadRequestError("Request body is required")
 
