@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from typing import Optional
 
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
@@ -17,8 +16,6 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
-from modules.notification.errors import AccountNotificationPreferencesNotFoundError, ValidationError
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 
 
 class AccountView(MethodView):
@@ -41,32 +38,11 @@ class AccountView(MethodView):
         account_params = AccountSearchByIdParams(id=id)
         account = AccountService.get_account_by_id(params=account_params)
         account_dict = asdict(account)
-
-        include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
-
-        if include_notification_preferences:
-            try:
-                notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
-                    account_id=account.id
-                )
-                account_dict["notification_preferences"] = asdict(notification_preferences)
-            except AccountNotificationPreferencesNotFoundError:
-                pass
-
         return jsonify(account_dict), 200
 
-    def patch(self, id: Optional[str] = None, account_id: Optional[str] = None) -> ResponseReturnValue:
+    def patch(self, id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
-        if id is not None:
-            return self._handle_account_update(id, request_data)
-
-        if account_id is not None:
-            return self._handle_account_notification_preferences_update(account_id, request_data)
-
-        raise AccountBadRequestError("Invalid endpoint")
-
-    def _handle_account_update(self, id: str, request_data: dict) -> ResponseReturnValue:
         if "token" in request_data and "new_password" in request_data:
             reset_account_params = ResetPasswordParams(account_id=id, **request_data)
             account = AccountService.reset_account_password(params=reset_account_params)
@@ -82,40 +58,3 @@ class AccountView(MethodView):
 
         account_dict = asdict(account)
         return jsonify(account_dict), 200
-
-    def _handle_account_notification_preferences_update(
-        self, account_id: str, request_data: dict
-    ) -> ResponseReturnValue:
-        if request_data is None:
-            raise AccountBadRequestError("Request body is required")
-
-        self._validate_notification_preferences(request_data)
-
-        preferences_kwargs = {}
-
-        if "email_enabled" in request_data:
-            preferences_kwargs["email_enabled"] = request_data["email_enabled"]
-
-        if "push_enabled" in request_data:
-            preferences_kwargs["push_enabled"] = request_data["push_enabled"]
-
-        if "sms_enabled" in request_data:
-            preferences_kwargs["sms_enabled"] = request_data["sms_enabled"]
-
-        if not preferences_kwargs:
-            raise AccountBadRequestError(
-                "At least one preference field (email_enabled, push_enabled, sms_enabled) must be provided"
-            )
-
-        preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(**preferences_kwargs)
-
-        updated_preferences = AccountService.create_or_update_account_notification_preferences(
-            account_id=account_id, preferences=preferences_params
-        )
-
-        return jsonify(asdict(updated_preferences)), 200
-
-    def _validate_notification_preferences(self, request_data: dict) -> None:
-        for field in ["email_enabled", "push_enabled", "sms_enabled"]:
-            if field in request_data and not isinstance(request_data[field], bool):
-                raise ValidationError(f"{field} must be a boolean")
