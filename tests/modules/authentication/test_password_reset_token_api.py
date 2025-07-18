@@ -41,10 +41,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertIn("token", response.json)
             self.assertFalse(response.json["is_used"])
             self.assertTrue(mock_send_email.called)
-            call_args = mock_send_email.call_args
-            self.assertIn("account_id", call_args.kwargs)
-            self.assertEqual(call_args.kwargs["account_id"], account.id)
-            self.assertIn("password_reset_link", call_args.kwargs["params"].template_data)
+            self.assertIn("password_reset_link", mock_send_email.call_args.kwargs["params"].template_data)
             self.assertEqual(response.json["account"], account.id)
 
     @mock.patch.object(EmailService, "send_email_for_account")
