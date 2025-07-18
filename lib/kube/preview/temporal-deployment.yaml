@@ -37,7 +37,7 @@ spec:
 
       containers:
         - name: temporal-server
-          image: temporalio/auto-setup:1.27.2
+          image: temporalio/server:1.27.2
           imagePullPolicy: Always
           ports:
             - containerPort: 7233
