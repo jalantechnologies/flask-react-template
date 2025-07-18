@@ -144,7 +144,7 @@ class AuthenticationService:
         )
 
         if not OTPUtil.should_use_default_otp_for_phone_number(recipient_phone_number.phone_number):
-            SMSService.send_sms(params=send_sms_params)
+            SMSService.send_sms_for_account(account_id=account_id, params=send_sms_params)
 
         return otp
 
