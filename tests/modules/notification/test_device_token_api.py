@@ -5,7 +5,8 @@ import jwt
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.config.config_service import ConfigService
-from modules.notification.notification_service import NotificationService
+from modules.application.application_service import ApplicationService
+from modules.notification.workers.token_cleanup_worker import TokenCleanupWorker
 from server import app
 
 from tests.modules.notification.base_test_notification import BaseTestNotification
@@ -140,9 +141,6 @@ class TestDeviceTokenApi(BaseTestNotification):
         "modules.notification.notification_service.NotificationService.cleanup_inactive_tokens"
     )
     def test_token_cleanup_worker(self, mock_cleanup_tokens) -> None:
-        from modules.application.application_service import ApplicationService
-        from modules.application.workers.token_cleanup_worker import TokenCleanupWorker
-
         mock_cleanup_tokens.return_value = 5
 
         worker_id = ApplicationService.run_worker_immediately(cls=TokenCleanupWorker)
