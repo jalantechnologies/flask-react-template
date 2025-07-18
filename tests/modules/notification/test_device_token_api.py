@@ -110,7 +110,7 @@ class TestDeviceTokenApi(BaseTestNotification):
         asyncio.run(TokenCleanupWorker.execute())
 
         mock_cleanup_tokens.assert_called_once()
-        mock_cleanup_tokens.assert_called_with(days=7)
+        mock_cleanup_tokens.assert_called_with(days=60)
 
     def test_token_cleanup_worker_temporal_integration(self) -> None:
         worker_id = ApplicationService.run_worker_immediately(cls=TokenCleanupWorker)
