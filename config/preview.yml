@@ -14,6 +14,17 @@ public:
     enabled: true
     code: '1234'
 
+account:
+  enable_bootstrap_tasks: true
+  create_test_user_account: true
+  test_user:
+    first_name: "Preview"
+    last_name: "User"
+    username: "preview@example.com"
+    password: "previewpassword"
+
+BOOTSTRAP_APP: true
+
 notification:
   token_cleanup_enabled: true
   token_cleanup_days: 30

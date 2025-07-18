@@ -18,6 +18,17 @@ public:
     enabled: true
     code: '1234'
 
+account:
+  enable_bootstrap_tasks: true
+  create_test_user_account: true
+  test_user:
+    first_name: "Dev"
+    last_name: "User"
+    username: "dev@example.com"
+    password: "devpassword"
+
+BOOTSTRAP_APP: true
+
 notification:
   token_cleanup_days: 30
-  token_cleanup_enabled: false 
+  token_cleanup_enabled: false

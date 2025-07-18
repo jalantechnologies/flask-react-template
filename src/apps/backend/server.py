@@ -15,6 +15,7 @@ from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.notification.rest_api.notification_rest_api_server import NotificationRestApiServer
 from modules.notification.workers.token_cleanup_worker import TokenCleanupWorker
+from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
 
@@ -23,6 +24,9 @@ cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Mount deps
 LoggerManager.mount_logger()
+
+# Run bootstrap tasks
+BootstrapApp().run()
 
 # Connect to Temporal Server
 try:

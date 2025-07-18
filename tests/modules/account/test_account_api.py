@@ -14,8 +14,6 @@ from modules.account.types import (
 )
 from modules.authentication.types import AccessTokenErrorCode, OTPErrorCode
 from modules.config.config_service import ConfigService
-from modules.authentication.types import AccessTokenErrorCode, OTPErrorCode
-from modules.config.config_service import ConfigService
 from modules.notification.sms_service import SMSService
 from tests.modules.account.base_test_account import BaseTestAccount
 
