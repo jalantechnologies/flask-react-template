@@ -16,6 +16,7 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 
 
 class AccountView(MethodView):
@@ -58,3 +59,37 @@ class AccountView(MethodView):
 
         account_dict = asdict(account)
         return jsonify(account_dict), 200
+
+    def update_account_notification_preferences(self, account_id: str) -> ResponseReturnValue:
+        request_data = request.get_json()
+
+        if request_data is None:
+            raise AccountBadRequestError("Request body is required")
+
+        for field in ["email_enabled", "push_enabled", "sms_enabled"]:
+            if field in request_data and not isinstance(request_data[field], bool):
+                raise AccountBadRequestError(f"{field} must be a boolean")
+
+        preferences_kwargs = {}
+
+        if "email_enabled" in request_data:
+            preferences_kwargs["email_enabled"] = request_data["email_enabled"]
+
+        if "push_enabled" in request_data:
+            preferences_kwargs["push_enabled"] = request_data["push_enabled"]
+
+        if "sms_enabled" in request_data:
+            preferences_kwargs["sms_enabled"] = request_data["sms_enabled"]
+
+        if not preferences_kwargs:
+            raise AccountBadRequestError(
+                "At least one preference field (email_enabled, push_enabled, sms_enabled) must be provided"
+            )
+
+        preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(**preferences_kwargs)
+
+        updated_preferences = AccountService.create_or_update_account_notification_preferences(
+            account_id=account_id, preferences=preferences_params
+        )
+
+        return jsonify(asdict(updated_preferences)), 200
