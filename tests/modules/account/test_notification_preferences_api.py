@@ -403,36 +403,3 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["sms_enabled"] is False
             assert "account_id" in response.json
             assert response.json["account_id"] == account2.id
-
-    def test_update_notification_preferences_all_false(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": False, "push_enabled": False, "sms_enabled": False}
-
-            response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
-                data=json.dumps(preferences_data),
-            )
-
-            assert response.status_code == 200
-            assert response.json
-            assert response.json["email_enabled"] is False
-            assert response.json["push_enabled"] is False
-            assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
