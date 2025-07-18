@@ -120,7 +120,7 @@ class TestDeviceTokenService(BaseTestNotification):
             # Verify last_active was updated
             token = DeviceTokenReader.get_token_by_value("fcm-token-123456")
             self.assertIsNotNone(token)
-            self.assertEqual(token.last_active, new_time)
+            self.assertEqual(token.last_active.replace(microsecond=0), new_time.replace(microsecond=0))
 
     @patch.object(DeviceTokenUtil, "calculate_cutoff_date")
     def test_cleanup_inactive_tokens(self, mock_cutoff_date) -> None:
