@@ -4,6 +4,7 @@ from unittest.mock import patch
 from modules.notification.internals.device_token_reader import DeviceTokenReader
 from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.device_token_writer import DeviceTokenWriter
+from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import RegisterDeviceTokenParams
 from tests.modules.notification.base_test_notification import BaseTestNotification
