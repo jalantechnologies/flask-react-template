@@ -41,7 +41,6 @@ class AccountNotificationPreferenceWriter:
     def create_or_update_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
-
         try:
             AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
             return AccountNotificationPreferenceWriter.update_account_notification_preferences(account_id, preferences)
