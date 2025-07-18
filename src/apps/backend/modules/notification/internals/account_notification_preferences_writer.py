@@ -19,7 +19,7 @@ from modules.notification.types import (
 
 class AccountNotificationPreferenceWriter:
     @staticmethod
-    def create_account_notification_preferences(
+    def _create_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
         preferences_model = AccountNotificationPreferencesModel(
@@ -38,17 +38,7 @@ class AccountNotificationPreferenceWriter:
         )
 
     @staticmethod
-    def create_or_update_account_notification_preferences(
-        account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
-    ) -> AccountNotificationPreferences:
-        try:
-            AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
-            return AccountNotificationPreferenceWriter.update_account_notification_preferences(account_id, preferences)
-        except AccountNotificationPreferencesNotFoundError:
-            return AccountNotificationPreferenceWriter.create_account_notification_preferences(account_id, preferences)
-
-    @staticmethod
-    def update_account_notification_preferences(
+    def _update_account_notification_preferences(
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
         update_data: dict[str, Any] = {"updated_at": datetime.now()}
@@ -69,3 +59,13 @@ class AccountNotificationPreferenceWriter:
         return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_account_notification_preferences(
             updated_preferences
         )
+
+    @staticmethod
+    def create_or_update_account_notification_preferences(
+        account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
+    ) -> AccountNotificationPreferences:
+        try:
+            AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
+            return AccountNotificationPreferenceWriter._update_account_notification_preferences(account_id, preferences)
+        except AccountNotificationPreferencesNotFoundError:
+            return AccountNotificationPreferenceWriter._create_account_notification_preferences(account_id, preferences)
