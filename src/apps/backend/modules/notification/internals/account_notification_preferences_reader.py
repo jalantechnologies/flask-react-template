@@ -16,6 +16,6 @@ class AccountNotificationPreferenceReader:
         if notification_preferences is None:
             raise AccountNotificationPreferencesNotFoundError(account_id=account_id)
 
-        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_account_params(
+        return AccountNotificationPreferenceUtil.convert_account_notification_preferences_bson_to_account_notification_preferences(
             notification_preferences
         )
