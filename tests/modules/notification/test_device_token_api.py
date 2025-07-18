@@ -27,10 +27,13 @@ class TestDeviceTokenApi(BaseTestNotification):
         return {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
     def test_register_device_token(self) -> None:
-        # Create a test account
+        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name",
+                last_name="last_name",
+                password="password",
+                username="unique_username_for_register_test",
             )
         )
 
@@ -64,10 +67,13 @@ class TestDeviceTokenApi(BaseTestNotification):
             self.assertEqual(response.status_code, 401)
 
     def test_get_device_tokens(self) -> None:
-        # Create a test account
+        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name",
+                last_name="last_name",
+                password="password",
+                username="unique_username_for_get_tokens_test",
             )
         )
 
@@ -101,10 +107,13 @@ class TestDeviceTokenApi(BaseTestNotification):
             self.assertEqual(response.status_code, 401)
 
     def test_delete_device_token(self) -> None:
-        # Create a test account
+        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name",
+                last_name="last_name",
+                password="password",
+                username="unique_username_for_delete_token_test",
             )
         )
 
@@ -132,10 +141,13 @@ class TestDeviceTokenApi(BaseTestNotification):
             self.assertIsNone(DeviceTokenReader.get_token_by_value("token-to-delete"))
 
     def test_delete_nonexistent_token(self) -> None:
-        # Create a test account
+        # Create a test account with a unique username
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name",
+                last_name="last_name",
+                password="password",
+                username="unique_username_for_nonexistent_token_test",
             )
         )
 
