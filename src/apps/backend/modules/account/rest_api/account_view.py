@@ -74,7 +74,7 @@ class AccountView(MethodView):
         return jsonify(account_dict), 200
 
     @staticmethod
-    def update_account_notification_preferences(self, account_id: str) -> ResponseReturnValue:
+    def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
         if request_data is None:
