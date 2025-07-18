@@ -42,7 +42,9 @@ class TestAuthenticationService(BaseTestAccessToken):
         account = AccountWriter.create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
         )
-        otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)))
+        otp = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+        )
 
         access_token = AuthenticationService.create_access_token_by_phone_number(
             params=OTPBasedAuthAccessTokenRequestParams(
@@ -60,7 +62,9 @@ class TestAuthenticationService(BaseTestAccessToken):
         account = AccountWriter.create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
         )
-        otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)))
+        otp = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+        )
 
         access_token = AuthenticationService.create_access_token_by_phone_number(
             params=OTPBasedAuthAccessTokenRequestParams(

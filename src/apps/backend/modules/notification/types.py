@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
 
@@ -13,6 +13,21 @@ class EmailSender:
 @dataclass(frozen=True)
 class EmailRecipient:
     email: str
+
+
+@dataclass(frozen=True)
+class CreateOrUpdateAccountNotificationPreferencesParams:
+    email_enabled: Optional[bool] = None
+    push_enabled: Optional[bool] = None
+    sms_enabled: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class AccountNotificationPreferences:
+    account_id: str
+    email_enabled: bool = True
+    push_enabled: bool = True
+    sms_enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -30,9 +45,10 @@ class SendSMSParams:
 
 
 @dataclass(frozen=True)
-class CommunicationErrorCode:
-    VALIDATION_ERROR = "COMMUNICATION_ERR_01"
-    SERVICE_ERROR = "COMMUNICATION_ERR_02"
+class NotificationErrorCode:
+    PREFERENCES_NOT_FOUND = "NOTIFICATION_ERR_01"
+    VALIDATION_ERROR = "NOTIFICATION_ERR_02"
+    SERVICE_ERROR = "NOTIFICATION_ERR_03"
 
 
 @dataclass(frozen=True)
