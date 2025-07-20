@@ -35,7 +35,6 @@ try:
     # In production, it is optional to run this worker
     ApplicationService.schedule_worker_as_cron(cls=HealthCheckWorker, cron_schedule="*/10 * * * *")
 
-
 except WorkerClientConnectionError as e:
     Logger.critical(message=e.message)
 
