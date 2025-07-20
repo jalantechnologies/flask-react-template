@@ -28,8 +28,3 @@ public:
     enabled: 'false'
 
 BOOTSTRAP_APP: false
-
-notification:
-  token_cleanup_days: 60
-  token_cleanup_enabled: true
-  token_cleanup_schedule: "0 2 * * 0" 

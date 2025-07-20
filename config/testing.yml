@@ -16,7 +16,3 @@ public:
   default_otp:
     enabled: false
     code: '1234'
-
-notification:
-  token_cleanup_enabled: false
-  token_cleanup_days: 7

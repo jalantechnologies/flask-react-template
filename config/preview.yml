@@ -24,8 +24,3 @@ account:
     password: "previewpassword"
 
 BOOTSTRAP_APP: true
-
-notification:
-  token_cleanup_enabled: true
-  token_cleanup_days: 30
-  token_cleanup_schedule: "0 4 * * *"
