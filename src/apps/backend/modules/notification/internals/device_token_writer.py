@@ -4,7 +4,7 @@ from modules.logger.logger import Logger
 from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
-from modules.notification.types import DeviceTokenInfo, RegisterDeviceTokenParams
+from modules.notification.types import DeviceToken, RegisterDeviceTokenParams
 
 
 class DeviceTokenWriter:
@@ -19,7 +19,7 @@ class DeviceTokenWriter:
         return deleted_count
 
     @staticmethod
-    def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceTokenInfo:
+    def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
         now = DeviceTokenUtil.get_current_timestamp()
 
         existing_token = DeviceTokenRepository.collection().find_one({"token": params.token})
@@ -38,7 +38,7 @@ class DeviceTokenWriter:
                 },
                 return_document=ReturnDocument.AFTER,
             )
-            device_token_model = DeviceTokenModel.from_bson(updated_token)
+            return DeviceTokenUtil.convert_device_token_bson_to_device_token(updated_token)
         else:
             device_token_model = DeviceTokenModel(
                 token=params.token,
@@ -51,9 +51,7 @@ class DeviceTokenWriter:
 
             result = DeviceTokenRepository.collection().insert_one(device_token_model.to_bson())
             inserted_token = DeviceTokenRepository.collection().find_one({"_id": result.inserted_id})
-            device_token_model = DeviceTokenModel.from_bson(inserted_token)
-
-        return DeviceTokenUtil.convert_device_token_model_to_device_token_info(device_token_model)
+            return DeviceTokenUtil.convert_device_token_bson_to_device_token(inserted_token)
 
     @staticmethod
     def remove_device_token(token: str) -> bool:
