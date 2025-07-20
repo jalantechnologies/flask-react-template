@@ -30,7 +30,7 @@ class DeviceTokenView(MethodView):
     def get(self) -> ResponseReturnValue:
         account_id = cast(str, getattr(request, "account_id", None))
 
-        tokens = NotificationService.get_device_tokens_by_user_id(account_id)
+        tokens = NotificationService.get_user_fcm_tokens(account_id)
 
         return jsonify({"tokens": tokens}), 200
 

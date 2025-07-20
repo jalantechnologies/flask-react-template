@@ -17,16 +17,8 @@ class NotificationService:
         return DeviceTokenWriter.remove_device_token(token)
 
     @staticmethod
-    def get_device_tokens_by_user_id(user_id: str) -> List[str]:
-        return DeviceTokenReader.get_tokens_by_user_id(user_id)
-
-    @staticmethod
-    def get_device_tokens_entities_by_user_id(user_id: str) -> List[DeviceToken]:
-        return DeviceTokenReader.get_device_tokens_by_user_id(user_id)
-
-    @staticmethod
-    def get_token_by_value(token: str) -> DeviceToken:
-        return DeviceTokenReader.get_token_by_value(token)
+    def get_user_fcm_tokens(user_id: str) -> List[str]:
+        return DeviceTokenReader.get_user_fcm_tokens(user_id)
 
     @staticmethod
     def send_email(*, params: SendEmailParams) -> None:
