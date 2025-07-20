@@ -5,23 +5,18 @@ from modules.application.repository import ApplicationRepository
 from modules.logger.logger import Logger
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 
-DATE_OPTIONAL = "must be a date"
-DATE_REQUIRED = "must be a date and is required"
-STRING_OPTIONAL = "must be a string if present"
-STRING_REQUIRED = "must be a string and is required"
-
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["token", "user_id", "device_type", "last_active"],
         "properties": {
-            "app_version": {"bsonType": "string", "description": STRING_OPTIONAL},
-            "device_type": {"bsonType": "string", "description": STRING_REQUIRED},
-            "last_active": {"bsonType": "date", "description": DATE_REQUIRED},
-            "token": {"bsonType": "string", "description": STRING_REQUIRED},
-            "user_id": {"bsonType": "string", "description": STRING_REQUIRED},
-            "created_at": {"bsonType": "date", "description": DATE_OPTIONAL},
-            "updated_at": {"bsonType": "date", "description": DATE_OPTIONAL},
+            "app_version": {"bsonType": "string"},
+            "device_type": {"bsonType": "string"},
+            "last_active": {"bsonType": "date"},
+            "token": {"bsonType": "string"},
+            "user_id": {"bsonType": "string"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
         },
     }
 }
