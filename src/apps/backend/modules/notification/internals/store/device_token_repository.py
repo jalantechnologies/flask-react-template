@@ -8,11 +8,10 @@ from modules.notification.internals.store.device_token_model import DeviceTokenM
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["token", "user_id", "device_type", "last_active"],
+        "required": ["token", "user_id", "device_type"],
         "properties": {
             "app_version": {"bsonType": "string"},
             "device_type": {"bsonType": "string"},
-            "last_active": {"bsonType": "date"},
             "token": {"bsonType": "string"},
             "user_id": {"bsonType": "string"},
             "created_at": {"bsonType": "date"},
@@ -27,7 +26,6 @@ class DeviceTokenRepository(ApplicationRepository):
 
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
-        collection.create_index("last_active")
         collection.create_index("token", unique=True)
         collection.create_index("user_id")
 

@@ -1,6 +1,5 @@
 from pymongo import ReturnDocument
 
-from modules.logger.logger import Logger
 from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
@@ -8,16 +7,6 @@ from modules.notification.types import DeviceToken, RegisterDeviceTokenParams
 
 
 class DeviceTokenWriter:
-    @staticmethod
-    def cleanup_inactive_tokens(days: int = 60) -> int:
-        cutoff_date = DeviceTokenUtil.calculate_cutoff_date(days)
-        result = DeviceTokenRepository.collection().delete_many({"last_active": {"$lt": cutoff_date}})
-
-        deleted_count = int(result.deleted_count)
-        Logger.info(message=f"Cleaned up {deleted_count} inactive device tokens older than {days} days")
-
-        return deleted_count
-
     @staticmethod
     def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
         now = DeviceTokenUtil.get_current_timestamp()
@@ -32,7 +21,6 @@ class DeviceTokenWriter:
                         "user_id": params.user_id,
                         "device_type": params.device_type,
                         "app_version": params.app_version,
-                        "last_active": now,
                         "updated_at": now,
                     }
                 },
@@ -45,7 +33,6 @@ class DeviceTokenWriter:
                 user_id=params.user_id,
                 device_type=params.device_type,
                 app_version=params.app_version,
-                last_active=now,
                 id=None,
             )
 
@@ -57,10 +44,3 @@ class DeviceTokenWriter:
     def remove_device_token(token: str) -> bool:
         result = DeviceTokenRepository.collection().delete_one({"token": token})
         return int(result.deleted_count) > 0
-
-    @staticmethod
-    def update_token_activity(token: str) -> None:
-        now = DeviceTokenUtil.get_current_timestamp()
-        DeviceTokenRepository.collection().update_one(
-            {"token": token}, {"$set": {"last_active": now, "updated_at": now}}
-        )

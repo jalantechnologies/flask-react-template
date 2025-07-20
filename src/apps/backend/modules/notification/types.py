@@ -43,19 +43,11 @@ class ValidationFailure:
 
 
 @dataclass(frozen=True)
-class DeviceTokenInfo:
-    token: str
-    device_type: str
-    app_version: Optional[str] = None
-
-
-@dataclass(frozen=True)
 class DeviceToken:
     id: str
     token: str
     user_id: str
     device_type: str
-    last_active: datetime
     app_version: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
