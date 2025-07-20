@@ -9,8 +9,8 @@ from modules.notification.types import DeviceToken, RegisterDeviceTokenParams, S
 
 class NotificationService:
     @staticmethod
-    def register_device_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
-        return DeviceTokenWriter.register_device_token(params=params)
+    def upsert_device_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
+        return DeviceTokenWriter.upsert_device_token(params=params)
 
     @staticmethod
     def remove_device_token(token: str) -> bool:
