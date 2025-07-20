@@ -40,10 +40,7 @@ class DeviceTokenView(MethodView):
         request_data = request.get_json()
 
         token_params = RegisterDeviceTokenParams(
-            user_id=account_id,
-            token=request_data.get("token"),
-            device_type=request_data.get("device_type"),
-            app_version=request_data.get("app_version"),
+            user_id=account_id, token=request_data.get("token"), device_type=request_data.get("device_type")
         )
 
         device_token = NotificationService.register_device_token(params=token_params)

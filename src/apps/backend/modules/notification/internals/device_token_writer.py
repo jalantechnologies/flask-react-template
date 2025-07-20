@@ -16,24 +16,13 @@ class DeviceTokenWriter:
         if existing_token:
             updated_token = DeviceTokenRepository.collection().find_one_and_update(
                 {"token": params.token},
-                {
-                    "$set": {
-                        "user_id": params.user_id,
-                        "device_type": params.device_type,
-                        "app_version": params.app_version,
-                        "updated_at": now,
-                    }
-                },
+                {"$set": {"user_id": params.user_id, "device_type": params.device_type, "updated_at": now}},
                 return_document=ReturnDocument.AFTER,
             )
             return DeviceTokenUtil.convert_device_token_bson_to_device_token(updated_token)
         else:
             device_token_model = DeviceTokenModel(
-                token=params.token,
-                user_id=params.user_id,
-                device_type=params.device_type,
-                app_version=params.app_version,
-                id=None,
+                token=params.token, user_id=params.user_id, device_type=params.device_type, id=None
             )
 
             result = DeviceTokenRepository.collection().insert_one(device_token_model.to_bson())

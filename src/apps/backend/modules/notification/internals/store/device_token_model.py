@@ -9,7 +9,6 @@ from modules.application.base_model import BaseModel
 
 @dataclass
 class DeviceTokenModel(BaseModel):
-    app_version: Optional[str]
     device_type: str
     id: Optional[ObjectId | str]
     token: str
@@ -20,7 +19,6 @@ class DeviceTokenModel(BaseModel):
     @classmethod
     def from_bson(cls, bson_data: dict) -> "DeviceTokenModel":
         return cls(
-            app_version=bson_data.get("app_version"),
             device_type=bson_data.get("device_type", ""),
             id=bson_data.get("_id"),
             token=bson_data.get("token", ""),

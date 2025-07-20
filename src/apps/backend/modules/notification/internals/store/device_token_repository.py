@@ -10,7 +10,6 @@ DEVICE_TOKEN_VALIDATION_SCHEMA = {
         "bsonType": "object",
         "required": ["token", "user_id", "device_type"],
         "properties": {
-            "app_version": {"bsonType": "string"},
             "device_type": {"bsonType": "string"},
             "token": {"bsonType": "string"},
             "user_id": {"bsonType": "string"},

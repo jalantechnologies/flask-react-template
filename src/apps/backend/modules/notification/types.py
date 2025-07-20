@@ -48,7 +48,6 @@ class DeviceToken:
     token: str
     user_id: str
     device_type: str
-    app_version: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -58,4 +57,3 @@ class RegisterDeviceTokenParams:
     user_id: str
     token: str
     device_type: str
-    app_version: Optional[str] = None
