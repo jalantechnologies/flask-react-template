@@ -43,6 +43,6 @@ class DeviceTokenView(MethodView):
             user_id=account_id, token=request_data.get("token"), device_type=request_data.get("device_type")
         )
 
-        device_token = NotificationService.register_device_token(params=token_params)
+        device_token = NotificationService.upsert_device_token(params=token_params)
 
         return jsonify(asdict(device_token)), 201
