@@ -1,3 +1,4 @@
+import uuid
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.notification.notification_service import NotificationService
@@ -8,9 +9,10 @@ from tests.modules.notification.base_test_notification import BaseTestNotificati
 class TestDeviceTokenService(BaseTestNotification):
     def test_upsert_device_token_new(self) -> None:
         # Create an account
+        unique_username = f"service-new-{uuid.uuid4()}@example.com"
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name", last_name="last_name", password="password", username=unique_username
             )
         )
 
@@ -30,29 +32,33 @@ class TestDeviceTokenService(BaseTestNotification):
 
     def test_upsert_device_token_update(self) -> None:
         # Create an account
+        unique_username1 = f"service-update1-{uuid.uuid4()}@example.com"
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name", last_name="last_name", password="password", username=unique_username1
             )
         )
 
         # Create a device token
-        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-123", device_type="android")
+        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-update", device_type="android")
 
         device_token = NotificationService.upsert_device_token(params=token_params)
 
         # Update the device token with a new user and device type
+        unique_username2 = f"service-update2-{uuid.uuid4()}@example.com"
         account2 = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name2", last_name="last_name2", password="password2", username="username2"
+                first_name="first_name2", last_name="last_name2", password="password2", username=unique_username2
             )
         )
 
-        updated_token_params = RegisterDeviceTokenParams(user_id=account2.id, token="fcm-token-123", device_type="ios")
+        updated_token_params = RegisterDeviceTokenParams(
+            user_id=account2.id, token="fcm-token-update", device_type="ios"
+        )
 
         updated_device_token = NotificationService.upsert_device_token(params=updated_token_params)
 
-        self.assertEqual(updated_device_token.token, "fcm-token-123")
+        self.assertEqual(updated_device_token.token, "fcm-token-update")
         self.assertEqual(updated_device_token.device_type, "ios")
         self.assertEqual(updated_device_token.user_id, account2.id)
 
@@ -63,18 +69,19 @@ class TestDeviceTokenService(BaseTestNotification):
         # Verify that the token is now associated with the second account
         tokens2 = NotificationService.get_user_fcm_tokens(account2.id)
         self.assertEqual(len(tokens2), 1)
-        self.assertEqual(tokens2[0], "fcm-token-123")
+        self.assertEqual(tokens2[0], "fcm-token-update")
 
     def test_remove_device_token(self) -> None:
         # Create an account
+        unique_username = f"service-remove-{uuid.uuid4()}@example.com"
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name", last_name="last_name", password="password", username=unique_username
             )
         )
 
         # Create a device token
-        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-123", device_type="android")
+        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-remove", device_type="android")
 
         NotificationService.upsert_device_token(params=token_params)
 
@@ -83,7 +90,7 @@ class TestDeviceTokenService(BaseTestNotification):
         self.assertEqual(len(tokens), 1)
 
         # Remove the token
-        result = NotificationService.remove_device_token("fcm-token-123")
+        result = NotificationService.remove_device_token("fcm-token-remove")
         self.assertTrue(result)
 
         # Verify that the token is gone
@@ -97,9 +104,10 @@ class TestDeviceTokenService(BaseTestNotification):
 
     def test_get_user_fcm_tokens_multiple(self) -> None:
         # Create an account
+        unique_username = f"service-multiple-{uuid.uuid4()}@example.com"
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name", last_name="last_name", password="password", username=unique_username
             )
         )
 
@@ -123,9 +131,10 @@ class TestDeviceTokenService(BaseTestNotification):
 
     def test_get_user_fcm_tokens_empty(self) -> None:
         # Create an account
+        unique_username = f"service-empty-{uuid.uuid4()}@example.com"
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+                first_name="first_name", last_name="last_name", password="password", username=unique_username
             )
         )
 
