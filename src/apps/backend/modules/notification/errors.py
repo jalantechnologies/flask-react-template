@@ -16,6 +16,16 @@ class ValidationError(AppError):
         self.http_code = 400
 
 
+class InvalidDeviceTypeError(ValidationError):
+    def __init__(self, device_type: str, allowed_types: List[str]) -> None:
+        allowed_types_str = ", ".join(allowed_types)
+        super().__init__(
+            f"Invalid device type: {device_type}. Must be one of: {allowed_types_str}",
+            [ValidationFailure(field="device_type", message=f"Must be one of: {allowed_types_str}")],
+        )
+        self.code = NotificationErrorCode.INVALID_DEVICE_TYPE
+
+
 class AccountNotificationPreferencesNotFoundError(AppError):
     def __init__(self, account_id: str) -> None:
         super().__init__(

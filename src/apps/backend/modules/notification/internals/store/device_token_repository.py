@@ -4,13 +4,18 @@ from pymongo.errors import OperationFailure
 from modules.application.repository import ApplicationRepository
 from modules.logger.logger import Logger
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
+from modules.notification.types import DeviceType
 
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
         "required": ["token", "user_id", "device_type"],
         "properties": {
-            "device_type": {"bsonType": "string"},
+            "device_type": {
+                "bsonType": "string",
+                "enum": [DeviceType.ANDROID.value, DeviceType.IOS.value],
+                "description": "must be either 'android' or 'ios'",
+            },
             "token": {"bsonType": "string"},
             "user_id": {"bsonType": "string"},
             "created_at": {"bsonType": "date"},
