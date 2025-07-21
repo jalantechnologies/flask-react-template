@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any, List
 
 from pymongo.cursor import Cursor
@@ -27,7 +26,3 @@ class DeviceTokenUtil:
             if doc.get("token"):
                 tokens.append(doc["token"])
         return tokens
-
-    @staticmethod
-    def get_current_timestamp() -> datetime:
-        return datetime.now()
