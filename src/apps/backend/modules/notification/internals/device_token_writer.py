@@ -15,7 +15,6 @@ class DeviceTokenWriter:
             token=params.token,
             user_id=params.user_id,
             device_type=params.device_type,
-            app_version=params.app_version,
             id=None,
         )
         result = DeviceTokenRepository.collection().insert_one(device_token_model.to_bson())
@@ -30,7 +29,6 @@ class DeviceTokenWriter:
                 "$set": {
                     "user_id": params.user_id,
                     "device_type": params.device_type,
-                    "app_version": params.app_version,
                     "updated_at": now,
                 }
             },
