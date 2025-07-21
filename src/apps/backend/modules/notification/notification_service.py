@@ -22,8 +22,8 @@ class NotificationService:
         return DeviceTokenWriter.upsert_user_fcm_token(params=params)
 
     @staticmethod
-    def delete_user_fcm_token(token: str) -> bool:
-        return DeviceTokenWriter.delete_user_fcm_token(token)
+    def delete_user_fcm_tokens_by_user_id(user_id: str) -> int:
+        return DeviceTokenWriter.delete_user_fcm_tokens_by_user_id(user_id)
 
     @staticmethod
     def get_user_fcm_tokens(user_id: str) -> List[str]:

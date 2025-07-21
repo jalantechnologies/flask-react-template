@@ -118,3 +118,83 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.status_code == 401
             assert response.json
             assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
+
+    def test_delete_all_user_tokens_success(self) -> None:
+        account, auth_token = self._create_test_account_and_get_token()
+
+        tokens = ["token1", "token2", "token3"]
+        for i, token in enumerate(tokens):
+            device_type = DeviceType.ANDROID if i % 2 == 0 else DeviceType.IOS
+            NotificationService.upsert_user_fcm_token(
+                params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type=device_type)
+            )
+
+        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens) == 3
+
+        with app.test_client() as client:
+            response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token}"})
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("success") is True
+            assert response.json.get("deleted_count") == 3
+
+        user_tokens_after = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens_after) == 0
+
+    def test_delete_tokens_no_existing_tokens(self) -> None:
+        account, auth_token = self._create_test_account_and_get_token()
+
+        with app.test_client() as client:
+            response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token}"})
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("success") is False
+            assert response.json.get("deleted_count") == 0
+
+    def test_delete_tokens_without_auth(self) -> None:
+        with app.test_client() as client:
+            response = client.delete(DEVICE_TOKEN_URL, headers=HEADERS)
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
+
+    def test_delete_tokens_with_invalid_token(self) -> None:
+        with app.test_client() as client:
+            response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": "Bearer invalid_token"})
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_INVALID
+
+    def test_delete_tokens_doesnt_affect_other_users(self) -> None:
+        account1, auth_token1 = self._create_test_account_and_get_token("_1")
+        account2, auth_token2 = self._create_test_account_and_get_token("_2")
+
+        NotificationService.upsert_user_fcm_token(
+            params=RegisterDeviceTokenParams(user_id=account1.id, token="user1_token", device_type=DeviceType.ANDROID)
+        )
+        NotificationService.upsert_user_fcm_token(
+            params=RegisterDeviceTokenParams(user_id=account2.id, token="user2_token", device_type=DeviceType.IOS)
+        )
+
+        user1_tokens = NotificationService.get_user_fcm_tokens(account1.id)
+        user2_tokens = NotificationService.get_user_fcm_tokens(account2.id)
+        assert len(user1_tokens) == 1
+        assert len(user2_tokens) == 1
+
+        with app.test_client() as client:
+            response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token1}"})
+
+            assert response.status_code == 200
+            assert response.json.get("success") is True
+            assert response.json.get("deleted_count") == 1
+
+        user1_tokens_after = NotificationService.get_user_fcm_tokens(account1.id)
+        user2_tokens_after = NotificationService.get_user_fcm_tokens(account2.id)
+        assert len(user1_tokens_after) == 0
+        assert len(user2_tokens_after) == 1
+        assert "user2_token" in user2_tokens_after

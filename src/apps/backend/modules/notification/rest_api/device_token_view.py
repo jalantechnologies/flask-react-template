@@ -13,6 +13,13 @@ from modules.notification.types import DeviceType, RegisterDeviceTokenParams, Va
 
 class DeviceTokenView(MethodView):
     @access_auth_middleware
+    def delete(self) -> ResponseReturnValue:
+        account_id = cast(str, getattr(request, "account_id", None))
+
+        deleted_count = NotificationService.delete_user_fcm_tokens_by_user_id(account_id)
+        return jsonify({"success": deleted_count > 0, "deleted_count": deleted_count}), 200
+
+    @access_auth_middleware
     def post(self) -> ResponseReturnValue:
         account_id = cast(str, getattr(request, "account_id", None))
         request_data = request.get_json()

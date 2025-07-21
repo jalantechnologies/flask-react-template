@@ -46,9 +46,9 @@ class DeviceTokenWriter:
         return DeviceTokenUtil.convert_device_token_bson_to_device_token(updated_token)
 
     @staticmethod
-    def delete_user_fcm_token(token: str) -> bool:
-        result = DeviceTokenRepository.collection().delete_one({"token": token})
-        return int(result.deleted_count) > 0
+    def delete_user_fcm_tokens_by_user_id(user_id: str) -> int:
+        result = DeviceTokenRepository.collection().delete_many({"user_id": user_id})
+        return int(result.deleted_count)
 
     @staticmethod
     def upsert_user_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:

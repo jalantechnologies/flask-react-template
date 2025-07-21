@@ -85,31 +85,7 @@ class TestDeviceTokenService(BaseTestNotification):
         assert "fcm_token_user1" not in user2_tokens
         assert "fcm_token_user2" not in user1_tokens
 
-    def test_remove_device_token_success(self) -> None:
-        account = self._create_test_account()
-
-        NotificationService.upsert_user_fcm_token(
-            params=RegisterDeviceTokenParams(
-                user_id=account.id, token="fcm_token_to_remove", device_type=DeviceType.ANDROID
-            )
-        )
-
-        user_tokens_before = NotificationService.get_user_fcm_tokens(account.id)
-        assert "fcm_token_to_remove" in user_tokens_before
-
-        result = NotificationService.delete_user_fcm_token("fcm_token_to_remove")
-
-        assert result is True
-
-        user_tokens_after = NotificationService.get_user_fcm_tokens(account.id)
-        assert "fcm_token_to_remove" not in user_tokens_after
-
-    def test_remove_device_token_not_found(self) -> None:
-        result = NotificationService.delete_user_fcm_token("non_existent_token")
-
-        assert result is False
-
-    def test_remove_device_token_doesnt_affect_other_tokens(self) -> None:
+    def test_delete_user_fcm_tokens_by_user_id_success(self) -> None:
         account = self._create_test_account()
 
         tokens_to_create = ["fcm_token_1", "fcm_token_2", "fcm_token_3"]
@@ -119,14 +95,48 @@ class TestDeviceTokenService(BaseTestNotification):
                 params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type=device_type)
             )
 
-        result = NotificationService.delete_user_fcm_token("fcm_token_2")
-        assert result is True
+        user_tokens_before = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens_before) == 3
 
-        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
-        assert len(user_tokens) == 2
-        assert "fcm_token_1" in user_tokens
-        assert "fcm_token_3" in user_tokens
-        assert "fcm_token_2" not in user_tokens
+        deleted_count = NotificationService.delete_user_fcm_tokens_by_user_id(account.id)
+
+        assert deleted_count == 3
+
+        user_tokens_after = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens_after) == 0
+
+    def test_delete_user_fcm_tokens_by_user_id_no_tokens(self) -> None:
+        account = self._create_test_account()
+
+        deleted_count = NotificationService.delete_user_fcm_tokens_by_user_id(account.id)
+
+        assert deleted_count == 0
+
+    def test_delete_user_fcm_tokens_by_user_id_doesnt_affect_other_users(self) -> None:
+        account1 = self._create_test_account("_1")
+        account2 = self._create_test_account("_2")
+
+        NotificationService.upsert_user_fcm_token(
+            params=RegisterDeviceTokenParams(user_id=account1.id, token="user1_token", device_type=DeviceType.ANDROID)
+        )
+
+        NotificationService.upsert_user_fcm_token(
+            params=RegisterDeviceTokenParams(user_id=account2.id, token="user2_token", device_type=DeviceType.IOS)
+        )
+
+        user1_tokens_before = NotificationService.get_user_fcm_tokens(account1.id)
+        user2_tokens_before = NotificationService.get_user_fcm_tokens(account2.id)
+        assert len(user1_tokens_before) == 1
+        assert len(user2_tokens_before) == 1
+
+        deleted_count = NotificationService.delete_user_fcm_tokens_by_user_id(account1.id)
+        assert deleted_count == 1
+
+        user1_tokens_after = NotificationService.get_user_fcm_tokens(account1.id)
+        user2_tokens_after = NotificationService.get_user_fcm_tokens(account2.id)
+        assert len(user1_tokens_after) == 0
+        assert len(user2_tokens_after) == 1
+        assert "user2_token" in user2_tokens_after
 
     def test_get_user_fcm_tokens_nonexistent_user(self) -> None:
         fake_user_id = "661e42ec98423703a299a899"
