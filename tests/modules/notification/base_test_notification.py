@@ -1,9 +1,9 @@
 import unittest
 from typing import Callable
 
+from modules.logger.logger_manager import LoggerManager
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
 from modules.notification.rest_api.notification_rest_api_server import NotificationRestApiServer
-from modules.logger.logger_manager import LoggerManager
 
 
 class BaseTestNotification(unittest.TestCase):

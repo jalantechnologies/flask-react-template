@@ -1,4 +1,3 @@
-import uuid
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.notification.notification_service import NotificationService
@@ -7,137 +6,198 @@ from tests.modules.notification.base_test_notification import BaseTestNotificati
 
 
 class TestDeviceTokenService(BaseTestNotification):
-    def test_upsert_device_token_new(self) -> None:
-        # Create an account
-        unique_username = f"service-new-{uuid.uuid4()}@example.com"
-        account = AccountService.create_account_by_username_and_password(
+    def _create_test_account(self):
+        """Helper method to create a test account"""
+        return AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username=unique_username
+                first_name="Test", last_name="User", password="password", username="testuser@example.com"
             )
         )
 
-        # Create a new device token
-        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-123", device_type="android")
+    def test_upsert_device_token_create_new(self) -> None:
+        """Test creating a new device token"""
+        account = self._create_test_account()
 
-        device_token = NotificationService.upsert_device_token(params=token_params)
+        params = RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_123", device_type="android")
 
-        self.assertEqual(device_token.token, "fcm-token-123")
-        self.assertEqual(device_token.device_type, "android")
-        self.assertEqual(device_token.user_id, account.id)
+        device_token = NotificationService.upsert_device_token(params=params)
 
-        # Verify that the token is retrievable
-        tokens = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0], "fcm-token-123")
+        assert device_token.token == "fcm_token_123"
+        assert device_token.user_id == account.id
+        assert device_token.device_type == "android"
+        assert device_token.id is not None
+        assert device_token.created_at is not None
+        assert device_token.updated_at is not None
 
-    def test_upsert_device_token_update(self) -> None:
-        # Create an account
-        unique_username1 = f"service-update1-{uuid.uuid4()}@example.com"
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username=unique_username1
-            )
-        )
-
-        # Create a device token
-        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-update", device_type="android")
-
-        device_token = NotificationService.upsert_device_token(params=token_params)
-
-        # Update the device token with a new user and device type
-        unique_username2 = f"service-update2-{uuid.uuid4()}@example.com"
+    def test_upsert_device_token_update_existing(self) -> None:
+        """Test updating an existing device token"""
+        account1 = self._create_test_account()
         account2 = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name2", last_name="last_name2", password="password2", username=unique_username2
+                first_name="Test2", last_name="User2", password="password", username="testuser2@example.com"
             )
         )
 
-        updated_token_params = RegisterDeviceTokenParams(
-            user_id=account2.id, token="fcm-token-update", device_type="ios"
+        # Create initial token for account1
+        params1 = RegisterDeviceTokenParams(user_id=account1.id, token="fcm_token_123", device_type="android")
+        device_token1 = NotificationService.upsert_device_token(params=params1)
+
+        # Update same token for account2
+        params2 = RegisterDeviceTokenParams(
+            user_id=account2.id, token="fcm_token_123", device_type="ios"  # Same token  # Different device type
         )
+        device_token2 = NotificationService.upsert_device_token(params=params2)
 
-        updated_device_token = NotificationService.upsert_device_token(params=updated_token_params)
+        # Should be the same record (same ID) but updated
+        assert device_token2.id == device_token1.id
+        assert device_token2.token == "fcm_token_123"
+        assert device_token2.user_id == account2.id  # Updated to account2
+        assert device_token2.device_type == "ios"  # Updated device type
+        assert device_token2.updated_at >= device_token1.created_at
 
-        self.assertEqual(updated_device_token.token, "fcm-token-update")
-        self.assertEqual(updated_device_token.device_type, "ios")
-        self.assertEqual(updated_device_token.user_id, account2.id)
+    def test_get_user_fcm_tokens_multiple_tokens(self) -> None:
+        """Test getting multiple tokens for a user"""
+        account = self._create_test_account()
 
-        # Verify that the token is no longer associated with the first account
-        tokens1 = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens1), 0)
+        # Create multiple tokens for the same user
+        tokens_to_create = [("fcm_token_1", "android"), ("fcm_token_2", "ios"), ("fcm_token_3", "web")]
 
-        # Verify that the token is now associated with the second account
-        tokens2 = NotificationService.get_user_fcm_tokens(account2.id)
-        self.assertEqual(len(tokens2), 1)
-        self.assertEqual(tokens2[0], "fcm-token-update")
+        for token, device_type in tokens_to_create:
+            NotificationService.upsert_device_token(
+                params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type=device_type)
+            )
 
-    def test_remove_device_token(self) -> None:
-        # Create an account
-        unique_username = f"service-remove-{uuid.uuid4()}@example.com"
-        account = AccountService.create_account_by_username_and_password(
+        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
+
+        assert len(user_tokens) == 3
+        assert "fcm_token_1" in user_tokens
+        assert "fcm_token_2" in user_tokens
+        assert "fcm_token_3" in user_tokens
+
+    def test_get_user_fcm_tokens_no_tokens(self) -> None:
+        """Test getting tokens for user with no tokens"""
+        account = self._create_test_account()
+
+        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
+
+        assert user_tokens == []
+
+    def test_get_user_fcm_tokens_different_users(self) -> None:
+        """Test that tokens are properly isolated between users"""
+        account1 = self._create_test_account()
+        account2 = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username=unique_username
+                first_name="Test2", last_name="User2", password="password", username="testuser2@example.com"
             )
         )
 
-        # Create a device token
-        token_params = RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-remove", device_type="android")
+        # Create tokens for each user
+        NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account1.id, token="fcm_token_user1", device_type="android")
+        )
 
-        NotificationService.upsert_device_token(params=token_params)
+        NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account2.id, token="fcm_token_user2", device_type="ios")
+        )
 
-        # Verify that the token exists
-        tokens = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens), 1)
+        user1_tokens = NotificationService.get_user_fcm_tokens(account1.id)
+        user2_tokens = NotificationService.get_user_fcm_tokens(account2.id)
+
+        assert len(user1_tokens) == 1
+        assert len(user2_tokens) == 1
+        assert "fcm_token_user1" in user1_tokens
+        assert "fcm_token_user2" in user2_tokens
+        assert "fcm_token_user1" not in user2_tokens
+        assert "fcm_token_user2" not in user1_tokens
+
+    def test_remove_device_token_success(self) -> None:
+        """Test successfully removing a device token"""
+        account = self._create_test_account()
+
+        # Create a token
+        NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_to_remove", device_type="android")
+        )
+
+        # Verify token exists
+        user_tokens_before = NotificationService.get_user_fcm_tokens(account.id)
+        assert "fcm_token_to_remove" in user_tokens_before
 
         # Remove the token
-        result = NotificationService.remove_device_token("fcm-token-remove")
-        self.assertTrue(result)
+        result = NotificationService.remove_device_token("fcm_token_to_remove")
 
-        # Verify that the token is gone
-        tokens = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens), 0)
+        assert result is True
 
-    def test_remove_nonexistent_device_token(self) -> None:
-        # Try to remove a nonexistent token
-        result = NotificationService.remove_device_token("nonexistent-token")
-        self.assertFalse(result)
+        # Verify token is removed
+        user_tokens_after = NotificationService.get_user_fcm_tokens(account.id)
+        assert "fcm_token_to_remove" not in user_tokens_after
 
-    def test_get_user_fcm_tokens_multiple(self) -> None:
-        # Create an account
-        unique_username = f"service-multiple-{uuid.uuid4()}@example.com"
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username=unique_username
+    def test_remove_device_token_not_found(self) -> None:
+        """Test removing a non-existent device token"""
+        result = NotificationService.remove_device_token("non_existent_token")
+
+        assert result is False
+
+    def test_remove_device_token_doesnt_affect_other_tokens(self) -> None:
+        """Test that removing one token doesn't affect other tokens"""
+        account = self._create_test_account()
+
+        # Create multiple tokens
+        tokens_to_create = ["fcm_token_1", "fcm_token_2", "fcm_token_3"]
+        for token in tokens_to_create:
+            NotificationService.upsert_device_token(
+                params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type="android")
             )
+
+        # Remove one token
+        result = NotificationService.remove_device_token("fcm_token_2")
+        assert result is True
+
+        # Verify other tokens still exist
+        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens) == 2
+        assert "fcm_token_1" in user_tokens
+        assert "fcm_token_3" in user_tokens
+        assert "fcm_token_2" not in user_tokens
+
+    def test_get_user_fcm_tokens_nonexistent_user(self) -> None:
+        """Test getting tokens for a non-existent user"""
+        fake_user_id = "661e42ec98423703a299a899"
+
+        user_tokens = NotificationService.get_user_fcm_tokens(fake_user_id)
+
+        assert user_tokens == []
+
+    def test_upsert_device_token_same_user_multiple_devices(self) -> None:
+        """Test that a user can have multiple tokens for different devices"""
+        account = self._create_test_account()
+
+        # Create tokens for different device types
+        android_token = NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_android", device_type="android")
         )
 
-        # Create multiple device tokens for the account
-        NotificationService.upsert_device_token(
-            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-1", device_type="android")
-        )
-        NotificationService.upsert_device_token(
-            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-2", device_type="ios")
-        )
-        NotificationService.upsert_device_token(
-            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm-token-3", device_type="web")
+        ios_token = NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_ios", device_type="ios")
         )
 
-        # Get the tokens
-        tokens = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens), 3)
-        self.assertIn("fcm-token-1", tokens)
-        self.assertIn("fcm-token-2", tokens)
-        self.assertIn("fcm-token-3", tokens)
-
-    def test_get_user_fcm_tokens_empty(self) -> None:
-        # Create an account
-        unique_username = f"service-empty-{uuid.uuid4()}@example.com"
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username=unique_username
-            )
+        web_token = NotificationService.upsert_device_token(
+            params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_web", device_type="web")
         )
 
-        # Get the tokens for an account with no tokens
-        tokens = NotificationService.get_user_fcm_tokens(account.id)
-        self.assertEqual(len(tokens), 0)
+        # All should be different records
+        assert android_token.id != ios_token.id
+        assert android_token.id != web_token.id
+        assert ios_token.id != web_token.id
+
+        # All should belong to the same user
+        assert android_token.user_id == account.id
+        assert ios_token.user_id == account.id
+        assert web_token.user_id == account.id
+
+        # User should have all tokens
+        user_tokens = NotificationService.get_user_fcm_tokens(account.id)
+        assert len(user_tokens) == 3
+        assert "fcm_token_android" in user_tokens
+        assert "fcm_token_ios" in user_tokens
+        assert "fcm_token_web" in user_tokens
