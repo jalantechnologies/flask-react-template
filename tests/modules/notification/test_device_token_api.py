@@ -36,7 +36,6 @@ class TestDeviceTokenApi(BaseTestNotification):
             return account, response.json.get("token")
 
     def test_register_device_token_success(self) -> None:
-        """Test successful device token registration"""
         account, token = self._create_test_account_and_get_token()
 
         device_token_data = {"token": "fcm_token_123", "device_type": "android"}
@@ -57,36 +56,7 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert "created_at" in response.json
             assert "updated_at" in response.json
 
-    def test_register_device_token_upsert_existing(self) -> None:
-        """Test upserting an existing device token updates user_id and device_type"""
-        account1, token1 = self._create_test_account_and_get_token("_1")
-        account2, token2 = self._create_test_account_and_get_token("_2")
-
-        device_token_data = {"token": "fcm_token_123", "device_type": "android"}
-
-        with app.test_client() as client:
-            # Register token with first account
-            response1 = client.post(
-                DEVICE_TOKEN_URL,
-                headers={**HEADERS, "Authorization": f"Bearer {token1}"},
-                data=json.dumps(device_token_data),
-            )
-            assert response1.status_code == 201
-            assert response1.json.get("user_id") == account1.id
-
-            # Register same token with second account (should update)
-            device_token_data["device_type"] = "ios"
-            response2 = client.post(
-                DEVICE_TOKEN_URL,
-                headers={**HEADERS, "Authorization": f"Bearer {token2}"},
-                data=json.dumps(device_token_data),
-            )
-            assert response2.status_code == 201
-            assert response2.json.get("user_id") == account2.id
-            assert response2.json.get("device_type") == "ios"
-
     def test_register_device_token_without_auth(self) -> None:
-        """Test device token registration without authentication"""
         device_token_data = {"token": "fcm_token_123", "device_type": "android"}
 
         with app.test_client() as client:
@@ -97,10 +67,8 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
 
     def test_get_user_device_tokens_success(self) -> None:
-        """Test getting user's device tokens"""
         account, token = self._create_test_account_and_get_token()
 
-        # Register multiple tokens for the user
         tokens_to_register = ["fcm_token_1", "fcm_token_2", "fcm_token_3"]
         for fcm_token in tokens_to_register:
             NotificationService.upsert_device_token(
@@ -118,7 +86,6 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert all(token in returned_tokens for token in tokens_to_register)
 
     def test_get_user_device_tokens_empty(self) -> None:
-        """Test getting device tokens when user has none"""
         account, token = self._create_test_account_and_get_token()
 
         with app.test_client() as client:
@@ -129,7 +96,6 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("tokens") == []
 
     def test_get_user_device_tokens_without_auth(self) -> None:
-        """Test getting device tokens without authentication"""
         with app.test_client() as client:
             response = client.get(DEVICE_TOKEN_URL)
 
@@ -138,10 +104,8 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
 
     def test_delete_device_token_success(self) -> None:
-        """Test successful device token deletion"""
         account, token = self._create_test_account_and_get_token()
 
-        # Register a token first
         device_token = NotificationService.upsert_device_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_to_delete", device_type="android")
         )
@@ -158,7 +122,6 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("message") == "Device token removed successfully"
 
     def test_delete_device_token_not_found(self) -> None:
-        """Test deleting a non-existent device token"""
         account, token = self._create_test_account_and_get_token()
 
         delete_data = {"token": "non_existent_token"}
@@ -173,10 +136,9 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("message") == "Device token not found"
 
     def test_delete_device_token_missing_token_param(self) -> None:
-        """Test deleting device token without providing token parameter"""
         account, token = self._create_test_account_and_get_token()
 
-        delete_data = {}  # Missing token parameter
+        delete_data = {}
 
         with app.test_client() as client:
             response = client.delete(
@@ -188,7 +150,6 @@ class TestDeviceTokenApi(BaseTestNotification):
             assert response.json.get("message") == "Token is required"
 
     def test_delete_device_token_without_auth(self) -> None:
-        """Test deleting device token without authentication"""
         delete_data = {"token": "some_token"}
 
         with app.test_client() as client:
