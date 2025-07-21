@@ -1,4 +1,3 @@
-from datetime import datetime
 from pymongo import ReturnDocument
 
 from modules.notification.internals.device_token_util import DeviceTokenUtil
@@ -12,25 +11,19 @@ class DeviceTokenWriter:
     @staticmethod
     def _create_new_token(params: RegisterDeviceTokenParams) -> DeviceToken:
         device_token_model = DeviceTokenModel(
-            token=params.token,
-            user_id=params.user_id,
-            device_type=params.device_type,
-            id=None,
+            token=params.token, user_id=params.user_id, device_type=params.device_type, id=None
         )
         result = DeviceTokenRepository.collection().insert_one(device_token_model.to_bson())
         inserted_token = DeviceTokenRepository.collection().find_one({"_id": result.inserted_id})
         return DeviceTokenUtil.convert_device_token_bson_to_device_token(inserted_token)
 
     @staticmethod
-    def _update_existing_token(params: RegisterDeviceTokenParams, now: datetime) -> DeviceToken:
+    def _update_existing_token(params: RegisterDeviceTokenParams) -> DeviceToken:
         updated_token = DeviceTokenRepository.collection().find_one_and_update(
             {"token": params.token},
             {
-                "$set": {
-                    "user_id": params.user_id,
-                    "device_type": params.device_type,
-                    "updated_at": now,
-                }
+                "$set": {"user_id": params.user_id, "device_type": params.device_type},
+                "$currentDate": {"updated_at": True},
             },
             return_document=ReturnDocument.AFTER,
         )
@@ -43,11 +36,9 @@ class DeviceTokenWriter:
 
     @staticmethod
     def upsert_device_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
-        now = DeviceTokenUtil.get_current_timestamp()
-
         existing_token = DeviceTokenRepository.collection().find_one({"token": params.token})
 
         if existing_token:
-            return DeviceTokenWriter._update_existing_token(params, now)
+            return DeviceTokenWriter._update_existing_token(params)
         else:
             return DeviceTokenWriter._create_new_token(params)
