@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.1
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@amaan/fix/skip-temporal-deployment-in-preview
     concurrency:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
