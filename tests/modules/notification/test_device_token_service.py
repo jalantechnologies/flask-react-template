@@ -24,7 +24,7 @@ class TestDeviceTokenService(BaseTestNotification):
 
         params = RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_123", device_type="android")
 
-        device_token = NotificationService.upsert_device_token(params=params)
+        device_token = NotificationService.upsert_user_fcm_token(params=params)
 
         assert device_token.token == "fcm_token_123"
         assert device_token.user_id == account.id
@@ -39,7 +39,7 @@ class TestDeviceTokenService(BaseTestNotification):
         tokens_to_create = [("fcm_token_1", "android"), ("fcm_token_2", "ios"), ("fcm_token_3", "web")]
 
         for token, device_type in tokens_to_create:
-            NotificationService.upsert_device_token(
+            NotificationService.upsert_user_fcm_token(
                 params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type=device_type)
             )
 
@@ -61,11 +61,11 @@ class TestDeviceTokenService(BaseTestNotification):
         account1 = self._create_test_account("_1")
         account2 = self._create_test_account("_2")
 
-        NotificationService.upsert_device_token(
+        NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account1.id, token="fcm_token_user1", device_type="android")
         )
 
-        NotificationService.upsert_device_token(
+        NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account2.id, token="fcm_token_user2", device_type="ios")
         )
 
@@ -82,14 +82,14 @@ class TestDeviceTokenService(BaseTestNotification):
     def test_remove_device_token_success(self) -> None:
         account = self._create_test_account()
 
-        NotificationService.upsert_device_token(
+        NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_to_remove", device_type="android")
         )
 
         user_tokens_before = NotificationService.get_user_fcm_tokens(account.id)
         assert "fcm_token_to_remove" in user_tokens_before
 
-        result = NotificationService.remove_device_token("fcm_token_to_remove")
+        result = NotificationService.delete_user_fcm_token("fcm_token_to_remove")
 
         assert result is True
 
@@ -97,7 +97,7 @@ class TestDeviceTokenService(BaseTestNotification):
         assert "fcm_token_to_remove" not in user_tokens_after
 
     def test_remove_device_token_not_found(self) -> None:
-        result = NotificationService.remove_device_token("non_existent_token")
+        result = NotificationService.delete_user_fcm_token("non_existent_token")
 
         assert result is False
 
@@ -106,11 +106,11 @@ class TestDeviceTokenService(BaseTestNotification):
 
         tokens_to_create = ["fcm_token_1", "fcm_token_2", "fcm_token_3"]
         for token in tokens_to_create:
-            NotificationService.upsert_device_token(
+            NotificationService.upsert_user_fcm_token(
                 params=RegisterDeviceTokenParams(user_id=account.id, token=token, device_type="android")
             )
 
-        result = NotificationService.remove_device_token("fcm_token_2")
+        result = NotificationService.delete_user_fcm_token("fcm_token_2")
         assert result is True
 
         user_tokens = NotificationService.get_user_fcm_tokens(account.id)
@@ -129,15 +129,15 @@ class TestDeviceTokenService(BaseTestNotification):
     def test_upsert_device_token_same_user_multiple_devices(self) -> None:
         account = self._create_test_account()
 
-        android_token = NotificationService.upsert_device_token(
+        android_token = NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_android", device_type="android")
         )
 
-        ios_token = NotificationService.upsert_device_token(
+        ios_token = NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_ios", device_type="ios")
         )
 
-        web_token = NotificationService.upsert_device_token(
+        web_token = NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_web", device_type="web")
         )
 

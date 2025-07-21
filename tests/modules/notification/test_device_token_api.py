@@ -71,7 +71,7 @@ class TestDeviceTokenApi(BaseTestNotification):
 
         tokens_to_register = ["fcm_token_1", "fcm_token_2", "fcm_token_3"]
         for fcm_token in tokens_to_register:
-            NotificationService.upsert_device_token(
+            NotificationService.upsert_user_fcm_token(
                 params=RegisterDeviceTokenParams(user_id=account.id, token=fcm_token, device_type="android")
             )
 
@@ -106,7 +106,7 @@ class TestDeviceTokenApi(BaseTestNotification):
     def test_delete_device_token_success(self) -> None:
         account, token = self._create_test_account_and_get_token()
 
-        device_token = NotificationService.upsert_device_token(
+        device_token = NotificationService.upsert_user_fcm_token(
             params=RegisterDeviceTokenParams(user_id=account.id, token="fcm_token_to_delete", device_type="android")
         )
 
