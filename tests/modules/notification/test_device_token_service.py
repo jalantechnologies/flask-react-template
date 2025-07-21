@@ -1,3 +1,5 @@
+import uuid
+
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.notification.notification_service import NotificationService
@@ -6,11 +8,14 @@ from tests.modules.notification.base_test_notification import BaseTestNotificati
 
 
 class TestDeviceTokenService(BaseTestNotification):
-    def _create_test_account(self):
-        """Helper method to create a test account"""
+    def _create_test_account(self, username_suffix=""):
+
+        unique_id = str(uuid.uuid4())[:8]
+        username = f"testuser{username_suffix}_{unique_id}@example.com"
+
         return AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="Test", last_name="User", password="password", username="testuser@example.com"
+                first_name="Test", last_name="User", password="password", username=username
             )
         )
 
@@ -31,12 +36,8 @@ class TestDeviceTokenService(BaseTestNotification):
 
     def test_upsert_device_token_update_existing(self) -> None:
         """Test updating an existing device token"""
-        account1 = self._create_test_account()
-        account2 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="Test2", last_name="User2", password="password", username="testuser2@example.com"
-            )
-        )
+        account1 = self._create_test_account("_1")
+        account2 = self._create_test_account("_2")
 
         # Create initial token for account1
         params1 = RegisterDeviceTokenParams(user_id=account1.id, token="fcm_token_123", device_type="android")
@@ -84,12 +85,8 @@ class TestDeviceTokenService(BaseTestNotification):
 
     def test_get_user_fcm_tokens_different_users(self) -> None:
         """Test that tokens are properly isolated between users"""
-        account1 = self._create_test_account()
-        account2 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="Test2", last_name="User2", password="password", username="testuser2@example.com"
-            )
-        )
+        account1 = self._create_test_account("_1")
+        account2 = self._create_test_account("_2")
 
         # Create tokens for each user
         NotificationService.upsert_device_token(

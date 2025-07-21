@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from server import app
 
@@ -15,11 +16,14 @@ HEADERS = {"Content-Type": "application/json"}
 
 
 class TestDeviceTokenApi(BaseTestNotification):
-    def _create_test_account_and_get_token(self):
-        """Helper method to create test account and get access token"""
+    def _create_test_account_and_get_token(self, username_suffix=""):
+
+        unique_id = str(uuid.uuid4())[:8]
+        username = f"testuser{username_suffix}_{unique_id}@example.com"
+
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
-                first_name="Test", last_name="User", password="password", username="testuser@example.com"
+                first_name="Test", last_name="User", password="password", username=username
             )
         )
 
@@ -55,21 +59,8 @@ class TestDeviceTokenApi(BaseTestNotification):
 
     def test_register_device_token_upsert_existing(self) -> None:
         """Test upserting an existing device token updates user_id and device_type"""
-        account1, token1 = self._create_test_account_and_get_token()
-        account2 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="Test2", last_name="User2", password="password", username="testuser2@example.com"
-            )
-        )
-
-        with app.test_client() as client:
-            # Get token for second account
-            response = client.post(
-                ACCESS_TOKEN_URL,
-                headers=HEADERS,
-                data=json.dumps({"username": account2.username, "password": "password"}),
-            )
-            token2 = response.json.get("token")
+        account1, token1 = self._create_test_account_and_get_token("_1")
+        account2, token2 = self._create_test_account_and_get_token("_2")
 
         device_token_data = {"token": "fcm_token_123", "device_type": "android"}
 
