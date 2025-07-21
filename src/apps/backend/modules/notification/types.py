@@ -1,7 +1,18 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
+
+
+@dataclass(frozen=True)
+class DeviceToken:
+    id: str
+    token: str
+    user_id: str
+    device_type: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
@@ -28,6 +39,13 @@ class AccountNotificationPreferences:
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True
+
+
+@dataclass(frozen=True)
+class RegisterDeviceTokenParams:
+    user_id: str
+    token: str
+    device_type: str
 
 
 @dataclass(frozen=True)

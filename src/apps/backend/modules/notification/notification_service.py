@@ -1,8 +1,14 @@
+from typing import List
+
 from modules.notification.email_service import EmailService
+from modules.notification.internals.device_token_reader import DeviceTokenReader
+from modules.notification.internals.device_token_writer import DeviceTokenWriter
 from modules.notification.sms_service import SMSService
 from modules.notification.internals.account_notification_preferences_writer import AccountNotificationPreferenceWriter
 from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.types import (
+    DeviceToken,
+    RegisterDeviceTokenParams,
     SendEmailParams,
     SendSMSParams,
     CreateOrUpdateAccountNotificationPreferencesParams,
@@ -11,6 +17,17 @@ from modules.notification.types import (
 
 
 class NotificationService:
+    @staticmethod
+    def upsert_user_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
+        return DeviceTokenWriter.upsert_user_fcm_token(params=params)
+
+    @staticmethod
+    def delete_user_fcm_token(token: str) -> bool:
+        return DeviceTokenWriter.delete_user_fcm_token(token)
+
+    @staticmethod
+    def get_user_fcm_tokens(user_id: str) -> List[str]:
+        return DeviceTokenReader.get_user_fcm_tokens(user_id)
 
     @staticmethod
     def send_email_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendEmailParams) -> None:
