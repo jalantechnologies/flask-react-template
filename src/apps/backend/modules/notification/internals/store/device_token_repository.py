@@ -9,7 +9,7 @@ from modules.notification.types import DeviceType
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["token", "user_id", "device_type"],
+        "required": ["token", "account_id", "device_type"],
         "properties": {
             "device_type": {
                 "bsonType": "string",
@@ -17,7 +17,7 @@ DEVICE_TOKEN_VALIDATION_SCHEMA = {
                 "description": "must be either 'android' or 'ios'",
             },
             "token": {"bsonType": "string"},
-            "user_id": {"bsonType": "string"},
+            "account_id": {"bsonType": "string"},
             "created_at": {"bsonType": "date"},
             "updated_at": {"bsonType": "date"},
         },
@@ -31,7 +31,7 @@ class DeviceTokenRepository(ApplicationRepository):
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index("token", unique=True)
-        collection.create_index("user_id")
+        collection.create_index("account_id")
 
         add_validation_command = {
             "collMod": cls.collection_name,

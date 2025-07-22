@@ -16,7 +16,7 @@ class DeviceTokenView(MethodView):
     def delete(self) -> ResponseReturnValue:
         account_id = cast(str, getattr(request, "account_id", None))
 
-        deleted_count = NotificationService.delete_user_fcm_tokens_by_user_id(account_id)
+        deleted_count = NotificationService.delete_account_fcm_tokens_by_account_id(account_id)
         return jsonify({"success": deleted_count > 0, "deleted_count": deleted_count}), 200
 
     @access_auth_middleware
@@ -35,10 +35,10 @@ class DeviceTokenView(MethodView):
             )
 
         token_params = RegisterDeviceTokenParams(
-            user_id=account_id, token=request_data.get("token"), device_type=device_type
+            account_id=account_id, token=request_data.get("token"), device_type=device_type
         )
 
-        device_token = NotificationService.upsert_user_fcm_token(params=token_params)
+        device_token = NotificationService.upsert_account_fcm_token(params=token_params)
 
         device_token_dict = asdict(device_token)
         device_token_dict["device_type"] = device_token.device_type.value

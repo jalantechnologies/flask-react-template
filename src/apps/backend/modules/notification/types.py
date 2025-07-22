@@ -15,7 +15,7 @@ class DeviceType(str, Enum):
 class DeviceToken:
     id: str
     token: str
-    user_id: str
+    account_id: str
     device_type: DeviceType
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -49,7 +49,7 @@ class AccountNotificationPreferences:
 
 @dataclass(frozen=True)
 class RegisterDeviceTokenParams:
-    user_id: str
+    account_id: str
     token: str
     device_type: DeviceType
 

@@ -17,24 +17,24 @@ class DeviceTokenWriter:
             raise InvalidDeviceTypeError(device_type_str, list(DeviceType))
 
     @staticmethod
-    def _create_user_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
+    def _create_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
         DeviceTokenWriter._validate_device_type(params.device_type)
 
         device_token_model = DeviceTokenModel(
-            token=params.token, user_id=params.user_id, device_type=params.device_type, id=None
+            token=params.token, account_id=params.account_id, device_type=params.device_type, id=None
         )
         result = DeviceTokenRepository.collection().insert_one(device_token_model.to_bson())
         inserted_token = DeviceTokenRepository.collection().find_one({"_id": result.inserted_id})
         return DeviceTokenUtil.convert_device_token_bson_to_device_token(inserted_token)
 
     @staticmethod
-    def _update_user_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
+    def _update_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
         DeviceTokenWriter._validate_device_type(params.device_type)
 
         updated_token = DeviceTokenRepository.collection().find_one_and_update(
             {"token": params.token},
             {
-                "$set": {"user_id": params.user_id, "device_type": params.device_type.value},
+                "$set": {"account_id": params.account_id, "device_type": params.device_type.value},
                 "$currentDate": {"updated_at": True},
             },
             return_document=ReturnDocument.AFTER,
@@ -42,15 +42,15 @@ class DeviceTokenWriter:
         return DeviceTokenUtil.convert_device_token_bson_to_device_token(updated_token)
 
     @staticmethod
-    def delete_user_fcm_tokens_by_user_id(user_id: str) -> int:
-        result = DeviceTokenRepository.collection().delete_many({"user_id": user_id})
+    def delete_account_fcm_tokens_by_account_id(account_id: str) -> int:
+        result = DeviceTokenRepository.collection().delete_many({"account_id": account_id})
         return int(result.deleted_count)
 
     @staticmethod
-    def upsert_user_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
+    def upsert_account_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
         existing_token = DeviceTokenRepository.collection().find_one({"token": params.token})
 
         if existing_token:
-            return DeviceTokenWriter._update_user_fcm_token(params)
+            return DeviceTokenWriter._update_account_fcm_token(params)
         else:
-            return DeviceTokenWriter._create_user_fcm_token(params)
+            return DeviceTokenWriter._create_account_fcm_token(params)

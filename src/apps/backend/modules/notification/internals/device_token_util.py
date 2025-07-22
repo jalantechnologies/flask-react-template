@@ -13,7 +13,7 @@ class DeviceTokenUtil:
         return DeviceToken(
             id=str(validated_device_token_data.id),
             token=validated_device_token_data.token,
-            user_id=validated_device_token_data.user_id,
+            account_id=validated_device_token_data.account_id,
             device_type=validated_device_token_data.device_type,
             created_at=validated_device_token_data.created_at,
             updated_at=validated_device_token_data.updated_at,

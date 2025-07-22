@@ -18,16 +18,16 @@ from modules.notification.types import (
 
 class NotificationService:
     @staticmethod
-    def upsert_user_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
-        return DeviceTokenWriter.upsert_user_fcm_token(params=params)
+    def upsert_account_fcm_token(*, params: RegisterDeviceTokenParams) -> DeviceToken:
+        return DeviceTokenWriter.upsert_account_fcm_token(params=params)
 
     @staticmethod
-    def delete_user_fcm_tokens_by_user_id(user_id: str) -> int:
-        return DeviceTokenWriter.delete_user_fcm_tokens_by_user_id(user_id)
+    def delete_account_fcm_tokens_by_account_id(account_id: str) -> int:
+        return DeviceTokenWriter.delete_account_fcm_tokens_by_account_id(account_id)
 
     @staticmethod
-    def get_user_fcm_tokens(user_id: str) -> List[str]:
-        return DeviceTokenReader.get_user_fcm_tokens(user_id)
+    def get_account_fcm_tokens(account_id: str) -> List[str]:
+        return DeviceTokenReader.get_account_fcm_tokens(account_id)
 
     @staticmethod
     def send_email_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendEmailParams) -> None:

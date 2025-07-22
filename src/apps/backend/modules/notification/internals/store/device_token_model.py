@@ -13,7 +13,7 @@ class DeviceTokenModel(BaseModel):
     device_type: DeviceType
     id: Optional[ObjectId | str]
     token: str
-    user_id: str
+    account_id: str
     created_at: Optional[datetime] = datetime.now()
     updated_at: Optional[datetime] = datetime.now()
 
@@ -29,7 +29,7 @@ class DeviceTokenModel(BaseModel):
             device_type=device_type,
             id=bson_data.get("_id"),
             token=bson_data.get("token", ""),
-            user_id=bson_data.get("user_id", ""),
+            account_id=bson_data.get("account_id", ""),
             created_at=bson_data.get("created_at"),
             updated_at=bson_data.get("updated_at"),
         )
