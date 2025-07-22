@@ -26,7 +26,7 @@ class NotificationService:
         return DeviceTokenWriter.delete_account_fcm_tokens_by_account_id(account_id)
 
     @staticmethod
-    def get_account_fcm_tokens(account_id: str) -> List[str]:
+    def get_account_fcm_tokens(account_id: str) -> List[DeviceToken]:
         return DeviceTokenReader.get_account_fcm_tokens(account_id)
 
     @staticmethod

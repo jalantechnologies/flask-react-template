@@ -20,9 +20,9 @@ class DeviceTokenUtil:
         )
 
     @staticmethod
-    def extract_tokens_from_cursor(cursor: Cursor) -> List[str]:
-        tokens: List[str] = []
+    def convert_cursor_to_device_token_list(cursor: Cursor) -> List[DeviceToken]:
+        device_tokens: List[DeviceToken] = []
         for doc in cursor:
-            if doc.get("token"):
-                tokens.append(doc["token"])
-        return tokens
+            device_token = DeviceTokenUtil.convert_device_token_bson_to_device_token(doc)
+            device_tokens.append(device_token)
+        return device_tokens
