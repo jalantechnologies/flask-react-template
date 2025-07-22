@@ -13,7 +13,6 @@ from modules.account.types import (
     InitiateAccountDeletionParams,
     AccountDeletionResult,
 )
-from modules.account.errors import AccountAlreadyDeletedError
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, VerifyOTPParams, OTPStatus
 from modules.authentication.errors import OTPIncorrectError

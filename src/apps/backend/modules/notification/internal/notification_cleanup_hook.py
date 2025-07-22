@@ -6,7 +6,6 @@ from modules.logger.logger import Logger
 
 
 class NotificationCleanupHook(BaseAccountDeletionHook):
-    """Cleanup hook for notification-related data during account deletion"""
 
     @property
     def hook_name(self) -> str:
