@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Union
 
+from modules.account.types import PhoneNumber
+
 
 @dataclass(frozen=True)
 class AccountSearchParams:
@@ -62,12 +64,34 @@ class ResetPasswordParams:
 
 
 @dataclass(frozen=True)
+class DeleteAccountRequestParams:
+    phone_number: PhoneNumber
+    otp_code: str
+
+
+@dataclass(frozen=True)
+class InitiateAccountDeletionParams:
+    phone_number: PhoneNumber
+
+
+@dataclass(frozen=True)
+class AccountDeletionResult:
+    account_id: str
+    success: bool
+    cleanup_results: dict[str, bool]
+    message: str
+
+
+@dataclass(frozen=True)
 class AccountErrorCode:
     INVALID_CREDENTIALS: str = "ACCOUNT_ERR_03"
     NOT_FOUND: str = "ACCOUNT_ERR_02"
     USERNAME_ALREADY_EXISTS: str = "ACCOUNT_ERR_01"
     BAD_REQUEST: str = "ACCOUNT_ERR_04"
     PHONE_NUMBER_ALREADY_EXISTS: str = "ACCOUNT_ERR_05"
+    ACCOUNT_DELETION_OTP_REQUIRED: str = "ACCOUNT_ERR_06"
+    ACCOUNT_DELETION_FAILED: str = "ACCOUNT_ERR_07"
+    ACCOUNT_ALREADY_DELETED: str = "ACCOUNT_ERR_08"
 
 
 @dataclass(frozen=True)

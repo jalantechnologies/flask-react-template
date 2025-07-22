@@ -10,6 +10,7 @@ from modules.account.errors import (
     AccountWithPhoneNumberNotFoundError,
     AccountWithUserNameExistsError,
     AccountWithUsernameNotFoundError,
+    AccountAlreadyDeletedError,
 )
 from modules.account.internal.account_util import AccountUtil
 from modules.account.internal.store.account_repository import AccountRepository

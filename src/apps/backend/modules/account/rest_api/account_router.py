@@ -16,4 +16,10 @@ class AccountRouter:
             methods=["PATCH"],
         )
 
+        blueprint.add_url_rule(
+            "/accounts/delete/initiate", view_func=AccountView.initiate_account_deletion, methods=["POST"]
+        )
+
+        blueprint.add_url_rule("/accounts/delete", view_func=AccountView.delete_account, methods=["DELETE"])
+
         return blueprint
