@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from modules.application.errors import AppError
-from modules.notification.types import NotificationErrorCode, ValidationFailure
+from modules.notification.types import DeviceType, NotificationErrorCode, ValidationFailure
 
 
 class ValidationError(AppError):
@@ -16,14 +16,15 @@ class ValidationError(AppError):
         self.http_code = 400
 
 
-class InvalidDeviceTypeError(ValidationError):
-    def __init__(self, device_type: str, allowed_types: List[str]) -> None:
-        allowed_types_str = ", ".join(allowed_types)
+class InvalidDeviceTypeError(AppError):
+    def __init__(self, device_type: str, allowed_types: List[DeviceType]) -> None:
+        allowed_types_str = ", ".join([device_type.value for device_type in allowed_types])
+
         super().__init__(
-            f"Invalid device type: {device_type}. Must be one of: {allowed_types_str}",
-            [ValidationFailure(field="device_type", message=f"Must be one of: {allowed_types_str}")],
+            code=NotificationErrorCode.INVALID_DEVICE_TYPE,
+            http_status_code=400,
+            message=f"Invalid device type: {device_type}. Must be one of: {allowed_types_str}",
         )
-        self.code = NotificationErrorCode.INVALID_DEVICE_TYPE
 
 
 class AccountNotificationPreferencesNotFoundError(AppError):
