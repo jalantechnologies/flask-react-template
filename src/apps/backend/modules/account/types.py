@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from modules.account.types import PhoneNumber
-
 
 @dataclass(frozen=True)
 class AccountSearchParams:
