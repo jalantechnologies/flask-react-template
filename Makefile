@@ -23,7 +23,11 @@ run-vulture:
 	cd src/apps/backend \
 		&& pipenv run vulture
 
-
+run-engine:
+	cd src/apps/backend \
+		&& pipenv run python --version \
+		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
+		
 run-temporal-server:
 	cd src/apps/backend \
 		&& PYTHONPATH=./ pipenv run python temporal_server.py
