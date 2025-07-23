@@ -26,10 +26,16 @@ class TaskReader:
             {"account_id": params.account_id, "active": True}
         )
 
-        pagination_params = PaginationParams(
-            page=params.page if params.page else 1,
-            size=params.size if params.size else total_tasks_count if total_tasks_count > 0 else 10,
-        )
+        page = params.page if params.page else 1
+
+        if params.size:
+            size = params.size
+        elif total_tasks_count > 0:
+            size = total_tasks_count
+        else:
+            size = 10
+
+        pagination_params = PaginationParams(page=page, size=size)
 
         start_index = (pagination_params.page - 1) * pagination_params.size
 
