@@ -42,7 +42,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-                echo "Upgrading schema for DB: $1"
+                echo "Upgrading schema for DB: temporal_preview"
                 temporal-sql-tool --plugin postgres12 \
                 --ep "${POSTGRES_SEEDS}" \
                 -u "${POSTGRES_USER}" \
@@ -52,7 +52,7 @@ spec:
                 update-schema \
                 -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" ||
                 {
-                  echo "Schema upgrade failed for $1"
+                  echo "Schema upgrade failed"
                   exit 1
                 } 
           envFrom:
