@@ -63,7 +63,7 @@ class ResetPasswordParams:
 
 
 @dataclass(frozen=True)
-class DeletionResult:
+class AccountDeletionResult:
     account_id: str
     deleted_at: datetime
     success: bool

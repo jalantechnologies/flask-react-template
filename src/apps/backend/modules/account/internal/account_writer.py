@@ -14,7 +14,7 @@ from modules.account.types import (
     Account,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    DeletionResult,
+    AccountDeletionResult,
     PhoneNumber,
     UpdateAccountProfileParams,
 )
@@ -91,7 +91,7 @@ class AccountWriter:
         return AccountUtil.convert_account_bson_to_account(updated_account)
 
     @staticmethod
-    def delete_account(*, account_id: str) -> DeletionResult:
+    def delete_account(*, account_id: str) -> AccountDeletionResult:
         deletion_time = datetime.now()
         updated_account = AccountRepository.collection().find_one_and_update(
             {"_id": ObjectId(account_id), "active": True},
@@ -102,4 +102,4 @@ class AccountWriter:
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)
 
-        return DeletionResult(account_id=account_id, deleted_at=deletion_time, success=True)
+        return AccountDeletionResult(account_id=account_id, deleted_at=deletion_time, success=True)
