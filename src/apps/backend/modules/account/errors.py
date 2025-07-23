@@ -58,28 +58,10 @@ class AccountWithPhoneNumberExistsError(AppError):
         )
 
 
-class AccountDeletionOTPRequiredError(AppError):
-    def __init__(self) -> None:
-        super().__init__(
-            code=AccountErrorCode.ACCOUNT_DELETION_OTP_REQUIRED,
-            http_status_code=400,
-            message="OTP verification is required to delete your account. Please verify your phone number first.",
-        )
-
-
 class AccountDeletionFailedError(AppError):
     def __init__(self, message: str) -> None:
         super().__init__(
             code=AccountErrorCode.ACCOUNT_DELETION_FAILED,
             http_status_code=500,
             message=f"Account deletion failed: {message}",
-        )
-
-
-class AccountAlreadyDeletedError(AppError):
-    def __init__(self, phone_number: PhoneNumber) -> None:
-        super().__init__(
-            code=AccountErrorCode.ACCOUNT_ALREADY_DELETED,
-            http_status_code=410,
-            message=f"The account associated with {phone_number} has already been deleted.",
         )

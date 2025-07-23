@@ -14,8 +14,6 @@ from modules.account.types import (
     PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
-    DeleteAccountRequestParams,
-    InitiateAccountDeletionParams,
 )
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
@@ -75,6 +73,11 @@ class AccountView(MethodView):
         account_dict = asdict(account)
         return jsonify(account_dict), 200
 
+    @access_auth_middleware
+    def delete(self, id: str) -> ResponseReturnValue:
+        deletion_result = AccountService.delete_account(account_id=id)
+        return jsonify(asdict(deletion_result)), 200
+
     @staticmethod
     def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
@@ -109,45 +112,3 @@ class AccountView(MethodView):
         )
 
         return jsonify(asdict(updated_preferences)), 200
-
-    @staticmethod
-    def initiate_account_deletion() -> ResponseReturnValue:
-        request_data = request.get_json()
-
-        if not request_data or "phone_number" not in request_data:
-            raise AccountBadRequestError("Phone number is required")
-
-        try:
-            phone_number_data = request_data["phone_number"]
-            phone_number_obj = PhoneNumber(**phone_number_data)
-            params = InitiateAccountDeletionParams(phone_number=phone_number_obj)
-
-            message = AccountService.initiate_account_deletion(params=params)
-
-            return jsonify({"message": message}), 200
-
-        except Exception as e:
-            raise AccountBadRequestError(f"Failed to initiate account deletion: {str(e)}")
-
-    @staticmethod
-    def delete_account() -> ResponseReturnValue:
-        request_data = request.get_json()
-
-        if not request_data:
-            raise AccountBadRequestError("Request body is required")
-
-        if "phone_number" not in request_data or "otp_code" not in request_data:
-            raise AccountBadRequestError("Phone number and OTP code are required")
-
-        try:
-            phone_number_data = request_data["phone_number"]
-            phone_number_obj = PhoneNumber(**phone_number_data)
-
-            params = DeleteAccountRequestParams(phone_number=phone_number_obj, otp_code=request_data["otp_code"])
-
-            deletion_result = AccountService.delete_account_with_otp(params=params)
-
-            return jsonify(asdict(deletion_result)), 200 if deletion_result.success else 500
-
-        except Exception as e:
-            raise AccountBadRequestError(f"Failed to delete account: {str(e)}")

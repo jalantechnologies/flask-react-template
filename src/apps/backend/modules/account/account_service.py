@@ -9,19 +9,15 @@ from modules.account.types import (
     PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
-    DeleteAccountRequestParams,
-    InitiateAccountDeletionParams,
     AccountDeletionResult,
 )
 from modules.authentication.authentication_service import AuthenticationService
-from modules.authentication.types import CreateOTPParams, VerifyOTPParams, OTPStatus
-from modules.authentication.errors import OTPIncorrectError
+from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import (
     CreateOrUpdateAccountNotificationPreferencesParams,
     AccountNotificationPreferences,
 )
-from modules.logger.logger import Logger
 
 
 class AccountService:
@@ -90,20 +86,6 @@ class AccountService:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
 
     @staticmethod
-    def initiate_account_deletion(*, params: InitiateAccountDeletionParams) -> None:
-        account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
-        create_otp_params = CreateOTPParams(phone_number=params.phone_number)
-        AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
-
-    @staticmethod
-    def delete_account_with_otp(*, params: DeleteAccountRequestParams) -> AccountDeletionResult:
-        account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
-        verify_params = VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code)
-        otp_result = AuthenticationService.verify_otp(params=verify_params)
-
-        if otp_result.status != OTPStatus.SUCCESS:
-            Logger.warn(message=f"Invalid OTP provided for account deletion: {params.phone_number}")
-            raise OTPIncorrectError()
-
-        deletion_result = AccountWriter.delete_account(account_id=account.id)
+    def delete_account(*, account_id: str) -> AccountDeletionResult:
+        deletion_result = AccountWriter.delete_account(account_id=account_id)
         return deletion_result

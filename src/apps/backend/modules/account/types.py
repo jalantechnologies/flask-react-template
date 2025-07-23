@@ -62,17 +62,6 @@ class ResetPasswordParams:
 
 
 @dataclass(frozen=True)
-class DeleteAccountRequestParams:
-    phone_number: PhoneNumber
-    otp_code: str
-
-
-@dataclass(frozen=True)
-class InitiateAccountDeletionParams:
-    phone_number: PhoneNumber
-
-
-@dataclass(frozen=True)
 class AccountDeletionResult:
     account_id: str
     success: bool
@@ -87,9 +76,7 @@ class AccountErrorCode:
     USERNAME_ALREADY_EXISTS: str = "ACCOUNT_ERR_01"
     BAD_REQUEST: str = "ACCOUNT_ERR_04"
     PHONE_NUMBER_ALREADY_EXISTS: str = "ACCOUNT_ERR_05"
-    ACCOUNT_DELETION_OTP_REQUIRED: str = "ACCOUNT_ERR_06"
-    ACCOUNT_DELETION_FAILED: str = "ACCOUNT_ERR_07"
-    ACCOUNT_ALREADY_DELETED: str = "ACCOUNT_ERR_08"
+    ACCOUNT_DELETION_FAILED: str = "ACCOUNT_ERR_06"
 
 
 @dataclass(frozen=True)

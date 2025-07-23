@@ -9,17 +9,12 @@ class AccountRouter:
         blueprint.add_url_rule("/accounts", view_func=AccountView.as_view("account_view"))
         blueprint.add_url_rule("/accounts/<id>", view_func=AccountView.as_view("account_view_by_id"), methods=["GET"])
         blueprint.add_url_rule("/accounts/<id>", view_func=AccountView.as_view("account_update"), methods=["PATCH"])
+        blueprint.add_url_rule("/accounts/<id>", view_func=AccountView.as_view("account_delete"), methods=["DELETE"])
 
         blueprint.add_url_rule(
             "/accounts/<account_id>/notification-preferences",
             view_func=AccountView.update_account_notification_preferences,
             methods=["PATCH"],
         )
-
-        blueprint.add_url_rule(
-            "/accounts/delete/initiate", view_func=AccountView.initiate_account_deletion, methods=["POST"]
-        )
-
-        blueprint.add_url_rule("/accounts/delete", view_func=AccountView.delete_account, methods=["DELETE"])
 
         return blueprint
