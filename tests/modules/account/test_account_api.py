@@ -308,6 +308,7 @@ class TestAccountApi(BaseTestAccount):
             assert response.json.get("message") == "Account successfully deleted"
             assert response.json.get("account_id") == account.id
             assert response.json.get("success") is True
+            assert "deleted_at" in response.json
 
     def test_delete_account_not_found(self) -> None:
         account = AccountService.create_account_by_username_and_password(
@@ -382,6 +383,7 @@ class TestAccountApi(BaseTestAccount):
                 headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
             )
             assert delete_response.status_code == 200
+            assert delete_response.json.get("success") is True
 
             get_response = client.get(
                 f"{ACCOUNT_URL}/{account.id}",
@@ -406,10 +408,12 @@ class TestAccountApi(BaseTestAccount):
                 data=json.dumps({"username": account.username, "password": "password"}),
             )
 
-            client.delete(
+            delete_response = client.delete(
                 f"{ACCOUNT_URL}/{account.id}",
                 headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
             )
+            assert delete_response.status_code == 200
+            assert delete_response.json.get("success") is True
 
             login_response = client.post(
                 "http://127.0.0.1:8080/api/access-tokens",

@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import patch
 
 from server import app
@@ -190,10 +191,12 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        deleted_account = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id)
 
-        assert deleted_account.id == account.id
-        assert deleted_account.username == account.username
+        assert deletion_result.account_id == account.id
+        assert deletion_result.success is True
+        assert deletion_result.deleted_at is not None
+        assert isinstance(deletion_result.deleted_at, datetime)
 
     def test_delete_account_not_found(self) -> None:
         non_existent_account_id = "5f7b1b7b4f3b9b1b3f3b9b1b"
@@ -214,7 +217,8 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id)
+        assert deletion_result.success is True
 
         try:
             AccountService.get_account_by_username(username=account.username)
@@ -229,7 +233,8 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id)
+        assert deletion_result.success is True
 
         try:
             AccountService.get_account_by_id(params=AccountSearchByIdParams(id=account.id))
@@ -243,7 +248,8 @@ class TestAccountService(BaseTestAccount):
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
         )
 
-        AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id)
+        assert deletion_result.success is True
 
         try:
             AccountService.get_account_by_phone_number(phone_number=phone_number)
@@ -258,7 +264,8 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        AccountService.delete_account(account_id=original_account.id)
+        deletion_result = AccountService.delete_account(account_id=original_account.id)
+        assert deletion_result.success is True
 
         new_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -277,7 +284,8 @@ class TestAccountService(BaseTestAccount):
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
         )
 
-        AccountService.delete_account(account_id=original_account.id)
+        deletion_result = AccountService.delete_account(account_id=original_account.id)
+        assert deletion_result.success is True
 
         new_account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from modules.account.internal.account_reader import AccountReader
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
@@ -6,6 +8,7 @@ from modules.account.types import (
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    DeletionResult,
     PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
@@ -82,5 +85,6 @@ class AccountService:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
 
     @staticmethod
-    def delete_account(*, account_id: str) -> Account:
-        return AccountWriter.delete_account(account_id=account_id)
+    def delete_account(*, account_id: str) -> DeletionResult:
+        account = AccountWriter.delete_account(account_id=account_id)
+        return DeletionResult(account_id=account.id, deleted_at=datetime.now(), success=True)

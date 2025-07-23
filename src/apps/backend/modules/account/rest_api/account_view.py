@@ -75,8 +75,18 @@ class AccountView(MethodView):
 
     @access_auth_middleware
     def delete(self, id: str) -> ResponseReturnValue:
-        AccountService.delete_account(account_id=id)
-        return jsonify({"message": "Account successfully deleted", "account_id": id, "success": True}), 200
+        deletion_result = AccountService.delete_account(account_id=id)
+        return (
+            jsonify(
+                {
+                    "message": "Account successfully deleted",
+                    "account_id": deletion_result.account_id,
+                    "deleted_at": deletion_result.deleted_at.isoformat(),
+                    "success": deletion_result.success,
+                }
+            ),
+            200,
+        )
 
     @staticmethod
     def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, Union
 
 
@@ -59,6 +60,13 @@ class ResetPasswordParams:
     account_id: str
     new_password: str
     token: str
+
+
+@dataclass(frozen=True)
+class DeletionResult:
+    account_id: str
+    deleted_at: datetime
+    success: bool
 
 
 @dataclass(frozen=True)
