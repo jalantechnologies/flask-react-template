@@ -97,18 +97,13 @@ class AccountService:
 
     @staticmethod
     def delete_account_with_otp(*, params: DeleteAccountRequestParams) -> AccountDeletionResult:
-        try:
-            account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
-            verify_params = VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code)
-            otp_result = AuthenticationService.verify_otp(params=verify_params)
+        account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
+        verify_params = VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code)
+        otp_result = AuthenticationService.verify_otp(params=verify_params)
 
-            if otp_result.status != OTPStatus.SUCCESS:
-                Logger.warn(message=f"Invalid OTP provided for account deletion: {params.phone_number}")
-                raise OTPIncorrectError()
+        if otp_result.status != OTPStatus.SUCCESS:
+            Logger.warn(message=f"Invalid OTP provided for account deletion: {params.phone_number}")
+            raise OTPIncorrectError()
 
-            deletion_result = AccountWriter.delete_account(account_id=account.id)
-            return deletion_result
-
-        except Exception as e:
-            Logger.error(message=f"Account deletion failed for phone number {params.phone_number}: {str(e)}")
-            raise
+        deletion_result = AccountWriter.delete_account(account_id=account.id)
+        return deletion_result
