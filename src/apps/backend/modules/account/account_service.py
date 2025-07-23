@@ -91,19 +91,15 @@ class AccountService:
 
     @staticmethod
     def initiate_account_deletion(*, params: InitiateAccountDeletionParams) -> str:
-        Logger.info(message=f"Initiating account deletion for phone number: {params.phone_number}")
-
         account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
 
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
         AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
 
-        Logger.info(message=f"Account deletion OTP sent to phone number: {params.phone_number}")
         return "OTP has been sent to your phone number for account deletion verification."
 
     @staticmethod
     def delete_account_with_otp(*, params: DeleteAccountRequestParams) -> AccountDeletionResult:
-        Logger.info(message=f"Processing account deletion request for phone number: {params.phone_number}")
 
         try:
             account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)

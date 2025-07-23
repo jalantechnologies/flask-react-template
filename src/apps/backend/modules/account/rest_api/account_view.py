@@ -110,7 +110,6 @@ class AccountView(MethodView):
 
         return jsonify(asdict(updated_preferences)), 200
 
-
     @staticmethod
     def initiate_account_deletion() -> ResponseReturnValue:
         request_data = request.get_json()
