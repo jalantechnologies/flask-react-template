@@ -283,3 +283,192 @@ class TestAccountApi(BaseTestAccount):
             )
 
             assert response.status_code == 500
+
+    def test_delete_account_success(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            response = client.delete(
+                f"{ACCOUNT_URL}/{account.id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            assert response.status_code == 200
+            assert response.json
+            assert response.json.get("message") == "Account successfully deleted"
+            assert response.json.get("account_id") == account.id
+            assert response.json.get("success") is True
+
+    def test_delete_account_not_found(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        non_existent_account_id = "661e42ec98423703a299a899"
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            response = client.delete(
+                f"{ACCOUNT_URL}/{non_existent_account_id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            assert response.status_code == 404
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.NOT_FOUND
+            assert f"We could not find an account with id: {non_existent_account_id}" in response.json.get("message")
+
+    def test_delete_account_without_auth_token(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        with app.test_client() as client:
+            response = client.delete(f"{ACCOUNT_URL}/{account.id}")
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
+
+    def test_delete_account_with_invalid_token(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        with app.test_client() as client:
+            response = client.delete(f"{ACCOUNT_URL}/{account.id}", headers={"Authorization": "Bearer invalid_token"})
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_INVALID
+
+    def test_delete_account_unauthorized_access_different_account(self) -> None:
+        account1 = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name1", last_name="last_name1", password="password1", username="username1"
+            )
+        )
+
+        account2 = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name2", last_name="last_name2", password="password2", username="username2"
+            )
+        )
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account1.username, "password": "password1"}),
+            )
+
+            response = client.delete(
+                f"{ACCOUNT_URL}/{account2.id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.UNAUTHORIZED_ACCESS
+
+    def test_deleted_account_cannot_be_retrieved(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            delete_response = client.delete(
+                f"{ACCOUNT_URL}/{account.id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+            assert delete_response.status_code == 200
+
+            get_response = client.get(
+                f"{ACCOUNT_URL}/{account.id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            assert get_response.status_code == 404
+            assert get_response.json
+            assert get_response.json.get("code") == AccountErrorCode.NOT_FOUND
+
+    def test_deleted_account_cannot_login(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            client.delete(
+                f"{ACCOUNT_URL}/{account.id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            login_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            assert login_response.status_code == 404
+            assert login_response.json
+            assert login_response.json.get("code") == AccountErrorCode.NOT_FOUND
+
+    def test_delete_account_invalid_object_id(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        invalid_account_id = "invalid_object_id"
+
+        with app.test_client() as client:
+            access_token_response = client.post(
+                "http://127.0.0.1:8080/api/access-tokens",
+                headers=HEADERS,
+                data=json.dumps({"username": account.username, "password": "password"}),
+            )
+
+            response = client.delete(
+                f"{ACCOUNT_URL}/{invalid_account_id}",
+                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+            )
+
+            assert response.status_code == 500
