@@ -40,7 +40,7 @@ class AccountInvalidPasswordError(AppError):
         super().__init__(
             code=AccountErrorCode.INVALID_CREDENTIALS,
             http_status_code=401,
-            message="Incorrect password. Please try again or Reset your password if you've forgotten it.",
+            message="Incorrect password. Please try again or Reset your password if you’ve forgotten it.",
         )
 
 
