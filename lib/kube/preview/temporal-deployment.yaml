@@ -43,18 +43,12 @@ spec:
           args:
             - |
               upgrade() {
-                echo "Upgrading schema for DB: $1"
-                sql-tool --plugin postgres12 \
-               --ep ${POSTGRES_SEEDS}:${DB_PORT} \
-               --tls --tls-disable-host-verification \
-               --db "$1" \
-               schema upgrade || {
-                 echo "Schema upgrade failed for $1"
-                 exit 1
-                  }
+                echo "Upgrading schema for DB: temporal_preview"
+                temporal-sql-tool --plugin postgres12 --ep "${POSTGRES_SEEDS}" -u "${POSTGRES_USER}" -pw "${POSTGRES_PWD}" -p "${DB_PORT}" --db "${DBNAME}" update-schema -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" || {
+                echo "Schema upgrade failed for $1"
+                exit 1S
               }
               upgrade temporal_preview
-              upgrade temporal_visibility
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
