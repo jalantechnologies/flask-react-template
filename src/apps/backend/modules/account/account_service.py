@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from modules.account.internal.account_reader import AccountReader
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
@@ -16,7 +14,10 @@ from modules.account.types import (
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams, AccountNotificationPreferences
+from modules.notification.types import (
+    CreateOrUpdateAccountNotificationPreferencesParams,
+    AccountNotificationPreferences,
+)
 
 
 class AccountService:
@@ -86,5 +87,4 @@ class AccountService:
 
     @staticmethod
     def delete_account(*, account_id: str) -> DeletionResult:
-        account = AccountWriter.delete_account(account_id=account_id)
-        return DeletionResult(account_id=account.id, deleted_at=datetime.now(), success=True)
+        return AccountWriter.delete_account(account_id=account_id)
