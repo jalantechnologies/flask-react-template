@@ -49,6 +49,7 @@ class AccountWriter:
         if not is_valid_phone_number:
             raise OTPRequestFailedError()
 
+        AccountReader.check_phone_number_not_exist(phone_number=params.phone_number)
         account_bson = AccountModel(
             first_name="", hashed_password="", id=None, last_name="", phone_number=phone_number, username=""
         ).to_bson()
