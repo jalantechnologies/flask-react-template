@@ -35,6 +35,30 @@ spec:
       imagePullSecrets:
         - name: regcred
 
+      # Add initContainer to handle DB schema upgrades before Temporal starts
+      initContainers:
+        - name: temporal-schema-upgrade
+          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - |
+              echo "Upgrading schema for DB"
+              tctl --plugin postgres12 \
+                   --ep ${POSTGRES_SEEDS}:${DB_PORT} \
+                   --tls --tls-disable-host-verification \
+                   --db temporal_preview \
+                   schema upgrade || echo "Main DB already up-to-date"
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          resources:
+            requests:
+              memory: "100Mi"
+            limits:
+              memory: "200Mi"
+
       containers:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2
