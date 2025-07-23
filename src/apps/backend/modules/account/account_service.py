@@ -9,7 +9,6 @@ from modules.account.types import (
     PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
-    AccountDeletionResult,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
@@ -86,6 +85,5 @@ class AccountService:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
 
     @staticmethod
-    def delete_account(*, account_id: str) -> AccountDeletionResult:
-        deletion_result = AccountWriter.delete_account(account_id=account_id)
-        return deletion_result
+    def delete_account(*, account_id: str) -> Account:
+        return AccountWriter.delete_account(account_id=account_id)

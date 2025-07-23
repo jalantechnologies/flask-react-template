@@ -62,21 +62,12 @@ class ResetPasswordParams:
 
 
 @dataclass(frozen=True)
-class AccountDeletionResult:
-    account_id: str
-    success: bool
-    cleanup_results: dict[str, bool]
-    message: str
-
-
-@dataclass(frozen=True)
 class AccountErrorCode:
     INVALID_CREDENTIALS: str = "ACCOUNT_ERR_03"
     NOT_FOUND: str = "ACCOUNT_ERR_02"
     USERNAME_ALREADY_EXISTS: str = "ACCOUNT_ERR_01"
     BAD_REQUEST: str = "ACCOUNT_ERR_04"
     PHONE_NUMBER_ALREADY_EXISTS: str = "ACCOUNT_ERR_05"
-    ACCOUNT_DELETION_FAILED: str = "ACCOUNT_ERR_06"
 
 
 @dataclass(frozen=True)

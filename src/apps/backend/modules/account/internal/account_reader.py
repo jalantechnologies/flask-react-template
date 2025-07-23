@@ -25,7 +25,7 @@ from modules.account.types import (
 class AccountReader:
     @staticmethod
     def get_account_by_username(*, username: str) -> Account:
-        account_bson = AccountRepository.collection().find_one({"username": username})
+        account_bson = AccountRepository.collection().find_one({"username": username, "active": True})
         if account_bson is None:
             raise AccountWithUsernameNotFoundError(username=username)
 
@@ -57,7 +57,7 @@ class AccountReader:
     @staticmethod
     def get_account_by_phone_number_optional(*, phone_number: PhoneNumber) -> Optional[Account]:
         phone_number_dict = asdict(phone_number)
-        account_bson = AccountRepository.collection().find_one({"phone_number": phone_number_dict})
+        account_bson = AccountRepository.collection().find_one({"phone_number": phone_number_dict, "active": True})
         if account_bson is None:
             return None
 

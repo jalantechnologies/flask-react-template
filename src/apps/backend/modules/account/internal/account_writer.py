@@ -16,11 +16,8 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
     UpdateAccountProfileParams,
-    AccountDeletionResult,
 )
 from modules.authentication.errors import OTPRequestFailedError
-from modules.application.internal.account_deletion_registry import AccountDeletionRegistry
-from modules.logger.logger import Logger
 
 
 class AccountWriter:
@@ -93,27 +90,14 @@ class AccountWriter:
         return AccountUtil.convert_account_bson_to_account(updated_account)
 
     @staticmethod
-    def delete_account(*, account_id: str) -> AccountDeletionResult:
-        account_bson = AccountRepository.collection().find_one({"_id": ObjectId(account_id), "active": True})
-
-        if account_bson is None:
-            return AccountDeletionResult(
-                account_id=account_id, success=False, cleanup_results={}, message="Account not found or already deleted"
-            )
-
-        AccountRepository.collection().update_one(
-            {"_id": ObjectId(account_id)}, {"$set": {"active": False, "updated_at": datetime.now()}}
+    def delete_account(*, account_id: str) -> Account:
+        updated_account = AccountRepository.collection().find_one_and_update(
+            {"_id": ObjectId(account_id), "active": True},
+            {"$set": {"active": False, "updated_at": datetime.now()}},
+            return_document=ReturnDocument.AFTER,
         )
 
-        cleanup_results = AccountDeletionRegistry.execute_all_hooks(account_id)
-        failed_cleanups = [hook_name for hook_name, success in cleanup_results.items() if not success]
+        if updated_account is None:
+            raise AccountWithIdNotFoundError(id=account_id)
 
-        if failed_cleanups:
-            Logger.warn(message=f"Some cleanup hooks failed for account {account_id}: {failed_cleanups}")
-            message = f"Account deleted with some cleanup failures: {', '.join(failed_cleanups)}"
-        else:
-            message = "Account successfully deleted"
-
-        return AccountDeletionResult(
-            account_id=account_id, success=True, cleanup_results=cleanup_results, message=message
-        )
+        return AccountUtil.convert_account_bson_to_account(updated_account)

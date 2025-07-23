@@ -75,8 +75,8 @@ class AccountView(MethodView):
 
     @access_auth_middleware
     def delete(self, id: str) -> ResponseReturnValue:
-        deletion_result = AccountService.delete_account(account_id=id)
-        return jsonify(asdict(deletion_result)), 200
+        delete_account = AccountService.delete_account(account_id=id)
+        return jsonify(asdict(delete_account)), 200
 
     @staticmethod
     def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:
