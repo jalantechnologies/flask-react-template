@@ -90,34 +90,23 @@ class AccountService:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
 
     @staticmethod
-    def initiate_account_deletion(*, params: InitiateAccountDeletionParams) -> str:
+    def initiate_account_deletion(*, params: InitiateAccountDeletionParams) -> None:
         account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
-
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
         AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
 
-        return "OTP has been sent to your phone number for account deletion verification."
-
     @staticmethod
     def delete_account_with_otp(*, params: DeleteAccountRequestParams) -> AccountDeletionResult:
-
         try:
             account = AccountReader.get_account_by_phone_number(phone_number=params.phone_number)
-
             verify_params = VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code)
-
             otp_result = AuthenticationService.verify_otp(params=verify_params)
 
             if otp_result.status != OTPStatus.SUCCESS:
                 Logger.warn(message=f"Invalid OTP provided for account deletion: {params.phone_number}")
                 raise OTPIncorrectError()
 
-            Logger.info(message=f"OTP verified successfully for account deletion: {account.id}")
-
             deletion_result = AccountWriter.delete_account(account_id=account.id)
-
-            Logger.info(message=f"Account deletion completed for account {account.id}: {deletion_result.message}")
-
             return deletion_result
 
         except Exception as e:
