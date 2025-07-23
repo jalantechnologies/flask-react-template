@@ -39,17 +39,22 @@ spec:
       initContainers:
         - name: temporal-schema-upgrade
           image: temporalio/admin-tools:1.27.2-tctl-1.18
-          imagePullPolicy: Always
-          command:
-            - sh
-            - -c
+          command: ["/bin/sh", "-c"]
+          args:
             - |
-              echo "Upgrading schema for DB"
-              tctl --plugin postgres12 \
-                   --ep ${POSTGRES_SEEDS}:${DB_PORT} \
-                   --tls --tls-disable-host-verification \
-                   --db temporal_preview \
-                   schema upgrade || echo "Main DB already up-to-date"
+              upgrade() {
+                echo "Upgrading schema for DB: $1"
+                tctl --plugin postgres12 \
+                     --ep ${POSTGRES_SEEDS}:${DB_PORT} \
+                     --tls --tls-disable-host-verification \
+                     --db "$1" \
+                     schema upgrade || {
+                       echo "Schema upgrade failed for $1"
+                       exit 1
+                     }
+              }
+              upgrade temporal_preview
+              upgrade temporal_visibility
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
@@ -61,7 +66,7 @@ spec:
 
       containers:
         - name: temporal-server
-          image: temporalio/auto-setup:1.27.2
+          image: temporalio/server:1.27.2
           imagePullPolicy: Always
           ports:
             - containerPort: 7233
