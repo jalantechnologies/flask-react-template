@@ -34,6 +34,8 @@ class AccountRepository(ApplicationRepository):
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index("username")
+        collection.create_index([("active", 1), ("username", 1)], name="active_username_index")
+        collection.create_index([("active", 1), ("phone_number", 1)], name="active_phone_number_index")
 
         add_validation_command = {
             "collMod": cls.collection_name,
