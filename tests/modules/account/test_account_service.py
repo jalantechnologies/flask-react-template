@@ -269,3 +269,21 @@ class TestAccountService(BaseTestAccount):
         assert new_account.username == "username"
         assert new_account.first_name == "new_first_name"
         assert new_account.id != original_account.id
+
+    def test_can_create_new_account_with_same_phone_number_after_deletion(self) -> None:
+        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
+
+        original_account = AccountService.get_or_create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        AccountService.delete_account(account_id=original_account.id)
+
+        new_account = AccountService.get_or_create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        assert new_account.phone_number == phone_number
+        assert new_account.id != original_account.id
+        assert new_account.phone_number.country_code == "+91"
+        assert new_account.phone_number.phone_number == "9999999999"
