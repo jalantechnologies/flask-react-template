@@ -14,10 +14,7 @@ from modules.account.types import (
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import (
-    CreateOrUpdateAccountNotificationPreferencesParams,
-    AccountNotificationPreferences,
-)
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams, AccountNotificationPreferences
 
 
 class AccountService:
