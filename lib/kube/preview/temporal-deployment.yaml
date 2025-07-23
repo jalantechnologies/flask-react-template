@@ -37,32 +37,55 @@ spec:
 
       # Add initContainer to handle DB schema upgrades before Temporal starts
       initContainers:
-        - name: temporal-schema-upgrade
-          image: temporalio/admin-tools:1.27.2-tctl-1.18
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-                echo "Upgrading schema for DB: temporal_preview"
-                temporal-sql-tool --plugin postgres12 \
+      - name: temporal-schema-upgrade
+        image: temporalio/admin-tools:1.27.2-tctl-1.18
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+              echo "Checking and upgrading schema for DB: ${DBNAME}"
+        
+              echo "Setting up schema (if not already present)..."
+              temporal-sql-tool \
+                --plugin ${DB} \
                 --ep "${POSTGRES_SEEDS}" \
                 -u "${POSTGRES_USER}" \
-                -pw "${POSTGRES_PWD}" \
                 -p "${DB_PORT}" \
-                --db "$1" \
-                update-schema \
-                -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" ||
-                {
+                --db "${DBNAME}" \
+                --tls="${POSTGRES_TLS_ENABLED}" \
+                --tls-disable-host-verification="${POSTGRES_TLS_DISABLE_HOST_VERIFICATION}" \
+                --tls-cert-file "${POSTGRES_TLS_CERT_FILE}" \
+                --tls-key-file "${POSTGRES_TLS_KEY_FILE}" \
+                --tls-ca-file "${POSTGRES_TLS_CA_FILE}" \
+                --tls-server-name "${POSTGRES_TLS_SERVER_NAME}" \
+                setup-schema -v 0.0 || echo "Schema already exist."
+
+              echo "Applying schema upgrades"
+              temporal-sql-tool \
+                --plugin ${DB} \
+                --ep "${POSTGRES_SEEDS}" \
+                -u "${POSTGRES_USER}" \
+                -p "${DB_PORT}" \
+                --db "${DBNAME}" \
+                --tls="${POSTGRES_TLS_ENABLED}" \
+                --tls-disable-host-verification="${POSTGRES_TLS_DISABLE_HOST_VERIFICATION}" \
+                --tls-cert-file "${POSTGRES_TLS_CERT_FILE}" \
+                --tls-key-file "${POSTGRES_TLS_KEY_FILE}" \
+                --tls-ca-file "${POSTGRES_TLS_CA_FILE}" \
+                --tls-server-name "${POSTGRES_TLS_SERVER_NAME}" \
+                update-schema -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" || {
                   echo "Schema upgrade failed"
                   exit 1
-                } 
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
-          resources:
-            requests:
-              memory: "100Mi"
-            limits:
-              memory: "200Mi"
+                }
+
+              echo "Schema upgrade completed successfully"
+        envFrom:
+          - secretRef:
+              name: $DOPPLER_MANAGED_SECRET_NAME
+        resources:
+          requests:
+            memory: "100Mi"
+          limits:
+            memory: "200Mi"
 
       containers:
         - name: temporal-server
