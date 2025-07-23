@@ -42,13 +42,19 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              upgrade() {
-                echo "Upgrading schema for DB: temporal_preview"
-                temporal-sql-tool --plugin postgres12 --ep "${POSTGRES_SEEDS}" -u "${POSTGRES_USER}" -pw "${POSTGRES_PWD}" -p "${DB_PORT}" --db "${DBNAME}" update-schema -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" || {
-                echo "Schema upgrade failed for $1"
-                exit 1
-              }
-              upgrade temporal_preview
+                echo "Upgrading schema for DB: $1"
+                temporal-sql-tool --plugin postgres12 \
+                --ep "${POSTGRES_SEEDS}" \
+                -u "${POSTGRES_USER}" \
+                -pw "${POSTGRES_PWD}" \
+                -p "${DB_PORT}" \
+                --db "$1" \
+                update-schema \
+                -d "/etc/temporal/schema/postgresql/v12/temporal/versioned" ||
+                {
+                  echo "Schema upgrade failed for $1"
+                  exit 1
+                } 
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
