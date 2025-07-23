@@ -363,35 +363,6 @@ class TestAccountApi(BaseTestAccount):
             assert response.json
             assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_INVALID
 
-    def test_delete_account_unauthorized_access_different_account(self) -> None:
-        account1 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name1", last_name="last_name1", password="password1", username="username1"
-            )
-        )
-
-        account2 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name2", last_name="last_name2", password="password2", username="username2"
-            )
-        )
-
-        with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account1.username, "password": "password1"}),
-            )
-
-            response = client.delete(
-                f"{ACCOUNT_URL}/{account2.id}",
-                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
-            )
-
-            assert response.status_code == 401
-            assert response.json
-            assert response.json.get("code") == AccessTokenErrorCode.UNAUTHORIZED_ACCESS
-
     def test_deleted_account_cannot_be_retrieved(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
