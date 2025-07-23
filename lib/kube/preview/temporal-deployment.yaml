@@ -44,17 +44,13 @@ spec:
             - |
               upgrade() {
                 echo "Upgrading schema for DB: $1"
-                /etc/temporal/schema/postgresql/v12/temporal/sql-tool \
-                  --ep ${POSTGRES_SEEDS}:${DB_PORT} \
-                  --user ${POSTGRES_USER} \
-                  --password ${POSTGRES_PWD} \
-                  --tls \
-                  --tls-disable-host-verification \
-                  --db "$1" \
-                  --plugin postgres \
-                  schema upgrade --path /etc/temporal/schema/postgresql/v12/temporal/versioned || {
-                    echo "Schema upgrade failed for $1"
-                    exit 1
+                sql-tool --plugin postgres12 \
+               --ep ${POSTGRES_SEEDS}:${DB_PORT} \
+               --tls --tls-disable-host-verification \
+               --db "$1" \
+               schema upgrade || {
+                 echo "Schema upgrade failed for $1"
+                 exit 1
                   }
               }
               upgrade temporal_preview
