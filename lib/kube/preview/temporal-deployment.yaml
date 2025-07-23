@@ -42,11 +42,15 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+              echo "Exporting environment variables..."
+              export $(env | grep -v '^_' | cut -d= -f1 | xargs)
+
               echo "Checking and upgrading schema for DB: ${DBNAME}"
               if [ -z "${DBNAME}" ]; then
                 echo "DBNAME is not set. Skipping schema upgrade."
                 exit 0
               fi
+
               echo "Setting up schema (if not already present)..."
               temporal-sql-tool \
                 --plugin ${DB} \
@@ -61,9 +65,9 @@ spec:
                 --tls-key-file "${POSTGRES_TLS_KEY_FILE}" \
                 --tls-ca-file "${POSTGRES_TLS_CA_FILE}" \
                 --tls-server-name "${POSTGRES_TLS_SERVER_NAME}" \
-                setup-schema -v 0.0 || echo "Schema already exist."
+                setup-schema -v 0.0 || echo "Schema already exists."
 
-              echo "Applying schema upgrades"
+              echo "Applying schema upgrades..."
               temporal-sql-tool \
                 --plugin ${DB} \
                 --ep "${POSTGRES_SEEDS}" \
@@ -83,6 +87,7 @@ spec:
                 }
 
               echo "Schema upgrade completed successfully"
+
         envFrom:
           - secretRef:
               name: $DOPPLER_MANAGED_SECRET_NAME
