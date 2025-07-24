@@ -2,8 +2,9 @@ from typing import Any, List
 
 from pymongo.cursor import Cursor
 
+from modules.notification.errors import DeviceTokenValidationError
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
-from modules.notification.types import DeviceToken
+from modules.notification.types import DeviceToken, DeviceType
 
 
 class DeviceTokenUtil:
@@ -26,3 +27,10 @@ class DeviceTokenUtil:
             device_token = DeviceTokenUtil.convert_device_token_bson_to_device_token(doc)
             device_tokens.append(device_token)
         return device_tokens
+
+    @staticmethod
+    def validate_device_type(device_type_str: str) -> DeviceType:
+        try:
+            return DeviceType(device_type_str)
+        except (ValueError, TypeError):
+            raise DeviceTokenValidationError(device_type_str, list(DeviceType))

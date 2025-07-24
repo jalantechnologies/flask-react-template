@@ -7,8 +7,9 @@ from flask.views import MethodView
 
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.notification.errors import ValidationError
+from modules.notification.internals.device_token_util import DeviceTokenUtil, DeviceTokenValidationError
 from modules.notification.notification_service import NotificationService
-from modules.notification.types import DeviceType, RegisterDeviceTokenParams, ValidationFailure
+from modules.notification.types import RegisterDeviceTokenParams, ValidationFailure
 
 
 class DeviceTokenView(MethodView):
@@ -25,12 +26,13 @@ class DeviceTokenView(MethodView):
         request_data = request.get_json()
 
         device_type_str = request_data.get("device_type")
+
         try:
-            device_type = DeviceType(device_type_str)
-        except (ValueError, TypeError):
-            allowed_values = ", ".join([t.value for t in DeviceType])
+            device_type = DeviceTokenUtil.validate_device_type(device_type_str)
+        except DeviceTokenValidationError as e:
+            allowed_values = ", ".join([t.value for t in e.allowed_types])
             raise ValidationError(
-                f"Invalid device type: {device_type_str}. Must be one of: {allowed_values}",
+                f"Invalid device type: {e.device_type_str}. Must be one of: {allowed_values}",
                 [ValidationFailure(field="device_type", message=f"Must be one of: {allowed_values}")],
             )
 

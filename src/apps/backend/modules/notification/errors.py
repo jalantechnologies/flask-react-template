@@ -36,6 +36,13 @@ class AccountNotificationPreferencesNotFoundError(AppError):
         )
 
 
+class DeviceTokenValidationError(Exception):
+    def __init__(self, device_type_str: str, allowed_types: List[DeviceType]):
+        self.device_type_str = device_type_str
+        self.allowed_types = allowed_types
+        super().__init__(f"Invalid device type: {device_type_str}")
+
+
 class ServiceError(AppError):
     def __init__(self, err: Exception) -> None:
         super().__init__(message=err.args[2], code=NotificationErrorCode.SERVICE_ERROR)

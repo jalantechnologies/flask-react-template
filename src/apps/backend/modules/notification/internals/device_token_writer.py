@@ -1,20 +1,20 @@
 from pymongo import ReturnDocument
 
 from modules.notification.errors import InvalidDeviceTypeError
-from modules.notification.internals.device_token_util import DeviceTokenUtil
+from modules.notification.internals.device_token_util import DeviceTokenUtil, DeviceTokenValidationError
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
-from modules.notification.types import DeviceToken, DeviceType, RegisterDeviceTokenParams
+from modules.notification.types import DeviceToken, RegisterDeviceTokenParams
 
 
 class DeviceTokenWriter:
 
     @staticmethod
-    def _validate_device_type(device_type_str: str) -> DeviceType:
+    def _validate_device_type(device_type_str: str) -> None:
         try:
-            return DeviceType(device_type_str)
-        except ValueError:
-            raise InvalidDeviceTypeError(device_type_str, list(DeviceType))
+            DeviceTokenUtil.validate_device_type(device_type_str)
+        except DeviceTokenValidationError as e:
+            raise InvalidDeviceTypeError(e.device_type_str, e.allowed_types)
 
     @staticmethod
     def _create_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
