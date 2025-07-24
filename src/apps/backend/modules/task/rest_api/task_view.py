@@ -22,7 +22,7 @@ class TaskView(MethodView):
     def post(self) -> ResponseReturnValue:
         request_data = request.get_json()
 
-        if not request_data:
+        if request_data is None:
             raise TaskBadRequestError("Request body is required")
 
         if not request_data.get("title"):
@@ -73,7 +73,7 @@ class TaskView(MethodView):
     def patch(self, task_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
-        if not request_data:
+        if request_data is None:
             raise TaskBadRequestError("Request body is required")
 
         if not request_data.get("title"):
