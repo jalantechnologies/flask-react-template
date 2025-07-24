@@ -6,8 +6,70 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  temporal_schema_setup:
+    name: Temporal Schema Setup / Upgrade
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'open'
+
+    steps:
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+        with:
+          doppler-token: ${{ secrets.doppler_token }}
+
+      - name: Setup or Upgrade Temporal Schema
+        env:
+          TEMPORAL_SCHEMA_VERSION: ${{ secrets.TEMPORAL_SCHEMA_VERSION }}
+        run: |
+          doppler run -- bash -c '
+            echo "Target schema version: $TEMPORAL_SCHEMA_VERSION"
+
+            echo "Checking if schema exists.."
+            docker run --rm \
+              -e DB=postgres12 \
+              -e DB_PORT=$DB_PORT \
+              -e DB_HOST=$POSTGRES_SEEDS \
+              -e DB_USER=$POSTGRES_USER \
+              -e DB_PWD=$POSTGRES_PWD \
+              -e DB_NAME=$DBNAME \
+              -e SQL_TLS=$SQL_TLS \
+              -e SQL_TLS_MODE=$SQL_TLS_MODE \
+              -e SQL_TLS_SKIP_VERIFY=$SQL_TLS_SKIP_VERIFY \
+              temporalio/admin-tools:1.27.2-tctl-1.18 \
+              bash -c "
+                temporal-sql-tool --ep \$DB_HOST:\$DB_PORT \
+                  --db \$DB_NAME --user \$DB_USER --pw \$DB_PWD \
+                  validate-schema-version --expected-version \$TEMPORAL_SCHEMA_VERSION
+              " && echo "Schema is already up-to-date." && exit 0
+
+            echo "Schema not up-to-date. Running setup or upgrade..."
+            docker run --rm \
+              -e DB=postgres12 \
+              -e DB_PORT=$DB_PORT \
+              -e DB_HOST=$POSTGRES_SEEDS \
+              -e DB_USER=$POSTGRES_USER \
+              -e DB_PWD=$POSTGRES_PWD \
+              -e DB_NAME=$DBNAME \
+              -e SQL_TLS=$SQL_TLS \
+              -e SQL_TLS_MODE=$SQL_TLS_MODE \
+              -e SQL_TLS_SKIP_VERIFY=$SQL_TLS_SKIP_VERIFY \
+              temporalio/admin-tools:1.27.2-tctl-1.18 \
+              bash -c "
+                temporal-sql-tool --ep \$DB_HOST:\$DB_PORT \
+                  --db \$DB_NAME --user \$DB_USER --pw \$DB_PWD \
+                  setup-schema -v 0.0 || true
+
+                temporal-sql-tool --ep \$DB_HOST:\$DB_PORT \
+                  --db \$DB_NAME --user \$DB_USER --pw \$DB_PWD \
+                  update-schema -v \$TEMPORAL_SCHEMA_VERSION
+              "
+
+            echo "Schema updated to version \$TEMPORAL_SCHEMA_VERSION"
+          '
+
   preview:
     # only run when updating an 'Open' PR
+    needs: temporal_schema_setup
     if: github.event.pull_request.state == 'open'
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@temporal-schema-migration-fix
     concurrency:
@@ -37,3 +99,4 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
+      TEMPORAL_SCHEMA_VERSION: ${{ secrets.TEMPORAL_SCHEMA_VERSION }}
