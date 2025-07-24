@@ -49,9 +49,10 @@ class TestDeviceTokenService(BaseTestNotification):
         account_tokens = NotificationService.get_account_fcm_tokens(account.id)
 
         assert len(account_tokens) == 3
-        assert "fcm_token_1" in account_tokens
-        assert "fcm_token_2" in account_tokens
-        assert "fcm_token_3" in account_tokens
+        token_values = [device_token.token for device_token in account_tokens]
+        assert "fcm_token_1" in token_values
+        assert "fcm_token_2" in token_values
+        assert "fcm_token_3" in token_values
 
     def test_get_account_fcm_tokens_no_tokens(self) -> None:
         account = self._create_test_account()
@@ -81,10 +82,14 @@ class TestDeviceTokenService(BaseTestNotification):
 
         assert len(account1_tokens) == 1
         assert len(account2_tokens) == 1
-        assert "fcm_token_account1" in account1_tokens
-        assert "fcm_token_account2" in account2_tokens
-        assert "fcm_token_account1" not in account2_tokens
-        assert "fcm_token_account2" not in account1_tokens
+
+        account1_token_values = [device_token.token for device_token in account1_tokens]
+        account2_token_values = [device_token.token for device_token in account2_tokens]
+
+        assert "fcm_token_account1" in account1_token_values
+        assert "fcm_token_account2" in account2_token_values
+        assert "fcm_token_account1" not in account2_token_values
+        assert "fcm_token_account2" not in account1_token_values
 
     def test_delete_account_fcm_tokens_by_account_id_success(self) -> None:
         account = self._create_test_account()
@@ -139,7 +144,8 @@ class TestDeviceTokenService(BaseTestNotification):
         account2_tokens_after = NotificationService.get_account_fcm_tokens(account2.id)
         assert len(account1_tokens_after) == 0
         assert len(account2_tokens_after) == 1
-        assert "account2_token" in account2_tokens_after
+        account2_token_values = [device_token.token for device_token in account2_tokens_after]
+        assert "account2_token" in account2_token_values
 
     def test_get_account_fcm_tokens_nonexistent_account(self) -> None:
         fake_account_id = "661e42ec98423703a299a899"
@@ -167,5 +173,6 @@ class TestDeviceTokenService(BaseTestNotification):
 
         account_tokens = NotificationService.get_account_fcm_tokens(account.id)
         assert len(account_tokens) == 2
-        assert "fcm_token_android" in account_tokens
-        assert "fcm_token_ios" in account_tokens
+        token_values = [device_token.token for device_token in account_tokens]
+        assert "fcm_token_android" in token_values
+        assert "fcm_token_ios" in token_values

@@ -194,4 +194,4 @@ class TestDeviceTokenApi(BaseTestNotification):
         account2_tokens_after = NotificationService.get_account_fcm_tokens(account2.id)
         assert len(account1_tokens_after) == 0
         assert len(account2_tokens_after) == 1
-        assert "account2_token" in account2_tokens_after
+        assert any(device_token.token == "account2_token" for device_token in account2_tokens_after)
