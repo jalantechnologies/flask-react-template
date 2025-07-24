@@ -53,11 +53,12 @@ api_blueprint.register_blueprint(authentication_blueprint)
 # Register accounts apis
 account_blueprint = AccountRestApiServer.create()
 api_blueprint.register_blueprint(account_blueprint)
-app.register_blueprint(api_blueprint)
 
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
+
+app.register_blueprint(api_blueprint)
 
 # Register frontend elements
 app.register_blueprint(img_assets_blueprint)
