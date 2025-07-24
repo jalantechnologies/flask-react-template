@@ -45,7 +45,9 @@ class TaskWriter:
 
     @staticmethod
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
-        task = TaskReader.get_task_for_account(GetTaskParams(account_id=params.account_id, task_id=params.task_id))
+        task = TaskReader.get_task_for_account(
+            params=GetTaskParams(account_id=params.account_id, task_id=params.task_id)
+        )
 
         deletion_time = datetime.now()
         updated_task_bson = TaskRepository.collection().find_one_and_update(
