@@ -100,7 +100,9 @@ class TestTaskApi(BaseTestTask):
         with app.test_client() as client:
             response = client.get(TASK_API_URL, headers={"Authorization": f"Bearer {token}"})
             assert response.status_code == 200
-            assert response.json == []
+            assert response.json["items"] == []
+            assert "pagination" in response.json
+            assert response.json["pagination"]["total_count"] == 0
 
     def test_get_all_tasks_with_tasks(self) -> None:
         account, token = self._create_account_and_get_token()
@@ -111,10 +113,11 @@ class TestTaskApi(BaseTestTask):
         with app.test_client() as client:
             response = client.get(TASK_API_URL, headers={"Authorization": f"Bearer {token}"})
             assert response.status_code == 200
-            assert len(response.json) == 3
-            assert response.json[0]["title"] == "Task 3"
-            assert response.json[1]["title"] == "Task 2"
-            assert response.json[2]["title"] == "Task 1"
+            assert len(response.json["items"]) == 3
+            assert response.json["items"][0]["title"] == "Task 3"
+            assert response.json["items"][1]["title"] == "Task 2"
+            assert response.json["items"][2]["title"] == "Task 1"
+            assert response.json["pagination"]["total_count"] == 3
 
     def test_get_all_tasks_with_pagination(self) -> None:
         account, token = self._create_account_and_get_token()
@@ -125,11 +128,17 @@ class TestTaskApi(BaseTestTask):
         with app.test_client() as client:
             response = client.get(f"{TASK_API_URL}?page=1&size=2", headers={"Authorization": f"Bearer {token}"})
             assert response.status_code == 200
-            assert len(response.json) == 2
+            assert len(response.json["items"]) == 2
+            assert response.json["pagination"]["page"] == 1
+            assert response.json["pagination"]["size"] == 2
+            assert response.json["pagination"]["total_count"] == 5
+
             response2 = client.get(f"{TASK_API_URL}?page=2&size=2", headers={"Authorization": f"Bearer {token}"})
             assert response2.status_code == 200
-            assert len(response2.json) == 2
-            assert response.json[0]["id"] != response2.json[0]["id"]
+            assert len(response2.json["items"]) == 2
+            assert response2.json["pagination"]["page"] == 2
+            assert response2.json["pagination"]["size"] == 2
+            assert response.json["items"][0]["id"] != response2.json["items"][0]["id"]
 
     def test_get_all_tasks_no_auth(self) -> None:
         with app.test_client() as client:
