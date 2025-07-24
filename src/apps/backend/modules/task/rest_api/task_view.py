@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Optional
 
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
@@ -34,7 +35,7 @@ class TaskView(MethodView):
         return jsonify(task_dict), 201
 
     @access_auth_middleware
-    def get(self, task_id: str = None) -> ResponseReturnValue:
+    def get(self, task_id: Optional[str] = None) -> ResponseReturnValue:
         if task_id:
             task_params = GetTaskParams(account_id=request.account_id, task_id=task_id)
             task = TaskService.get_task_for_account(params=task_params)
