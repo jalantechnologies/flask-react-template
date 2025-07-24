@@ -27,9 +27,7 @@ class TaskRepository(ApplicationRepository):
 
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
-        collection.create_index("account_id")
         collection.create_index([("active", 1), ("account_id", 1)], name="active_account_id_index")
-        collection.create_index([("active", 1), ("created_at", -1)], name="active_created_at_index")
 
         add_validation_command = {
             "collMod": cls.collection_name,
