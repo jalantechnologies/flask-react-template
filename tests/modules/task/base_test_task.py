@@ -90,9 +90,9 @@ class BaseTestTask(unittest.TestCase):
             if method.upper() == "GET":
                 return client.get(url, headers={"Authorization": f"Bearer {token}"})
             elif method.upper() == "POST":
-                return client.post(url, headers=headers, data=json.dumps(data) if data else None)
+                return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
             elif method.upper() == "PATCH":
-                return client.patch(url, headers=headers, data=json.dumps(data) if data else None)
+                return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
             elif method.upper() == "DELETE":
                 return client.delete(url, headers={"Authorization": f"Bearer {token}"})
 
@@ -101,9 +101,9 @@ class BaseTestTask(unittest.TestCase):
             if method.upper() == "GET":
                 return client.get(url)
             elif method.upper() == "POST":
-                return client.post(url, headers=self.HEADERS, data=json.dumps(data) if data else None)
+                return client.post(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
             elif method.upper() == "PATCH":
-                return client.patch(url, headers=self.HEADERS, data=json.dumps(data) if data else None)
+                return client.patch(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
             elif method.upper() == "DELETE":
                 return client.delete(url)
 
@@ -123,9 +123,17 @@ class BaseTestTask(unittest.TestCase):
             assert response_json.get(field) == value
 
     def assert_error_response(self, response, expected_status: int, expected_error_code: str):
-        assert response.status_code == expected_status
-        assert response.json is not None
-        assert response.json.get("code") == expected_error_code
+        assert response.status_code == expected_status, f"Expected status {expected_status}, got {response.status_code}"
+
+        if response.json is None:
+            print(f"Response data: {response.data}")
+            print(f"Response headers: {dict(response.headers)}")
+            print(f"Response content type: {response.content_type}")
+
+        assert response.json is not None, f"Expected JSON response, got None. Response data: {response.data}"
+        assert (
+            response.json.get("code") == expected_error_code
+        ), f"Expected error code {expected_error_code}, got {response.json.get('code')}"
 
     def assert_pagination_response(
         self,
