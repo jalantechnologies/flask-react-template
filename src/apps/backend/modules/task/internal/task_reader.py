@@ -27,9 +27,9 @@ class TaskReader:
             {"account_id": params.account_id, "active": True}
         )
 
-        page = params.page if params.page and params.page > 0 else 1
+        page = params.page if params.page else 1
 
-        if params.size and params.size > 0:
+        if params.size:
             size = params.size
         elif total_tasks_count > 0:
             size = total_tasks_count
@@ -45,7 +45,7 @@ class TaskReader:
         tasks_cursor = (
             TaskRepository.collection()
             .find({"account_id": params.account_id, "active": True})
-            .sort("created_at", -1)
+            .sort([("created_at", -1), ("_id", -1)])
             .skip(start_index)
             .limit(pagination_params.size)
         )
