@@ -8,7 +8,13 @@ from flask.views import MethodView
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.task.errors import TaskBadRequestError
 from modules.task.task_service import TaskService
-from modules.task.types import CreateTaskParams, DeleteTaskParams, GetAllTasksParams, GetTaskParams, UpdateTaskParams
+from modules.task.types import (
+    CreateTaskParams,
+    DeleteTaskParams,
+    GetPaginatedTasksParams,
+    GetTaskParams,
+    UpdateTaskParams,
+)
 
 
 class TaskView(MethodView):
@@ -47,9 +53,9 @@ class TaskView(MethodView):
             page = request.args.get("page", type=int)
             size = request.args.get("size", type=int)
 
-            tasks_params = GetAllTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
+            tasks_params = GetPaginatedTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
 
-            pagination_result = TaskService.get_tasks_for_account(params=tasks_params)
+            pagination_result = TaskService.get_paginated_tasks_for_account(params=tasks_params)
 
             response_data = {
                 "items": [asdict(task) for task in pagination_result.items],

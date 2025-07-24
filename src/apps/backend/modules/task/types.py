@@ -19,7 +19,7 @@ class DeleteTaskParams:
 
 
 @dataclass(frozen=True)
-class GetAllTasksParams:
+class GetPaginatedTasksParams:
     account_id: str
     page: Optional[int] = None
     size: Optional[int] = None
