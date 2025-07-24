@@ -1,6 +1,6 @@
 import json
 import unittest
-from typing import Callable, Tuple
+from typing import Tuple
 
 from server import app
 from modules.account.account_service import AccountService
@@ -25,13 +25,11 @@ class BaseTestTask(unittest.TestCase):
     DEFAULT_FIRST_NAME = "Test"
     DEFAULT_LAST_NAME = "User"
 
-    def setup_method(self, method: Callable) -> None:
-        print(f"Executing:: {method.__name__}")
+    def setUp(self) -> None:
         LoggerManager.mount_logger()
         TaskRestApiServer.create()
 
-    def teardown_method(self, method: Callable) -> None:
-        print(f"Executed:: {method.__name__}")
+    def tearDown(self) -> None:
         TaskRepository.collection().delete_many({})
         AccountRepository.collection().delete_many({})
 

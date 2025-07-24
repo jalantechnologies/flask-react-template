@@ -1,3 +1,5 @@
+from server import app
+
 from modules.authentication.types import AccessTokenErrorCode
 from modules.task.types import TaskErrorCode
 from tests.modules.task.base_test_task import BaseTestTask
@@ -250,9 +252,6 @@ class TestTaskApi(BaseTestTask):
         invalid_json_data = "invalid json"
 
         with self.subTest("Invalid JSON for create task"):
-            import json as json_module
-            from server import app
-
             with app.test_client() as client:
                 response = client.post(
                     self.TASK_API_URL,
