@@ -1,5 +1,3 @@
-from typing import List
-
 from modules.task.internal.task_reader import TaskReader
 from modules.task.internal.task_writer import TaskWriter
 from modules.task.types import (
@@ -7,6 +5,7 @@ from modules.task.types import (
     DeleteTaskParams,
     GetAllTasksParams,
     GetTaskParams,
+    PaginationResult,
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
@@ -23,7 +22,7 @@ class TaskService:
         return TaskReader.get_task_for_account(params=params)
 
     @staticmethod
-    def get_tasks_for_account(*, params: GetAllTasksParams) -> List[Task]:
+    def get_tasks_for_account(*, params: GetAllTasksParams) -> PaginationResult[Task]:
         return TaskReader.get_tasks_for_account(params=params)
 
     @staticmethod

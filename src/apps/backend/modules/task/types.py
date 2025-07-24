@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Generic, List, Optional, TypeVar
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,14 @@ class GetTaskParams:
 class PaginationParams:
     page: int
     size: int
+
+
+@dataclass(frozen=True)
+class PaginationResult(Generic[T]):
+    items: List[T]
+    pagination_params: PaginationParams
+    total_count: int
+    total_pages: int
 
 
 @dataclass(frozen=True)

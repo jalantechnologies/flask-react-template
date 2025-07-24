@@ -49,10 +49,19 @@ class TaskView(MethodView):
 
             tasks_params = GetAllTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
 
-            tasks = TaskService.get_tasks_for_account(params=tasks_params)
-            tasks_dict = [asdict(task) for task in tasks]
+            pagination_result = TaskService.get_tasks_for_account(params=tasks_params)
 
-            return jsonify(tasks_dict), 200
+            response_data = {
+                "items": [asdict(task) for task in pagination_result.items],
+                "pagination": {
+                    "page": pagination_result.pagination_params.page,
+                    "size": pagination_result.pagination_params.size,
+                    "total_count": pagination_result.total_count,
+                    "total_pages": pagination_result.total_pages,
+                },
+            }
+
+            return jsonify(response_data), 200
 
     @access_auth_middleware
     def patch(self, task_id: str) -> ResponseReturnValue:
