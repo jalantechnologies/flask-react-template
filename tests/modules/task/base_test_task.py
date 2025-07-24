@@ -122,12 +122,6 @@ class BaseTestTask(unittest.TestCase):
 
     def assert_error_response(self, response, expected_status: int, expected_error_code: str):
         assert response.status_code == expected_status, f"Expected status {expected_status}, got {response.status_code}"
-
-        if response.json is None:
-            print(f"Response data: {response.data}")
-            print(f"Response headers: {dict(response.headers)}")
-            print(f"Response content type: {response.content_type}")
-
         assert response.json is not None, f"Expected JSON response, got None. Response data: {response.data}"
         assert (
             response.json.get("code") == expected_error_code
