@@ -13,7 +13,7 @@ from modules.task.types import CreateTaskParams, DeleteTaskParams, GetTaskParams
 
 class TaskWriter:
     @staticmethod
-    def create_task(params: CreateTaskParams) -> Task:
+    def create_task(*, params: CreateTaskParams) -> Task:
         task_bson = TaskModel(
             account_id=params.account_id, description=params.description, title=params.title, id=None, active=True
         ).to_bson()
@@ -24,7 +24,7 @@ class TaskWriter:
         return TaskUtil.convert_task_bson_to_task(created_task_bson)
 
     @staticmethod
-    def update_task(params: UpdateTaskParams) -> Task:
+    def update_task(*, params: UpdateTaskParams) -> Task:
         updated_task_bson = TaskRepository.collection().find_one_and_update(
             {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True},
             {"$set": {"description": params.description, "title": params.title, "updated_at": datetime.now()}},
@@ -37,7 +37,7 @@ class TaskWriter:
         return TaskUtil.convert_task_bson_to_task(updated_task_bson)
 
     @staticmethod
-    def delete_task(params: DeleteTaskParams) -> None:
+    def delete_task(*, params: DeleteTaskParams) -> None:
         task = TaskReader.get_task_for_account(GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
         updated_task_bson = TaskRepository.collection().find_one_and_update(

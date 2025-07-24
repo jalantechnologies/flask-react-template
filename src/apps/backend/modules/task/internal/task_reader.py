@@ -10,7 +10,7 @@ from modules.task.types import GetAllTasksParams, GetTaskParams, PaginationParam
 
 class TaskReader:
     @staticmethod
-    def get_task_for_account(params: GetTaskParams) -> Task:
+    def get_task_for_account(*, params: GetTaskParams) -> Task:
         task_bson = TaskRepository.collection().find_one(
             {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
         )
@@ -21,7 +21,7 @@ class TaskReader:
         return TaskUtil.convert_task_bson_to_task(task_bson)
 
     @staticmethod
-    def get_tasks_for_account(params: GetAllTasksParams) -> List[Task]:
+    def get_tasks_for_account(*, params: GetAllTasksParams) -> List[Task]:
         total_tasks_count = TaskRepository.collection().count_documents(
             {"account_id": params.account_id, "active": True}
         )

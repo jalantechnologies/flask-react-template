@@ -14,21 +14,21 @@ from modules.task.types import (
 
 class TaskService:
     @staticmethod
-    def create_task(params: CreateTaskParams) -> Task:
+    def create_task(*, params: CreateTaskParams) -> Task:
         return TaskWriter.create_task(params=params)
 
     @staticmethod
-    def get_task_for_account(params: GetTaskParams) -> Task:
+    def get_task_for_account(*, params: GetTaskParams) -> Task:
         return TaskReader.get_task_for_account(params=params)
 
     @staticmethod
-    def get_tasks_for_account(params: GetAllTasksParams) -> List[Task]:
+    def get_tasks_for_account(*, params: GetAllTasksParams) -> List[Task]:
         return TaskReader.get_tasks_for_account(params=params)
 
     @staticmethod
-    def update_task(params: UpdateTaskParams) -> Task:
+    def update_task(*, params: UpdateTaskParams) -> Task:
         return TaskWriter.update_task(params=params)
 
     @staticmethod
-    def delete_task(params: DeleteTaskParams) -> None:
+    def delete_task(*, params: DeleteTaskParams) -> None:
         return TaskWriter.delete_task(params=params)
