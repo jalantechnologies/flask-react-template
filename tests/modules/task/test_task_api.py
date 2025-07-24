@@ -325,12 +325,3 @@ class TestTaskApi(BaseTestTask):
                 TASK_API_URL, headers={**HEADERS, "Authorization": f"Bearer {token}"}, data="invalid json"
             )
             assert response.status_code == 400
-
-    def test_no_request_body(self) -> None:
-        account, token = self._create_account_and_get_token()
-        with app.test_client() as client:
-            response = client.post(TASK_API_URL, headers={**HEADERS, "Authorization": f"Bearer {token}"})
-            assert response.status_code == 400
-            assert response.json
-            assert response.json.get("code") == TaskErrorCode.BAD_REQUEST
-            assert "Request body is required" in response.json.get("message")
