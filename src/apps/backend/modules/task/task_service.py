@@ -8,6 +8,7 @@ from modules.task.types import (
     GetAllTasksParams,
     GetTaskParams,
     Task,
+    TaskDeletionResult,
     UpdateTaskParams,
 )
 
@@ -30,5 +31,5 @@ class TaskService:
         return TaskWriter.update_task(params=params)
 
     @staticmethod
-    def delete_task(*, params: DeleteTaskParams) -> None:
+    def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
         return TaskWriter.delete_task(params=params)

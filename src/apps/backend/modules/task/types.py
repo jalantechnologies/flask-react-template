@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 
@@ -40,6 +41,13 @@ class Task:
     account_id: str
     description: str
     title: str
+
+
+@dataclass(frozen=True)
+class TaskDeletionResult:
+    task_id: str
+    deleted_at: datetime
+    success: bool
 
 
 @dataclass(frozen=True)
