@@ -63,14 +63,16 @@ class TaskView(MethodView):
 
             pagination_result = TaskService.get_paginated_tasks_for_account(params=tasks_params)
 
+            tasks = [asdict(task) for task in pagination_result.items]
+            pagination_params = pagination_result.pagination_params
+            total_tasks_count = pagination_result.total_count
+            total_pages = pagination_result.total_pages
+
             response_data = {
-                "items": [asdict(task) for task in pagination_result.items],
-                "pagination": {
-                    "page": pagination_result.pagination_params.page,
-                    "size": pagination_result.pagination_params.size,
-                    "total_count": pagination_result.total_count,
-                    "total_pages": pagination_result.total_pages,
-                },
+                "items": tasks,
+                "pagination_params": pagination_params,
+                "total_count": total_tasks_count,
+                "total_pages": total_pages,
             }
 
             return jsonify(response_data), 200
