@@ -26,7 +26,9 @@ class TaskView(MethodView):
             raise TaskBadRequestError("Description is required")
 
         task_params = CreateTaskParams(
-            account_id=request.account_id, title=request_data["title"], description=request_data["description"]
+            account_id=getattr(request, "account_id"),
+            title=request_data["title"],
+            description=request_data["description"],
         )
 
         task = TaskService.create_task(params=task_params)
@@ -37,7 +39,7 @@ class TaskView(MethodView):
     @access_auth_middleware
     def get(self, task_id: Optional[str] = None) -> ResponseReturnValue:
         if task_id:
-            task_params = GetTaskParams(account_id=request.account_id, task_id=task_id)
+            task_params = GetTaskParams(account_id=getattr(request, "account_id"), task_id=task_id)
             task = TaskService.get_task_for_account(params=task_params)
             task_dict = asdict(task)
             return jsonify(task_dict), 200
@@ -45,7 +47,7 @@ class TaskView(MethodView):
             page = request.args.get("page", type=int)
             size = request.args.get("size", type=int)
 
-            tasks_params = GetAllTasksParams(account_id=request.account_id, page=page, size=size)
+            tasks_params = GetAllTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
 
             tasks = TaskService.get_tasks_for_account(params=tasks_params)
             tasks_dict = [asdict(task) for task in tasks]
@@ -66,7 +68,7 @@ class TaskView(MethodView):
             raise TaskBadRequestError("Description is required")
 
         update_params = UpdateTaskParams(
-            account_id=request.account_id,
+            account_id=getattr(request, "account_id"),
             task_id=task_id,
             title=request_data["title"],
             description=request_data["description"],
@@ -79,7 +81,7 @@ class TaskView(MethodView):
 
     @access_auth_middleware
     def delete(self, task_id: str) -> ResponseReturnValue:
-        delete_params = DeleteTaskParams(account_id=request.account_id, task_id=task_id)
+        delete_params = DeleteTaskParams(account_id=getattr(request, "account_id"), task_id=task_id)
 
         TaskService.delete_task(params=delete_params)
 
