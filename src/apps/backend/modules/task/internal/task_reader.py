@@ -27,9 +27,9 @@ class TaskReader:
             {"account_id": params.account_id, "active": True}
         )
 
-        page = params.page if params.page else 1
+        page = params.page if params.page and params.page > 0 else 1
 
-        if params.size:
+        if params.size and params.size > 0:
             size = params.size
         elif total_tasks_count > 0:
             size = total_tasks_count

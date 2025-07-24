@@ -50,8 +50,14 @@ class TaskView(MethodView):
             task_dict = asdict(task)
             return jsonify(task_dict), 200
         else:
-            page = request.args.get("page", type=int)
-            size = request.args.get("size", type=int)
+            page = request.args.get("page", type=int, default=None)
+            size = request.args.get("size", type=int, default=None)
+
+            if page is not None and page < 1:
+                page = 1
+
+            if size is not None and size < 1:
+                size = 10
 
             tasks_params = GetPaginatedTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
 
