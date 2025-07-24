@@ -1,7 +1,6 @@
 from pymongo import ReturnDocument
 
-from modules.notification.errors import InvalidDeviceTypeError
-from modules.notification.internals.device_token_util import DeviceTokenUtil, DeviceTokenValidationError
+from modules.notification.internals.device_token_util import DeviceTokenUtil
 from modules.notification.internals.store.device_token_model import DeviceTokenModel
 from modules.notification.internals.store.device_token_repository import DeviceTokenRepository
 from modules.notification.types import DeviceToken, RegisterDeviceTokenParams
@@ -10,15 +9,8 @@ from modules.notification.types import DeviceToken, RegisterDeviceTokenParams
 class DeviceTokenWriter:
 
     @staticmethod
-    def _validate_device_type(device_type_str: str) -> None:
-        try:
-            DeviceTokenUtil.validate_device_type(device_type_str)
-        except DeviceTokenValidationError as e:
-            raise InvalidDeviceTypeError(e.device_type_str, e.allowed_types)
-
-    @staticmethod
     def _create_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
-        DeviceTokenWriter._validate_device_type(params.device_type)
+        DeviceTokenUtil.validate_device_type_for_service(params.device_type)
 
         device_token_model = DeviceTokenModel(
             token=params.token, account_id=params.account_id, device_type=params.device_type, id=None
@@ -29,7 +21,7 @@ class DeviceTokenWriter:
 
     @staticmethod
     def _update_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
-        DeviceTokenWriter._validate_device_type(params.device_type)
+        DeviceTokenUtil.validate_device_type_for_service(params.device_type)
 
         updated_token = DeviceTokenRepository.collection().find_one_and_update(
             {"token": params.token},
