@@ -31,14 +31,14 @@ class TaskView(MethodView):
         if not request_data.get("description"):
             raise TaskBadRequestError("Description is required")
 
-        task_params = CreateTaskParams(
+        create_task_params = CreateTaskParams(
             account_id=getattr(request, "account_id"),
             title=request_data["title"],
             description=request_data["description"],
         )
 
-        task = TaskService.create_task(params=task_params)
-        task_dict = asdict(task)
+        created_task = TaskService.create_task(params=create_task_params)
+        task_dict = asdict(created_task)
 
         return jsonify(task_dict), 201
 
@@ -90,14 +90,14 @@ class TaskView(MethodView):
         if not request_data.get("description"):
             raise TaskBadRequestError("Description is required")
 
-        update_params = UpdateTaskParams(
+        update_task_params = UpdateTaskParams(
             account_id=getattr(request, "account_id"),
             task_id=task_id,
             title=request_data["title"],
             description=request_data["description"],
         )
 
-        updated_task = TaskService.update_task(params=update_params)
+        updated_task = TaskService.update_task(params=update_task_params)
         task_dict = asdict(updated_task)
 
         return jsonify(task_dict), 200
