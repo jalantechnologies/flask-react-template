@@ -21,7 +21,7 @@ from modules.task.types import (
 
 class TaskView(MethodView):
     @access_auth_middleware
-    def post(self) -> ResponseReturnValue:
+    def post(self, account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
         if request_data is None:
@@ -34,9 +34,7 @@ class TaskView(MethodView):
             raise TaskBadRequestError("Description is required")
 
         create_task_params = CreateTaskParams(
-            account_id=getattr(request, "account_id"),
-            title=request_data["title"],
-            description=request_data["description"],
+            account_id=account_id, title=request_data["title"], description=request_data["description"]
         )
 
         created_task = TaskService.create_task(params=create_task_params)
@@ -45,9 +43,9 @@ class TaskView(MethodView):
         return jsonify(task_dict), 201
 
     @access_auth_middleware
-    def get(self, task_id: Optional[str] = None) -> ResponseReturnValue:
+    def get(self, account_id: str, task_id: Optional[str] = None) -> ResponseReturnValue:
         if task_id:
-            task_params = GetTaskForAccountParams(account_id=getattr(request, "account_id"), task_id=task_id)
+            task_params = GetTaskForAccountParams(account_id=account_id, task_id=task_id)
             task = TaskService.get_task_for_account(params=task_params)
             task_dict = asdict(task)
             return jsonify(task_dict), 200
@@ -67,9 +65,7 @@ class TaskView(MethodView):
                 size = DEFAULT_PAGINATION_PARAMS.size
 
             pagination_params = PaginationParams(page=page, size=size, offset=0)
-            tasks_params = GetPaginatedTasksParams(
-                account_id=getattr(request, "account_id"), pagination_params=pagination_params
-            )
+            tasks_params = GetPaginatedTasksParams(account_id=account_id, pagination_params=pagination_params)
 
             pagination_result = TaskService.get_paginated_tasks_for_account(params=tasks_params)
 
@@ -78,7 +74,7 @@ class TaskView(MethodView):
             return jsonify(response_data), 200
 
     @access_auth_middleware
-    def patch(self, task_id: str) -> ResponseReturnValue:
+    def patch(self, account_id: str, task_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
         if request_data is None:
@@ -91,10 +87,7 @@ class TaskView(MethodView):
             raise TaskBadRequestError("Description is required")
 
         update_task_params = UpdateTaskParams(
-            account_id=getattr(request, "account_id"),
-            task_id=task_id,
-            title=request_data["title"],
-            description=request_data["description"],
+            account_id=account_id, task_id=task_id, title=request_data["title"], description=request_data["description"]
         )
 
         updated_task = TaskService.update_task(params=update_task_params)
@@ -103,8 +96,8 @@ class TaskView(MethodView):
         return jsonify(task_dict), 200
 
     @access_auth_middleware
-    def delete(self, task_id: str) -> ResponseReturnValue:
-        delete_params = DeleteTaskParams(account_id=getattr(request, "account_id"), task_id=task_id)
+    def delete(self, account_id: str, task_id: str) -> ResponseReturnValue:
+        delete_params = DeleteTaskParams(account_id=account_id, task_id=task_id)
 
         TaskService.delete_task(params=delete_params)
 

@@ -11,7 +11,7 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
-        response = self.make_authenticated_request("POST", self.TASK_API_URL, token, task_data)
+        response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         assert response.status_code == 201
         assert response.json is not None
@@ -26,7 +26,7 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         task_data = {"description": self.DEFAULT_TASK_DESCRIPTION}
 
-        response = self.make_authenticated_request("POST", self.TASK_API_URL, token, task_data)
+        response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
         assert "Title is required" in response.json.get("message")
@@ -35,7 +35,7 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         task_data = {"title": self.DEFAULT_TASK_TITLE}
 
-        response = self.make_authenticated_request("POST", self.TASK_API_URL, token, task_data)
+        response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
         assert "Description is required" in response.json.get("message")
@@ -44,30 +44,32 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         task_data = {}
 
-        response = self.make_authenticated_request("POST", self.TASK_API_URL, token, task_data)
+        response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
         assert "Title is required" in response.json.get("message")
 
     def test_create_task_no_auth(self) -> None:
+        account, _ = self.create_account_and_get_token()
         task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
-        response = self.make_unauthenticated_request("POST", self.TASK_API_URL, task_data)
+        response = self.make_unauthenticated_request("POST", account.id, data=task_data)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
 
     def test_create_task_invalid_token(self) -> None:
+        account, _ = self.create_account_and_get_token()
         invalid_token = "invalid_token"
         task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
-        response = self.make_authenticated_request("POST", self.TASK_API_URL, invalid_token, task_data)
+        response = self.make_authenticated_request("POST", account.id, invalid_token, data=task_data)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.ACCESS_TOKEN_INVALID)
 
     def test_get_all_tasks_empty(self) -> None:
         account, token = self.create_account_and_get_token()
 
-        response = self.make_authenticated_request("GET", self.TASK_API_URL, token)
+        response = self.make_authenticated_request("GET", account.id, token)
 
         assert response.status_code == 200
         self.assert_pagination_response(response.json, expected_items_count=0, expected_total_count=0)
@@ -76,7 +78,7 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         tasks = self.create_multiple_test_tasks(account_id=account.id, count=3)
 
-        response = self.make_authenticated_request("GET", self.TASK_API_URL, token)
+        response = self.make_authenticated_request("GET", account.id, token)
 
         assert response.status_code == 200
         self.assert_pagination_response(response.json, expected_items_count=3, expected_total_count=3)
@@ -89,8 +91,8 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         self.create_multiple_test_tasks(account_id=account.id, count=5)
 
-        response1 = self.make_authenticated_request("GET", f"{self.TASK_API_URL}?page=1&size=2", token)
-        response2 = self.make_authenticated_request("GET", f"{self.TASK_API_URL}?page=2&size=2", token)
+        response1 = self.make_authenticated_request("GET", account.id, token, query_params="page=1&size=2")
+        response2 = self.make_authenticated_request("GET", account.id, token, query_params="page=2&size=2")
 
         assert response1.status_code == 200
         self.assert_pagination_response(
@@ -105,7 +107,9 @@ class TestTaskApi(BaseTestTask):
         assert response1.json["items"][0]["id"] != response2.json["items"][0]["id"]
 
     def test_get_all_tasks_no_auth(self) -> None:
-        response = self.make_unauthenticated_request("GET", self.TASK_API_URL)
+        account, _ = self.create_account_and_get_token()
+
+        response = self.make_unauthenticated_request("GET", account.id)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
 
@@ -113,7 +117,7 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         created_task = self.create_test_task(account_id=account.id)
 
-        response = self.make_authenticated_request("GET", f"{self.TASK_API_URL}/{created_task.id}", token)
+        response = self.make_authenticated_request("GET", account.id, token, task_id=created_task.id)
 
         assert response.status_code == 200
         self.assert_task_response(response.json, expected_task=created_task)
@@ -122,14 +126,15 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         non_existent_task_id = "507f1f77bcf86cd799439011"
 
-        response = self.make_authenticated_request("GET", f"{self.TASK_API_URL}/{non_existent_task_id}", token)
+        response = self.make_authenticated_request("GET", account.id, token, task_id=non_existent_task_id)
 
         self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_get_specific_task_no_auth(self) -> None:
+        account, _ = self.create_account_and_get_token()
         fake_task_id = "507f1f77bcf86cd799439011"
 
-        response = self.make_unauthenticated_request("GET", f"{self.TASK_API_URL}/{fake_task_id}")
+        response = self.make_unauthenticated_request("GET", account.id, task_id=fake_task_id)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
 
@@ -141,7 +146,7 @@ class TestTaskApi(BaseTestTask):
         update_data = {"title": "Updated Title", "description": "Updated Description"}
 
         response = self.make_authenticated_request(
-            "PATCH", f"{self.TASK_API_URL}/{created_task.id}", token, update_data
+            "PATCH", account.id, token, task_id=created_task.id, data=update_data
         )
 
         assert response.status_code == 200
@@ -159,7 +164,7 @@ class TestTaskApi(BaseTestTask):
         update_data = {"description": "Updated Description"}
 
         response = self.make_authenticated_request(
-            "PATCH", f"{self.TASK_API_URL}/{created_task.id}", token, update_data
+            "PATCH", account.id, token, task_id=created_task.id, data=update_data
         )
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
@@ -171,7 +176,7 @@ class TestTaskApi(BaseTestTask):
         update_data = {"title": "Updated Title"}
 
         response = self.make_authenticated_request(
-            "PATCH", f"{self.TASK_API_URL}/{created_task.id}", token, update_data
+            "PATCH", account.id, token, task_id=created_task.id, data=update_data
         )
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
@@ -183,16 +188,17 @@ class TestTaskApi(BaseTestTask):
         update_data = {"title": "Updated Title", "description": "Updated Description"}
 
         response = self.make_authenticated_request(
-            "PATCH", f"{self.TASK_API_URL}/{non_existent_task_id}", token, update_data
+            "PATCH", account.id, token, task_id=non_existent_task_id, data=update_data
         )
 
         self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_update_task_no_auth(self) -> None:
+        account, _ = self.create_account_and_get_token()
         fake_task_id = "507f1f77bcf86cd799439011"
         update_data = {"title": "Updated Title", "description": "Updated Description"}
 
-        response = self.make_unauthenticated_request("PATCH", f"{self.TASK_API_URL}/{fake_task_id}", update_data)
+        response = self.make_unauthenticated_request("PATCH", account.id, task_id=fake_task_id, data=update_data)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
 
@@ -202,26 +208,27 @@ class TestTaskApi(BaseTestTask):
             account_id=account.id, title="Task to Delete", description="This task will be deleted"
         )
 
-        delete_response = self.make_authenticated_request("DELETE", f"{self.TASK_API_URL}/{created_task.id}", token)
+        delete_response = self.make_authenticated_request("DELETE", account.id, token, task_id=created_task.id)
 
         assert delete_response.status_code == 204
         assert delete_response.data == b""
 
-        get_response = self.make_authenticated_request("GET", f"{self.TASK_API_URL}/{created_task.id}", token)
+        get_response = self.make_authenticated_request("GET", account.id, token, task_id=created_task.id)
         assert get_response.status_code == 404
 
     def test_delete_task_not_found(self) -> None:
         account, token = self.create_account_and_get_token()
         non_existent_task_id = "507f1f77bcf86cd799439011"
 
-        response = self.make_authenticated_request("DELETE", f"{self.TASK_API_URL}/{non_existent_task_id}", token)
+        response = self.make_authenticated_request("DELETE", account.id, token, task_id=non_existent_task_id)
 
         self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_delete_task_no_auth(self) -> None:
+        account, _ = self.create_account_and_get_token()
         fake_task_id = "507f1f77bcf86cd799439011"
 
-        response = self.make_unauthenticated_request("DELETE", f"{self.TASK_API_URL}/{fake_task_id}")
+        response = self.make_unauthenticated_request("DELETE", account.id, task_id=fake_task_id)
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
 
@@ -230,20 +237,20 @@ class TestTaskApi(BaseTestTask):
         account2, token2 = self.create_account_and_get_token("user2@example.com", "password2")
 
         task_data = {"title": "Account 1 Task", "description": "This belongs to account 1"}
-        create_response = self.make_authenticated_request("POST", self.TASK_API_URL, token1, task_data)
+        create_response = self.make_authenticated_request("POST", account1.id, token1, data=task_data)
         account1_task_id = create_response.json.get("id")
 
-        get_response = self.make_authenticated_request("GET", f"{self.TASK_API_URL}/{account1_task_id}", token2)
-        patch_response = self.make_authenticated_request(
-            "PATCH", f"{self.TASK_API_URL}/{account1_task_id}", token2, {"title": "Hacked", "description": "Hacked"}
+        get_response = self.make_cross_account_request("GET", account1.id, token2, task_id=account1_task_id)
+        patch_response = self.make_cross_account_request(
+            "PATCH", account1.id, token2, task_id=account1_task_id, data={"title": "Hacked", "description": "Hacked"}
         )
-        delete_response = self.make_authenticated_request("DELETE", f"{self.TASK_API_URL}/{account1_task_id}", token2)
+        delete_response = self.make_cross_account_request("DELETE", account1.id, token2, task_id=account1_task_id)
 
-        self.assert_error_response(get_response, 404, TaskErrorCode.NOT_FOUND)
-        self.assert_error_response(patch_response, 404, TaskErrorCode.NOT_FOUND)
-        self.assert_error_response(delete_response, 404, TaskErrorCode.NOT_FOUND)
+        self.assert_error_response(get_response, 401, AccessTokenErrorCode.UNAUTHORIZED_ACCESS)
+        self.assert_error_response(patch_response, 401, AccessTokenErrorCode.UNAUTHORIZED_ACCESS)
+        self.assert_error_response(delete_response, 401, AccessTokenErrorCode.UNAUTHORIZED_ACCESS)
 
-        verify_response = self.make_authenticated_request("GET", f"{self.TASK_API_URL}/{account1_task_id}", token1)
+        verify_response = self.make_authenticated_request("GET", account1.id, token1, task_id=account1_task_id)
         assert verify_response.status_code == 200
         assert verify_response.json.get("id") == account1_task_id
 
@@ -251,12 +258,11 @@ class TestTaskApi(BaseTestTask):
         account, token = self.create_account_and_get_token()
         invalid_json_data = "invalid json"
 
-        with self.subTest("Invalid JSON for create task"):
-            with app.test_client() as client:
-                response = client.post(
-                    self.TASK_API_URL,
-                    headers={**self.HEADERS, "Authorization": f"Bearer {token}"},
-                    data=invalid_json_data,
-                )
+        with app.test_client() as client:
+            response = client.post(
+                self.get_task_api_url(account.id),
+                headers={**self.HEADERS, "Authorization": f"Bearer {token}"},
+                data=invalid_json_data,
+            )
 
         assert response.status_code == 400

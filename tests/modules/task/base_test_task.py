@@ -14,7 +14,6 @@ from modules.task.types import CreateTaskParams, Task
 
 
 class BaseTestTask(unittest.TestCase):
-    TASK_API_URL = "http://127.0.0.1:8080/api/tasks"
     ACCESS_TOKEN_URL = "http://127.0.0.1:8080/api/access-tokens"
     HEADERS = {"Content-Type": "application/json"}
 
@@ -33,7 +32,15 @@ class BaseTestTask(unittest.TestCase):
         TaskRepository.collection().delete_many({})
         AccountRepository.collection().delete_many({})
 
-    # COMMON HELPER METHODS
+    # URL HELPER METHODS
+
+    def get_task_api_url(self, account_id: str) -> str:
+        return f"http://127.0.0.1:8080/api/accounts/{account_id}/tasks"
+
+    def get_task_by_id_api_url(self, account_id: str, task_id: str) -> str:
+        return f"http://127.0.0.1:8080/api/accounts/{account_id}/tasks/{task_id}"
+
+    # ACCOUNT AND TOKEN HELPER METHODS
 
     def create_test_account(
         self, username: str = None, password: str = None, first_name: str = None, last_name: str = None
@@ -66,6 +73,8 @@ class BaseTestTask(unittest.TestCase):
         token = self.get_access_token(username=test_username, password=test_password)
         return account, token
 
+    # TASK HELPER METHODS
+
     def create_test_task(self, account_id: str, title: str = None, description: str = None) -> Task:
         return TaskService.create_task(
             params=CreateTaskParams(
@@ -82,8 +91,21 @@ class BaseTestTask(unittest.TestCase):
             tasks.append(task)
         return tasks
 
-    def make_authenticated_request(self, method: str, url: str, token: str, data: dict = None):
+    # HTTP REQUEST HELPER METHODS
+
+    def make_authenticated_request(
+        self, method: str, account_id: str, token: str, task_id: str = None, data: dict = None, query_params: str = ""
+    ):
+        if task_id:
+            url = self.get_task_by_id_api_url(account_id, task_id)
+        else:
+            url = self.get_task_api_url(account_id)
+
+        if query_params:
+            url += f"?{query_params}"
+
         headers = {**self.HEADERS, "Authorization": f"Bearer {token}"}
+
         with app.test_client() as client:
             if method.upper() == "GET":
                 return client.get(url, headers={"Authorization": f"Bearer {token}"})
@@ -94,7 +116,12 @@ class BaseTestTask(unittest.TestCase):
             elif method.upper() == "DELETE":
                 return client.delete(url, headers={"Authorization": f"Bearer {token}"})
 
-    def make_unauthenticated_request(self, method: str, url: str, data: dict = None):
+    def make_unauthenticated_request(self, method: str, account_id: str, task_id: str = None, data: dict = None):
+        if task_id:
+            url = self.get_task_by_id_api_url(account_id, task_id)
+        else:
+            url = self.get_task_api_url(account_id)
+
         with app.test_client() as client:
             if method.upper() == "GET":
                 return client.get(url)
@@ -105,7 +132,27 @@ class BaseTestTask(unittest.TestCase):
             elif method.upper() == "DELETE":
                 return client.delete(url)
 
-    # ASSERTION HELPERS
+    def make_cross_account_request(
+        self, method: str, target_account_id: str, auth_token: str, task_id: str = None, data: dict = None
+    ):
+        if task_id:
+            url = self.get_task_by_id_api_url(target_account_id, task_id)
+        else:
+            url = self.get_task_api_url(target_account_id)
+
+        headers = {**self.HEADERS, "Authorization": f"Bearer {auth_token}"}
+
+        with app.test_client() as client:
+            if method.upper() == "GET":
+                return client.get(url, headers={"Authorization": f"Bearer {auth_token}"})
+            elif method.upper() == "POST":
+                return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "PATCH":
+                return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
+            elif method.upper() == "DELETE":
+                return client.delete(url, headers={"Authorization": f"Bearer {auth_token}"})
+
+    # ASSERTION HELPER METHODS
 
     def assert_task_response(self, response_json: dict, expected_task: Task = None, **expected_fields):
         assert response_json.get("id") is not None
