@@ -10,8 +10,6 @@ class DeviceTokenWriter:
 
     @staticmethod
     def _create_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
-        DeviceTokenUtil.validate_device_type_for_service(params.device_type)
-
         device_token_model = DeviceTokenModel(
             token=params.token, account_id=params.account_id, device_type=params.device_type, id=None
         )
@@ -21,8 +19,6 @@ class DeviceTokenWriter:
 
     @staticmethod
     def _update_account_fcm_token(params: RegisterDeviceTokenParams) -> DeviceToken:
-        DeviceTokenUtil.validate_device_type_for_service(params.device_type)
-
         updated_token = DeviceTokenRepository.collection().find_one_and_update(
             {"token": params.token},
             {
