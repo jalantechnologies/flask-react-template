@@ -16,7 +16,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: schema-upgrade
-          image: temporalio/admin-tools:1.27.2
+          image: temporalio/admin-tools:1.28.0
           command:
             - /bin/sh
             - -c
