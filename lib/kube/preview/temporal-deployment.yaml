@@ -18,7 +18,7 @@ spec:
         - name: regcred
       containers:
         - name: schema-upgrade
-          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          image: temporalio/admin-tools:1.27.2
           command:
             - /bin/sh
             - -c
@@ -116,7 +116,7 @@ spec:
               memory: '400Mi'
 
         - name: temporal-admin-tools
-          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          image: temporalio/admin-tools:1.27.2
           imagePullPolicy: Always
           envFrom:
             - secretRef:
