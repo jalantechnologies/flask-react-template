@@ -16,7 +16,6 @@ TASK_VALIDATION_SCHEMA = {
             "active": {"bsonType": "bool"},
             "created_at": {"bsonType": "date"},
             "updated_at": {"bsonType": "date"},
-            "_id": {"bsonType": "objectId"},
         },
     }
 }
