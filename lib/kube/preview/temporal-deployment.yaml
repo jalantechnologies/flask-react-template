@@ -1,3 +1,68 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: temporal-schema-migration
+  namespace: $KUBE_NS
+  labels:
+    app: temporal
+    purpose: schema-init
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: temporal
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: schema-upgrade
+          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Running Temporal schema setup"
+
+              tctl --address temporal-grpc:7233 \
+                operator db setup \
+                --plugin postgres \
+                --db postgres12 \
+                --db-name temporal_preview \
+                --user doadmin \
+                --pw $POSTGRES_PWD \
+                --host $POSTGRES_SEEDS \
+                --port 25061 \
+                --tls \
+                --tls-enable-host-verification=false \
+                --tls-skip-verify \
+                --tls-disable-host-verification \
+                --schema-dir /etc/temporal/schema/postgresql/v96/temporal/versioned
+
+              echo "Running schema upgrade"
+
+              tctl --address temporal-grpc:7233 \
+                operator db upgrade \
+                --plugin postgres \
+                --db postgres12 \
+                --db-name temporal_preview \
+                --user doadmin \
+                --pw $POSTGRES_PWD \
+                --host $POSTGRES_SEEDS \
+                --port 25061 \
+                --tls \
+                --tls-enable-host-verification=false \
+                --tls-skip-verify \
+                --tls-disable-host-verification \
+                --schema-dir /etc/temporal/schema/postgresql/v96/temporal/versioned
+
+              echo "Schema setup & upgrade complete."
+
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
