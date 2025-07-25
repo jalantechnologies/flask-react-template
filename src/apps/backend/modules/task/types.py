@@ -54,9 +54,6 @@ class TaskDeletionResult:
     success: bool
 
 
-PaginatedTasksResult = PaginationResult[Task]
-
-
 @dataclass(frozen=True)
 class TaskErrorCode:
     NOT_FOUND: str = "TASK_ERR_01"
