@@ -16,47 +16,40 @@ spec:
       restartPolicy: Never
       containers:
         - name: schema-upgrade
-          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          image: temporalio/temporal-sql-tool:1.28.0
           command:
             - /bin/sh
             - -c
             - |
-              echo "Running Temporal schema setup"
-
-              tctl --address temporal-grpc:7233 \
-                operator db setup \
+              echo "Running schema setup"
+              temporal-sql-tool setup-schema \
                 --plugin postgres \
-                --db postgres12 \
-                --db-name temporal_preview \
-                --user doadmin \
-                --pw $POSTGRES_PWD \
-                --host $POSTGRES_SEEDS \
-                --port 25061 \
+                --db-name ${DBNAME} \
+                --db-user ${POSTGRES_USER} \
+                --db-password ${POSTGRES_PWD} \
+                --db-port ${DB_PORT} \
+                --db-host ${POSTGRES_SEEDS} \
                 --tls \
-                --tls-enable-host-verification=false \
                 --tls-skip-verify \
                 --tls-disable-host-verification \
-                --schema-dir /etc/temporal/schema/postgresql/v12/temporal/versioned
+                --encoding-type=default \
+                --schema-dir /schema/postgresql/v12/temporal/versioned
 
               echo "Running schema upgrade"
-
-              tctl --address temporal-grpc:7233 \
-                operator db upgrade \
+              temporal-sql-tool update-schema \
                 --plugin postgres \
-                --db postgres12 \
-                --db-name temporal_preview \
-                --user doadmin \
-                --pw $POSTGRES_PWD \
-                --host $POSTGRES_SEEDS \
-                --port 25061 \
+                --db-name ${DBNAME} \
+                --db-user ${POSTGRES_USER} \
+                --db-password ${POSTGRES_PWD} \
+                --db-port ${DB_PORT} \
+                --db-host ${POSTGRES_SEEDS} \
                 --tls \
-                --tls-enable-host-verification=false \
                 --tls-skip-verify \
                 --tls-disable-host-verification \
-                --schema-dir /etc/temporal/schema/postgresql/v12/temporal/versioned
+                --encoding-type=default \
+                --schema-dir /schema/postgresql/v12/temporal/versioned
 
-              echo "Schema setup & upgrade complete."
-
+              echo "Done"
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
