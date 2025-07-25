@@ -6,7 +6,7 @@ from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
     GetPaginatedTasksParams,
-    GetTaskParams,
+    GetTaskForAccountParams,
     TaskErrorCode,
     UpdateTaskParams,
 )
@@ -31,7 +31,7 @@ class TestTaskService(BaseTestTask):
 
     def test_get_task_for_account(self) -> None:
         created_task = self.create_test_task(account_id=self.account.id)
-        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
+        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=created_task.id)
 
         retrieved_task = TaskService.get_task_for_account(params=get_params)
 
@@ -42,7 +42,7 @@ class TestTaskService(BaseTestTask):
 
     def test_get_task_for_account_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        get_params = GetTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
+        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=non_existent_task_id)
 
         with self.assertRaises(TaskNotFoundError) as context:
             TaskService.get_task_for_account(params=get_params)
@@ -133,7 +133,7 @@ class TestTaskService(BaseTestTask):
         assert deletion_result.deleted_at is not None
         assert isinstance(deletion_result.deleted_at, datetime)
 
-        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
+        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=created_task.id)
         with self.assertRaises(TaskNotFoundError):
             TaskService.get_task_for_account(params=get_params)
 
@@ -168,6 +168,6 @@ class TestTaskService(BaseTestTask):
         assert len(account2_result.items) == 1
         assert account2_result.items[0].id == account2_task.id
 
-        get_params = GetTaskParams(account_id=self.account.id, task_id=account2_task.id)
+        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=account2_task.id)
         with self.assertRaises(TaskNotFoundError):
             TaskService.get_task_for_account(params=get_params)

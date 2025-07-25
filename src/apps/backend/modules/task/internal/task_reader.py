@@ -7,12 +7,12 @@ from modules.application.common.types import PaginationParams
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_util import TaskUtil
-from modules.task.types import GetPaginatedTasksParams, GetTaskParams, PaginatedTasksResult, Task
+from modules.task.types import GetPaginatedTasksParams, GetTaskForAccountParams, PaginatedTasksResult, Task
 
 
 class TaskReader:
     @staticmethod
-    def get_task_for_account(*, params: GetTaskParams) -> Task:
+    def get_task_for_account(*, params: GetTaskForAccountParams) -> Task:
         task_bson = TaskRepository.collection().find_one(
             {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
         )

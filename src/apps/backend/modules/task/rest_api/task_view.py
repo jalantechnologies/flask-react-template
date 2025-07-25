@@ -12,7 +12,7 @@ from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
     GetPaginatedTasksParams,
-    GetTaskParams,
+    GetTaskForAccountParams,
     UpdateTaskParams,
 )
 
@@ -45,7 +45,7 @@ class TaskView(MethodView):
     @access_auth_middleware
     def get(self, task_id: Optional[str] = None) -> ResponseReturnValue:
         if task_id:
-            task_params = GetTaskParams(account_id=getattr(request, "account_id"), task_id=task_id)
+            task_params = GetTaskForAccountParams(account_id=getattr(request, "account_id"), task_id=task_id)
             task = TaskService.get_task_for_account(params=task_params)
             task_dict = asdict(task)
             return jsonify(task_dict), 200

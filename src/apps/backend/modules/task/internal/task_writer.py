@@ -11,7 +11,7 @@ from modules.task.internal.task_util import TaskUtil
 from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
-    GetTaskParams,
+    GetTaskForAccountParams,
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
@@ -46,7 +46,7 @@ class TaskWriter:
     @staticmethod
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
         task = TaskReader.get_task_for_account(
-            params=GetTaskParams(account_id=params.account_id, task_id=params.task_id)
+            params=GetTaskForAccountParams(account_id=params.account_id, task_id=params.task_id)
         )
 
         deletion_time = datetime.now()
