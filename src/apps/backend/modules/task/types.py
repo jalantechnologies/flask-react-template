@@ -14,7 +14,7 @@ class Task:
 
 
 @dataclass(frozen=True)
-class GetTaskForAccountParams:
+class GetTaskParams:
     account_id: str
     task_id: str
 

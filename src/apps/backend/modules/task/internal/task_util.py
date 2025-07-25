@@ -9,8 +9,8 @@ class TaskUtil:
     def convert_task_bson_to_task(task_bson: dict[str, Any]) -> Task:
         validated_task_data = TaskModel.from_bson(task_bson)
         return Task(
-            id=str(validated_task_data.id),
             account_id=validated_task_data.account_id,
             description=validated_task_data.description,
+            id=str(validated_task_data.id),
             title=validated_task_data.title,
         )

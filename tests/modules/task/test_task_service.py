@@ -7,7 +7,7 @@ from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
     GetPaginatedTasksParams,
-    GetTaskForAccountParams,
+    GetTaskParams,
     TaskErrorCode,
     UpdateTaskParams,
 )
@@ -32,9 +32,9 @@ class TestTaskService(BaseTestTask):
 
     def test_get_task_for_account(self) -> None:
         created_task = self.create_test_task(account_id=self.account.id)
-        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=created_task.id)
+        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
 
-        retrieved_task = TaskService.get_task_for_account(params=get_params)
+        retrieved_task = TaskService.get_task(params=get_params)
 
         assert retrieved_task.id == created_task.id
         assert retrieved_task.account_id == self.account.id
@@ -43,18 +43,18 @@ class TestTaskService(BaseTestTask):
 
     def test_get_task_for_account_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=non_existent_task_id)
+        get_params = GetTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
 
         with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.get_task_for_account(params=get_params)
+            TaskService.get_task(params=get_params)
 
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 
-    def test_get_paginated_tasks_for_account_empty(self) -> None:
+    def test_get_paginated_tasks_empty(self) -> None:
         pagination_params = PaginationParams(page=1, size=10, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params)
 
         assert len(result.items) == 0
         assert result.total_count == 0
@@ -62,13 +62,13 @@ class TestTaskService(BaseTestTask):
         assert result.pagination_params.page == 1
         assert result.pagination_params.size == 10
 
-    def test_get_paginated_tasks_for_account_with_data(self) -> None:
+    def test_get_paginated_tasks_with_data(self) -> None:
         tasks_count = 5
         self.create_multiple_test_tasks(account_id=self.account.id, count=tasks_count)
         pagination_params = PaginationParams(page=1, size=3, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params)
 
         assert len(result.items) == 3
         assert result.total_count == 5
@@ -78,7 +78,7 @@ class TestTaskService(BaseTestTask):
 
         pagination_params = PaginationParams(page=2, size=3, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        result = TaskService.get_paginated_tasks_for_account(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params)
         assert len(result.items) == 2
         assert result.total_count == 5
         assert result.total_pages == 2
@@ -88,7 +88,7 @@ class TestTaskService(BaseTestTask):
         pagination_params = PaginationParams(page=1, size=1, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params)
 
         assert len(result.items) == 1
         assert result.total_count == 1
@@ -138,9 +138,9 @@ class TestTaskService(BaseTestTask):
         assert deletion_result.deleted_at is not None
         assert isinstance(deletion_result.deleted_at, datetime)
 
-        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=created_task.id)
+        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
         with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task_for_account(params=get_params)
+            TaskService.get_task(params=get_params)
 
     def test_delete_task_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
@@ -163,10 +163,10 @@ class TestTaskService(BaseTestTask):
 
         pagination_params = PaginationParams(page=1, size=10, offset=0)
         get_params1 = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        account1_result = TaskService.get_paginated_tasks_for_account(params=get_params1)
+        account1_result = TaskService.get_paginated_tasks(params=get_params1)
 
         get_params2 = GetPaginatedTasksParams(account_id=other_account.id, pagination_params=pagination_params)
-        account2_result = TaskService.get_paginated_tasks_for_account(params=get_params2)
+        account2_result = TaskService.get_paginated_tasks(params=get_params2)
 
         assert len(account1_result.items) == 1
         assert account1_result.items[0].id == account1_task.id
@@ -174,6 +174,6 @@ class TestTaskService(BaseTestTask):
         assert len(account2_result.items) == 1
         assert account2_result.items[0].id == account2_task.id
 
-        get_params = GetTaskForAccountParams(account_id=self.account.id, task_id=account2_task.id)
+        get_params = GetTaskParams(account_id=self.account.id, task_id=account2_task.id)
         with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task_for_account(params=get_params)
+            TaskService.get_task(params=get_params)

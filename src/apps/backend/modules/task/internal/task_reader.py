@@ -5,12 +5,12 @@ from modules.application.common.types import PaginationResult
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_util import TaskUtil
-from modules.task.types import GetPaginatedTasksParams, GetTaskForAccountParams, Task
+from modules.task.types import GetPaginatedTasksParams, GetTaskParams, Task
 
 
 class TaskReader:
     @staticmethod
-    def get_task_for_account(*, params: GetTaskForAccountParams) -> Task:
+    def get_task(*, params: GetTaskParams) -> Task:
         task_bson = TaskRepository.collection().find_one(
             {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
         )
@@ -19,7 +19,7 @@ class TaskReader:
         return TaskUtil.convert_task_bson_to_task(task_bson)
 
     @staticmethod
-    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginationResult[Task]:
+    def get_paginated_tasks(*, params: GetPaginatedTasksParams) -> PaginationResult[Task]:
         filter_query = {"account_id": params.account_id, "active": True}
         total_count = TaskRepository.collection().count_documents(filter_query)
         pagination_params, skip, total_pages = BaseModel.calculate_pagination_values(

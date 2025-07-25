@@ -14,7 +14,7 @@ from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
     GetPaginatedTasksParams,
-    GetTaskForAccountParams,
+    GetTaskParams,
     UpdateTaskParams,
 )
 
@@ -45,8 +45,8 @@ class TaskView(MethodView):
     @access_auth_middleware
     def get(self, account_id: str, task_id: Optional[str] = None) -> ResponseReturnValue:
         if task_id:
-            task_params = GetTaskForAccountParams(account_id=account_id, task_id=task_id)
-            task = TaskService.get_task_for_account(params=task_params)
+            task_params = GetTaskParams(account_id=account_id, task_id=task_id)
+            task = TaskService.get_task(params=task_params)
             task_dict = asdict(task)
             return jsonify(task_dict), 200
         else:
@@ -67,7 +67,7 @@ class TaskView(MethodView):
             pagination_params = PaginationParams(page=page, size=size, offset=0)
             tasks_params = GetPaginatedTasksParams(account_id=account_id, pagination_params=pagination_params)
 
-            pagination_result = TaskService.get_paginated_tasks_for_account(params=tasks_params)
+            pagination_result = TaskService.get_paginated_tasks(params=tasks_params)
 
             response_data = asdict(pagination_result)
 

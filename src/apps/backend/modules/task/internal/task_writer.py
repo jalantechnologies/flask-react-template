@@ -11,7 +11,7 @@ from modules.task.internal.task_util import TaskUtil
 from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
-    GetTaskForAccountParams,
+    GetTaskParams,
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
@@ -22,7 +22,7 @@ class TaskWriter:
     @staticmethod
     def create_task(*, params: CreateTaskParams) -> Task:
         task_bson = TaskModel(
-            account_id=params.account_id, description=params.description, title=params.title, id=None, active=True
+            account_id=params.account_id, description=params.description, title=params.title
         ).to_bson()
 
         query = TaskRepository.collection().insert_one(task_bson)
@@ -45,9 +45,7 @@ class TaskWriter:
 
     @staticmethod
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
-        task = TaskReader.get_task_for_account(
-            params=GetTaskForAccountParams(account_id=params.account_id, task_id=params.task_id)
-        )
+        task = TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
         deletion_time = datetime.now()
         updated_task_bson = TaskRepository.collection().find_one_and_update(
