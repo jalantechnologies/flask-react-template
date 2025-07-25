@@ -21,13 +21,12 @@ class BaseModel:
         pagination_params: PaginationParams, total_count: int
     ) -> Tuple[PaginationParams, int, int]:
         page = pagination_params.page
-        size = pagination_params.size if pagination_params.size else total_count
+        size = pagination_params.size
         offset = pagination_params.offset
 
         skip = (page - 1) * size + offset
 
-        pagination_params = PaginationParams(page=page, size=size, offset=pagination_params.offset)
-        total_pages = (total_count + size - 1) // size
+        total_pages = (total_count + size - 1) // size if size > 0 else 0
 
         return pagination_params, skip, total_pages
 

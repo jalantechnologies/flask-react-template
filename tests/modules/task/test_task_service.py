@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from modules.application.common.types import PaginationParams
 from modules.task.errors import TaskNotFoundError
 from modules.task.task_service import TaskService
 from modules.task.types import (
@@ -50,9 +51,10 @@ class TestTaskService(BaseTestTask):
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 
     def test_get_paginated_tasks_for_account_empty(self) -> None:
-        pagination_params = GetPaginatedTasksParams(account_id=self.account.id, page=1, size=10)
+        pagination_params = PaginationParams(page=1, size=10, offset=0)
+        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        result = TaskService.get_paginated_tasks_for_account(params=get_params)
 
         assert len(result.items) == 0
         assert result.total_count == 0
@@ -63,9 +65,10 @@ class TestTaskService(BaseTestTask):
     def test_get_paginated_tasks_for_account_with_data(self) -> None:
         tasks_count = 5
         self.create_multiple_test_tasks(account_id=self.account.id, count=tasks_count)
-        pagination_params = GetPaginatedTasksParams(account_id=self.account.id, page=1, size=3)
+        pagination_params = PaginationParams(page=1, size=3, offset=0)
+        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        result = TaskService.get_paginated_tasks_for_account(params=get_params)
 
         assert len(result.items) == 3
         assert result.total_count == 5
@@ -73,17 +76,19 @@ class TestTaskService(BaseTestTask):
         assert result.pagination_params.page == 1
         assert result.pagination_params.size == 3
 
-        pagination_params = GetPaginatedTasksParams(account_id=self.account.id, page=2, size=3)
-        result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        pagination_params = PaginationParams(page=2, size=3, offset=0)
+        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
+        result = TaskService.get_paginated_tasks_for_account(params=get_params)
         assert len(result.items) == 2
         assert result.total_count == 5
         assert result.total_pages == 2
 
     def test_get_paginated_tasks_default_pagination(self) -> None:
         self.create_test_task(account_id=self.account.id)
-        pagination_params = GetPaginatedTasksParams(account_id=self.account.id)
+        pagination_params = PaginationParams(page=1, size=1, offset=0)
+        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        result = TaskService.get_paginated_tasks_for_account(params=get_params)
 
         assert len(result.items) == 1
         assert result.total_count == 1
@@ -156,11 +161,12 @@ class TestTaskService(BaseTestTask):
             account_id=other_account.id, title="Account 2 Task", description="Task for account 2"
         )
 
-        pagination_params = GetPaginatedTasksParams(account_id=self.account.id)
-        account1_result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        pagination_params = PaginationParams(page=1, size=10, offset=0)
+        get_params1 = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
+        account1_result = TaskService.get_paginated_tasks_for_account(params=get_params1)
 
-        pagination_params = GetPaginatedTasksParams(account_id=other_account.id)
-        account2_result = TaskService.get_paginated_tasks_for_account(params=pagination_params)
+        get_params2 = GetPaginatedTasksParams(account_id=other_account.id, pagination_params=pagination_params)
+        account2_result = TaskService.get_paginated_tasks_for_account(params=get_params2)
 
         assert len(account1_result.items) == 1
         assert account1_result.items[0].id == account1_task.id

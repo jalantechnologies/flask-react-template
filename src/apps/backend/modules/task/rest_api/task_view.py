@@ -5,6 +5,8 @@ from flask import jsonify, request
 from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
+from modules.application.common.constants import DEFAULT_PAGINATION_PARAMS
+from modules.application.common.types import PaginationParams
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.task.errors import TaskBadRequestError
 from modules.task.task_service import TaskService
@@ -59,21 +61,19 @@ class TaskView(MethodView):
             if size is not None and size < 1:
                 raise TaskBadRequestError("Size must be greater than 0")
 
-            tasks_params = GetPaginatedTasksParams(account_id=getattr(request, "account_id"), page=page, size=size)
+            if page is None:
+                page = DEFAULT_PAGINATION_PARAMS.page
+            if size is None:
+                size = DEFAULT_PAGINATION_PARAMS.size
+
+            pagination_params = PaginationParams(page=page, size=size, offset=0)
+            tasks_params = GetPaginatedTasksParams(
+                account_id=getattr(request, "account_id"), pagination_params=pagination_params
+            )
 
             pagination_result = TaskService.get_paginated_tasks_for_account(params=tasks_params)
 
-            tasks = [asdict(task) for task in pagination_result.items]
-            pagination_params = pagination_result.pagination_params
-            total_tasks_count = pagination_result.total_count
-            total_pages = pagination_result.total_pages
-
-            response_data = {
-                "items": tasks,
-                "pagination_params": pagination_params,
-                "total_count": total_tasks_count,
-                "total_pages": total_pages,
-            }
+            response_data = asdict(pagination_result)
 
             return jsonify(response_data), 200
 

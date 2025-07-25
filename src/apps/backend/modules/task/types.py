@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from modules.application.common.types import PaginationResult
+from modules.application.common.types import PaginationParams, PaginationResult, SortParams
 
 
 @dataclass(frozen=True)
@@ -22,8 +22,8 @@ class GetTaskForAccountParams:
 @dataclass(frozen=True)
 class GetPaginatedTasksParams:
     account_id: str
-    page: Optional[int] = None
-    size: Optional[int] = None
+    pagination_params: PaginationParams
+    sort_params: Optional[SortParams] = None
 
 
 @dataclass(frozen=True)
