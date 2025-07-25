@@ -43,3 +43,9 @@ class PaginationResult(Generic[T]):
     pagination_params: PaginationParams
     total_count: int
     total_pages: int
+
+
+@dataclass(frozen=True)
+class GetPaginatedTasksParams:
+    pagination_params: PaginationParams
+    sort_params: Optional[SortParams] = None
