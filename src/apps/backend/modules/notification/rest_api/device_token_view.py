@@ -15,9 +15,8 @@ class DeviceTokenView(MethodView):
     @access_auth_middleware
     def delete(self) -> ResponseReturnValue:
         account_id = cast(str, getattr(request, "account_id", None))
-
-        deleted_count = NotificationService.delete_account_fcm_tokens_by_account_id(account_id)
-        return jsonify({"success": deleted_count > 0, "deleted_count": deleted_count}), 200
+        NotificationService.delete_account_fcm_tokens_by_account_id(account_id)
+        return "", 204
 
     @access_auth_middleware
     def post(self) -> ResponseReturnValue:

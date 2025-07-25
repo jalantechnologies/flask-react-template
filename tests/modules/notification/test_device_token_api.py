@@ -130,10 +130,8 @@ class TestDeviceTokenApi(BaseTestNotification):
         with app.test_client() as client:
             response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token}"})
 
-            assert response.status_code == 200
-            assert response.json
-            assert response.json.get("success") is True
-            assert response.json.get("deleted_count") == 3
+            assert response.status_code == 204
+            assert response.data == b""
 
         account_tokens_after = NotificationService.get_account_fcm_tokens(account.id)
         assert len(account_tokens_after) == 0
@@ -144,10 +142,8 @@ class TestDeviceTokenApi(BaseTestNotification):
         with app.test_client() as client:
             response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token}"})
 
-            assert response.status_code == 200
-            assert response.json
-            assert response.json.get("success") is False
-            assert response.json.get("deleted_count") == 0
+            assert response.status_code == 204
+            assert response.data == b""
 
     def test_delete_tokens_without_auth(self) -> None:
         with app.test_client() as client:
@@ -186,9 +182,8 @@ class TestDeviceTokenApi(BaseTestNotification):
         with app.test_client() as client:
             response = client.delete(DEVICE_TOKEN_URL, headers={**HEADERS, "Authorization": f"Bearer {auth_token1}"})
 
-            assert response.status_code == 200
-            assert response.json.get("success") is True
-            assert response.json.get("deleted_count") == 1
+            assert response.status_code == 204
+            assert response.data == b""
 
         account1_tokens_after = NotificationService.get_account_fcm_tokens(account1.id)
         account2_tokens_after = NotificationService.get_account_fcm_tokens(account2.id)
