@@ -3,10 +3,11 @@ from typing import List
 
 from bson.objectid import ObjectId
 
+from modules.application.common.types import PaginationParams
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_util import TaskUtil
-from modules.task.types import GetPaginatedTasksParams, GetTaskParams, PaginationParams, PaginatedTasksResult, Task
+from modules.task.types import GetPaginatedTasksParams, GetTaskParams, PaginatedTasksResult, Task
 
 
 class TaskReader:
@@ -22,7 +23,7 @@ class TaskReader:
         return TaskUtil.convert_task_bson_to_task(task_bson)
 
     @staticmethod
-    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult[Task]:
+    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult:
         total_tasks_count = TaskRepository.collection().count_documents(
             {"account_id": params.account_id, "active": True}
         )

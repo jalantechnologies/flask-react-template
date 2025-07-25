@@ -22,7 +22,7 @@ class TaskService:
         return TaskReader.get_task_for_account(params=params)
 
     @staticmethod
-    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult[Task]:
+    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult:
         return TaskReader.get_paginated_tasks_for_account(params=params)
 
     @staticmethod
