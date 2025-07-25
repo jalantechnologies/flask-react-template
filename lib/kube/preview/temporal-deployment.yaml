@@ -36,7 +36,7 @@ spec:
                 --tls-enable-host-verification=false \
                 --tls-skip-verify \
                 --tls-disable-host-verification \
-                --schema-dir /etc/temporal/schema/postgresql/v96/temporal/versioned
+                --schema-dir /etc/temporal/schema/postgresql/v12/temporal/versioned
 
               echo "Running schema upgrade"
 
@@ -53,7 +53,7 @@ spec:
                 --tls-enable-host-verification=false \
                 --tls-skip-verify \
                 --tls-disable-host-verification \
-                --schema-dir /etc/temporal/schema/postgresql/v96/temporal/versioned
+                --schema-dir /etc/temporal/schema/postgresql/v12/temporal/versioned
 
               echo "Schema setup & upgrade complete."
 
