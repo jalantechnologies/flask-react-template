@@ -16,14 +16,12 @@ class ValidationError(AppError):
         self.http_code = 400
 
 
-class InvalidDeviceTypeError(AppError):
-    def __init__(self, device_type: str, allowed_types: List[DeviceType]) -> None:
-        allowed_types_str = ", ".join([device_type.value for device_type in allowed_types])
-
+class InvalidDeviceTypeError(ValidationError):
+    def __init__(self, device_type_str: str) -> None:
+        allowed_values = ", ".join([t.value for t in DeviceType])
         super().__init__(
-            code=NotificationErrorCode.INVALID_DEVICE_TYPE,
-            http_status_code=400,
-            message=f"Invalid device type: {device_type}. Must be one of: {allowed_types_str}",
+            msg=f"Invalid device type: {device_type_str}. Must be one of: {allowed_values}",
+            failures=[ValidationFailure(field="device_type", message=f"Must be one of: {allowed_values}")],
         )
 
 
@@ -34,13 +32,6 @@ class AccountNotificationPreferencesNotFoundError(AppError):
             http_status_code=404,
             message=f"Notification preferences not found for account: {account_id}. Please create preferences first.",
         )
-
-
-class DeviceTokenValidationError(Exception):
-    def __init__(self, device_type_str: str, allowed_types: List[DeviceType]):
-        self.device_type_str = device_type_str
-        self.allowed_types = allowed_types
-        super().__init__(f"Invalid device type: {device_type_str}")
 
 
 class ServiceError(AppError):

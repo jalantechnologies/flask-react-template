@@ -26,7 +26,7 @@ class DeviceTokenView(MethodView):
 
         device_type_str = request_data.get("device_type")
 
-        device_type = DeviceTokenUtil.validate_device_type_for_api(device_type_str)
+        device_type = DeviceTokenUtil.validate_device_type(device_type_str)
 
         token_params = RegisterDeviceTokenParams(
             account_id=account_id, token=request_data.get("token"), device_type=device_type
