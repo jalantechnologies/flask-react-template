@@ -14,8 +14,6 @@ spec:
         app: temporal
     spec:
       restartPolicy: Never
-      imagePullSecrets:
-        - name: regcred
       containers:
         - name: schema-upgrade
           image: temporalio/admin-tools:1.27.2
