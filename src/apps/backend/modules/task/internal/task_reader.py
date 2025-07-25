@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_util import TaskUtil
-from modules.task.types import GetPaginatedTasksParams, GetTaskParams, PaginationParams, PaginationResult, Task
+from modules.task.types import GetPaginatedTasksParams, GetTaskParams, PaginationParams, PaginatedTasksResult, Task
 
 
 class TaskReader:
@@ -22,7 +22,7 @@ class TaskReader:
         return TaskUtil.convert_task_bson_to_task(task_bson)
 
     @staticmethod
-    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginationResult[Task]:
+    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult[Task]:
         total_tasks_count = TaskRepository.collection().count_documents(
             {"account_id": params.account_id, "active": True}
         )
@@ -53,6 +53,6 @@ class TaskReader:
         tasks_bson = list(tasks_cursor)
         tasks = [TaskUtil.convert_task_bson_to_task(task_bson) for task_bson in tasks_bson]
 
-        return PaginationResult(
+        return PaginatedTasksResult(
             items=tasks, pagination_params=pagination_params, total_count=total_tasks_count, total_pages=total_pages
         )

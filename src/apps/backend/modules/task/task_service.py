@@ -5,7 +5,7 @@ from modules.task.types import (
     DeleteTaskParams,
     GetPaginatedTasksParams,
     GetTaskParams,
-    PaginationResult,
+    PaginatedTasksResult,
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
@@ -22,7 +22,7 @@ class TaskService:
         return TaskReader.get_task_for_account(params=params)
 
     @staticmethod
-    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginationResult[Task]:
+    def get_paginated_tasks_for_account(*, params: GetPaginatedTasksParams) -> PaginatedTasksResult[Task]:
         return TaskReader.get_paginated_tasks_for_account(params=params)
 
     @staticmethod

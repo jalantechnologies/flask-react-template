@@ -1,19 +1,20 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Generic, List, Optional, TypeVar
+from typing import Optional
 
-T = TypeVar("T")
+from modules.application.common.types import PaginationResult
 
 
 @dataclass(frozen=True)
-class CreateTaskParams:
+class Task:
+    id: str
     account_id: str
     description: str
     title: str
 
 
 @dataclass(frozen=True)
-class DeleteTaskParams:
+class GetTaskParams:
     account_id: str
     task_id: str
 
@@ -26,31 +27,24 @@ class GetPaginatedTasksParams:
 
 
 @dataclass(frozen=True)
-class GetTaskParams:
-    account_id: str
-    task_id: str
-
-
-@dataclass(frozen=True)
-class PaginationParams:
-    page: int
-    size: int
-
-
-@dataclass(frozen=True)
-class PaginationResult(Generic[T]):
-    items: List[T]
-    pagination_params: PaginationParams
-    total_count: int
-    total_pages: int
-
-
-@dataclass(frozen=True)
-class Task:
-    id: str
+class CreateTaskParams:
     account_id: str
     description: str
     title: str
+
+
+@dataclass(frozen=True)
+class UpdateTaskParams:
+    account_id: str
+    task_id: str
+    description: str
+    title: str
+
+
+@dataclass(frozen=True)
+class DeleteTaskParams:
+    account_id: str
+    task_id: str
 
 
 @dataclass(frozen=True)
@@ -60,15 +54,10 @@ class TaskDeletionResult:
     success: bool
 
 
+PaginatedTasksResult = PaginationResult[Task]
+
+
 @dataclass(frozen=True)
 class TaskErrorCode:
     NOT_FOUND: str = "TASK_ERR_01"
     BAD_REQUEST: str = "TASK_ERR_02"
-
-
-@dataclass(frozen=True)
-class UpdateTaskParams:
-    account_id: str
-    task_id: str
-    description: str
-    title: str
