@@ -11,10 +11,10 @@ from modules.application.base_model import BaseModel
 class TaskModel(BaseModel):
     account_id: str
     description: str
-    id: Optional[ObjectId | str]
     title: str
     active: bool = True
     created_at: Optional[datetime] = datetime.now()
+    id: Optional[ObjectId | str] = None
     updated_at: Optional[datetime] = datetime.now()
 
     @classmethod
@@ -22,10 +22,10 @@ class TaskModel(BaseModel):
         return cls(
             account_id=bson_data.get("account_id", ""),
             description=bson_data.get("description", ""),
-            id=bson_data.get("_id"),
             title=bson_data.get("title", ""),
             active=bson_data.get("active", True),
             created_at=bson_data.get("created_at"),
+            id=bson_data.get("_id"),
             updated_at=bson_data.get("updated_at"),
         )
 
