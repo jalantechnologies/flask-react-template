@@ -13,13 +13,15 @@ class SMSService:
             Logger.warn(message=f"SMS is disabled. Could not send message - {params.message_body}")
             return
 
-        preferences = AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
-
-        if not bypass_preferences and not preferences.sms_enabled:
-            Logger.info(
-                message=f"SMS notification skipped for {params.recipient_phone} "
-                f"(account {account_id}): disabled by user preferences"
+        if not bypass_preferences:
+            preferences = AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(
+                account_id
             )
-            return
+            if not preferences.sms_enabled:
+                Logger.info(
+                    message=f"SMS notification skipped for {params.recipient_phone} "
+                    f"(account {account_id}): disabled by user preferences"
+                )
+                return
 
         TwilioService.send_sms(params=params)
