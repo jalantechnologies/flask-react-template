@@ -112,7 +112,6 @@ class AuthenticationService:
 
     @staticmethod
     def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:
-
         web_app_host = ConfigService[str].get_value(key="web_app_host")
         default_email = ConfigService[str].get_value(key="mailer.default_email")
         default_email_name = ConfigService[str].get_value(key="mailer.default_email_name")
@@ -131,7 +130,9 @@ class AuthenticationService:
             template_data=template_data,
         )
 
-        EmailService.send_email_for_account(account_id=account_id, params=password_reset_email_params)
+        EmailService.send_email_for_account(
+            account_id=account_id, bypass_preferences=True, params=password_reset_email_params
+        )
 
     @staticmethod
     def create_otp(*, params: CreateOTPParams, account_id: str) -> OTP:
@@ -143,7 +144,7 @@ class AuthenticationService:
             recipient_phone=recipient_phone_number,
         )
         if not OTPUtil.should_use_default_otp_for_phone_number(recipient_phone_number.phone_number):
-            SMSService.send_sms_for_account(account_id=account_id, params=send_sms_params)
+            SMSService.send_sms_for_account(account_id=account_id, bypass_preferences=True, params=send_sms_params)
 
         return otp
 
