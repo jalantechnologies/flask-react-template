@@ -33,7 +33,7 @@ class AccountService:
     @staticmethod
     def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
         account = AccountWriter.create_account_by_username_and_password(params=params)
-        AccountService._create_default_notification_preferences(account.id)
+        AccountService._create_default_notification_preferences(account_id=account.id)
         return account
 
     @staticmethod
@@ -46,7 +46,7 @@ class AccountService:
 
         if account is None:
             account = AccountWriter.create_account_by_phone_number(params=params)
-            AccountService._create_default_notification_preferences(account.id)
+            AccountService._create_default_notification_preferences(account_id=account.id)
 
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
         AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
