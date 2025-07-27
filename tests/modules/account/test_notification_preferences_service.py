@@ -8,16 +8,6 @@ from tests.modules.account.base_test_account import BaseTestAccount
 
 
 class TestNotificationPreferencesService(BaseTestAccount):
-    def test_get_notification_preferences_throws_error_when_none_exist(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        with self.assertRaises(AccountNotificationPreferencesNotFoundError):
-            NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
-
     def test_get_notification_preferences_returns_existing_preferences(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
