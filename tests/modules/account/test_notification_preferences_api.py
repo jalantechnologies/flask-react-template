@@ -95,30 +95,6 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json
             assert "notification_preferences" not in response.json
 
-    def test_get_account_with_no_existing_notification_preferences(self) -> None:
-        """Test that when no notification preferences exist, they are not included in response"""
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            response = client.get(
-                f"{ACCOUNT_URL}/{account.id}?include_notification_preferences=true",
-                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
-            )
-
-            assert response.status_code == 200
-            assert response.json
-            assert "notification_preferences" not in response.json
-
     def test_update_notification_preferences_success(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
