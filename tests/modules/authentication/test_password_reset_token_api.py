@@ -11,6 +11,8 @@ from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internals.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
 from modules.notification.email_service import EmailService
+from modules.notification.notification_service import NotificationService
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.modules.authentication.base_test_password_reset_token import BaseTestPasswordResetToken
 
 ACCOUNT_API_URL = "http://127.0.0.1:8080/api/accounts"
@@ -232,3 +234,46 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
                 ).message,
             )
             self.assertTrue(mock_send_email.called)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_password_reset_email_uses_bypass_preferences(self, mock_send_email):
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="Test", last_name="User", password="password123", username="testuser@example.com"
+            )
+        )
+
+        token = "test_token_123"
+        AuthenticationService.send_password_reset_email(
+            account_id=account.id, first_name=account.first_name, username=account.username, password_reset_token=token
+        )
+
+        mock_send_email.assert_called_once()
+        call_kwargs = mock_send_email.call_args.kwargs
+        assert call_kwargs["bypass_preferences"] is True
+        assert call_kwargs["account_id"] == account.id
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_password_reset_flow_with_disabled_email_preferences(self, mock_send_email):
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="Test", last_name="User", password="old_password", username="testuser@example.com"
+            )
+        )
+
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
+        )
+
+        reset_password_params = {"username": account.username}
+
+        with app.test_client() as client:
+            response = client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps(reset_password_params))
+
+            self.assertEqual(response.status_code, 201)
+            self.assertTrue(response.json)
+            self.assertIn("id", response.json)
+
+        # Verify email was sent despite preferences being disabled
+        self.assertTrue(mock_send_email.called)
+        self.assertTrue(mock_send_email.call_args.kwargs["bypass_preferences"])

@@ -1,5 +1,7 @@
 import json
 
+from apps.backend.modules.notification.notification_service import NotificationService
+from apps.backend.modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from server import app
 
 from modules.account.account_service import AccountService
@@ -143,3 +145,30 @@ class TestAccessTokenApi(BaseTestAccessToken):
             assert response.json
             assert response.json.get("code") == OTPErrorCode.OTP_EXPIRED
             assert response.json.get("message") == "The OTP has expired. Please request a new OTP."
+
+    def test_otp_based_auth_flow_with_disabled_sms_preferences(self):
+        """Test complete OTP authentication flow works with disabled SMS preferences"""
+        phone_number = {"country_code": "+91", "phone_number": "9999999999"}
+
+        account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+        )
+
+        NotificationService.create_or_update_account_notification_preferences(
+            account_id=account.id, preferences=CreateOrUpdateAccountNotificationPreferencesParams(sms_enabled=False)
+        )
+
+        otp = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+        )
+
+        with app.test_client() as client:
+            response = client.post(
+                API_URL, headers=HEADERS, data=json.dumps({"phone_number": phone_number, "otp_code": otp.otp_code})
+            )
+
+            assert response.status_code == 201
+            assert response.json
+            assert response.json.get("token")
+            assert response.json.get("account_id") == account.id
+            assert response.json.get("expires_at")

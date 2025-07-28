@@ -3,7 +3,8 @@ import os
 from unittest import mock
 
 from server import app
-from modules.account.types import PhoneNumber
+from modules.account.account_service import AccountService
+from modules.account.types import PhoneNumber, CreateAccountByPhoneNumberParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.config.config_service import ConfigService
@@ -174,3 +175,20 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
         self.assertEqual(otp.otp_code, "1234")
         self.assertEqual(otp.phone_number, phone_number)
         self.assertFalse(mock_send_sms.called)
+
+    @mock.patch.object(SMSService, "send_sms_for_account")
+    def test_otp_creation_uses_bypass_preferences(self, mock_send_sms):
+        """Test that OTP creation uses bypass_preferences=True for SMS"""
+        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
+        account = AccountService.get_or_create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        mock_send_sms.reset_mock()
+
+        otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number), account_id=account.id)
+
+        mock_send_sms.assert_called_once()
+        call_kwargs = mock_send_sms.call_args.kwargs
+        assert call_kwargs["bypass_preferences"] is True
+        assert call_kwargs["account_id"] == account.id

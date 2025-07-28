@@ -1,5 +1,9 @@
 from modules.account.account_service import AccountService
-from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.account.types import (
+    CreateAccountByUsernameAndPasswordParams,
+    CreateAccountByPhoneNumberParams,
+    PhoneNumber,
+)
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
@@ -179,3 +183,31 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.email_enabled is False
         assert preferences.push_enabled is False
         assert preferences.sms_enabled is False
+
+    def test_account_creation_by_username_automatically_creates_notification_preferences(self):
+        """Test that creating an account by username automatically creates notification preferences"""
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="Test", last_name="User", password="password123", username="testuser@example.com"
+            )
+        )
+
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+
+        assert preferences.account_id == account.id
+        assert preferences.email_enabled is True
+        assert preferences.push_enabled is True
+        assert preferences.sms_enabled is True
+
+    def test_account_creation_by_phone_automatically_creates_notification_preferences(self):
+        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
+        account = AccountService.get_or_create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+
+        assert preferences.account_id == account.id
+        assert preferences.email_enabled is True
+        assert preferences.push_enabled is True
+        assert preferences.sms_enabled is True
