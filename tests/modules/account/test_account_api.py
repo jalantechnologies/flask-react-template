@@ -441,3 +441,12 @@ class TestAccountApi(BaseTestAccount):
             )
 
             assert response.status_code == 500
+
+    def test_phone_number_account_creation_works_without_notification_preferences(self):
+        payload = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "8888888888"}})
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=payload)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("id", response.json)

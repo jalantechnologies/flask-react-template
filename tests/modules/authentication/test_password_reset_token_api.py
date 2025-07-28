@@ -10,7 +10,9 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internals.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.email_service import EmailService
+from modules.notification.notification_service import NotificationService
 from tests.modules.authentication.base_test_password_reset_token import BaseTestPasswordResetToken
 
 ACCOUNT_API_URL = "http://127.0.0.1:8080/api/accounts"
@@ -232,3 +234,23 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
                 ).message,
             )
             self.assertTrue(mock_send_email.called)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_password_reset_succeeds_when_account_has_no_notification_preferences(self, mock_send_email):
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="Test", last_name="User", password="password", username="test@example.com"
+            )
+        )
+
+        with self.assertRaises(AccountNotificationPreferencesNotFoundError):
+            NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+
+        reset_password_params = {"username": account.username}
+
+        with app.test_client() as client:
+            response = client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps(reset_password_params))
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(mock_send_email.called)
+        self.assertTrue(mock_send_email.call_args.kwargs["bypass_preferences"])

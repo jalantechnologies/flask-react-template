@@ -3,11 +3,14 @@ import os
 from unittest import mock
 
 from server import app
-from modules.account.types import PhoneNumber
+from modules.account.internal.account_writer import AccountWriter
+from modules.account.types import PhoneNumber, CreateAccountByPhoneNumberParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.config.config_service import ConfigService
 from modules.config.internals.config_manager import ConfigManager
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
+from modules.notification.notification_service import NotificationService
 from modules.notification.sms_service import SMSService
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
@@ -174,3 +177,20 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
         self.assertEqual(otp.otp_code, "1234")
         self.assertEqual(otp.phone_number, phone_number)
         self.assertFalse(mock_send_sms.called)
+
+    @mock.patch.object(SMSService, "send_sms_for_account")
+    def test_create_otp_succeeds_when_account_has_no_notification_preferences(self, mock_send_sms):
+        phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
+        account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+        )
+
+        with self.assertRaises(AccountNotificationPreferencesNotFoundError):
+            NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+
+        otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number), account_id=account.id)
+
+        self.assertIsNotNone(otp.otp_code)
+        self.assertEqual(otp.phone_number, phone_number)
+        self.assertTrue(mock_send_sms.called)
+        self.assertTrue(mock_send_sms.call_args.kwargs["bypass_preferences"])
