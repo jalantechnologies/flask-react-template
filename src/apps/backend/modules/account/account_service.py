@@ -22,18 +22,14 @@ from modules.notification.types import (
 
 class AccountService:
     @staticmethod
-    def _create_default_notification_preferences(*, account_id: str) -> None:
+    def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
+        account = AccountWriter.create_account_by_username_and_password(params=params)
         AccountService.create_or_update_account_notification_preferences(
-            account_id=account_id,
+            account_id=account.id,
             preferences=CreateOrUpdateAccountNotificationPreferencesParams(
                 email_enabled=True, push_enabled=True, sms_enabled=True
             ),
         )
-
-    @staticmethod
-    def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
-        account = AccountWriter.create_account_by_username_and_password(params=params)
-        AccountService._create_default_notification_preferences(account_id=account.id)
         return account
 
     @staticmethod
@@ -46,7 +42,12 @@ class AccountService:
 
         if account is None:
             account = AccountWriter.create_account_by_phone_number(params=params)
-            AccountService._create_default_notification_preferences(account_id=account.id)
+            AccountService.create_or_update_account_notification_preferences(
+                account_id=account.id,
+                preferences=CreateOrUpdateAccountNotificationPreferencesParams(
+                    email_enabled=True, push_enabled=True, sms_enabled=True
+                ),
+            )
 
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
         AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
