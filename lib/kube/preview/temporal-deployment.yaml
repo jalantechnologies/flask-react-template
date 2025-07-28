@@ -102,4 +102,3 @@ spec:
               memory: '150Mi'
             limits:
               memory: '300Mi'
-
