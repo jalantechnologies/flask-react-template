@@ -49,7 +49,6 @@ spec:
               memory: '200Mi'
             limits:
               memory: '400Mi'
-
         - name: temporal-admin-tools
           image: temporalio/admin-tools:1.27.2-tctl-1.18
           imagePullPolicy: Always
