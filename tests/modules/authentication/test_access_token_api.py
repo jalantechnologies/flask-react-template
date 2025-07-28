@@ -1,7 +1,5 @@
 import json
 
-from apps.backend.modules.notification.notification_service import NotificationService
-from apps.backend.modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from server import app
 
 from modules.account.account_service import AccountService
@@ -10,8 +8,10 @@ from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    CreateOrUpdateAccountNotificationPreferencesParams,
     PhoneNumber,
 )
+from modules.notification.notification_service import NotificationService
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPErrorCode, VerifyOTPParams
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken

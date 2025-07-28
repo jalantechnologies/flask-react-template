@@ -274,6 +274,5 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertTrue(response.json)
             self.assertIn("id", response.json)
 
-        # Verify email was sent despite preferences being disabled
         self.assertTrue(mock_send_email.called)
         self.assertTrue(mock_send_email.call_args.kwargs["bypass_preferences"])
