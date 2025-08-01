@@ -1,15 +1,20 @@
 import hashlib
 import os
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Any
 
 import bcrypt
 
+from modules.account.errors import AccountBadRequestError
+from modules.authentication.internals.password_reset_token.password_reset_token_reader import PasswordResetTokenReader
 from modules.authentication.internals.password_reset_token.store.password_reset_token_model import (
     PasswordResetTokenModel,
 )
 from modules.authentication.types import PasswordResetToken
 from modules.config.config_service import ConfigService
+from modules.notification.email_service import EmailService
+from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams
 
 
 class PasswordResetTokenUtil:
@@ -41,7 +46,7 @@ class PasswordResetTokenUtil:
 
     @staticmethod
     def convert_password_reset_token_bson_to_password_reset_token(
-        password_reset_token_bson: dict[str, Any]
+        password_reset_token_bson: dict[str, Any],
     ) -> PasswordResetToken:
         validated_password_reset_token_data = PasswordResetTokenModel.from_bson(password_reset_token_bson)
         return PasswordResetToken(
@@ -51,4 +56,51 @@ class PasswordResetTokenUtil:
             is_expired=PasswordResetTokenUtil.is_token_expired(validated_password_reset_token_data.expires_at),
             expires_at=str(validated_password_reset_token_data.expires_at),
             token=validated_password_reset_token_data.token,
+        )
+
+    @staticmethod
+    def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
+        password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
+
+        if password_reset_token.is_expired:
+            raise AccountBadRequestError(
+                f"Password reset link is expired for accountId {account_id}. Please retry with new link"
+            )
+        if password_reset_token.is_used:
+            raise AccountBadRequestError(
+                f"Password reset is already used for accountId {account_id}. Please retry with new link"
+            )
+
+        is_token_valid = PasswordResetTokenUtil.compare_password(
+            password=token, hashed_password=password_reset_token.token
+        )
+        if not is_token_valid:
+            raise AccountBadRequestError(
+                f"Password reset link is invalid for accountId {account_id}. Please retry with new link."
+            )
+
+        return password_reset_token
+
+    @staticmethod
+    def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:
+        web_app_host = ConfigService[str].get_value(key="web_app_host")
+        default_email = ConfigService[str].get_value(key="mailer.default_email")
+        default_email_name = ConfigService[str].get_value(key="mailer.default_email_name")
+        forgot_password_mail_template_id = ConfigService[str].get_value(key="mailer.forgot_password_mail_template_id")
+
+        template_data = {
+            "first_name": first_name,
+            "password_reset_link": f"{web_app_host}/accounts/{account_id}/reset_password?token={urllib.parse.quote(password_reset_token)}",
+            "username": username,
+        }
+
+        password_reset_email_params = SendEmailParams(
+            template_id=forgot_password_mail_template_id,
+            recipient=EmailRecipient(email=username),
+            sender=EmailSender(email=default_email, name=default_email_name),
+            template_data=template_data,
+        )
+
+        EmailService.send_email_for_account(
+            account_id=account_id, bypass_preferences=True, params=password_reset_email_params
         )
