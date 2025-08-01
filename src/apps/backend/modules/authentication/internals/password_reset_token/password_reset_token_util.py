@@ -6,8 +6,6 @@ from typing import Any
 
 import bcrypt
 
-from modules.account.errors import AccountBadRequestError
-from modules.authentication.internals.password_reset_token.password_reset_token_reader import PasswordResetTokenReader
 from modules.authentication.internals.password_reset_token.store.password_reset_token_model import (
     PasswordResetTokenModel,
 )
@@ -57,29 +55,6 @@ class PasswordResetTokenUtil:
             expires_at=str(validated_password_reset_token_data.expires_at),
             token=validated_password_reset_token_data.token,
         )
-
-    @staticmethod
-    def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
-        password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
-
-        if password_reset_token.is_expired:
-            raise AccountBadRequestError(
-                f"Password reset link is expired for accountId {account_id}. Please retry with new link"
-            )
-        if password_reset_token.is_used:
-            raise AccountBadRequestError(
-                f"Password reset is already used for accountId {account_id}. Please retry with new link"
-            )
-
-        is_token_valid = PasswordResetTokenUtil.compare_password(
-            password=token, hashed_password=password_reset_token.token
-        )
-        if not is_token_valid:
-            raise AccountBadRequestError(
-                f"Password reset link is invalid for accountId {account_id}. Please retry with new link."
-            )
-
-        return password_reset_token
 
     @staticmethod
     def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:

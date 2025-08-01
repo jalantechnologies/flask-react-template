@@ -59,7 +59,7 @@ class AuthenticationService:
 
     @staticmethod
     def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
-        return PasswordResetTokenUtil.verify_password_reset_token(account_id=account_id, token=token)
+        return PasswordResetTokenReader.verify_password_reset_token(account_id=account_id, token=token)
 
     @staticmethod
     def create_otp(*, params: CreateOTPParams, account_id: str) -> OTP:
