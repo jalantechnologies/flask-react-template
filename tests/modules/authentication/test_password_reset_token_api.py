@@ -75,7 +75,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         token = PasswordResetTokenUtil.generate_password_reset_token()
         PasswordResetTokenWriter.create_password_reset_token(account.id, token)
-        PasswordResetTokenUtil.send_password_reset_email(account.id, account.first_name, account.username, token)
+        AuthenticationService.send_password_reset_email(account.id, account.first_name, account.username, token)
 
         new_password = "new_password"
 
@@ -244,7 +244,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         )
 
         token = "test_token_123"
-        PasswordResetTokenUtil.send_password_reset_email(
+        AuthenticationService.send_password_reset_email(
             account_id=account.id, first_name=account.first_name, username=account.username, password_reset_token=token
         )
 

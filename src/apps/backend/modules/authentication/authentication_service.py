@@ -1,3 +1,4 @@
+import urllib.parse
 from dataclasses import asdict
 
 from modules.account.types import Account, PhoneNumber
@@ -16,8 +17,10 @@ from modules.authentication.types import (
     PasswordResetToken,
     VerifyOTPParams,
 )
+from modules.config.config_service import ConfigService
+from modules.notification.email_service import EmailService
 from modules.notification.sms_service import SMSService
-from modules.notification.types import SendSMSParams
+from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams, SendSMSParams
 
 
 class AuthenticationService:
@@ -44,7 +47,7 @@ class AuthenticationService:
     def create_password_reset_token(params: Account) -> PasswordResetToken:
         token = PasswordResetTokenUtil.generate_password_reset_token()
         password_reset_token = PasswordResetTokenWriter.create_password_reset_token(params.id, token)
-        PasswordResetTokenUtil.send_password_reset_email(
+        AuthenticationService.send_password_reset_email(
             account_id=params.id, first_name=params.first_name, username=params.username, password_reset_token=token
         )
         return password_reset_token
@@ -60,6 +63,30 @@ class AuthenticationService:
     @staticmethod
     def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
         return PasswordResetTokenReader.verify_password_reset_token(account_id=account_id, token=token)
+
+    @staticmethod
+    def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:
+        web_app_host = ConfigService[str].get_value(key="web_app_host")
+        default_email = ConfigService[str].get_value(key="mailer.default_email")
+        default_email_name = ConfigService[str].get_value(key="mailer.default_email_name")
+        forgot_password_mail_template_id = ConfigService[str].get_value(key="mailer.forgot_password_mail_template_id")
+
+        template_data = {
+            "first_name": first_name,
+            "password_reset_link": f"{web_app_host}/accounts/{account_id}/reset_password?token={urllib.parse.quote(password_reset_token)}",
+            "username": username,
+        }
+
+        password_reset_email_params = SendEmailParams(
+            template_id=forgot_password_mail_template_id,
+            recipient=EmailRecipient(email=username),
+            sender=EmailSender(email=default_email, name=default_email_name),
+            template_data=template_data,
+        )
+
+        EmailService.send_email_for_account(
+            account_id=account_id, bypass_preferences=True, params=password_reset_email_params
+        )
 
     @staticmethod
     def create_otp(*, params: CreateOTPParams, account_id: str) -> OTP:
