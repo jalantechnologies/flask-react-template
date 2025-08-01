@@ -41,7 +41,7 @@ class PasswordResetTokenUtil:
 
     @staticmethod
     def convert_password_reset_token_bson_to_password_reset_token(
-        password_reset_token_bson: dict[str, Any],
+        password_reset_token_bson: dict[str, Any]
     ) -> PasswordResetToken:
         validated_password_reset_token_data = PasswordResetTokenModel.from_bson(password_reset_token_bson)
         return PasswordResetToken(
