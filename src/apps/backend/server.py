@@ -10,6 +10,7 @@ from modules.application.application_service import ApplicationService
 from modules.application.errors import AppError, WorkerClientConnectionError
 from modules.application.workers.health_check_worker import HealthCheckWorker
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
+from modules.comments.rest_api.comments_rest_api_server import create as create_comments_blueprint
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
@@ -58,11 +59,18 @@ api_blueprint.register_blueprint(account_blueprint)
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
 
+# Register comments apis
+comments_blueprint = create_comments_blueprint()
+api_blueprint.register_blueprint(comments_blueprint)
+
 app.register_blueprint(api_blueprint)
 
 # Register frontend elements
 app.register_blueprint(img_assets_blueprint)
 app.register_blueprint(react_blueprint)
+
+for rule in app.url_map.iter_rules():
+    print(f"📌 Route registered: {rule} — methods: {rule.methods}")
 
 
 @app.errorhandler(AppError)

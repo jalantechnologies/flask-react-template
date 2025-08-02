@@ -12,9 +12,9 @@ from modules.account.internal.store.account_model import AccountModel
 from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.types import (
     Account,
+    AccountDeletionResult,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    AccountDeletionResult,
     PhoneNumber,
     UpdateAccountProfileParams,
 )

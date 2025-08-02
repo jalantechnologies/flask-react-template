@@ -3,9 +3,10 @@ import unittest
 from typing import Tuple
 
 from server import app
+
 from modules.account.account_service import AccountService
 from modules.account.internal.store.account_repository import AccountRepository
-from modules.account.types import CreateAccountByUsernameAndPasswordParams, Account
+from modules.account.types import Account, CreateAccountByUsernameAndPasswordParams
 from modules.logger.logger_manager import LoggerManager
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer

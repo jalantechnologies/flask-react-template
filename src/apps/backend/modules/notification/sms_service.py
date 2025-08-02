@@ -1,7 +1,7 @@
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
-from modules.notification.internals.twilio_service import TwilioService
 from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.internals.twilio_service import TwilioService
 from modules.notification.types import SendSMSParams
 
 

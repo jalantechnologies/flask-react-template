@@ -1,11 +1,11 @@
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.application.repository import ApplicationRepository
+from modules.logger.logger import Logger
 from modules.notification.internals.store.account_notification_preferences_model import (
     AccountNotificationPreferencesModel,
 )
-from modules.application.repository import ApplicationRepository
-from modules.logger.logger import Logger
 
 ACCOUNT_NOTIFICATION_PREFERENCES_VALIDATION_SCHEMA = {
     "$jsonSchema": {

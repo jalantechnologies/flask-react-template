@@ -1,6 +1,6 @@
 from modules.logger.logger import Logger
-from modules.notification.internals.sendgrid_service import SendGridService
 from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.internals.sendgrid_service import SendGridService
 from modules.notification.types import SendEmailParams
 
 

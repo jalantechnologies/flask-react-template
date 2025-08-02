@@ -14,7 +14,6 @@ pyjwt = "==2.8.0"
 pydantic = "==2.4"
 pymongo = { extras = ["srv"], version = "==3.12" }
 pyyaml = "==6.0.1"
-python-dotenv = "==1.0.1"
 requests = "==2.31.0"
 sendgrid = "==6.11.0"
 tomli = "==2.0.1"
@@ -22,6 +21,7 @@ twilio = "==9.2.4"
 waitress = "==2.1.2"
 datadog-api-client = "==2.31.0"
 temporalio = "==1.10.0"
+python-dotenv = "*"
 
 [dev-packages]
 black = "==24.8.0"

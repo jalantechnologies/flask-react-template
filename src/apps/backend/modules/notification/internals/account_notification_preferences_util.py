@@ -1,4 +1,5 @@
 from typing import Any
+
 from modules.notification.internals.store.account_notification_preferences_model import (
     AccountNotificationPreferencesModel,
 )
@@ -8,7 +9,7 @@ from modules.notification.types import AccountNotificationPreferences
 class AccountNotificationPreferenceUtil:
     @staticmethod
     def convert_account_notification_preferences_bson_to_account_notification_preferences(
-        notification_preferences_bson: dict[str, Any],
+        notification_preferences_bson: dict[str, Any]
     ) -> AccountNotificationPreferences:
         validated_preferences_data = AccountNotificationPreferencesModel.from_bson(notification_preferences_bson)
         return AccountNotificationPreferences(
