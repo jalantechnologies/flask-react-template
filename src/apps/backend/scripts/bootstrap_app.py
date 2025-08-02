@@ -1,9 +1,8 @@
-import os
-from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.config.config_service import ConfigService
 from modules.config.errors import MissingKeyError
+from modules.logger.logger import Logger
 
 
 class BootstrapApp:
