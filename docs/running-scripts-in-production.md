@@ -10,11 +10,61 @@ This guide explains how to manually execute cron scripts inside the Kubernetes c
 
 Make sure the following tools are installed and accessible:
 
-- [`doctl`](https://docs.digitalocean.com/reference/doctl/) – DigitalOcean CLI
-- [`kubectl`](https://kubernetes.io/docs/tasks/tools/) – Kubernetes CLI
+### 1. `doctl` (DigitalOcean CLI)
 
-> See [Developer Setup – CLI Tools](./deployment.md#developer-setup--cli-tools) if you're missing any tools.
+**Windows:**
+```sh
+choco install doctl
+```
 
+**macOS:**
+```sh
+brew install doctl
+```
+
+**Linux:**
+```sh
+curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest \
+| grep "browser_download_url.*linux-amd64.tar.gz" \
+| cut -d '"' -f 4 \
+| wget -i - -O doctl.tar.gz
+
+tar -xvzf doctl.tar.gz
+sudo mv doctl /usr/local/bin/
+```
+
+### 2. `kubectl` (Kubernetes CLI)
+
+**Windows:**
+```sh
+choco install kubernetes-cli
+```
+
+**macOS:**
+```sh
+brew install kubectl
+```
+
+**Linux:**
+```sh
+sudo apt update && sudo apt install -y apt-transport-https ca-certificates curl
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] \
+https://apt.kubernetes.io/ kubernetes-xenial main" \
+| sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
+
+sudo apt update
+sudo apt install -y kubectl
+```
+
+**Verify Installation**
+```sh
+doctl version
+kubectl version --client
+```
+
+> ✅ Make sure both `doctl` and `kubectl` are accessible in your terminal before proceeding with preview or production deployment steps.
 ---
 
 ## 2. Authenticate with DigitalOcean and Connect to Kubernetes Cluster
@@ -52,7 +102,5 @@ exit
 
 ## Best Practices
 - Always double-check that you are in the correct production namespace.
-
 - Only run scripts after validating the impact, ideally in preview first.
-
 - Avoid running scripts that mutate critical state during peak traffic unless absolutely necessary.
