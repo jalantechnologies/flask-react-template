@@ -188,14 +188,18 @@ kubectl get pods -n <preview-namespace>
 4. **Find the PR pod name** from the preview environment using `kubectl get pods`  
    (look for the name matching your PR deployment)
 
-5. **Execute the cron script manually**:
+5. **Open a shell session in the pod**:
 ```sh
 kubectl exec -it <pod-name> -n <preview-namespace> -- /bin/bash
 ```
-After entering the pod, you can run scripts like:
+6. **After entering the pod, you can run scripts like**:
 ```sh
 npm run run:change-booking-appointment-status
 npm run run:send-appointment-reminder
+```
+7. **Exit the pod shell when done**:
+```sh
+exit
 ```
 
 This will immediately trigger the script **inside the running PR environment**, without waiting for the scheduled cron job.
@@ -205,4 +209,4 @@ This will immediately trigger the script **inside the running PR environment**, 
 ## 📌 Notes
 
 - If you face permission issues, ensure your DigitalOcean token has right access to the correct team and cluster.
-- This manual trigger is only for debugging/testing and **should not** be used in production environments.
+- This manual trigger is only for debugging/testing.
