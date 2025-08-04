@@ -3,8 +3,9 @@ import os
 from unittest import mock
 
 from server import app
+
 from modules.account.account_service import AccountService
-from modules.account.types import PhoneNumber, CreateAccountByPhoneNumberParams
+from modules.account.types import CreateAccountByPhoneNumberParams, PhoneNumber
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.config.config_service import ConfigService
