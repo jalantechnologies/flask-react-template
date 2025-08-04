@@ -1,12 +1,8 @@
 import urllib.parse
 from dataclasses import asdict
-from datetime import datetime, timedelta
 
-import jwt
-
-from modules.account.errors import AccountBadRequestError
 from modules.account.types import Account, PhoneNumber
-from modules.authentication.errors import AccessTokenExpiredError, AccessTokenInvalidError, OTPIncorrectError
+from modules.authentication.internals.access_token.access_token_util import AccessTokenUtil
 from modules.authentication.internals.otp.otp_util import OTPUtil
 from modules.authentication.internals.otp.otp_writer import OTPWriter
 from modules.authentication.internals.password_reset_token.password_reset_token_reader import PasswordResetTokenReader
@@ -18,7 +14,6 @@ from modules.authentication.types import (
     AccessTokenPayload,
     CreateOTPParams,
     OTPBasedAuthAccessTokenRequestParams,
-    OTPStatus,
     PasswordResetToken,
     VerifyOTPParams,
 )
@@ -31,7 +26,7 @@ from modules.notification.types import EmailRecipient, EmailSender, SendEmailPar
 class AuthenticationService:
     @staticmethod
     def create_access_token_by_username_and_password(*, account: Account) -> AccessToken:
-        return AuthenticationService.__generate_access_token(account=account)
+        return AccessTokenUtil.generate_access_token(account=account)
 
     @staticmethod
     def create_access_token_by_phone_number(
@@ -40,43 +35,21 @@ class AuthenticationService:
         otp = AuthenticationService.verify_otp(
             params=VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code)
         )
+        AccessTokenUtil.validate_otp_for_access_token(otp=otp)
 
-        if otp.status != OTPStatus.SUCCESS:
-            raise OTPIncorrectError()
-
-        return AuthenticationService.__generate_access_token(account=account)
-
-    @staticmethod
-    def __generate_access_token(*, account: Account) -> AccessToken:
-        jwt_signing_key = ConfigService[str].get_value(key="accounts.token_signing_key")
-        jwt_expiry = timedelta(days=ConfigService[int].get_value(key="accounts.token_expiry_days"))
-        expiry_time = datetime.now() + jwt_expiry
-        payload = {"account_id": account.id, "exp": (expiry_time).timestamp()}
-        jwt_token = jwt.encode(payload, jwt_signing_key, algorithm="HS256")
-        access_token = AccessToken(token=jwt_token, account_id=account.id, expires_at=expiry_time.isoformat())
-
-        return access_token
+        return AccessTokenUtil.generate_access_token(account=account)
 
     @staticmethod
     def verify_access_token(*, token: str) -> AccessTokenPayload:
-
-        jwt_signing_key = ConfigService[str].get_value(key="accounts.token_signing_key")
-
-        try:
-            verified_token = jwt.decode(token, jwt_signing_key, algorithms=["HS256"])
-        except jwt.exceptions.DecodeError:
-            raise AccessTokenInvalidError("Invalid access token")
-        except jwt.ExpiredSignatureError:
-            raise AccessTokenExpiredError(message="Access token has expired. Please login again.")
-
-        return AccessTokenPayload(account_id=verified_token.get("account_id"))
+        return AccessTokenUtil.verify_access_token(token=token)
 
     @staticmethod
     def create_password_reset_token(params: Account) -> PasswordResetToken:
         token = PasswordResetTokenUtil.generate_password_reset_token()
         password_reset_token = PasswordResetTokenWriter.create_password_reset_token(params.id, token)
-        AuthenticationService.send_password_reset_email(params.id, params.first_name, params.username, token)
-
+        AuthenticationService.send_password_reset_email(
+            account_id=params.id, first_name=params.first_name, username=params.username, password_reset_token=token
+        )
         return password_reset_token
 
     @staticmethod
@@ -89,26 +62,7 @@ class AuthenticationService:
 
     @staticmethod
     def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
-        password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(account_id)
-
-        if password_reset_token.is_expired:
-            raise AccountBadRequestError(
-                f"Password reset link is expired for accountId {account_id}. Please retry with new link"
-            )
-        if password_reset_token.is_used:
-            raise AccountBadRequestError(
-                f"Password reset is already used for accountId {account_id}. Please retry with new link"
-            )
-
-        is_token_valid = PasswordResetTokenUtil.compare_password(
-            password=token, hashed_password=password_reset_token.token
-        )
-        if not is_token_valid:
-            raise AccountBadRequestError(
-                f"Password reset link is invalid for accountId {account_id}. Please retry with new link."
-            )
-
-        return password_reset_token
+        return PasswordResetTokenReader.verify_password_reset_token(account_id=account_id, token=token)
 
     @staticmethod
     def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:
@@ -139,11 +93,11 @@ class AuthenticationService:
         recipient_phone_number = PhoneNumber(**asdict(params)["phone_number"])
         otp = OTPWriter.create_new_otp(params=params)
 
-        send_sms_params = SendSMSParams(
-            message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
-            recipient_phone=recipient_phone_number,
-        )
         if not OTPUtil.should_use_default_otp_for_phone_number(recipient_phone_number.phone_number):
+            send_sms_params = SendSMSParams(
+                message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
+                recipient_phone=recipient_phone_number,
+            )
             SMSService.send_sms_for_account(account_id=account_id, bypass_preferences=True, params=send_sms_params)
 
         return otp

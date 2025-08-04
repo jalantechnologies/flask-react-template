@@ -1,5 +1,6 @@
 from bson.objectid import ObjectId
 
+from modules.account.errors import AccountBadRequestError
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internals.password_reset_token.store.password_reset_token_repository import (
@@ -28,3 +29,26 @@ class PasswordResetTokenReader:
             expires_at=token_data.get("expires_at"),
             is_used=token_data.get("is_used"),
         )
+
+    @staticmethod
+    def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
+        password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
+
+        if password_reset_token.is_expired:
+            raise AccountBadRequestError(
+                f"Password reset link is expired for accountId {account_id}. Please retry with new link"
+            )
+        if password_reset_token.is_used:
+            raise AccountBadRequestError(
+                f"Password reset is already used for accountId {account_id}. Please retry with new link"
+            )
+
+        is_token_valid = PasswordResetTokenUtil.compare_password(
+            password=token, hashed_password=password_reset_token.token
+        )
+        if not is_token_valid:
+            raise AccountBadRequestError(
+                f"Password reset link is invalid for accountId {account_id}. Please retry with new link."
+            )
+
+        return password_reset_token
