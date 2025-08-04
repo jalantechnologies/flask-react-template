@@ -27,10 +27,26 @@ class BaseTestTask(unittest.TestCase):
     def setUp(self) -> None:
         LoggerManager.mount_logger()
         TaskRestApiServer.create()
+        
+        # Clean up any leftover data from previous tests
+        self._cleanup_database()
+
+    def _cleanup_database(self) -> None:
+        """Clean up all test data from database."""
+        try:
+            # Clean up comment data first (foreign key dependency)
+            from modules.task.comments.internal.store.comment_repository import CommentRepository
+            CommentRepository.collection().delete_many({})
+            
+            # Clean up task and account data
+            TaskRepository.collection().delete_many({})
+            AccountRepository.collection().delete_many({})
+        except Exception as e:
+            # Log but don't fail tests due to cleanup issues
+            print(f"Warning: Database cleanup failed: {e}")
 
     def tearDown(self) -> None:
-        TaskRepository.collection().delete_many({})
-        AccountRepository.collection().delete_many({})
+        self._cleanup_database()
 
     # URL HELPER METHODS
 
@@ -66,7 +82,8 @@ class BaseTestTask(unittest.TestCase):
             return response.json.get("token")
 
     def create_account_and_get_token(self, username: str = None, password: str = None) -> Tuple[Account, str]:
-        test_username = username or f"testuser_{id(self)}@example.com"
+        import uuid
+        test_username = username or f"testuser_{uuid.uuid4().hex[:8]}@example.com"
         test_password = password or self.DEFAULT_PASSWORD
 
         account = self.create_test_account(username=test_username, password=test_password)
