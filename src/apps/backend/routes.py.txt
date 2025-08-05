@@ -1,0 +1,19 @@
+from flask import Blueprint, request, jsonify
+
+comments_bp = Blueprint('comments', __name__)
+
+comments = []
+next_id = 1
+
+@comments_bp.route("/comments", methods=["POST"])
+def add_comment():
+    global next_id
+    data = request.get_json()
+    text = data.get("text")
+    if not text:
+        return jsonify({"error": "Comment text is required"}), 400
+
+    comment = {"id": next_id, "text": text}
+    comments.append(comment)
+    next_id += 1
+    return jsonify(comment), 201

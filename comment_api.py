@@ -18,6 +18,10 @@ def add_comment():
     next_id += 1
     return jsonify(comment), 201
 
+@app.route("/comments", methods=["GET"])
+def get_comments():
+    return jsonify(comments), 200
+
 @app.route("/comments/<int:comment_id>", methods=["PUT"])
 def edit_comment(comment_id):
     data = request.get_json()
