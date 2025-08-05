@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 
 import routes from 'frontend/constants/routes';
 import { useAccountContext, useAuthContext } from 'frontend/contexts';
-import { Dashboard, NotFound } from 'frontend/pages';
+import { Dashboard, NotFound, TaskDetail, TaskCreate, TaskEdit } from 'frontend/pages';
 import AppLayout from 'frontend/pages/app-layout/app-layout';
 import { AsyncError } from 'frontend/types';
 
@@ -28,12 +28,28 @@ const App = () => {
   );
 };
 
+const TaskDetailWrapper = () => {
+  const { accessToken } = useAuthContext();
+  return <TaskDetail accessToken={accessToken} />;
+};
+
+const TaskCreateWrapper = () => {
+  return <TaskCreate />;
+};
+
+const TaskEditWrapper = () => {
+  return <TaskEdit />;
+};
+
 export const protectedRoutes = [
   {
     path: '',
     element: <App />,
     children: [
       { path: '', element: <Dashboard /> },
+      { path: 'tasks/create', element: <TaskCreateWrapper /> },
+      { path: 'tasks/:taskId/edit', element: <TaskEditWrapper /> },
+      { path: 'tasks/:taskId', element: <TaskDetailWrapper /> },
       { path: '*', element: <NotFound /> },
     ],
   },

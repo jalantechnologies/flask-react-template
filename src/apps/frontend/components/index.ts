@@ -1,4 +1,6 @@
 import Button from 'frontend/components/button';
+import { CommentForm, CommentItem, CommentList } from 'frontend/components/comment';
+import { TaskForm, TaskList } from 'frontend/components/task';
 import FlexItem from 'frontend/components/flex/flex-item.component';
 import Flex from 'frontend/components/flex/flex.component';
 import FormControl from 'frontend/components/form-control';
@@ -14,6 +16,9 @@ import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
 
 export {
   Button,
+  CommentForm,
+  CommentItem,
+  CommentList,
   Flex,
   FlexItem,
   FormControl,
@@ -25,5 +30,7 @@ export {
   ParagraphMedium,
   PasswordInput,
   Select,
+  TaskForm,
+  TaskList,
   VerticalStackLayout,
 };
