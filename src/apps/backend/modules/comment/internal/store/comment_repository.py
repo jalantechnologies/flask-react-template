@@ -1,0 +1,48 @@
+from pymongo.collection import Collection
+from pymongo.errors import OperationFailure
+
+from modules.application.repository import ApplicationRepository
+from modules.comment.internal.store.comment_model import CommentModel
+from modules.logger.logger import Logger
+
+COMMENT_VALIDATION_SCHEMA = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["account_id", "task_id", "content", "created_at", "updated_at", "active"],
+        "properties": {
+            "account_id": {"bsonType": "string"},
+            "task_id": {"bsonType": "string"},
+            "content": {"bsonType": "string"},
+            "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": "date"},
+            "active": {"bsonType": "bool"},
+        },
+    }
+}
+
+
+class CommentRepository(ApplicationRepository):
+    @property
+    def collection_name(self) -> str:
+        return CommentModel.get_collection_name()
+
+    @classmethod
+    def on_init_collection(cls, collection: Collection) -> bool:
+        collection.create_index(
+            [("active", 1), ("task_id", 1)], name="active_task_id_index", partialFilterExpression={"active": True}
+        )
+
+        add_validation_command = {
+            "collMod": cls.collection_name,
+            "validator": COMMENT_VALIDATION_SCHEMA,
+            "validationLevel": "strict",
+        }
+
+        try:
+            collection.database.command(add_validation_command)
+        except OperationFailure as e:
+            if e.code == 26:
+                collection.database.create_collection(cls.collection_name, validator=COMMENT_VALIDATION_SCHEMA)
+            else:
+                Logger.error(message=f"OperationFailure occurred for collection tasks: {e.details}")
+        return True
