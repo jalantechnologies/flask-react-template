@@ -9,6 +9,8 @@ import HorizontalStackLayout from 'frontend/components/layouts/horizontal-stack-
 import VerticalStackLayout from 'frontend/components/layouts/vertical-stack-layout';
 import OTP from 'frontend/components/otp';
 import Select from 'frontend/components/select';
+import TaskCard from 'frontend/components/task-card';
+import TaskForm from 'frontend/components/task-form';
 import H2 from 'frontend/components/typography/h2';
 import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
 
@@ -25,5 +27,7 @@ export {
   ParagraphMedium,
   PasswordInput,
   Select,
+  TaskCard,
+  TaskForm,
   VerticalStackLayout,
 };
