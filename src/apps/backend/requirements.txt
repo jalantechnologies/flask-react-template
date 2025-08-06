@@ -1,0 +1,14 @@
+datadog_api_client==2.40.0
+Flask==3.1.1
+flask_cors==6.0.1
+phonenumbers==9.0.10
+PyJWT==2.10.1
+pymongo==4.13.2
+python-dotenv==1.1.1
+python_bcrypt==0.3.2
+PyYAML==6.0.2
+Requests==2.32.4
+sendgrid==6.12.4
+temporalio==1.15.0
+twilio==9.7.0
+Werkzeug==3.1.3

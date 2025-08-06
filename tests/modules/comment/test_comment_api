@@ -1,0 +1,99 @@
+from server import app
+from modules.authentication.types import AccessTokenErrorCode
+from tests.modules.comment.base_test_comment import BaseTestComment
+
+
+class TestCommentApi(BaseTestComment):
+    def test_create_comment_success(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+
+        response = self.make_authenticated_request(
+            "POST", account.id, token, task_id=task.id, data={"content": "New Comment"}
+        )
+
+        assert response.status_code == 201
+        assert response.json["content"] == "New Comment"
+
+    def test_create_comment_missing_content(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+
+        response = self.make_authenticated_request(
+            "POST", account.id, token, task_id=task.id, data={}
+        )
+
+        assert response.status_code == 400
+        assert "Content is required" in response.json["error"]
+
+    def test_get_all_comments(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+
+        # Create multiple comments
+        self.create_test_comment(task.id, account.id, "Comment 1")
+        self.create_test_comment(task.id, account.id, "Comment 2")
+
+        response = self.make_authenticated_request("GET", account.id, token, task_id=task.id)
+
+        assert response.status_code == 200
+        assert len(response.json) == 2
+        assert response.json[0]["content"] == "Comment 1"
+
+    def test_get_single_comment(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+        comment = self.create_test_comment(task.id, account.id, "Single Comment")
+
+        response = self.make_authenticated_request(
+            "GET", account.id, token, task_id=task.id, comment_id=comment.id
+        )
+
+        assert response.status_code == 200
+        assert response.json["content"] == "Single Comment"
+
+    def test_update_comment_success(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+        comment = self.create_test_comment(task.id, account.id, "Old Content")
+
+        response = self.make_authenticated_request(
+            "PATCH", account.id, token, task_id=task.id, comment_id=comment.id, data={"content": "Updated Content"}
+        )
+
+        assert response.status_code == 200
+        assert response.json["content"] == "Updated Content"
+
+    def test_update_comment_missing_content(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+        comment = self.create_test_comment(task.id, account.id, "Old Content")
+
+        response = self.make_authenticated_request(
+            "PATCH", account.id, token, task_id=task.id, comment_id=comment.id, data={}
+        )
+
+        assert response.status_code == 400
+        assert "Content is required" in response.json["error"]
+
+    def test_delete_comment_success(self):
+        account, token = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+        comment = self.create_test_comment(task.id, account.id, "To be deleted")
+
+        response = self.make_authenticated_request(
+            "DELETE", account.id, token, task_id=task.id, comment_id=comment.id
+        )
+
+        assert response.status_code == 200
+        assert response.json["success"] is True
+
+    def test_comment_no_auth(self):
+        account, _ = self.create_account_and_get_token()
+        task = self.create_test_task(account.id)
+
+        response = self.make_unauthenticated_request(
+            "POST", account.id, task_id=task.id, data={"content": "No Auth Comment"}
+        )
+
+        self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)

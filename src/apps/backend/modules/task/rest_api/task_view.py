@@ -20,7 +20,7 @@ from modules.task.types import (
 
 
 class TaskView(MethodView):
-    @access_auth_middleware
+    # @access_auth_middleware
     def post(self, account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
