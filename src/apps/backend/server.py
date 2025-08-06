@@ -1,8 +1,22 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask.typing import ResponseReturnValue
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from comments.routes import register_routes
+from flask import Blueprint
+
+
+
+
+
+
+
+
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
@@ -19,24 +33,31 @@ from scripts.bootstrap_app import BootstrapApp
 load_dotenv()
 
 app = Flask(__name__)
+comments_bp = Blueprint('comments', __name__)
+register_routes(comments_bp)
+app.register_blueprint(comments_bp, url_prefix='/api')
+
+
+
+
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Mount deps
 LoggerManager.mount_logger()
 
 # Run bootstrap tasks
-BootstrapApp().run()
+#BootstrapApp().run()
 
 # Connect to Temporal Server
-try:
-    ApplicationService.connect_temporal_server()
+#try:
+#    ApplicationService.connect_temporal_server()
 
     # Start the health check worker
     # In production, it is optional to run this worker
-    ApplicationService.schedule_worker_as_cron(cls=HealthCheckWorker, cron_schedule="*/10 * * * *")
+    #ApplicationService.schedule_worker_as_cron(cls=HealthCheckWorker, cron_schedule="*/10 * * * *")
 
-except WorkerClientConnectionError as e:
-    Logger.critical(message=e.message)
+#except WorkerClientConnectionError as e:
+#    Logger.critical(message=e.message)
 
 
 # Apply ProxyFix to interpret `X-Forwarded` headers if enabled in configuration
@@ -68,3 +89,17 @@ app.register_blueprint(react_blueprint)
 @app.errorhandler(AppError)
 def handle_error(exc: AppError) -> ResponseReturnValue:
     return jsonify({"message": exc.message, "code": exc.code}), exc.http_code or 500
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)
+
+@app.route('/ping')
+def ping():
+    return "Pong!", 200
+
+@staticmethod
+def get_comment(comment_id):
+    return comments.get(comment_id)
+
+
+
