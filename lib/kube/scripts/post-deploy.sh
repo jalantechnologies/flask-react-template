@@ -92,6 +92,12 @@ collect_diagnostics() {
   } > ci_artifacts/summary.md
 
   echo "diag :: diagnostics collection done"
+
+  # ✅ NEW: also append diagnostics directly to the GitHub job summary so engineers see it without artifacts
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" && -f ci_artifacts/summary.md ]]; then
+    echo "diag :: writing diagnostics to GitHub job summary"
+    cat ci_artifacts/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+  fi
 }
 
 # Always collect diagnostics at the end, even if rollout fails
@@ -117,16 +123,13 @@ fi
 
 # If either rollout failed, emit explicit errors so CI highlights them
 if [[ "$APP_ROLLOUT_RC" -ne 0 ]]; then
-  echo "::error ::Rollout did not complete for ${APP_DEPLOY} (ns=$KUBE_NS). See artifacts for details."
+  echo "::error ::Rollout did not complete for ${APP_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
 fi
 if [[ "$TEMP_ROLLOUT_RC" -ne 0 ]]; then
-  echo "::error ::Rollout did not complete for ${TEMPORAL_DEPLOY} (ns=$KUBE_NS). See artifacts for details."
+  echo "::error ::Rollout did not complete for ${TEMPORAL_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
 fi
 
-# Let the EXIT trap run to gather diagnostics; then exit non-zero if there was a rollout failure
+# Exit non-zero if there was a rollout failure
 if [[ "$APP_ROLLOUT_RC" -ne 0 || "$TEMP_ROLLOUT_RC" -ne 0 ]]; then
-  # Non-zero exit so the job can fail clearly after artifacts are collected
   exit 1
 fi
-
-# If both succeeded, the EXIT trap will still run and attach a clean summary/artifacts
