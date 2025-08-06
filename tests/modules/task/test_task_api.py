@@ -266,3 +266,59 @@ class TestTaskApi(BaseTestTask):
             )
 
         assert response.status_code == 400
+
+def test_comment_creation_success(self) -> None:
+        account, token = self.create_account_and_get_token()
+        created_task = self.create_test_task(account_id=account.id)
+
+        comment_data = {"comment": "This is a test comment"}
+        response = self.make_authenticated_request(
+            "POST", account.id, token, task_id=created_task.id, data=comment_data
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        self.assert_comment_response(response.json, content="This is a test comment", task_id=created_task.id)
+
+def test_comment_creation_missing_content(self) -> None:
+        account, token = self.create_account_and_get_token()
+        created_task = self.create_test_task(account_id=account.id)
+
+        response = self.make_authenticated_request("POST", account.id, token, task_id=created_task.id, data={})
+
+        self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert "Comment is required" in response.json.get("message")
+
+def test_comment_creation_no_auth(self) -> None:
+        account, _ = self.create_account_and_get_token()
+        created_task = self.create_test_task(account_id=account.id)
+
+        comment_data = {"comment": "This is a test comment"}
+        response = self.make_unauthenticated_request("POST", account.id, task_id=created_task.id, data=comment_data)
+
+        self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
+
+        assert response.status_code == 401
+
+def test_comment_deletion_success(self) -> None:
+        account, token = self.create_account_and_get_token()
+        created_task = self.create_test_task(account_id=account.id)
+        comment_data = {"comment": "This is a test comment"}
+        comment_response = self.make_authenticated_request(
+            "POST", account.id, token, task_id=created_task.id, data=comment_data
+        )
+        comment_id = comment_response.json.get("id")
+
+        delete_response = self.make_authenticated_request(
+            "DELETE", account.id, token, task_id=created_task.id, comment_id=comment_id
+        )
+
+        assert delete_response.status_code == 204
+        assert delete_response.data == b""
+
+
+        get_response = self.make_authenticated_request("GET", account.id, token, task_id=created_task.id)
+        assert get_response.status_code == 200
+        assert not get_response.json.get("comments") #Assuming only one comment was added and then deleted
+
+
