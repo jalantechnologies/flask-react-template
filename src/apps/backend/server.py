@@ -15,6 +15,7 @@ from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
+from modules.comments.rest_api.comment_rest_api_server import CommentRestApiServer
 
 load_dotenv()
 
@@ -64,6 +65,11 @@ app.register_blueprint(api_blueprint)
 app.register_blueprint(img_assets_blueprint)
 app.register_blueprint(react_blueprint)
 
+# Register comment APIs
+comment_blueprint = CommentRestApiServer.create()
+api_blueprint.register_blueprint(comment_blueprint)
+
+app.register_blueprint(api_blueprint)
 
 @app.errorhandler(AppError)
 def handle_error(exc: AppError) -> ResponseReturnValue:
