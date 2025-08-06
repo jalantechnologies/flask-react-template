@@ -100,7 +100,7 @@ collect_diagnostics() {
   fi
 }
 
-# Always collect diagnostics at the end, even if rollout fails
+# Always collect diagnostics at the end, even if rollout fail
 trap 'collect_diagnostics' EXIT
 
 echo "rollout :: waiting for $APP_DEPLOY"
