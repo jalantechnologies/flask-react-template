@@ -22,7 +22,17 @@ ACTIVE=$(kubectl -n "$NS" get deploy -o json \
   | jq --arg base "$BASE" '[.items[].metadata.name | select(startswith($base))] | length')
 
 TOTAL_ALLOC_MIB=$(kubectl get nodes -o json \
-  | jq '[.items[].status.allocatable.memory] | map(sub("Ki$";"")|tonumber/1024) | add | floor')
+  | jq '[.items[].status.allocatable.memory]
+         | map(
+             if test("Ki$") then
+               (sub("Ki$";"") | tonumber/1024)
+             elif test("Mi$") then
+               (sub("Mi$";"") | tonumber)
+             else
+               tonumber
+             end
+           )
+         | add | floor')
 
 NEEDED=$(( (ACTIVE + 1) * REQ_MIB_PER_PR ))
 
