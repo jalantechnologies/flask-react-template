@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Comment Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="container">
+    <h1>Comments Manager</h1>
+
+    <form id="commentForm">
+      <input type="number" id="taskId" placeholder="Task ID" required />
+      <input type="text" id="content" placeholder="Comment Content" required />
+      <button type="submit">Add Comment</button>
+    </form>
+
+    <div id="commentsList"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
