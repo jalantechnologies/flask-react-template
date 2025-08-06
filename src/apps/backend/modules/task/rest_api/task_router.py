@@ -22,7 +22,7 @@ class TaskRouter:
         )
 
         blueprint.add_url_rule(
-            "/accounts/<account_id>/tasks/<task_id>/comments/<comment_id>",
+            "/accounts/<account_id>/tasks/<task_id>/comments",
             view_func=TaskCommentView.as_view("delete_comment"),
             methods=["DELETE"]
         )
