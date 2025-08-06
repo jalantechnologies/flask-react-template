@@ -1,3 +1,6 @@
+from modules.comment.rest_api.comment_rest_api_server import CommentRestApiServer
+
+from modules.comment.rest_api.comment_router import bp as comment_bp
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask.typing import ResponseReturnValue
@@ -57,6 +60,9 @@ api_blueprint.register_blueprint(account_blueprint)
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
+# Register comment apis
+comment_blueprint = CommentRestApiServer.create()
+api_blueprint.register_blueprint(comment_blueprint)
 
 app.register_blueprint(api_blueprint)
 
