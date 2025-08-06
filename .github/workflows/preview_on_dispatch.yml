@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   preview:
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.3
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@amaan/chore/ci-preview-deploy-diagnostics
     concurrency:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
