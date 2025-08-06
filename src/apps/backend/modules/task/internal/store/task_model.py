@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional, Union
+
+from attrs import field
 
 from bson import ObjectId
 
@@ -14,8 +16,8 @@ class TaskModel(BaseModel):
     title: str
     active: bool = True
     created_at: Optional[datetime] = datetime.now()
-    id: Optional[ObjectId | str] = None
     updated_at: Optional[datetime] = datetime.now()
+    comments: List[Dict[str, Union[str, datetime]]] = field(default_factory=list)
 
     @classmethod
     def from_bson(cls, bson_data: dict) -> "TaskModel":
@@ -27,6 +29,7 @@ class TaskModel(BaseModel):
             id=bson_data.get("_id"),
             title=bson_data.get("title", ""),
             updated_at=bson_data.get("updated_at"),
+            comments=bson_data.get("comments", []),
         )
 
     @staticmethod

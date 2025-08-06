@@ -1,6 +1,7 @@
+import uuid
 from dataclasses import asdict
 from typing import Optional
-
+import uuid
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
 from flask.views import MethodView
@@ -10,12 +11,17 @@ from modules.application.common.types import PaginationParams
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.task.errors import TaskBadRequestError
 from modules.task.task_service import TaskService
+from modules.task.internal.store.task_model import TaskModel
 from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
     GetPaginatedTasksParams,
     GetTaskParams,
     UpdateTaskParams,
+    TaskComment,
+    CreateTaskCommentParams,
+    TaskDeletionResult,
+    DeleteTaskCommentParams,
 )
 
 
@@ -102,3 +108,45 @@ class TaskView(MethodView):
         TaskService.delete_task(params=delete_params)
 
         return "", 204
+
+class TaskCommentView(MethodView):
+
+    def post(self, account_id:str, task_id:str):
+        data = request.json
+        comment = data.get("comment")
+
+        if not comment:
+            return jsonify({"error": "Comment is required"}), 400
+
+        create_task_params = CreateTaskCommentParams(account_id=account_id, task_id=task_id, content=comment)
+
+        comment_added = TaskService.add_comment(params=create_task_params)
+        comment_dict = asdict(comment_added)
+
+        return jsonify(comment_dict), 200
+
+
+    def delete(self, account_id:str, task_id:str):
+
+
+        delete_params = DeleteTaskCommentParams(account_id=account_id, task_id=task_id, content=request.json.get("content"))
+
+        TaskService.delete_comment(params=delete_params)
+
+        return "", 204
+
+
+
+
+
+        # result = TaskModel.delete_comment(account_id=account_id, task_id=task_id, comment_id=comment_id)
+
+        # if not result:
+        #     return jsonify({"error": "Task or comment not found"}), 404
+
+        # return jsonify({"message": "Comment deleted successfully"}), 200
+
+
+
+
+

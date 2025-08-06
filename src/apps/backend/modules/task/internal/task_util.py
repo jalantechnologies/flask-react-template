@@ -13,4 +13,5 @@ class TaskUtil:
             description=validated_task_data.description,
             id=str(validated_task_data.id),
             title=validated_task_data.title,
+            comments=validated_task_data.comments if validated_task_data.comments else []
         )

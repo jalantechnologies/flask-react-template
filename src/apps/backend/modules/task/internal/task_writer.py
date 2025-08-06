@@ -15,6 +15,8 @@ from modules.task.types import (
     Task,
     TaskDeletionResult,
     UpdateTaskParams,
+    CreateTaskCommentParams,
+    TaskComment
 )
 
 
@@ -33,8 +35,8 @@ class TaskWriter:
     @staticmethod
     def update_task(*, params: UpdateTaskParams) -> Task:
         updated_task_bson = TaskRepository.collection().find_one_and_update(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True},
-            {"$set": {"description": params.description, "title": params.title, "updated_at": datetime.now()}},
+            {"_id": ObjectId(params.task_id), "account_id": params.account_id,"active": True},
+            {"$set": {"description": params.description, "title": params.title, "updated_at": datetime.now(),"comments.$.content": params.comment_content}},
             return_document=ReturnDocument.AFTER,
         )
 
@@ -58,3 +60,30 @@ class TaskWriter:
             raise TaskNotFoundError(task_id=params.task_id)
 
         return TaskDeletionResult(task_id=params.task_id, deleted_at=deletion_time, success=True)
+
+    @staticmethod
+    def add_comment(*, params: CreateTaskCommentParams) -> TaskComment:
+        task_bson = TaskRepository.collection().find_one_and_update(
+            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True},
+            {"$push": {"comments": {"content": params.content, "created_at": datetime.now()}}},
+            return_document=ReturnDocument.AFTER,
+        )
+
+        if task_bson is None:
+            raise TaskNotFoundError(task_id=params.task_id)
+
+        return TaskUtil.convert_task_bson_to_task(task_bson).comments[-1]
+
+    @staticmethod
+    def delete_comment(*, params: CreateTaskCommentParams) -> TaskComment:
+        task_bson = TaskRepository.collection().find_one_and_update(
+            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True},
+            {"$pull": {"comments": {"content": params.content}}},
+            return_document=ReturnDocument.AFTER,
+        )
+
+        if task_bson is None:
+            raise TaskNotFoundError(task_id=params.task_id)
+
+        return TaskUtil.convert_task_bson_to_task(task_bson).comments[-1] if task_bson.get("comments") else None
+

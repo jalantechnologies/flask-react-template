@@ -8,7 +8,7 @@ from modules.logger.logger import Logger
 TASK_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["account_id", "description", "title", "active", "created_at", "updated_at"],
+        "required": ["account_id", "description", "title", "active", "created_at", "updated_at", "comments"],
         "properties": {
             "account_id": {"bsonType": "string"},
             "description": {"bsonType": "string"},
@@ -16,6 +16,20 @@ TASK_VALIDATION_SCHEMA = {
             "active": {"bsonType": "bool"},
             "created_at": {"bsonType": "date"},
             "updated_at": {"bsonType": "date"},
+            "comments": {
+                "bsonType": "array",
+                "items": {
+                    "bsonType": "object",
+                    "required": ["task_id", "account_id", "content", "created_at"],
+                    "properties": {
+                        "task_id": {"bsonType": "string"},
+                        "account_id": {"bsonType": "string"},
+                        "content": {"bsonType": "string"},
+                        "created_at": {"bsonType": "date"},
+                    },
+                },
+            },
+
         },
     }
 }

@@ -39,6 +39,7 @@ class UpdateTaskParams:
     task_id: str
     description: str
     title: str
+    comments:str
 
 
 @dataclass(frozen=True)
@@ -58,3 +59,31 @@ class TaskDeletionResult:
 class TaskErrorCode:
     NOT_FOUND: str = "TASK_ERR_01"
     BAD_REQUEST: str = "TASK_ERR_02"
+
+@dataclass(frozen=True)
+class TaskComment:
+    # comment_id: str
+    task_id: str
+    account_id: str
+    content: str
+    created_at: datetime
+
+@dataclass(frozen=True)
+class CreateTaskCommentParams:
+    account_id: str
+    task_id: str
+    content: str
+
+@dataclass(frozen=True)
+class DeleteTaskCommentParams:
+    account_id: str
+    task_id: str
+    content: str
+    # comment_id: str
+
+@dataclass(frozen=True)
+class TaskCommentDeletionResult:
+    content: str
+    deleted_at: datetime
+    success: bool
+
