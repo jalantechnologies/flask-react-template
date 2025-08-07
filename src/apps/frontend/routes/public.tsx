@@ -15,18 +15,17 @@ import {
   PhoneLogin,
   Dashboard,
 } from '../pages';
-import TaskDetails from '../pages/task-details'; // 👈 The correct way to import TaskDetails
+import TaskDetails from '../pages/task-details';
 
 const currentAuthMechanism = Config.getConfigValue<string>(
   'authenticationMechanism',
 );
 
 export const publicRoutes = [
-  // Default route will now go to the Dashboard
   { path: '/', element: <Navigate to={routes.DASHBOARD} /> },
   { path: routes.DASHBOARD, element: <Dashboard /> },
   { path: routes.ABOUT, element: <About /> },
-  { path: '/tasks/:taskId', element: <TaskDetails /> }, // The dynamic task details page
+  { path: '/tasks/:taskId', element: <TaskDetails /> },
 
   {
     path: routes.FORGOT_PASSWORD,
@@ -44,7 +43,6 @@ export const publicRoutes = [
       </ResetPasswordProvider>
     ),
   },
-  // This catch-all route now redirects to the dashboard
   { path: '*', element: <Navigate to={routes.DASHBOARD} /> },
 ];
 

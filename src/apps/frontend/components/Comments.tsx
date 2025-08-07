@@ -18,7 +18,7 @@ const Comments: FC<CommentsProps> = ({ taskId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  
   const fetchComments = async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/comments/for-task/${taskId}`);
