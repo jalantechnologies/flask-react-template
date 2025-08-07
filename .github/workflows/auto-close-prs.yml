@@ -1,0 +1,45 @@
+name: Auto-Close Unauthorized PRs
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  check-author:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR author
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const allowedUsers = [
+              'amaan-sayyed',
+              'platform-dev1',
+              'platform-dev2',
+              'platform-dev3',
+              'platform-dev4',
+              'platform-dev5'
+            ];
+
+            const prAuthor = context.payload.pull_request.user.login;
+
+            if (!allowedUsers.includes(prAuthor)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `Hi @${prAuthor}, thanks for your PR! However, this repository only accepts contributions from our internal platform team. Your PR will be closed.`
+              });
+
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                state: 'closed'
+              });
+
+              console.log(`PR from @${prAuthor} closed.`);
+            } else {
+              console.log(`@${prAuthor} is authorized.`);
+            }
