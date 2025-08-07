@@ -8,7 +8,7 @@ import TaskCard from 'frontend/components/task/task-card.component';
 import TaskForm from 'frontend/components/task/task-form.component';
 
 const TasksPage: React.FC = () => {
-  const { account } = useAccountContext();
+  const { accountDetails } = useAccountContext();
   const [tasks, setTasks] = useState<TaskModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -22,11 +22,11 @@ const TasksPage: React.FC = () => {
   const taskService = new TaskService();
 
   const loadTasks = async (page = 1) => {
-    if (!account) return;
+    if (!accountDetails) return;
 
     try {
       setLoading(true);
-      const result = await taskService.getTasks(account.id, { page, size: 10 });
+      const result = await taskService.getTasks(accountDetails.id, { page, size: 10 });
       setTasks(result.items);
       setTotalCount(result.totalCount);
       setTotalPages(Math.ceil(result.totalCount / 10));
@@ -40,17 +40,17 @@ const TasksPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (account) {
+    if (accountDetails) {
       loadTasks();
     }
-  }, [account]);
+  }, [accountDetails]);
 
   const handleCreateTask = async (taskData: { title: string; description: string }) => {
-    if (!account) return;
+    if (!accountDetails) return;
 
     try {
       setIsSubmitting(true);
-      await taskService.createTask(account.id, taskData);
+      await taskService.createTask(accountDetails.id, taskData);
       toast.success('Task created successfully');
       setShowForm(false);
       loadTasks(currentPage);
@@ -63,11 +63,11 @@ const TasksPage: React.FC = () => {
   };
 
   const handleUpdateTask = async (taskData: { title: string; description: string }) => {
-    if (!account || !editingTask) return;
+    if (!accountDetails || !editingTask) return;
 
     try {
       setIsSubmitting(true);
-      await taskService.updateTask(account.id, editingTask.id, taskData);
+      await taskService.updateTask(accountDetails.id, editingTask.id, taskData);
       toast.success('Task updated successfully');
       setEditingTask(null);
       loadTasks(currentPage);
@@ -80,7 +80,7 @@ const TasksPage: React.FC = () => {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!account) return;
+    if (!accountDetails) return;
 
     if (!window.confirm('Are you sure you want to delete this task?')) {
       return;
@@ -88,7 +88,7 @@ const TasksPage: React.FC = () => {
 
     try {
       setDeletingTaskId(taskId);
-      await taskService.deleteTask(account.id, taskId);
+      await taskService.deleteTask(accountDetails.id, taskId);
       toast.success('Task deleted successfully');
       loadTasks(currentPage);
     } catch (error) {
@@ -112,7 +112,7 @@ const TasksPage: React.FC = () => {
     loadTasks(page);
   };
 
-  if (!account) {
+  if (!accountDetails) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
