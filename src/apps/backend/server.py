@@ -10,6 +10,7 @@ from modules.application.application_service import ApplicationService
 from modules.application.errors import AppError, WorkerClientConnectionError
 from modules.application.workers.health_check_worker import HealthCheckWorker
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
+from modules.comment.rest_api.comment_rest_api_server import CommentRestApiServer
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
@@ -58,6 +59,10 @@ api_blueprint.register_blueprint(account_blueprint)
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
 
+# Register comment apis
+comment_blueprint = CommentRestApiServer.create()
+api_blueprint.register_blueprint(comment_blueprint)
+
 app.register_blueprint(api_blueprint)
 
 # Register frontend elements
@@ -68,3 +73,4 @@ app.register_blueprint(react_blueprint)
 @app.errorhandler(AppError)
 def handle_error(exc: AppError) -> ResponseReturnValue:
     return jsonify({"message": exc.message, "code": exc.code}), exc.http_code or 500
+
