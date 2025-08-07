@@ -1,0 +1,206 @@
+/* Using CSS variables for easier theming */
+:root {
+  --primary-color: #007bff;
+  --primary-dark: #0056b3;
+  --bg-color: #e0eafc; /* A soft, light blue gradient start */
+  --bg-end: #cfdef3; /* A soft, light blue gradient end */
+  --card-bg: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+  --border-color: rgba(255, 255, 255, 0.5);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --text-color: #333;
+}
+
+body {
+  background: linear-gradient(to right, var(--bg-color), var(--bg-end));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.comments-container {
+  /* This creates the "frosted glass" effect */
+  backdrop-filter: blur(10px);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 10px 30px var(--shadow-color);
+  max-width: 800px;
+  width: 90%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: var(--text-color);
+  transition: all 0.3s ease-in-out;
+}
+
+.comments-container h2 {
+  color: var(--text-color);
+  margin-top: 0;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 15px;
+  font-size: 2rem; /* Using rem for better scaling */
+}
+
+.comments-list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 25px;
+}
+
+.comment-item {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  animation: fadeIn 0.5s ease-in-out; /* Fade-in animation for new comments */
+}
+
+.comment-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px var(--shadow-color);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #555;
+  font-size: 1.1rem;
+}
+
+.comment-text {
+  margin-top: 10px;
+  color: #444;
+  font-size: 1rem;
+  /* This is the key for the typing effect */
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: .15em solid var(--primary-color);
+  animation: typing 2.5s steps(30, end), blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: var(--primary-color); }
+}
+
+.comment-form {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+}
+
+.comment-form input {
+  flex-grow: 1;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.comment-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.comment-form button {
+  padding: 15px 30px;
+  background-image: linear-gradient(45deg, #007bff, #00c6ff);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.comment-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.delete-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+}
+
+.delete-button:hover {
+  color: #e60000;
+}
+
+.floating-comment-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.floating-comment-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.comment-icon {
+  font-size: 1.2rem;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .comments-container {
+    width: 95%;
+    margin: 15px auto;
+    padding: 20px;
+  }
+  
+  .comment-item {
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+
+  .comment-form {
+    gap: 8px;
+  }
+
+  .comment-form input {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .comment-form button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+}

@@ -1,17 +1,26 @@
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6';
 import React from 'react';
-import { RouterProvider } from 'react-router-dom';
+import { BrowserRouter, Route, Routes as ReactRoutes } from 'react-router-dom';
 
-import { useAuthContext } from 'frontend/contexts';
-import { protectedRoutes } from 'frontend/routes/protected';
-import { publicRoutes } from 'frontend/routes/public';
+import { publicRoutes } from './public';
+import { protectedRoutes } from './protected';
 
-export const AppRoutes = () => {
-  const { isUserAuthenticated } = useAuthContext();
+// This is the main router component that determines which routes to show.
+export const AppRoutes: React.FC = () => {
+  // You would add logic here to check if the user is authenticated.
+  // For now, we'll just render the public routes so you can see your work.
+  const isAuth = false; // We'll hardcode this to false for now
 
-  const routes = isUserAuthenticated() ? protectedRoutes : publicRoutes;
+  // Here, we combine public and protected routes based on authentication.
+  // We will remove the protected routes for now to avoid the login redirect.
+  const allRoutes = isAuth ? [...publicRoutes, ...protectedRoutes] : publicRoutes;
 
-  const router = createBrowserRouter(routes);
-
-  return <RouterProvider router={router} />;
+  return (
+    <BrowserRouter>
+      <ReactRoutes>
+        {allRoutes.map((route, index) => (
+          <Route key={index} path={route.path} element={route.element} />
+        ))}
+      </ReactRoutes>
+    </BrowserRouter>
+  );
 };

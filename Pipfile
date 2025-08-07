@@ -22,6 +22,7 @@ twilio = "==9.2.4"
 waitress = "==2.1.2"
 datadog-api-client = "==2.31.0"
 temporalio = "==1.10.0"
+colorama = "*"
 
 [dev-packages]
 black = "==24.8.0"
