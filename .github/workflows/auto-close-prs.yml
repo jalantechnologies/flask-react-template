@@ -1,13 +1,15 @@
-name: Auto Close Fork PRs
+name: Auto Close PRs Not From Branch
 
 on:
   pull_request:
     types: [opened, reopened]
 
 jobs:
-  close-fork-pr:
+  close-invalid-pr:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name != github.repository
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref != 'main'
 
     permissions:
       pull-requests: write  # Required to comment and close PRs
@@ -16,17 +18,15 @@ jobs:
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
 
-      - name: Close PR from fork
+      - name: Close PR into non-main branches
         run: |
           gh pr close "$PR_URL" --comment "$COMMENT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           COMMENT: |
-            ❌ This pull request was opened from a **forked repository**.
+            ❌ This pull request does not target the correct base branch.
 
-            To contribute, please create a new branch in your own clone of this repository and open a PR with:
-            - **Base repo:** `your-username/flask-react-template`
-            - **Base branch:** `main`
+            Please ensure that PRs are opened against the `main` branch of this repo.
 
             Thank you!
