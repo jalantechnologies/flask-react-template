@@ -10,7 +10,7 @@ jobs:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
     with:
-      # ENV-BASED provider
+      # ENV-BASED
       hosting_provider: ${{ vars.HOSTING_PROVIDER }}  # 'DIGITAL_OCEAN' or 'AWS'
       app_name: frm-boilerplate
       app_env: preview
