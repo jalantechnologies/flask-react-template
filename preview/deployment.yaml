@@ -1,0 +1,74 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: $KUBE_APP-$KUBE_DEPLOY_ID-priority
+  namespace: $KUBE_NS
+value: $KUBE_DEPLOY_ID
+globalDefault: false
+description: "This priority class is used for preview pods."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $KUBE_APP-deployment
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP
+    version: $GITHUB_SHA
+  annotations:
+    secrets.doppler.com/reload: 'true'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $KUBE_APP
+  template:
+    metadata:
+      labels:
+        app: $KUBE_APP
+    spec:
+      priorityClassName: $KUBE_APP-$KUBE_DEPLOY_ID-priority
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: doks.digitalocean.com/node-pool
+                    operator: In
+                    values:
+                      - platform-cluster-01-staging-pool
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: $KUBE_APP
+          image: $KUBE_DEPLOYMENT_IMAGE
+          imagePullPolicy: Always
+          resources:
+            requests:
+             memory: '400Mi'        
+            limits:
+             memory: '800Mi' 
+          ports:
+            - containerPort: 8080
+          env:
+            - name: WEB_APP_HOST
+              value: $KUBE_INGRESS_HOSTNAME
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30

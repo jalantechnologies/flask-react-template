@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $KUBE_APP-temporal-deployment
+  namespace: $KUBE_NS
+  labels:
+    app: temporal
+    version: $GITHUB_SHA
+  annotations:
+    secrets.doppler.com/reload: 'true'
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: temporal
+  template:
+    metadata:
+      labels:
+        app: temporal
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: doks.digitalocean.com/node-pool
+                    operator: In
+                    values:
+                      - platform-cluster-01-staging-pool
+      imagePullSecrets:
+        - name: regcred
+
+      containers:
+        - name: temporal-server
+          image: temporalio/auto-setup:1.27.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 7233
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          resources:
+            requests:
+              memory: '200Mi'
+            limits:
+              memory: '400Mi'
+        - name: temporal-admin-tools
+          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          stdin: true
+          tty: true
+          resources:
+            requests:
+              memory: '100Mi'
+            limits:
+              memory: '200Mi'
+
+        - name: temporal-ui
+          image: temporalio/ui:2.37.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          resources:
+            requests:
+              memory: '200Mi'
+            limits:
+              memory: '400Mi'
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+
+        - name: python-worker
+          image: $KUBE_DEPLOYMENT_IMAGE
+          workingDir: /opt/app/src/apps/backend
+          command: ['pipenv', 'run', 'python', 'temporal_server.py']
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
+          resources:
+            requests:
+              memory: '150Mi'
+            limits:
+              memory: '300Mi'

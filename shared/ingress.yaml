@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $KUBE_APP-ingress
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - $KUBE_INGRESS_HOSTNAME
+        - $KUBE_INGRESS_WORKER_HOSTNAME
+      secretName: $KUBE_APP-cert-key
+  rules:
+    - host: $KUBE_INGRESS_HOSTNAME
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: $KUBE_APP-service
+                port:
+                  number: 8080
+    - host: $KUBE_INGRESS_WORKER_HOSTNAME
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: temporal-service
+                port:
+                  number: 8080

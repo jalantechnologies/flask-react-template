@@ -1,0 +1,33 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: $KUBE_APP-my-worker
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-my-worker
+    version: $GITHUB_SHA
+spec:
+  schedule: "10 * * * *"
+  concurrencyPolicy: "Replace"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: $KUBE_APP-my-worker
+        spec:
+          imagePullSecrets:
+            - name: regcred
+          containers:
+            - name: $KUBE_APP
+              image: $KUBE_DEPLOYMENT_IMAGE
+              imagePullPolicy: Always
+              command: [ "npm", "run", "script", "--file=my_worker_script" ]
+              env:
+                - name: WEB_APP_HOST
+                  value: $KUBE_INGRESS_HOSTNAME
+              envFrom:
+                - secretRef:
+                    name: $DOPPLER_MANAGED_SECRET_NAME
+          restartPolicy: OnFailure
