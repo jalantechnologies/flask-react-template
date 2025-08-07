@@ -18,6 +18,7 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 - [Code Formatting](docs/code-formatting.md)
 - [Workers](docs/workers.md)
 - [Deployment](docs/deployment.md)
+- [Running Scripts in Production](docs/running-scripts-in-production.md)
 
 ## Best Practices
 
