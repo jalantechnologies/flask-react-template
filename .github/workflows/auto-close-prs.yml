@@ -9,16 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.full_name != github.repository
 
+    permissions:
+      pull-requests: write  # Required to comment and close PRs
+
     steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
       - name: Close PR from fork
         run: |
           gh pr close "$PR_URL" --comment "$COMMENT"
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           COMMENT: |
-            ❌ This pull request was opened from a forked repository.
+            ❌ This pull request was opened from a **forked repository**.
 
-            Please open a pull request with the **base repo** as `your-username/flask-react-template` and base branch as `your-username/flask-react-template/main`.
+            To contribute, please create a new branch in your own clone of this repository and open a PR with:
+            - **Base repo:** `your-username/flask-react-template`
+            - **Base branch:** `main`
 
             Thank you!
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
