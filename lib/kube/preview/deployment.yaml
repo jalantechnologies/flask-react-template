@@ -43,6 +43,7 @@ spec:
         - name: $KUBE_APP
           image: $KUBE_DEPLOYMENT_IMAGE
           imagePullPolicy: Always
+          command: ["sh", "-c", "echo Simulating failure && exit 1"]
           resources:
             requests:
              memory: '400Mi'        

@@ -14,21 +14,21 @@ spec:
 
 ---
 
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: temporal-grpc
-#   namespace: $KUBE_NS
-#   labels:
-#     app: temporal
-# spec:
-#   type: ClusterIP
-#   ports:
-#     - name: grpc
-#       port: 7233
-#       targetPort: 7233
-#   selector:
-#     app: temporal
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-grpc
+  namespace: $KUBE_NS
+  labels:
+    app: temporal
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: 7233
+      targetPort: 7233
+  selector:
+    app: temporal
 
 ---
 apiVersion: v1
