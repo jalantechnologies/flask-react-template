@@ -43,12 +43,11 @@ spec:
         - name: $KUBE_APP
           image: $KUBE_DEPLOYMENT_IMAGE
           imagePullPolicy: Always
-          command: ["sh", "-c", "echo Simulating failure && exit 1"]
           resources:
             requests:
-             memory: '400Mi'        
+             memory: '1500Mi'        
             limits:
-             memory: '800Mi' 
+             memory: '2000Mi' 
           ports:
             - containerPort: 8080
           env:
