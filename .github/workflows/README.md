@@ -7,7 +7,7 @@ You can easily switch the cloud provider for any environment by updating the `ho
 
 ### How to Select the Cloud Provider
 
-Each workflow file (such as `.github/workflows/production_on_push.yml`, `.github/workflows/preview_on_dispatch.yml`, `.github/workflows/clean_on_delete.yml`, etc.) contains a `hosting_provider` input.  
+Each workflow file (such as `.github/workflows/production_on_push.yml`, `.github/workflows/preview_on_dispatch.yml`, `.github/workflows/clean_on_delete.yml`, etc.) contains a `hosting_provider` input.
 
 Set this value to choose your cloud provider:
 
@@ -17,10 +17,12 @@ Set this value to choose your cloud provider:
   `hosting_provider: AWS`
 
 You can pass the `hosting_provider` value:
+
 - **Directly** in the workflow `with:` block
 - Or define it globally using **repository/environment variables** for easier management
 
 **Example for DigitalOcean:**
+
 ```yaml
 with:
   hosting_provider: DIGITAL_OCEAN
@@ -31,6 +33,7 @@ secrets:
 ```
 
 **Example for AWS:**
+
 ```yaml
 with:
   hosting_provider: AWS
@@ -48,16 +51,18 @@ secrets:
 ### Required Inputs and Secrets
 
 #### For DigitalOcean:
-- **Inputs:**  
+
+- **Inputs:**
   - `do_cluster_id`
-- **Secrets:**  
+- **Secrets:**
   - `do_access_token`
 
 #### For AWS:
-- **Inputs:**  
+
+- **Inputs:**
   - `aws_cluster_name`
   - `aws_region`
-- **Secrets:**  
+- **Secrets:**
   - `aws_access_key_id`
   - `aws_secret_access_key`
 
@@ -76,6 +81,7 @@ secrets:
 ### Example: Switching from DigitalOcean to AWS
 
 **Before (DigitalOcean):**
+
 ```yaml
 with:
   hosting_provider: DIGITAL_OCEAN
@@ -85,6 +91,7 @@ secrets:
 ```
 
 **After (AWS):**
+
 ```yaml
 with:
   hosting_provider: AWS

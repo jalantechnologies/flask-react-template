@@ -13,7 +13,6 @@ spec:
     app: $KUBE_APP
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:

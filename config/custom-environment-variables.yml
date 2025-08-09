@@ -41,4 +41,4 @@ public:
   default_otp:
     enabled: 'DEFAULT_OTP_ENABLED'
     code: 'DEFAULT_OTP_CODE'
-    whitelisted_phone_number: 'DEFAULT_OTP_WHITELISTED_PHONE_NUMBER'  # e.g., "9999999999"
+    whitelisted_phone_number: 'DEFAULT_OTP_WHITELISTED_PHONE_NUMBER' # e.g., "9999999999"

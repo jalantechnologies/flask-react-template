@@ -18,9 +18,9 @@ account:
   enable_bootstrap_tasks: true
   create_test_user_account: true
   test_user:
-    first_name: "Preview"
-    last_name: "User"
-    username: "preview@example.com"
-    password: "previewpassword"
+    first_name: 'Preview'
+    last_name: 'User'
+    username: 'preview@example.com'
+    password: 'previewpassword'
 
 BOOTSTRAP_APP: true

@@ -11,7 +11,7 @@ jobs:
       cancel-in-progress: true
     with:
       # ENV-BASED provider selection
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }}  # 'DIGITAL_OCEAN' or 'AWS'
+      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
       app_name: frm-boilerplate
       app_env: preview
       branch: ${{ github.event.ref }}

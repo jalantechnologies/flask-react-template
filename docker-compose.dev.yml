@@ -48,15 +48,7 @@ services:
       POSTGRES_SEEDS: 'temporal-db'
       DYNAMIC_CONFIG_FILE_PATH: 'config/temporal-sql.yaml'
     healthcheck:
-      test:
-        [
-          "CMD",
-          "tctl",
-          "--address",
-          "temporal:7233",
-          "workflow",
-          "list"
-        ]
+      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'workflow', 'list']
       interval: 1s
       timeout: 5s
       retries: 30

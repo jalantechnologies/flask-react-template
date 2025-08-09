@@ -28,7 +28,7 @@ class ExampleWorker(BaseWorker):
 ### Optional Settings
 
 | Attribute                       | Purpose                                                    |
-|---------------------------------|------------------------------------------------------------|
+| ------------------------------- | ---------------------------------------------------------- |
 | `max_execution_time_in_seconds` | Cancel execution if the worker exceeds this duration.      |
 | `max_retries`                   | Maximum retry attempts before the worker is marked failed. |
 
@@ -54,7 +54,7 @@ The system registers all workers with the Temporal server on startup.
 ## Controlling Workers with `ApplicationService`
 
 | Method                                               | Description                                                                     |
-|------------------------------------------------------|---------------------------------------------------------------------------------|
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `get_worker_by_id(id)`                               | Fetch a worker instance.                                                        |
 | `run_worker_immediately(cls, *args)`                 | Execute a one-off worker now.                                                   |
 | `schedule_worker_as_cron(cls, cron_schedule, *args)` | Run on a cron expression (`*/10 * * * *` = every 10 min).                       |
