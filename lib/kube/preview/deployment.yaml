@@ -5,7 +5,7 @@ metadata:
   namespace: $KUBE_NS
 value: $KUBE_DEPLOY_ID
 globalDefault: false
-description: "This priority class is used for preview pods."
+description: 'This priority class is used for preview pods.'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -45,9 +45,9 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-             memory: '400Mi'        
+              memory: '400Mi'
             limits:
-             memory: '800Mi' 
+              memory: '800Mi'
           ports:
             - containerPort: 8080
           env:

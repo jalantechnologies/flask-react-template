@@ -30,7 +30,7 @@ This ensures every PR runs its own background job workers independently of other
 ### Access Control
 
 | Service           | Access Scope            |
-|-------------------|-------------------------|
+| ----------------- | ----------------------- |
 | `temporal-server` | Internal-only           |
 | `temporal-ui`     | Public (preview + prod) |
 
@@ -77,6 +77,7 @@ This ensures every PR runs its own background job workers independently of other
 ```
 
 > Notes:
+>
 > - WebApp and Temporal services are separated for better scalability.
 > - Docker networking is used for communication inside the Temporal pod.
 
