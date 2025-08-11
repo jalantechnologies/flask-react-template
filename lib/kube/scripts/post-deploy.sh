@@ -15,8 +15,21 @@ collect_diagnostics() {
   # Give kubelet time to restart/crash pods so state reflects CrashLoopBackOff
   sleep 30
 
-  # Recent events
-  kubectl get events -n "$KUBE_NS" --sort-by=.lastTimestamp > ci_artifacts/events.txt || true
+  # Only events for THIS deploy (prefix = "$KUBE_APP-$KUBE_DEPLOY_ID-") and only last 45m
+  deploy_prefix="${KUBE_APP}-${KUBE_DEPLOY_ID}-"
+  cutoff="$(date -u -d '45 minutes ago' +%Y-%m-%dT%H:%M:%SZ)"
+
+  kubectl -n "$KUBE_NS" get events -o json \
+    | jq --arg p "$deploy_prefix" --arg cutoff "$cutoff" '
+        .items
+        | map(select(
+            ((.lastTimestamp // .eventTime // .series?.lastObservedTime // "") >= $cutoff)
+            and ((.involvedObject.name // "") | startswith($p))
+          ))
+        | sort_by(.lastTimestamp // .eventTime // .series?.lastObservedTime // "")
+        | .[]
+        | "\((.lastTimestamp // .eventTime // .series?.lastObservedTime // ""))\t\(.type)\t\(.reason)\t\(.involvedObject.kind)/\(.involvedObject.name)\t\(.message)"
+      ' > ci_artifacts/events.filtered.txt || true
 
   # Resource overviews
   kubectl -n "$KUBE_NS" get deploy,sts,svc,pods -o wide > ci_artifacts/resources.txt || true
@@ -48,8 +61,8 @@ collect_diagnostics() {
   done
 
   # Summaries / findings
-  EVENTS=ci_artifacts/events.txt
-  PODS=ci_artifacts/pods.yaml
+  EVENTS=ci_artifacts/events.filtered.txt
+  PODS=ci_artifacts/pods.sanitized.json
 
   # Scheduling / memory pressure
   if grep -Eq "FailedScheduling|Insufficient memory" "$EVENTS"; then
@@ -80,7 +93,9 @@ collect_diagnostics() {
     echo "::error ::Some pods are in CrashLoopBackOff/Error."
   fi
 
-  # Build a concise PR-friendly summary
+    # Start summary fresh each time
+  : > ci_artifacts/summary.md
+
   {
     echo "### Deployment diagnostics – namespace \`$KUBE_NS\`"
     echo
@@ -92,13 +107,35 @@ collect_diagnostics() {
     else
       echo "✅ No obvious scheduling, OOM, missing Service, or crash-loop issues detected."
     fi
+
     echo
-    echo "<details><summary>Recent events (latest)</summary>"
-    echo
-    tail -n 120 "$EVENTS" | sed 's/^/    /' || true
-    echo
-    echo "</details>"
-  } > ci_artifacts/summary.md
+    echo "### Recent events (latest)"
+    if [ -s ci_artifacts/events.filtered.txt ]; then
+      echo
+      echo '<details><summary>Show last 20</summary>'
+      echo
+      # Prefer Warning events (up to 20), else last 20 of all filtered events
+      if grep -q $'\tWarning\t' ci_artifacts/events.filtered.txt; then
+        grep $'\tWarning\t' ci_artifacts/events.filtered.txt | tail -n 20
+      else
+        tail -n 20 ci_artifacts/events.filtered.txt
+      fi
+      echo
+      echo '</details>'
+    elif [ -s ci_artifacts/events.txt ]; then
+      # Fallback if filtered file unavailable
+      echo
+      echo '<details><summary>Show last 20</summary>'
+      echo
+      tail -n 20 ci_artifacts/events.txt
+      echo
+      echo '</details>'
+    else
+      echo
+      echo "_No recent events._"
+    fi
+  } >> ci_artifacts/summary.md
+
 
   echo "diag :: diagnostics collection done"
 
