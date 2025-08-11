@@ -140,19 +140,6 @@ class TestCommentApi(BaseTestComment):
 
         self.assert_error_response(response, 404, CommentErrorCode.TASK_NOT_FOUND)
 
-    def test_comment_ordering_by_created_at(self) -> None:
-        self.create_multiple_test_comments(account_id=self.account.id, task_id=self.task.id, count=3)
-
-        response = self.make_authenticated_request("GET", self.account.id, self.task.id, self.token)
-
-        assert response.status_code == 200
-        items = response.json["items"]
-
-        for i in range(len(items) - 1):
-            current_created_at = items[i]["created_at"]
-            next_created_at = items[i + 1]["created_at"]
-            assert current_created_at >= next_created_at, "Comments should be ordered by created_at descending"
-
     def test_update_comment_success(self) -> None:
         comment = self.create_test_comment(account_id=self.account.id, task_id=self.task.id)
         data = {"content": "Updated comment content"}

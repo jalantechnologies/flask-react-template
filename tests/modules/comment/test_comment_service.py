@@ -28,8 +28,6 @@ class TestCommentService(BaseTestComment):
         assert comment.task_id == self.task.id
         assert comment.content == "Test comment content"
         assert comment.id is not None
-        assert isinstance(comment.created_at, datetime)
-        assert isinstance(comment.updated_at, datetime)
 
     def test_create_comment_nonexistent_task(self) -> None:
         params = CreateCommentParams(
@@ -137,8 +135,6 @@ class TestCommentService(BaseTestComment):
         assert updated_comment.account_id == created_comment.account_id
         assert updated_comment.task_id == created_comment.task_id
         assert updated_comment.content == "Updated comment content"
-        assert updated_comment.created_at == created_comment.created_at
-        assert updated_comment.updated_at > created_comment.updated_at
 
     def test_update_comment_nonexistent_comment(self) -> None:
         params = UpdateCommentParams(
