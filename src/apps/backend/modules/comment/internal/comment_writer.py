@@ -3,7 +3,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
 
-from modules.comment.errors import CommentNotFoundError, CommentTaskNotFoundError
+from modules.comment.errors import CommentNotFoundError
 from modules.comment.internal.comment_util import CommentUtil
 from modules.comment.internal.store.comment_model import CommentModel
 from modules.comment.internal.store.comment_repository import CommentRepository
@@ -14,17 +14,12 @@ from modules.comment.types import (
     DeleteCommentParams,
     UpdateCommentParams,
 )
-from modules.task.internal.store.task_repository import TaskRepository
 
 
 class CommentWriter:
     @staticmethod
     def create_comment(*, params: CreateCommentParams) -> Comment:
-        task_bson = TaskRepository.collection().find_one(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
-        )
-        if task_bson is None:
-            raise CommentTaskNotFoundError(task_id=params.task_id)
+        CommentUtil.validate_task_exists(params.account_id, params.task_id)
 
         comment_bson = CommentModel(
             account_id=params.account_id, task_id=params.task_id, content=params.content
@@ -37,11 +32,7 @@ class CommentWriter:
 
     @staticmethod
     def update_comment(*, params: UpdateCommentParams) -> Comment:
-        task_bson = TaskRepository.collection().find_one(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
-        )
-        if task_bson is None:
-            raise CommentTaskNotFoundError(task_id=params.task_id)
+        CommentUtil.validate_task_exists(params.account_id, params.task_id)
 
         updated_comment_bson = CommentRepository.collection().find_one_and_update(
             {
@@ -61,11 +52,7 @@ class CommentWriter:
 
     @staticmethod
     def delete_comment(*, params: DeleteCommentParams) -> CommentDeletionResult:
-        task_bson = TaskRepository.collection().find_one(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
-        )
-        if task_bson is None:
-            raise CommentTaskNotFoundError(task_id=params.task_id)
+        CommentUtil.validate_task_exists(params.account_id, params.task_id)
 
         deletion_time = datetime.now()
         updated_comment_bson = CommentRepository.collection().find_one_and_update(

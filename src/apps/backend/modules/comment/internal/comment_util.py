@@ -1,7 +1,11 @@
 from typing import Any
 
+from bson.objectid import ObjectId
+
+from modules.comment.errors import CommentTaskNotFoundError
 from modules.comment.internal.store.comment_model import CommentModel
 from modules.comment.types import Comment
+from modules.task.internal.store.task_repository import TaskRepository
 
 
 class CommentUtil:
@@ -14,3 +18,13 @@ class CommentUtil:
             id=str(validated_comment_data.id),
             task_id=validated_comment_data.task_id,
         )
+
+    @staticmethod
+    def validate_task_exists(account_id: str, task_id: str) -> None:
+        task_bson = TaskRepository.collection().find_one(
+            {"_id": ObjectId(task_id), "account_id": account_id, "active": True}
+        )
+        if task_bson is None:
+            raise CommentTaskNotFoundError(task_id=task_id)
+
+        return

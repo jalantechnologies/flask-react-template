@@ -2,21 +2,16 @@ from bson.objectid import ObjectId
 
 from modules.application.common.base_model import BaseModel
 from modules.application.common.types import PaginationResult
-from modules.comment.errors import CommentNotFoundError, CommentTaskNotFoundError
+from modules.comment.errors import CommentNotFoundError
 from modules.comment.internal.comment_util import CommentUtil
 from modules.comment.internal.store.comment_repository import CommentRepository
 from modules.comment.types import Comment, GetCommentParams, GetPaginatedCommentsParams
-from modules.task.internal.store.task_repository import TaskRepository
 
 
 class CommentReader:
     @staticmethod
     def get_comment(*, params: GetCommentParams) -> Comment:
-        task_bson = TaskRepository.collection().find_one(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
-        )
-        if task_bson is None:
-            raise CommentTaskNotFoundError(task_id=params.task_id)
+        CommentUtil.validate_task_exists(params.account_id, params.task_id)
 
         comment_bson = CommentRepository.collection().find_one(
             {
@@ -32,11 +27,7 @@ class CommentReader:
 
     @staticmethod
     def get_paginated_comments(*, params: GetPaginatedCommentsParams) -> PaginationResult[Comment]:
-        task_bson = TaskRepository.collection().find_one(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True}
-        )
-        if task_bson is None:
-            raise CommentTaskNotFoundError(task_id=params.task_id)
+        CommentUtil.validate_task_exists(params.account_id, params.task_id)
 
         filter_query = {"account_id": params.account_id, "task_id": params.task_id, "active": True}
         total_count = CommentRepository.collection().count_documents(filter_query)
