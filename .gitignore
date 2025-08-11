@@ -34,6 +34,7 @@ output
 # dependency directories
 node_modules
 jspm_packages
+venv
 
 # optional npm cache directory
 .npm
