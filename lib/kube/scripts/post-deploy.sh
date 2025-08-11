@@ -12,12 +12,21 @@ mkdir -p ci_artifacts
 collect_diagnostics() {
   echo "diag :: collecting diagnostics for namespace=$KUBE_NS"
 
+  # Give kubelet time to restart/crash pods so state reflects CrashLoopBackOff
+  sleep 30
+
   # Recent events
   kubectl get events -n "$KUBE_NS" --sort-by=.lastTimestamp > ci_artifacts/events.txt || true
 
   # Resource overviews
   kubectl -n "$KUBE_NS" get deploy,sts,svc,pods -o wide > ci_artifacts/resources.txt || true
-  kubectl -n "$KUBE_NS" get pods -o yaml > ci_artifacts/pods.yaml || true
+  kubectl -n "$KUBE_NS" get pods -o json \
+  | jq 'del(
+      .items[].spec.containers[].env?,
+      .items[].spec.initContainers[].env?,
+      .items[].spec.containers[].envFrom?,
+      .items[].spec.initContainers[].envFrom?
+    )' > ci_artifacts/pods.sanitized.json || true
 
   # Save describes for our deploys if they exist
   if kubectl -n "$KUBE_NS" get deploy "$APP_DEPLOY" >/dev/null 2>&1; then
