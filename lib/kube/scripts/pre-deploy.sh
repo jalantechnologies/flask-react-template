@@ -1,35 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# WHY: Keep the exact env/echo/behavior but structure code into small, clear units.
-
+# NS = target Kubernetes namespace (from KUBE_NS)
 NS="${KUBE_NS:-}"
 : "${NS:?KUBE_NS is required}"
 
 main() {
   echo "preflight :: capacity check (namespace=$NS)"
 
-  ensure_jq
+  ensure_jq_is_available
 
-  # TUNE THIS to your preview per-PR memory *requests* (MiB)
+  # Per-PR preview memory request (MiB)
   REQ_MIB_PER_PR="${REQ_MIB_PER_PR:-700}"
 
-  # Count active preview deployments within this namespace by label 'app' prefix (KUBE_APP without the hash)
-  # KUBE_APP like: <app>-<env>-<hash>  → base prefix: <app>-<env>-
+  # KUBE_APP like: <app>-<env>-<hash> → we match <app>-<env>-
   BASE="${KUBE_APP%-*}-" || true
 
-  ACTIVE="$(count_active_previews "$NS" "$BASE")"
-  TOTAL_ALLOC_MIB="$(cluster_allocatable_mib)"
+  ACTIVE="$(count_active_preview_deployments "$NS" "$BASE")"
+  TOTAL_ALLOC_MIB="$(calculate_cluster_allocatable_memory_mebibytes)"
   NEEDED=$(( (ACTIVE + 1) * REQ_MIB_PER_PR ))
 
   echo "preflight :: active previews in ns=$NS: $ACTIVE"
   echo "preflight :: allocatable memory (MiB): $TOTAL_ALLOC_MIB"
   echo "preflight :: estimated after this deploy (MiB): $NEEDED"
 
-  capacity_gate "$NEEDED" "$TOTAL_ALLOC_MIB"
+  warn_if_capacity_insufficient "$NEEDED" "$TOTAL_ALLOC_MIB"
 }
 
-ensure_jq() {
+ensure_jq_is_available() {
   if ! command -v jq >/dev/null 2>&1; then
     echo "preflight :: installing jq (not found)"
     sudo apt-get update -y >/dev/null 2>&1 || true
@@ -37,13 +35,13 @@ ensure_jq() {
   fi
 }
 
-count_active_previews() {
-  local ns="$1" base="$2"
-  kubectl -n "$ns" get deploy -o json \
-    | jq --arg base "$base" '[.items[].metadata.name | select(startswith($base))] | length'
+count_active_preview_deployments() {
+  local namespace="$1" base_prefix="$2"
+  kubectl -n "$namespace" get deploy -o json \
+    | jq --arg base "$base_prefix" '[.items[].metadata.name | select(startswith($base))] | length'
 }
 
-cluster_allocatable_mib() {
+calculate_cluster_allocatable_memory_mebibytes() {
   kubectl get nodes -o json \
     | jq '[.items[].status.allocatable.memory]
            | map(
@@ -58,10 +56,10 @@ cluster_allocatable_mib() {
            | add | floor'
 }
 
-capacity_gate() {
-  local needed="$1" total="$2"
-  if (( needed > total )); then
-    echo "::error ::This deploy likely exceeds cluster capacity (~${needed}Mi needed > ~${total}Mi available)."
+warn_if_capacity_insufficient() {
+  local needed_mib="$1" total_alloc_mib="$2"
+  if (( needed_mib > total_alloc_mib )); then
+    echo "::error ::This deploy likely exceeds cluster capacity (~${needed_mib}Mi needed > ~${total_alloc_mib}Mi available)."
     echo "💡 Fix: Close older preview PRs, reduce preview memory, or scale the node pool."
     # Soft gate: don’t exit 1 unless you want to block deploys.
     # exit 1

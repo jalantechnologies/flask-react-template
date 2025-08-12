@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# WHY: Structure into small functions; keep outputs/behavior identical.
-
 : "${KUBE_NS:?KUBE_NS is required}"
 : "${KUBE_APP:?KUBE_APP is required}"
 
@@ -13,7 +11,7 @@ ART_DIR="ci_artifacts"
 main() {
   mkdir -p "$ART_DIR"
 
-  # Always collect diagnostics at the end, even if rollout fails (same behavior)
+  # Always collect diagnostics at the end, even if rollout fails
   trap 'collect_diagnostics' EXIT
 
   echo "rollout :: waiting for $APP_DEPLOY"
@@ -51,7 +49,7 @@ main() {
 collect_diagnostics() {
   echo "diag :: collecting diagnostics for namespace=$KUBE_NS"
 
-  # Give kubelet time to restart/crash pods so state reflects CrashLoopBackOff
+  # Allow kubelet to surface CrashLoopBackOff state
   sleep 30
 
   # Only events for THIS deploy (prefix = "$KUBE_APP-$KUBE_DEPLOY_ID-") and only last 45m
@@ -83,12 +81,12 @@ collect_diagnostics() {
     )' > "$ART_DIR/pods.sanitized.json" || true
 
   # Save describes for our deploys if they exist
-  describe_if_present "$KUBE_NS" "$APP_DEPLOY"
-  describe_if_present "$KUBE_NS" "$TEMPORAL_DEPLOY"
+  save_deploy_describe_if_present "$KUBE_NS" "$APP_DEPLOY"
+  save_deploy_describe_if_present "$KUBE_NS" "$TEMPORAL_DEPLOY"
 
   # Critical services (extend this list if needed)
   for svc in temporal-grpc; do
-    capture_service_health "$KUBE_NS" "$svc"
+    save_service_and_endpoints_if_present "$KUBE_NS" "$svc"
   done
 
   # Summaries / findings
@@ -171,28 +169,28 @@ collect_diagnostics() {
 
   echo "diag :: diagnostics collection done"
 
-  # ✅ also append diagnostics directly to the GitHub job summary so engineers see it without artifacts
+  # Also append diagnostics to the GitHub job summary for quick visibility
   if [[ -n "${GITHUB_STEP_SUMMARY:-}" && -f "$ART_DIR/summary.md" ]]; then
     echo "diag :: writing diagnostics to GitHub job summary"
     cat "$ART_DIR/summary.md" >> "$GITHUB_STEP_SUMMARY" || true
   fi
 }
 
-describe_if_present() {
-  local ns="$1" deploy="$2"
-  if kubectl -n "$ns" get deploy "$deploy" >/dev/null 2>&1; then
-    kubectl -n "$ns" describe deploy "$deploy" > "$ART_DIR/describe_${deploy}.txt" || true
+save_deploy_describe_if_present() {
+  local namespace="$1" deploy_name="$2"
+  if kubectl -n "$namespace" get deploy "$deploy_name" >/dev/null 2>&1; then
+    kubectl -n "$namespace" describe deploy "$deploy_name" > "$ART_DIR/describe_${deploy_name}.txt" || true
   fi
 }
 
-capture_service_health() {
-  local ns="$1" svc="$2"
-  if kubectl -n "$ns" get svc "$svc" >/dev/null 2>&1; then
-    kubectl -n "$ns" get svc "$svc" -o wide > "$ART_DIR/svc_${svc}.txt" || true
-    kubectl -n "$ns" get endpoints "$svc" -o wide > "$ART_DIR/endpoints_${svc}.txt" || true
+save_service_and_endpoints_if_present() {
+  local namespace="$1" service_name="$2"
+  if kubectl -n "$namespace" get svc "$service_name" >/dev/null 2>&1; then
+    kubectl -n "$namespace" get svc "$service_name" -o wide > "$ART_DIR/svc_${service_name}.txt" || true
+    kubectl -n "$namespace" get endpoints "$service_name" -o wide > "$ART_DIR/endpoints_${service_name}.txt" || true
   else
-    echo "❌ Missing Service '$svc' in ns=$KUBE_NS" >> "$ART_DIR/findings.txt"
-    echo "::error ::Missing Service '$svc' in namespace $KUBE_NS"
+    echo "❌ Missing Service '$service_name' in ns=$KUBE_NS" >> "$ART_DIR/findings.txt"
+    echo "::error ::Missing Service '$service_name' in namespace $KUBE_NS"
   fi
 }
 
