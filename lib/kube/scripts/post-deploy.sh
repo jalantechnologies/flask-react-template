@@ -82,16 +82,19 @@ collect_diagnostics() {
     echo "::error ::A container was OOMKilled."
   fi
 
-  # CrashLoopBackOff / Error pods
-  if kubectl -n "$KUBE_NS" get pods | grep -Eq "CrashLoopBackOff|Error"; then
-    kubectl -n "$KUBE_NS" get pods | grep -E "CrashLoopBackOff|Error" > ci_artifacts/problem_pods.txt || true
+  # CrashLoopBackOff / Error pods (only for this app)
+  if kubectl -n "$KUBE_NS" get pods -l app="$KUBE_APP" --no-headers 2>/dev/null \
+    | grep -Eq "CrashLoopBackOff|Error"; then
+    kubectl -n "$KUBE_NS" get pods -l app="$KUBE_APP" --no-headers \
+      | awk '/CrashLoopBackOff|Error/ {print}' > ci_artifacts/problem_pods.txt || true
     {
-      echo "- ❌ Some pods are in CrashLoopBackOff/Error."
+      echo "- ❌ Some pods for app '$KUBE_APP' are in CrashLoopBackOff/Error."
       echo "  Fix: Inspect logs with:"
       echo "    kubectl -n $KUBE_NS logs <pod> -c <container> --tail=200"
     } >> ci_artifacts/findings.txt
-    echo "::error ::Some pods are in CrashLoopBackOff/Error."
+    echo "::error ::Some '$KUBE_APP' pods are in CrashLoopBackOff/Error."
   fi
+
 
     # Start summary fresh each time
   : > ci_artifacts/summary.md
