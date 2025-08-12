@@ -58,7 +58,7 @@ collect_diagnostics() {
       echo "❌ Missing Service '$svc' in ns=$KUBE_NS" >> ci_artifacts/findings.txt
       echo "::error ::Missing Service '$svc' in namespace $KUBE_NS"
     fi
-  done
+  done 
 
   # Summaries / findings
   EVENTS=ci_artifacts/events.filtered.txt
