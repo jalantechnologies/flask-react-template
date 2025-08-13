@@ -133,11 +133,6 @@ collect_diagnostics() {
         | "\((.lastTimestamp // .eventTime // .series?.lastObservedTime // ""))\t\(.type)\t\(.reason)\t\(.involvedObject.kind)/\(.involvedObject.name)\t\(.message)"
       ' > "$ART_DIR/events.filtered.txt" || true
 
-  # If filtered events are empty, also save unfiltered (sorted) events as a fallback.
-  if [[ ! -s "$ART_DIR/events.filtered.txt" ]]; then
-    kubectl -n "$KUBE_NS" get events --sort-by='.lastTimestamp' > "$ART_DIR/events.txt" 2>&1 || true
-  fi
-
   # 2) A quick "big picture" list of basic resources in the namespace.
   kubectl -n "$KUBE_NS" get deploy,sts,svc,pods -o wide > "$ART_DIR/resources.txt" || true
 
@@ -156,14 +151,7 @@ collect_diagnostics() {
   save_deploy_describe_if_present "$KUBE_NS" "$TEMPORAL_DEPLOY"
 
   # 5) Check critical Services exist and record their Endpoints.
-  # - Always check the app's web Service.
-  # - Only check Temporal's Service if the Temporal deployment exists here.
-  SERVICES_TO_CHECK=("$KUBE_APP-service")
-  if kubectl -n "$KUBE_NS" get deploy "$TEMPORAL_DEPLOY" >/dev/null 2>&1; then
-    SERVICES_TO_CHECK+=("temporal-service")
-  fi
-
-  for svc in "${SERVICES_TO_CHECK[@]}"; do
+  for svc in "$KUBE_APP-service" temporal-service; do
     save_service_and_endpoints_if_present "$KUBE_NS" "$svc"
   done
 
