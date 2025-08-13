@@ -36,7 +36,7 @@
 #   - Estimated request after this deploy
 #   - A warning if the estimate is larger than allocatable memory
 #
-# NOTES FOR ASSOCIATES:
+# NOTES:
 #   - `kubectl` is the Kubernetes CLI (we query cluster info with it).
 #   - `jq` is a tool that reads JSON; we use it to pick/transform numbers.
 #   - "allocatable memory" is what the scheduler thinks is free for Pods,

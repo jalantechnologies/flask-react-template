@@ -20,7 +20,7 @@
 #   - KUBE_NS  : namespace to work in
 #   - KUBE_APP : app base name (we derive deployment/service names from this)
 #
-# NAMING CONVENTIONS USED (these match your repo’s expectations):
+# NAMING CONVENTIONS USED (matched as per repo’s expectations):
 #   - App Deployment            : "${KUBE_APP}-deployment"
 #   - Temporal Deployment (opt) : "${KUBE_APP}-temporal-deployment"
 #   - Web Service               : "${KUBE_APP}-service"
@@ -38,7 +38,7 @@
 #       findings.txt (only if issues detected)
 #       summary.md  (a human-readable summary; also echoed to GH job summary)
 #
-# NEWBIE NOTES:
+# NOTES:
 #   - "rollout status" waits until a Deployment is considered successfully
 #     rolled out (or times out after 5 minutes here).
 #   - If a rollout fails, we still keep going (thanks to the trap)
@@ -61,7 +61,7 @@ main() {
   mkdir -p "$ART_DIR"
 
   # ----------------------------------------------------------------------------
-  # The trap below is here ON PURPOSE (matches your current logic exactly).
+  # The trap below is here ON PURPOSE (matches current logic exactly).
   # WHY TRAP? If anything fails anywhere below, Bash will exit, but before it
   #           fully quits it will call collect_diagnostics. That guarantees we
   #           always produce logs for debugging. Without this, a failure might
