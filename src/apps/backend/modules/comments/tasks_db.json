@@ -1,0 +1,27 @@
+[
+  {
+    "task_id": "task-1",
+    "title": "Task 1",
+    "description": "Complete the user authentication flow for the application. This includes login, registration, and session management."
+  },
+  {
+    "task_id": "task-2",
+    "title": "Task 2",
+    "description": "Create the database schema for storing user data and their tasks. Set up migrations using Flask-Migrate."
+  },
+  {
+    "task_id": "task-3",
+    "title": "Task 3",
+    "description": "Implement the frontend UI for the task management page. It should allow users to view, create, and edit tasks."
+  },
+  {
+    "task_id": "task-4",
+    "title": "Task 4",
+    "description": "Set up automated testing for the API endpoints using pytest. Ensure that all routes are properly tested for success and error cases."
+  },
+  {
+    "task_id": "task-5",
+    "title": "Task 5",
+    "description": "Optimize the application for better performance. Profile the app and identify bottlenecks in both the backend and frontend."
+  }
+]
