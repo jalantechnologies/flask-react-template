@@ -85,7 +85,7 @@ collect_diagnostics() {
   save_deploy_describe_if_present "$KUBE_NS" "$TEMPORAL_DEPLOY"
 
   # Critical services (extend this list if needed)
-  for svc in temporal-grpc; do
+  for svc in "$KUBE_APP-service" temporal-service; do
     save_service_and_endpoints_if_present "$KUBE_NS" "$svc"
   done
 
