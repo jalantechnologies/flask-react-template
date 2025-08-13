@@ -96,7 +96,10 @@ class CommentView(MethodView):
                 pagination_params = PaginationParams(page=page, size=size)
                 sort_params = None
                 if sort_by:
-                    sort_params = SortParams(sort_by=sort_by, sort_order=sort_order)
+                    from modules.application.common.types import SortDirection
+
+                    sort_direction = SortDirection.from_string(sort_order)
+                    sort_params = SortParams(sort_by=sort_by, sort_direction=sort_direction)
 
                 params = GetPaginatedCommentsParams(
                     task_id=task_id, account_id=account_id, pagination_params=pagination_params, sort_params=sort_params
