@@ -1,13 +1,11 @@
 from modules.account.account_service import AccountService
 from modules.account.types import (
-    CreateAccountByUsernameAndPasswordParams,
     CreateAccountByPhoneNumberParams,
+    CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
 )
-from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
-
 from tests.modules.account.base_test_account import BaseTestAccount
 
 

@@ -22,6 +22,7 @@ from modules.task.types import (
 class TaskView(MethodView):
     @access_auth_middleware
     def post(self, account_id: str) -> ResponseReturnValue:
+        print("Request logged")
         request_data = request.get_json()
 
         if request_data is None:
