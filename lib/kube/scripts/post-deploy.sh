@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------
 # post-deploy.sh
 #
-# GOAL (in plain English):
+# GOAL:
 #   1) Wait for the app deployment (and, if present, the temporal deployment)
 #      to roll out successfully.
 #   2) Whether rollouts succeed or fail, collect a helpful bundle of diagnostics

@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------
 # pre-deploy.sh
 #
-# GOAL (in plain English):
+# GOAL:
 #   Before we spin up *one more* preview environment, do a quick "capacity
 #   estimate" of cluster memory to help us avoid noisy failures later.
 #
@@ -30,13 +30,13 @@
 # EXAMPLE:
 #   KUBE_NS=preview KUBE_APP=myapp-preview-abcdef ./pre-deploy.sh
 #
-# OUTPUT (human):
+# OUTPUT:
 #   - How many active previews it sees
 #   - Total allocatable memory across nodes (MiB)
 #   - Estimated request after this deploy
 #   - A warning if the estimate is larger than allocatable memory
 #
-# NOTES FOR NEWBIES:
+# NOTES FOR ASSOCIATES:
 #   - `kubectl` is the Kubernetes CLI (we query cluster info with it).
 #   - `jq` is a tool that reads JSON; we use it to pick/transform numbers.
 #   - "allocatable memory" is what the scheduler thinks is free for Pods,
