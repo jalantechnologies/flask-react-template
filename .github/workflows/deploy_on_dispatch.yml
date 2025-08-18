@@ -1,0 +1,65 @@
+name: preview / deploy on dispatch
+
+on:
+  repository_dispatch:
+    types: [deploy_on_zip]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HOSTING_PROVIDER: ${{ vars.HOSTING_PROVIDER }}
+      DOCKER_USERNAME:  ${{ vars.DOCKER_USERNAME }}
+      DOCKER_REGISTRY:  ${{ vars.DOCKER_REGISTRY }}
+      SONAR_HOST_URL:   ${{ vars.SONAR_HOST_URL }}
+      DOCKER_PASSWORD:       ${{ secrets.DOCKER_PASSWORD }}
+      SONAR_TOKEN:           ${{ secrets.SONAR_TOKEN }}
+      DOPPLER_PREVIEW_TOKEN: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+      DO_ACCESS_TOKEN:       ${{ secrets.DO_ACCESS_TOKEN }}
+      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DO_CLUSTER_ID:         ${{ vars.DO_CLUSTER_ID }}
+      AWS_REGION:            ${{ vars.AWS_REGION }}
+      AWS_CLUSTER_NAME:      ${{ vars.AWS_CLUSTER_NAME }}
+      APP_NAME:              ${{ github.event.client_payload.app_name }}
+      APP_HOSTNAME:          ${{ github.event.client_payload.app_hostname }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login
+        run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Build & push image
+        run: |
+          IMAGE="$DOCKER_USERNAME/${{ github.event.repository.name }}:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: SonarQube analyze
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+
+      - name: Deploy to preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Deploying to $APP_HOSTNAME via $HOSTING_PROVIDER"
+          if [[ "$HOSTING_PROVIDER" == "DIGITAL_OCEAN" ]]; then
+            echo "$DO_ACCESS_TOKEN" | doctl auth init --access-token -
+            doctl kubernetes cluster kubeconfig save "$DO_CLUSTER_ID"
+          else
+            aws eks update-kubeconfig --name "$AWS_CLUSTER_NAME" --region "${AWS_REGION:-ap-south-1}"
+          fi
+          kubectl apply -f lib/kube/preview/namespace.yaml
+          sed "s#REPLACE_IMAGE#$IMAGE#g; s#REPLACE_HOSTNAME#$APP_HOSTNAME#g" lib/kube/preview/deployment.yaml | kubectl apply -f -
+          kubectl apply -f lib/kube/preview/service.yaml
+          sed "s#REPLACE_HOSTNAME#$APP_HOSTNAME#g" lib/kube/preview/ingress.yaml | kubectl apply -f -
