@@ -44,4 +44,5 @@ const useAsync = <T>(
     result,
   };
 };
+export { useAsync as useAsyncOperation };
 export default useAsync;

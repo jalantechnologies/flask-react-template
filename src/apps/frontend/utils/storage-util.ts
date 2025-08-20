@@ -18,3 +18,15 @@ export const setAccessTokenToStorage = (token: AccessToken): void => {
 export const removeAccessTokenFromStorage = (): void => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
 };
+
+export const StorageUtil = {
+  get: (key: string): string | null => {
+    return localStorage.getItem(key);
+  },
+  set: (key: string, value: string): void => {
+    localStorage.setItem(key, value);
+  },
+  remove: (key: string): void => {
+    localStorage.removeItem(key);
+  },
+};
