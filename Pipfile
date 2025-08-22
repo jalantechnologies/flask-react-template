@@ -11,7 +11,7 @@ flask-cors = "==4.0.0"
 gunicorn = "==21.2.0"
 phonenumbers = "==8.13.44"
 pyjwt = "==2.8.0"
-pydantic = "==2.4"
+pydantic = "==2.10.4"
 pymongo = { extras = ["srv"], version = "==3.12" }
 pyyaml = "==6.0.1"
 python-dotenv = "==1.0.1"
@@ -37,4 +37,4 @@ autoflake = "==2.3.1"
 pylint = "*"
 
 [requires]
-python_version = "3.12"
+python_version = "3.13"

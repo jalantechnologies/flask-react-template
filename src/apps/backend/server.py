@@ -14,6 +14,7 @@ from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
+from modules.task_comment.rest_api.task_comment_rest_api_server import TaskCommentRestApiServer
 from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
@@ -57,6 +58,10 @@ api_blueprint.register_blueprint(account_blueprint)
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
+
+# Register task comment apis
+task_comment_blueprint = TaskCommentRestApiServer.create()
+api_blueprint.register_blueprint(task_comment_blueprint)
 
 app.register_blueprint(api_blueprint)
 
