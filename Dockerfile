@@ -14,7 +14,7 @@ RUN apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev \
   libxtst6 xauth xvfb tzdata software-properties-common
 
 RUN add-apt-repository ppa:deadsnakes/ppa -y && \
-  apt-get install python3.12 python3-pip -y && \
+  apt-get install python3.13 python3.13-venv python3-pip -y && \
   pip install pipenv
 
   RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \

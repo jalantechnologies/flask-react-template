@@ -39,7 +39,8 @@ services:
   temporal:
     image: temporalio/auto-setup:1.27.0
     depends_on:
-      - temporal-db
+      temporal-db:
+        condition: service_healthy
     environment:
       DB: 'postgres12'
       DB_PORT: '5432'
@@ -74,6 +75,11 @@ services:
       postgres -c logging_collector=on
                -c log_directory=/var/log
                -c log_filename=postgresql.log
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - '5432:5432'
     volumes:
