@@ -2,6 +2,11 @@
 
 > A **feature** is the smallest unit of UX value (e.g., Login, Dashboard, Reset Password). Each feature composes **pages** from reusable **components**, orchestrates data via **contexts**, and calls **services** that encapsulate HTTP. **Routes** bind features to URLs. **constants** and **types** are the shared contracts.
 
+This document covers:
+1. **Why** the frontend is structured into layers and how they collaborate  
+2. **What** each layer is responsible for, with **examples from this repo**  
+3. **How** requests flow end-to-end (page → context → service → backend → UI)
+
 ---
 
 ## 1) Why this architecture?
