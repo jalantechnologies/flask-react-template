@@ -17,13 +17,13 @@
 
 ```mermaid
 flowchart LR
-  User[User] --> Page[Page (pages/*)]
-  Page --> Cmp[Components (components/*)]
-  Page --> Ctx[Contexts (contexts/*)]
-  Ctx --> Svc[Services (services/*)]
-  Svc --> Net[(HTTP / Vendors)]
+  User["User"] --> Page["Page (pages/*)"]
+  Page --> Cmp["Components (components/*)"]
+  Page --> Ctx["Contexts (contexts/*)"]
+  Ctx --> Svc["Services (services/*)"]
+  Svc --> Net["(HTTP / Vendors)"]
 
-  Page --> Router[Routes]
+  Page --> Router["Routes"]
   Router --> Page
 ```
 
