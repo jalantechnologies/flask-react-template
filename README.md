@@ -10,6 +10,7 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 
 - [Getting Started](docs/getting-started.md)
 - [Backend Architecture](docs/backend-architecture.md)
+- [Frontend Architecture](docs/frontend-architecture.md)
 - [Logging](docs/logging.md)
 - [Configuration](docs/configuration.md)
 - [Secrets](docs/secrets.md)
