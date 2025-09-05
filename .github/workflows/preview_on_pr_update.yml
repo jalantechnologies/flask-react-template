@@ -3,7 +3,7 @@ name: preview_on_pr_update
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, ready_for_review]
 
 jobs:
   preview:
