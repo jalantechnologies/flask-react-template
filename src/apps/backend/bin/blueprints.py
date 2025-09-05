@@ -11,7 +11,7 @@ satic_root = "../../../"
 react_public_dir: str = os.path.join(os.getcwd(), f"{satic_root}/dist/public/")
 react_blueprint = Blueprint("react", __name__, static_folder=react_public_dir, url_prefix="/")
 
-MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable to resolve react root path"
+MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable resolve react root path"
 
 
 @react_blueprint.route("/", defaults={"path": ""})
