@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   preview:
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.4
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@test-case-ci
     concurrency:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
@@ -16,6 +16,7 @@ jobs:
       branch: ${{ github.event.ref }}
       build_args: |
         APP_ENV=preview
+      checks: "['npm:coverage', 'npm:lint', 'compose:test']"
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
