@@ -1,15 +1,15 @@
 name: preview_on_pr_update
-# only run when updating an 'Open' PR  # retry fix
+# Runs only when updating an 'Open' PR (not draft)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened,ready_for_review]
 
 jobs:
   preview:
-    # only run when updating an 'Open' PR
-    if: github.event.pull_request.state == 'open'
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.4
+    # Run only if PR is open and not draft
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
@@ -22,6 +22,7 @@ jobs:
       branch: ${{ github.event.pull_request.head.ref }}
       build_args: |
         APP_ENV=preview
+      # ✅ Ensure preview only deploys if these checks succeed
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
