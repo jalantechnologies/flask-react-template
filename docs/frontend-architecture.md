@@ -7,6 +7,8 @@ This document covers:
 2. **What** each layer is responsible for, with **examples from this repo**  
 3. **How** requests flow end-to-end (page → context → service → backend → UI)  
 
+Video explanation: [Frontend Architecture Overview](https://www.loom.com/share/f268b08e11084d6e967dc5ed47462e8c)
+
 ---
 
 ## 1) Why this architecture?
