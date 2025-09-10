@@ -5,11 +5,13 @@
 This document covers:
 1. **Why** the frontend is structured into layers and how they collaborate  
 2. **What** each layer is responsible for, with **examples from this repo**  
-3. **How** requests flow end-to-end (page → context → service → backend → UI)
+3. **How** requests flow end-to-end (page → context → service → backend → UI)  
 
 ---
 
 ## 1) Why this architecture?
+
+The frontend is designed with clear boundaries so developers always know where to put code and where to look for it later. By separating responsibilities into layers, we reduce coupling between UI, state, and data access. This makes it easier to evolve features independently, onboard new engineers, and keep technical debt under control.
 
 - **Separation of concerns**: UI rendering (components/pages), state (contexts), data access (services), and navigation (routes) are cleanly separated.  
 - **Replaceable boundaries**: APIs/vendors can change with minimal UI rewrites.  
@@ -19,6 +21,8 @@ This document covers:
 ---
 
 ## 2) High-level runtime flow
+
+This diagram shows how data and control flow through the app at runtime. Users interact with **pages**, which compose **components** for UI and rely on **contexts** for shared state. Contexts in turn call **services** that encapsulate API logic, while **routes** decide which page to render.
 
 ```mermaid
 flowchart LR
@@ -35,6 +39,8 @@ flowchart LR
 ---
 
 ## 3) Repository layout
+
+The folder structure reflects the architecture. Each directory maps to one of the layers in the flow above. This ensures that when you work on a feature, you know exactly where to place new code — and when debugging, where to look.
 
 ```
 frontend/
@@ -54,6 +60,8 @@ frontend/
 
 ## 4) Routing
 
+Routing is the entry point for the user experience. It decides whether to show public flows like login/signup or protected flows like the dashboard. Keeping routing logic isolated makes authentication, redirection, and navigation consistent across the app.
+
 - **`routes/index.tsx`**:  
   Uses `isUserAuthenticated()` from `auth.provider.tsx`.  
   Builds router with `createBrowserRouter(publicRoutes | protectedRoutes)`.
@@ -69,6 +77,8 @@ frontend/
 
 ## 5) Services
 
+Services are the bridge between our frontend and backend. They encapsulate all network calls so that no UI code depends on HTTP details. This makes our API layer replaceable, testable, and consistent.
+
 - **`services/app.service.ts`** → runtime host + axios setup  
 - **`services/api.service.ts`** → standard `this.apiClient` with baseURL `/api`  
 - **`services/auth.service.ts`**  
@@ -82,6 +92,8 @@ frontend/
 ---
 
 ## 6) Contexts
+
+Contexts provide global state and shared APIs for the app. By centralizing authentication, account info, and reset-password flows, they prevent prop drilling and ensure all parts of the app behave consistently.
 
 - **`auth.provider.tsx`**  
   `useAuthContext()` → `{ isUserAuthenticated, login(), logout(), signup(), sendOTP(), verifyOTP() }`  
@@ -97,6 +109,8 @@ frontend/
 ---
 
 ## 7) Pages
+
+Pages are orchestration layers. They decide which components to render, when to call services, and how to handle success or failure. This keeps them close to the user experience while avoiding business logic.
 
 - **`pages/login/index.tsx`**  
   - Uses `useAuthContext().login()`.  
@@ -116,6 +130,8 @@ frontend/
 
 ## 8) Components
 
+Components are the building blocks of our UI. They are designed to be reusable, stateless, and presentation-focused, so they can be shared across multiple pages and features.
+
 - **Primitives**: `button/`, `input/`, `form-control/`, `flex/`  
 - **Layouts**: `layouts/` (`custom-layout`, `horizontal-stack-layout`)  
 - **Chrome**: `header/`, `sidebar/`  
@@ -126,14 +142,20 @@ frontend/
 
 ## 9) Shared contracts
 
-- **`constants/routes.ts`** → canonical paths  
+Shared contracts act as the **canonical interface** between layers. They establish the standardized types, constants, and endpoints that every part of the application depends on. By centralizing these definitions, we ensure consistency, reduce duplication, and prevent divergence across features.  
+
+This structure makes the system **predictable** (all routes are sourced from `constants/routes.ts`), **type-safe** (shared DTOs define the exact shape of API inputs and outputs), and **maintainable** (updating a type or endpoint in one place propagates across the codebase).
+
+- **`constants/routes.ts`** → canonical paths for navigation and redirects  
 - **`constants/countries.ts`** → shared dropdown data  
-- **`types/service-response.ts`** → standard API wrapper  
-- **`types/auth.ts`**, **`types/account.ts`**, **`types/common-types.ts`** → DTOs  
+- **`types/service-response.ts`** → standardized API wrapper  
+- **`types/auth.ts`**, **`types/account.ts`**, **`types/common-types.ts`** → domain models and DTOs  
 
 ---
 
 ## 10) Example end-to-end flow (Login → Dashboard)
+
+This flow illustrates how the different layers collaborate. The page orchestrates the user action, context handles state, service executes the API call, and routing ensures only valid sessions reach protected screens.
 
 ```mermaid
 sequenceDiagram
