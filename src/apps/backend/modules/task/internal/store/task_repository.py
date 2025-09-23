@@ -2,8 +2,8 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 from modules.application.repository import ApplicationRepository
-from modules.task.internal.store.task_model import TaskModel
 from modules.logger.logger import Logger
+from modules.task.internal.store.task_model import TaskModel
 
 TASK_VALIDATION_SCHEMA = {
     "$jsonSchema": {

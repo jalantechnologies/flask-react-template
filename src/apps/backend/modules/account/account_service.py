@@ -2,11 +2,11 @@ from modules.account.internal.account_reader import AccountReader
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
     Account,
+    AccountDeletionResult,
     AccountSearchByIdParams,
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    AccountDeletionResult,
     PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
@@ -15,8 +15,8 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import (
-    CreateOrUpdateAccountNotificationPreferencesParams,
     AccountNotificationPreferences,
+    CreateOrUpdateAccountNotificationPreferencesParams,
 )
 
 
