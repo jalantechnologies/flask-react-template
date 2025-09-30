@@ -22,7 +22,6 @@ jobs:
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: ${{ vars.AWS_REGION }}
-      pull_request_number: ${{ github.event.number }}
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
     secrets:
