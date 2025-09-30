@@ -6,6 +6,22 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [![Production Deploy](https://github.com/jalantechnologies/rflask-boilerplate/actions/workflows/production_on_push.yml/badge.svg?branch=main)](https://github.com/jalantechnologies/rflask-boilerplate/actions/workflows/production_on_push.yml) | [![Code Coverage](https://sonarqube.platform.jalantechnologies.com/api/project_badges/measure?project=jalantechnologies_rflask-boilerplate&metric=coverage&token=a4dd71c68afbb8da4b7ed1026329bf0933298f79)](https://sonarqube.platform.jalantechnologies.com/dashboard?id=jalantechnologies_rflask-boilerplate) |
 
+### Environments & URLs
+This project has three deployment environments that everyone can access:
+
+- **Production**
+  - The live app for end users.
+  - URL: [https://flask-react-template.platform.bettrhq.com](https://flask-react-template.platform.bettrhq.com)
+
+- **Preview (per PR)**
+  - A temporary environment for testing the latest changes in each PR
+  - A unique URL is generated for every pull request (e.g. `https://<github_sha>.preview.platform.bettrhq.com`).
+
+- **Permanent Preview**
+  - Always reflects the latest `main` branch.
+  - Useful for ongoing testing of the integrated codebase.
+  - URL: [https://preview--flask-react-template.platform.bettrhq.com](https://preview--flask-react-template.platform.bettrhq.com)
+
 ## Documentation Directory
 
 - [Getting Started](docs/getting-started.md)
