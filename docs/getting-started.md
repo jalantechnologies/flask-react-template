@@ -51,6 +51,74 @@ npm run serve
 * Disable the auto‑opening browser tab by exporting `WEBPACK_DEV_DISABLE_OPEN=true`.  
 * **Windows users:** run inside WSL or Git Bash for best results.
 
+### Windows (WSL) Setup
+
+Follow these steps to run the app on Windows using WSL (Windows Subsystem for Linux).
+
+1. **Install WSL**
+   - Open PowerShell as Administrator and run:
+
+     ```powershell
+     wsl --install
+     ```
+
+   - Restart your computer when prompted.
+
+2. **Initial Ubuntu setup**
+   - After restart, the first Ubuntu launch will initialize WSL and prompt you to create a Linux username and password.
+   - If it doesn't initialize automatically, open the Start menu, search for "Ubuntu", and launch it to complete initialization.
+
+3. **Open the project in VS Code**
+   - Open the project folder in VS Code.
+
+4. **Switch the VS Code terminal into Ubuntu (WSL)**
+   - In the VS Code terminal, run:
+
+     ```powershell
+     wsl
+     ```
+
+   - If you have multiple distros (check with `wsl -l -v`), explicitly select Ubuntu:
+
+     ```powershell
+     wsl -d Ubuntu
+     ```
+
+   - You are now in the Ubuntu CLI inside your project folder.
+
+5. **Install required packages (inside Ubuntu)**
+
+   ```bash
+   sudo apt update
+   sudo apt install -y python3-pip
+   sudo apt install -y pipenv
+   sudo apt install -y jq
+   ```
+
+6. **Install project dependencies**
+
+   ```bash
+   npm install
+   ```
+
+7. **Install Python dependencies (development)**
+
+   ```bash
+   pipenv install --dev
+   ```
+
+8. **Activate Pipenv shell**
+
+   ```bash
+   pipenv shell
+   ```
+
+9. **Start dev mode with hot reload**
+
+   ```bash
+   npm run serve
+   ```
+
 ---
 
 # Scripts
