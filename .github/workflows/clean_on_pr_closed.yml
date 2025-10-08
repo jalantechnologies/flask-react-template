@@ -1,7 +1,7 @@
 name: clean_on_pr_closed
 
 on:
-  pull_request:  # ✅ CHANGED from pull_request_target
+  pull_request:  
     types: [closed]
 
 permissions:
