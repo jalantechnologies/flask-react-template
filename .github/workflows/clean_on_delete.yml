@@ -2,6 +2,10 @@ name: clean_on_delete
 
 on: delete
 
+permissions:
+  contents: read
+  id-token: write  # For future OIDC
+
 jobs:
   clean:
     if: github.event.ref_type == 'branch'

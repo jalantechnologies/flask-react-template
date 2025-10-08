@@ -1,11 +1,20 @@
 name: clean_on_pr_closed
 
 on:
-  pull_request_target:
+  pull_request:  # ✅ CHANGED from pull_request_target
     types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   clean:
+    # Only run for team members or approved contributors
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository ||
+      contains(github.event.pull_request.labels.*.name, 'approved-contributor')
+
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
