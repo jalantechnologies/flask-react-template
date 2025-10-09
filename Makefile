@@ -33,6 +33,7 @@ run-temporal-server:
 		&& PYTHONPATH=./ pipenv run python temporal_server.py
 
 run-temporal:
+	@command -v temporal >/dev/null 2>&1 || { echo "Temporal CLI not installed, skipping..."; exit 0; }
 	temporal server start-dev
 
 run-test:

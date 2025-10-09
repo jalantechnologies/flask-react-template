@@ -1,13 +1,25 @@
 const path = require('path');
 
-const config = require('config');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
 
-const webpackBuildConfig = JSON.stringify(
-  config.util.toObject(config.has('public') ? config.get('public') : {}),
-);
+// Load config with fallback for compatibility issues
+let webpackBuildConfig = JSON.stringify({
+  authenticationMechanism: 'EMAIL',
+  datadog: {
+    enabled: 'false',
+  },
+});
+
+try {
+  const config = require('config');
+  if (config.has('public')) {
+    webpackBuildConfig = JSON.stringify(config.get('public'));
+  }
+} catch (error) {
+  console.warn('Config package error, using fallback config:', error.message);
+}
 
 module.exports = {
   target: 'web',
