@@ -2,9 +2,10 @@ name: clean_on_dispatch
 
 on: workflow_dispatch
 
+# to follow the principle of least privilege and enhance security.
 permissions:
-  contents: read
-  id-token: write  # For future OIDC
+  contents: read   # Read-only access to repo contents for safer workflows
+  id-token: write  # Allow OIDC tokens for secure cloud authentication
 
 jobs:
   clean:
