@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write  # For future OIDC
+
 jobs:
   production:
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5

@@ -2,6 +2,10 @@ name: clean_on_dispatch
 
 on: workflow_dispatch
 
+permissions:
+  contents: read
+  id-token: write  # For future OIDC
+
 jobs:
   clean:
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5

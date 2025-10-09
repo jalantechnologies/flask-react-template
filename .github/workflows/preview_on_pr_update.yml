@@ -5,10 +5,20 @@ on:
   pull_request:
     types: [opened, synchronize, reopened,ready_for_review]
 
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write  # For future OIDC
+
 jobs:
   preview:
-    # Run only if PR is open and not draft
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    # Skip untrusted PRs
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.event.pull_request.head.repo.full_name == github.repository ||
+       contains(github.event.pull_request.labels.*.name, 'approved-contributor') ||
+       github.actor == 'dependabot[bot]')
+
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}

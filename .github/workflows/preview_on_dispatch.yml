@@ -2,6 +2,10 @@ name: preview_on_dispatch
 
 on: workflow_dispatch
 
+permissions:
+  contents: read
+  id-token: write  # For future OIDC
+
 jobs:
   preview:
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
