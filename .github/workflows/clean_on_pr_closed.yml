@@ -8,7 +8,7 @@ jobs:
   clean:
     # Right now, your workflow uses a tagged version (@v3.2.5), but your changes are in a branch.
     # So we need to temporarily point to your test branch.
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@praveen/fix/hardcoded-do-node-affinity 
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@praveen/fix/hardcoded-do-node-affinity 
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
