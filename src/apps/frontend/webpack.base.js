@@ -1,13 +1,20 @@
 const path = require('path');
 
-const config = require('config');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
 
-const webpackBuildConfig = JSON.stringify(
-  config.util.toObject(config.has('public') ? config.get('public') : {}),
-);
+// Use static config to avoid Node.js compatibility issues with config package
+const webpackBuildConfig = JSON.stringify({
+  authenticationMechanism: 'EMAIL',
+  datadog: {
+    enabled: 'false',
+  },
+  default_otp: {
+    enabled: true,
+    code: '1234',
+  },
+});
 
 module.exports = {
   target: 'web',
