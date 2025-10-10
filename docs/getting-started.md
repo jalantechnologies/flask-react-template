@@ -49,7 +49,22 @@ npm run serve
 * **Backend:**  http://localhost:8080  
 * **MongoDB:**  `mongodb://localhost:27017`  
 * Disable the auto‑opening browser tab by exporting `WEBPACK_DEV_DISABLE_OPEN=true`.  
-* **Windows users:** run inside WSL or Git Bash for best results.
+
+### 3. Windows Native (npm run serve:win)
+
+```bash
+# Install JS deps
+npm install
+
+# Install Python deps
+pipenv install --dev
+
+# Start dev servers (frontend + backend + Temporal)
+npm run serve:win
+```
+
+* **Alternative for Windows users:** Use `npm run serve:win` for native Windows support.  
+* **WSL/Git Bash option:** Windows users can also run inside WSL or Git Bash for best results.
 
 ---
 
