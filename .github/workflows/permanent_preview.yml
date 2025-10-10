@@ -7,7 +7,9 @@ on:
 
 jobs:
   permanent_preview:
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
+    # Right now, your workflow uses a tagged version (@v3.2.5), but your changes are in a branch.
+    # So we need to temporarily point to your test branch.
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@praveen/fix/hardcoded-do-node-affinity 
     concurrency:
       group: ci-permanent-preview
       cancel-in-progress: true
