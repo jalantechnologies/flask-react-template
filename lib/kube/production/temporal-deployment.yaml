@@ -28,10 +28,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: doks.digitalocean.com/node-pool
+                  - key: ${NODE_POOL_SELECTOR_KEY}
                     operator: In
                     values:
-                      - platform-cluster-01-production-pool
+                      - ${NODE_POOL_VALUE}
       imagePullSecrets:
         - name: regcred
 
