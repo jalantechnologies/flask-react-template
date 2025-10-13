@@ -1,32 +1,40 @@
 name: preview_on_dispatch
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      hosting_provider:
+        type: choice
+        description: 'Cloud provider to deploy to'
+        options:
+          - DIGITAL_OCEAN
+          - AWS
+        default: DIGITAL_OCEAN
+      branch:
+        type: string
+        description: 'Git branch to deploy (e.g. main, praveen/refactor/k8s-template-multi-cloud)'
+        default: 'main'
+      app_env:
+        type: string
+        description: 'Environment to deploy (e.g. preview, staging)'
+        default: 'preview'
 
 jobs:
   preview:
-    # Right now, your workflow uses a tagged version (@v3.2.5), but your changes are in a branch.
-    # So we need to temporarily point to your test branch.
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@praveen/fix/hardcoded-do-node-affinity 
-    concurrency:
-      group: ci-preview-${{ github.event.ref }}
-      cancel-in-progress: true
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@praveen/fix/hardcoded-do-node-affinity
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
+      hosting_provider: ${{ inputs.hosting_provider }}
       app_name: frm-boilerplate
-      app_env: preview
+      app_env: ${{ inputs.app_env }}
       app_hostname: '{1}.preview.platform.bettrhq.com'
-      branch: ${{ github.event.ref }}
+      branch: refs/heads/${{ inputs.branch }}
       build_args: |
-        APP_ENV=preview
+        APP_ENV=${{ inputs.app_env }}
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: ${{ vars.AWS_REGION }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
-    secrets:
-      docker_password: ${{ secrets.DOCKER_PASSWORD }}
-      doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+      sonar_host_url: ${{ vars.SONAR_HOST_URL }}
+    secrets: inherit
