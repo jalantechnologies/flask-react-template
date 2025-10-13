@@ -27,7 +27,7 @@ jobs:
       app_name: frm-boilerplate
       app_env: ${{ inputs.app_env }}
       app_hostname: '{1}.preview.platform.bettrhq.com'
-      branch: refs/heads/${{ inputs.branch }}
+      branch: ${{ inputs.branch }}
       build_args: |
         APP_ENV=${{ inputs.app_env }}
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
@@ -36,5 +36,9 @@ jobs:
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: ${{ vars.AWS_REGION }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
-      sonar_host_url: ${{ vars.SONAR_HOST_URL }}
-    secrets: inherit
+    secrets:
+      docker_password: ${{ secrets.DOCKER_PASSWORD }}
+      doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
