@@ -3,20 +3,20 @@ name: clean_on_pr_closed
 on:
   pull_request_target:
     types: [closed]
+  # This is just for the purpose of testing clean_on_pr_closed
+  workflow_dispatch:  # Allows manual triggering from the GitHub UI
 
 jobs:
   clean:
-    # Right now, your workflow uses a tagged version (@v3.2.5), but your changes are in a branch.
-    # So we need to temporarily point to your test branch.
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@praveen/fix/hardcoded-do-node-affinity 
     concurrency:
-      group: ci-preview-${{ github.event.pull_request.head.ref }}
+      group: ci-preview-${{ github.event.pull_request.head.ref || github.event.inputs.branch || 'manual' }}
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
       app_name: frm-boilerplate
       app_env: preview
-      branch: ${{ github.event.pull_request.head.ref }}
+      branch: ${{ github.event.pull_request.head.ref || github.event.inputs.branch || 'manual' }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
