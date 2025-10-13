@@ -3,8 +3,6 @@ name: clean_on_pr_closed
 on:
   pull_request_target:
     types: [closed]
-  # This is just for the purpose of testing clean_on_pr_closed
-  workflow_dispatch:  # Allows manual triggering from the GitHub UI
 
 jobs:
   clean:
