@@ -22,8 +22,8 @@ This project has three deployment environments that everyone can access:
 - **Permanent Preview**
   - Always reflects the latest `main` branch.
   - Useful for ongoing testing of the integrated codebase.
-  - URL: [https://preview--flask-react-template.platform.bettrhq.com](https://preview--flask-react-template.platform.bettrhq.com)
-  - Temporal Workers Dashboard: [https://preview--flask-react-template.workers-dashboard.platform.bettrhq.com/](https://preview--flask-react-template.workers-dashboard.platform.bettrhq.com/)
+  - URL: [https://preview.flask-react-template.platform.bettrhq.com](https://preview.flask-react-template.platform.bettrhq.com)
+  - Temporal Workers Dashboard: [https://preview.flask-react-template.workers-dashboard.platform.bettrhq.com/](https://preview.flask-react-template.workers-dashboard.platform.bettrhq.com/)
 
 ## Documentation Directory
 
