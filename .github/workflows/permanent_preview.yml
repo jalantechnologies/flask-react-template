@@ -3,7 +3,7 @@ name: permanent_preview
 on:
   push:
     branches:
-      - main
+      - punith/fix/permanent-preview-url
 
 jobs:
   permanent_preview:
@@ -16,7 +16,7 @@ jobs:
       app_name: frm-boilerplate
       app_env: preview
       app_hostname: preview.flask-react-template.platform.bettrhq.com
-      branch: main
+      branch: punith/fix/permanent-preview-url
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
