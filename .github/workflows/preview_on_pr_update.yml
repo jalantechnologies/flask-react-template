@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened,ready_for_review]
 
-#  to follow the principle of least privilege and enhance security.
+# Ensures preview workflows have read-only permissions and ability to update pull requests
 permissions:
   contents: read  # Allows reading repository contents
   pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
@@ -15,7 +15,7 @@ jobs:
   preview:
     # Skip untrusted PRs
     if: |
-      github.event.pull_request.draft == false &&
+      (github.event.pull_request.draft == false) &&
       (github.event.pull_request.head.repo.full_name == github.repository ||
        contains(github.event.pull_request.labels.*.name, 'approved-contributor') ||
        github.actor == 'dependabot[bot]')

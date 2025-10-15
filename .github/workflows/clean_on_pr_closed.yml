@@ -4,6 +4,7 @@ on:
   pull_request:  # ✅ CHANGED from pull_request_target for safer for external contributions
     types: [closed]
 
+# Ensures PR cleanup workflow has minimal permissions for security
 permissions:
   contents: read # Allows reading repository contents
   pull-requests: write # Allow workflow to comment on, label, and update pull request as part of automation

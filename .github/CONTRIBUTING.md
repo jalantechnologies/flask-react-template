@@ -1,5 +1,7 @@
 # Contributing
 
+This guide explains how to contribute safely to this repository with secure workflow approval processes.
+
 ## External Contributors
 
 For security reasons, workflows for external contributors require approval:
