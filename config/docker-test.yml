@@ -1,5 +1,5 @@
 mongodb:
-  uri: 'mongodb://app-db:27017/frm-boilerplate-test'
+  uri: 'mongodb://app-db:27017/flask-react-template-test'
 
 temporal:
   server_address: 'temporal:7233'

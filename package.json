@@ -1,5 +1,5 @@
 {
-  "name": "rflask-boilerplate",
+  "name": "flask-react-template",
   "version": "0.0.1",
   "description": "Boilerplate project for React & Flask",
   "engines": {
