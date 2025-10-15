@@ -15,7 +15,7 @@ jobs:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
       app_name: frm-boilerplate
       app_env: preview
-      app_hostname: preview--flask-react-template.platform.bettrhq.com
+      app_hostname: preview.flask-react-template.platform.bettrhq.com
       branch: main
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
