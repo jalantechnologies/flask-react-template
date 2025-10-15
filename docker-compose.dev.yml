@@ -11,6 +11,8 @@ services:
         APP_ENV: 'docker-dev'
     environment:
       APP_ENV: 'docker-dev'
+      CHOKIDAR_USEPOLLING: 'true'
+      WATCHPACK_POLLING: 'true'
     command: /bin/sh -c "npm install && npm run serve -- --no-temporal"
     depends_on:
       app-db:
@@ -30,6 +32,7 @@ services:
     command:
       - '--logpath'
       - '/var/log/mongod.log'
+      - '--logappend'
     ports:
       - '27017:27017'
     volumes:
