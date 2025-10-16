@@ -1,9 +1,9 @@
 name: clean_on_pr_closed
-
+ 
 on:
   pull_request_target:
     types: [closed]
-
+      # this is to test if the workflow is being used by main branch 
 jobs:
   clean:
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5
