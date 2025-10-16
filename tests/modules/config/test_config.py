@@ -11,7 +11,7 @@ class TestConfig(BaseTestConfig):
     def test_db_config_is_loaded(self) -> None:
         uri = ConfigService[str].get_value(key="mongodb.uri")
         assert uri.split(":")[0] == "mongodb"
-        assert uri.split("/")[-1] == "frm-boilerplate-test"
+        assert uri.split("/")[-1] == "flask-react-template-test"
 
     def test_logger_config_is_loaded(self) -> None:
         loggers = ConfigService[List[str]].get_value(key="logger.transports")
