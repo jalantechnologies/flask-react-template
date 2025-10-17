@@ -13,12 +13,8 @@ permissions:
 
 jobs:
   preview:
-    # Skip untrusted PRs
-    if: |
-      (github.event.pull_request.draft == false) &&
-      (github.event.pull_request.head.repo.full_name == github.repository ||
-       contains(github.event.pull_request.labels.*.name, 'approved-contributor') ||
-       github.actor == 'dependabot[bot]')
+    # Run only if PR is open and not draft
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
 
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
     concurrency:
