@@ -5,6 +5,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened,ready_for_review]
 
+# Ensures preview workflows have read-only permissions and ability to update pull requests
+permissions:
+  contents: read  # Allows reading repository contents
+  pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
+  id-token: write  # Allow OIDC tokens for secure cloud authentication
+
 jobs:
   preview:
     # Run only if PR is open and not draft
