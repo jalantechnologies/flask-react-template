@@ -11,6 +11,11 @@ const config = {
   output: {
     pathinfo: true,
   },
+  watchOptions: {
+    poll: 500,
+    aggregateTimeout: 200,
+    ignored: /node_modules/,
+  },
   optimization: {
     runtimeChunk: 'single',
   },
@@ -18,8 +23,26 @@ const config = {
   devServer: {
     historyApiFallback: true,
     hot: true,
+    liveReload: true,
     open: devServerOpen,
     port: devServerPort,
+    host: '0.0.0.0',
+    allowedHosts: 'all',
+    watchFiles: {
+      paths: ['src/**/*.{js,jsx,ts,tsx,css,scss}'],
+      options: {
+        usePolling: true,
+        interval: 300,
+        ignored: /node_modules/,
+      },
+    },
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws',
+      overlay: {
+        errors: true,
+        warnings: false,
+      },
+    },
     proxy: {
       secure: false,
       '/api': `http://localhost:${devServerAPIProxyPort}`,
