@@ -11,8 +11,8 @@ services:
         APP_ENV: 'docker-dev'
     environment:
       APP_ENV: 'docker-dev'
-      CHOKIDAR_USEPOLLING: 'true'
-      WATCHPACK_POLLING: 'true'
+      CHOKIDAR_USEPOLLING: 'true' # Enable polling for file watching - required for hot reload on Windows Docker
+      WATCHPACK_POLLING: 'true'   # Enable webpack polling - ensures file changes are detected in Docker containers
     command: /bin/sh -c "npm install && npm run serve -- --no-temporal"
     depends_on:
       app-db:
@@ -23,8 +23,8 @@ services:
       - '3000:3000'
       - '8080:8080'
     volumes:
-      - './:/app:delegated'
-      - '/app/node_modules/'
+      - './:/app:delegated'   # Mount source code from host to container - enables file changes to be visible inside container
+      - '/app/node_modules/'  # Keep node_modules in container - prevents conflicts between host and container dependencies
     working_dir: /app
 
   app-db:
@@ -32,7 +32,7 @@ services:
     command:
       - '--logpath'
       - '/var/log/mongod.log'
-      - '--logappend'
+      - '--logappend'  # Append to existing log file instead of overwriting - prevents "Failed to open log file" errors on Windows Docker restarts
     ports:
       - '27017:27017'
     volumes:
