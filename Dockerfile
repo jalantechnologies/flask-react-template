@@ -46,9 +46,14 @@ ARG APP_ENV
 
 RUN npm run build
 
-# Create a new user called 'appuser' instead of using root for security
+# Create user first
 RUN groupadd -r appuser -g 999 && \
     useradd -r -u 999 -g appuser -m appuser
+
+# Switch to appuser and install dependencies
+USER appuser
+RUN pipenv install --dev
+USER root
 
 # Make folders that the app needs to write to and give ownership to appuser
 RUN mkdir -p /opt/app/tmp /opt/app/logs /home/appuser/.cache && \
