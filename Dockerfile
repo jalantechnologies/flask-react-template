@@ -46,5 +46,16 @@ ARG APP_ENV
 
 RUN npm run build
 
+# Create a new user called 'appuser' instead of using root for security
+RUN groupadd -r appuser -g 999 && \
+    useradd -r -u 999 -g appuser -m appuser
+
+# Make folders that the app needs to write to and give ownership to appuser
+RUN mkdir -p /opt/app/tmp /opt/app/logs /home/appuser/.cache && \
+    chown -R appuser:appuser /opt/app /home/appuser
+
+# Switch from root user to appuser for running the app
+USER appuser
+
 CMD [ "npm", "start" ]
 
