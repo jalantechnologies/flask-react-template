@@ -20,11 +20,26 @@ const config = {
     hot: true,
     open: devServerOpen,
     port: devServerPort,
-    proxy: {
-      secure: false,
-      '/api': `http://localhost:${devServerAPIProxyPort}`,
-      '/assets': `http://localhost:${devServerAPIProxyPort}`,
-    },
+    proxy: [
+      {
+        context: ['/api'],
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      {
+        context: ['/assets'],
+        target: `http://localhost:${devServerAPIProxyPort}`,
+        changeOrigin: true,
+        secure: false,
+      },
+    ],
+
+    // proxy: {
+    //   secure: false,
+    //   '/api': `http://localhost:${devServerAPIProxyPort}`,
+    //   '/assets': `http://localhost:${devServerAPIProxyPort}`,
+    // },
   },
 };
 
