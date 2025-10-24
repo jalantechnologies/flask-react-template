@@ -1,8 +1,8 @@
+from modules.notification.errors import AccountNotificationPreferencesNotFoundError
+from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
 from modules.notification.internals.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
-from modules.notification.internals.account_notification_preferences_util import AccountNotificationPreferenceUtil
-from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import AccountNotificationPreferences
 
 
