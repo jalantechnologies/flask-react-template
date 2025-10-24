@@ -7,7 +7,8 @@ RUN apt-get update -y && \
   apt-get install build-essential -y && \
   apt-get install git -y && \
   apt-get install curl -y && \
-  apt-get install jq -y 
+  apt-get install jq -y && \
+  apt-get install sudo -y 
 
 RUN apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev \
   libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 \
@@ -57,7 +58,7 @@ USER root
 
 # Create directories and set ownership for non-root user to write files
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
-    chown -R appuser:999 /opt/app /home/appuser /app/output
+    chown -R appuser:999 /opt/app /home/appuser /app
 
 # Switch from root user to appuser for running the app
 USER appuser

@@ -18,7 +18,6 @@ services:
         condition: service_healthy
     volumes:
       - ./output:/app/output
-    user: "999:999"
 
   app-db:
     image: mongo:5.0
