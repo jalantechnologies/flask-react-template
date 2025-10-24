@@ -7,6 +7,7 @@ const routes = {
   VERIFY_OTP: '/otp/verify',
   SIGNUP: '/signup',
   TASKS: '/tasks',
+  TASK_COMMENTS: '/tasks/:taskId/comments',
 };
 
 export default routes;

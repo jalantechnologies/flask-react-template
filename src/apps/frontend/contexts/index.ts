@@ -7,6 +7,7 @@ import {
   ResetPasswordProvider,
   useResetPasswordContext,
 } from 'frontend/contexts/reset-password.provider';
+import { CommentProvider } from 'frontend/contexts/comment.provider';
 
 export {
   AccountProvider,
@@ -15,4 +16,5 @@ export {
   useAuthContext,
   ResetPasswordProvider,
   useResetPasswordContext,
+  CommentProvider,
 };

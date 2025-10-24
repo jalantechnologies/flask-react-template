@@ -54,6 +54,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               setIsSidebarOpen={setIsSidebarOpen}
               title="Tasks"
             />
+            <SidebarMenuItem
+              iconPath="/assets/img/icon/tasks-sidebar-icon.svg"
+              path={routes.TASK_COMMENTS}
+              setIsSidebarOpen={setIsSidebarOpen}
+              title="Comments"
+            />
           </ul>
         </nav>
       </div>

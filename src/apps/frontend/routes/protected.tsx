@@ -5,6 +5,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import routes from 'frontend/constants/routes';
 import { useAccountContext, useAuthContext } from 'frontend/contexts';
 import { Dashboard, NotFound } from 'frontend/pages';
+import Comments from 'frontend/pages/comments';
 import AppLayout from 'frontend/pages/app-layout/app-layout';
 import { AsyncError } from 'frontend/types';
 
@@ -34,6 +35,7 @@ export const protectedRoutes = [
     element: <App />,
     children: [
       { path: '', element: <Dashboard /> },
+      { path: routes.TASK_COMMENTS, element: <Comments /> },
       { path: '*', element: <NotFound /> },
     ],
   },

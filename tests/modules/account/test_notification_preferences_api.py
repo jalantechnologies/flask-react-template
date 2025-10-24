@@ -1,12 +1,11 @@
 import json
 
-from modules.account.account_service import AccountService
-from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.authentication.types import AccessTokenErrorCode
-from modules.notification.notification_service import NotificationService
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from server import app
 
+from modules.account.account_service import AccountService
+from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.notification.notification_service import NotificationService
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
