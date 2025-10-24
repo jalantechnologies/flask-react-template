@@ -13,7 +13,7 @@ jobs:
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
-      app_name: frm-boilerplate
+      app_name: flask-react-template
       app_env: production
       app_hostname: flask-react-template.platform.bettrhq.com
       branch: ${{ github.event.ref }}

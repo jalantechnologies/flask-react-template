@@ -2,10 +2,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: $KUBE_APP-my-worker
+  name: $KUBE_APP-cronjob
   namespace: $KUBE_NS
   labels:
-    app: $KUBE_APP-my-worker
+    app: $KUBE_APP-cronjob
     version: $GITHUB_SHA
 spec:
   schedule: "10 * * * *"
@@ -15,7 +15,7 @@ spec:
       template:
         metadata:
           labels:
-            app: $KUBE_APP-my-worker
+            app: $KUBE_APP-cronjob
         spec:
           imagePullSecrets:
             - name: regcred

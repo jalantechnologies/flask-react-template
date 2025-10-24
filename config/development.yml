@@ -2,7 +2,7 @@ logger:
   transports: ['console']
 
 mongodb:
-  uri: 'mongodb://localhost:27017/frm-boilerplate-dev'
+  uri: 'mongodb://localhost:27017/flask-react-template-dev'
 
 temporal:
   server_address: 'localhost:7233'
