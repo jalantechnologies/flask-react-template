@@ -57,7 +57,8 @@ USER root
 
 # Create directories and set ownership for non-root user to write files
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
-    chown -R appuser:999 /opt/app /home/appuser /app
+    chown -R appuser:999 /opt/app /home/appuser /app && \
+    chmod -R 755 /app/output
 
 # Switch from root user to appuser for running the app
 USER appuser
