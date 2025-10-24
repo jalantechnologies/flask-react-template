@@ -10,7 +10,8 @@ services:
         APP_ENV: 'docker-test'
     environment:
       APP_ENV: 'docker-test'
-    command: "npm run test:docker"
+    # Create output directory with correct permissions before running tests
+    command: sh -c "mkdir -p /app/output && chmod 777 /app/output && npm run test:docker"
     depends_on:
       app-db:
         condition: service_started
