@@ -56,7 +56,7 @@ RUN pipenv install --dev
 USER root
 
 # Create directories and set ownership for non-root user to write files
-RUN mkdir -p /opt/app/tmp /opt/app/logs /home/appuser/.cache /app/output && \
+RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
     chown -R appuser:999 /opt/app /home/appuser /app/output
 
 # Switch from root user to appuser for running the app
