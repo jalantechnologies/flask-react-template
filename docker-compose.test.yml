@@ -16,9 +16,9 @@ services:
         condition: service_started
       temporal:
         condition: service_healthy
+    # Use named volume to avoid permission issues with bind mounts
     volumes:
-      - ./output:/app/output
-    user: "999:999"
+      - test_output:/app/output
 
   app-db:
     image: mongo:5.0
@@ -62,3 +62,7 @@ services:
       POSTGRES_USER: 'temporal'
     ports:
       - '5432:5432'
+
+# Define named volume for test output
+volumes:
+  test_output:
