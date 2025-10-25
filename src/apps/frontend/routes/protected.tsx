@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 
 import routes from 'frontend/constants/routes';
 import { useAccountContext, useAuthContext } from 'frontend/contexts';
-import { Dashboard, NotFound } from 'frontend/pages';
+import { Dashboard, FormValues, RenderTable } from 'frontend/pages';
 import AppLayout from 'frontend/pages/app-layout/app-layout';
 import { AsyncError } from 'frontend/types';
 
@@ -34,7 +34,8 @@ export const protectedRoutes = [
     element: <App />,
     children: [
       { path: '', element: <Dashboard /> },
-      { path: '*', element: <NotFound /> },
+      { path: '/tasks', element: <RenderTable /> },
+      { path: '/form-values', element: <FormValues /> },
     ],
   },
 ];

@@ -4,7 +4,7 @@ import { JsonObject, Nullable } from 'frontend/types/common-types';
 const ACCESS_TOKEN_KEY = 'access-token';
 
 export const getAccessTokenFromStorage = (): Nullable<AccessToken> => {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY) ?? '';
   if (token) {
     return new AccessToken(JSON.parse(token) as JsonObject);
   }
