@@ -10,7 +10,7 @@ jobs:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     # Temporarily change to test branch
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.3.0-alpha.2
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.3.0-alpha.3
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
