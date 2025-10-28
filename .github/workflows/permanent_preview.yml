@@ -21,6 +21,7 @@ jobs:
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: 'us-east-1' #Hardcoded for testing
+      aws_use_ecr: true
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
     secrets:
