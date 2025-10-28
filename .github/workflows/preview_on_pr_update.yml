@@ -9,12 +9,12 @@ jobs:
   preview:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@vikram/feat/add-aws-ecr-image-cleanup
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
+      hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
       analyze_base: main
       app_name: flask-react-template
       app_env: preview
@@ -27,7 +27,7 @@ jobs:
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
+      aws_region: 'us-east-1'
       pull_request_number: ${{ github.event.number }}
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}

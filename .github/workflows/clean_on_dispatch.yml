@@ -4,19 +4,19 @@ on: workflow_dispatch
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@vikram/feat/add-aws-ecr-image-cleanup
     concurrency:
       group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
+      hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
+      aws_region: 'us-east-1' # Hardcoded for testing
       app_name: flask-react-template
       app_env: preview
       branch: ${{ github.event.ref }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
