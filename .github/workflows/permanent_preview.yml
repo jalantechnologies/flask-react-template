@@ -7,12 +7,12 @@ on:
 
 jobs:
   permanent_preview:
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@vikram/feat/add-aws-ecr-image-cleanup
     concurrency:
       group: ci-permanent-preview
       cancel-in-progress: true
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
+      hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
       app_name: flask-react-template
       app_env: preview
       app_hostname: preview.flask-react-template.platform.bettrhq.com
@@ -21,7 +21,7 @@ jobs:
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
+      aws_region: 'us-east-1' #Hardcoded for testing
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
     secrets:
