@@ -1,9 +1,8 @@
 name: cd_permanent_preview
 
 on:
-  push:
-    branches:
-      - main
+  pull_request_target:
+    types: [closed]
 
 jobs:
 <<<<<<< HEAD
