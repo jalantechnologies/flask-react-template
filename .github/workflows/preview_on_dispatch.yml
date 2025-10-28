@@ -17,7 +17,7 @@ jobs:
       build_args: |
         APP_ENV=preview
       checks: "['npm:coverage', 'npm:lint', 'compose:test']"
-      docker_registry: ${{ vars.DOCKER_REGISTRY }}
+      docker_registry: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com # Hardcoded to test AWS ECR and registry detection logic
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: 'us-east-1' # Hardcoded for testing
