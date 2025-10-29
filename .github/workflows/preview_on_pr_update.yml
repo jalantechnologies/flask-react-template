@@ -42,7 +42,10 @@ jobs:
 
   download-sarif:
     needs: preview
-    uses: actions/download-artifact@v4
-    with: 
-      name: trivy-results
-      path: ./results
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Sarif
+      uses: actions/download-artifact@v4
+      with: 
+        name: trivy-results
+        path: ./results
