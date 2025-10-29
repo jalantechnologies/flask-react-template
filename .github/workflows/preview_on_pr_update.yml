@@ -35,7 +35,6 @@ jobs:
       target_repository: 'jalantechnologies/flask-react-template'
       target_ref: ${{ github.ref }}
       target_sha: ${{ github.sha }}
-      target_token: ${{ secrets.TOKEN }}
 
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
@@ -44,3 +43,4 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
+      target_token: ${{ secrets.TOKEN }}
