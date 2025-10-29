@@ -10,7 +10,7 @@ jobs:
       cancel-in-progress: true
     with:
       hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
-      aws_region: 'us-east-1' # Hardcoded for testing
+      aws_region: ${{ vars.AWS_REGION }}
       app_name: flask-react-template
       app_env: preview
       branch: ${{ github.event.ref }}
