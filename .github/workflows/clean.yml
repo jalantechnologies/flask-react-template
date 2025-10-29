@@ -6,19 +6,19 @@ on:
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@vikram/feat/add-aws-ecr-image-cleanup
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
+      hosting_provider: ${{ vars.HOSTING_PROVIDER }}
       app_name: flask-react-template
       app_env: preview
       branch: ${{ github.event.pull_request.head.ref }}
-      docker_registry: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com # Hardcoded to test AWS ECR and registry detection logic
+      docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: 'us-east-1' # Hardcoded for testing
+      aws_region: ${{ vars.AWS_REGION }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
