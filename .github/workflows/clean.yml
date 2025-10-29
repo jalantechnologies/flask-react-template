@@ -7,7 +7,7 @@ jobs:
   clean:
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.2.5
     concurrency:
-      group: ci-preview-${{ github.event.pull_request.head.ref }}
+      group: ci-preview-${{ github.event.ref }}
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }}
