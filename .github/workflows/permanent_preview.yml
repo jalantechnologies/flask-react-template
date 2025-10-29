@@ -6,39 +6,11 @@ on:
       - main
 
 jobs:
-<<<<<<< HEAD
-  permanent_preview:
-    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@vikram/feat/add-aws-ecr-image-cleanup
-=======
   deploy:
     runs-on: ubuntu-latest
->>>>>>> bc25c86 (Optimize CI/CD pipeline architecture (#434))
     concurrency:
       group: cd-permanent-preview
       cancel-in-progress: true
-<<<<<<< HEAD
-    with:
-      hosting_provider: 'AWS' # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
-      app_name: flask-react-template
-      app_env: preview
-      app_hostname: preview.flask-react-template.platform.bettrhq.com
-      branch: main
-      checks: "['npm:coverage', 'npm:lint', 'compose:test']"
-      docker_registry: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com # Hardcoded to test AWS ECR and registry detection logic
-      # docker_username: ${{ vars.DOCKER_USERNAME }}
-      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
-      aws_region: ${{ vars.AWS_REGION }}
-      aws_use_ecr: true
-      sonar_host_url: ${{ vars.SONAR_HOST_URL }}
-      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
-    secrets:
-      # docker_password: ${{ secrets.DOCKER_PASSWORD }}
-      doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
-      sonar_token: ${{ secrets.SONAR_TOKEN }}
-=======
     steps:
       - name: Checkout app
         uses: actions/checkout@v3
@@ -80,4 +52,3 @@ jobs:
           do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
->>>>>>> bc25c86 (Optimize CI/CD pipeline architecture (#434))
