@@ -12,7 +12,7 @@ jobs:
     with:
       # ENV-BASED provider selection
       hosting_provider: ${{ vars.HOSTING_PROVIDER }}  # 'DIGITAL_OCEAN' or 'AWS'
-      app_name: flask-react-template
+      app_name: flask-react-app
       app_env: preview
       branch: ${{ github.event.ref }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
