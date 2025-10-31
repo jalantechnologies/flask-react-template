@@ -47,12 +47,26 @@ jobs:
   upload-sarif:
     needs: preview
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # Required for uploading SARIF
+      actions: read
+      contents: read
+
     steps:
       - name: Checkout (required by upload-sarif)
         uses: actions/checkout@v4
-        
-      - name: Download Artifact
+
+      - name: Download Trivy results artifact
         uses: actions/download-artifact@v4
         with:
           name: trivy-results
           path: .
+
+      - name: Verify SARIF file
+        run: ls -l trivy-results.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-scan'
