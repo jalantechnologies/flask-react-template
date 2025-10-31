@@ -48,6 +48,9 @@ jobs:
     needs: preview
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout (required by upload-sarif)
+        uses: actions/checkout@v4
+        
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
