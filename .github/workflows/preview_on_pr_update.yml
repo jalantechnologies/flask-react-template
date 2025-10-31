@@ -43,30 +43,3 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
-
-  upload-sarif:
-    needs: preview
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write  # Required for uploading SARIF
-      actions: read
-      contents: read
-
-    steps:
-      - name: Checkout (required by upload-sarif)
-        uses: actions/checkout@v4
-
-      - name: Download Trivy results artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: trivy-results
-          path: .
-
-      - name: Verify SARIF file
-        run: ls -l trivy-results.sarif
-
-      - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy-scan'
