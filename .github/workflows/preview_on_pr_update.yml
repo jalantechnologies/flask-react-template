@@ -7,6 +7,7 @@ on:
 
 
 jobs:
+    
   preview:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -44,3 +45,27 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
+
+  upload-sarif:
+    runs-on: ubuntu-latest
+    needs: preview
+    permissions:
+      security-events: write  # required for upload-sarif
+      actions: read
+      contents: read
+
+    steps:
+      - name: Download SARIF artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: trivy-results
+          path: .
+
+      - name: Verify downloaded SARIF
+        run: ls -l trivy-results.sarif
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-scan'
