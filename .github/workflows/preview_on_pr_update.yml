@@ -16,7 +16,7 @@ jobs:
     with:
       hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
       analyze_base: main
-      app_name: flask-react-template
+      app_name: flask-react-app
       app_env: preview
       app_hostname: '{1}.preview.platform.bettrhq.com'
       branch: ${{ github.event.pull_request.head.ref }}
