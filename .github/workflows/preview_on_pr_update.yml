@@ -40,36 +40,22 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
-
-  upload-sarif:
-    # Wait for the preview job to complete
+    
+  upload_sarif:
     needs: preview
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write  # Required for uploading SARIF
-      actions: read
-      contents: read
-
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     steps:
-      - name: Checkout (required for upload-sarif)
-        uses: actions/checkout@v4
+      - name: Download SARIF artifact
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
-
-      - name: Download Trivy results artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: trivy-results
-          path: .
-
-      - name: Verify SARIF file
-        run: |
-          echo "Checking downloaded SARIF file..."
-          ls -l trivy-results.sarif || (echo "❌ trivy-results.sarif not found!" && exit 1)
+          # replace with the artifact name used when it was uploaded
+          name: code-scan-sarif
+          path: artifacts
 
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy-scan'
-
+          # supports globs
+          sarif_file: artifacts/*.sarif
+#
