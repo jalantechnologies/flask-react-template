@@ -40,5 +40,48 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
-  
-  
+    
+  upload_sarif:
+    needs: preview
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Ensure tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq unzip
+
+#       - name: Download SARIF artifact (from another workflow run)
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           REPO: ${{ github.repository }}
+#           ARTIFACT_NAME: code-scan-sarif   # <- change if your artifact name differs
+#         run: |
+#           echo "Searching for artifact named '$ARTIFACT_NAME' in $REPO..."
+#           ARTIFACT_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+#             "https://api.github.com/repos/$REPO/actions/artifacts?per_page=100" \
+#             | jq -r --arg NAME "$ARTIFACT_NAME" '.artifacts[] | select(.name==$NAME) | .id' \
+#             | sort -n | tail -n1)
+
+#           if [ -z "$ARTIFACT_ID" ] || [ "$ARTIFACT_ID" = "null" ]; then
+#             echo "No artifact named '$ARTIFACT_NAME' found. Skipping SARIF upload."
+#             exit 0
+#           fi
+
+#           echo "Found artifact id $ARTIFACT_ID — downloading..."
+#           curl -sL -H "Authorization: token $GITHUB_TOKEN" \
+#             "https://api.github.com/repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip" \
+#             -o artifact.zip
+
+#           mkdir -p artifacts
+#           unzip -q artifact.zip -d artifacts
+#           echo "Extracted files:"
+#           find artifacts -type f -maxdepth 3 -print
+
+#       - name: Upload SARIF to GitHub Code Scanning
+#         uses: github/codeql-action/upload-sarif@v2
+#         with:
+#           # supports globs; adjust path if your SARIF sits in a subfolder
+#           sarif_file: artifacts/**/*.sarif
+# # 
+      
