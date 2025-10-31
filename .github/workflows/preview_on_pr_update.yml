@@ -5,9 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened,ready_for_review]
 
-
 jobs:
-    
   preview:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -45,17 +43,3 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
-
-
-  # upload-sarif:
-  #   runs-on: ubuntu-latest
-  #   needs: preview
-  #   steps:
-  #     - name: Download SARIF artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: trivy-results
-  #         path: .
-
-  #     - name: Verify downloaded SARIF
-  #       run: ls -l trivy-results.sarif
