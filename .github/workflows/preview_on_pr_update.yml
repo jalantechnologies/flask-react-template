@@ -46,14 +46,10 @@ jobs:
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
 
+
   upload-sarif:
     runs-on: ubuntu-latest
     needs: preview
-    permissions:
-      security-events: write  # required for upload-sarif
-      actions: read
-      contents: read
-
     steps:
       - name: Download SARIF artifact
         uses: actions/download-artifact@v4
