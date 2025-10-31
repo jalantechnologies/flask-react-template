@@ -42,11 +42,34 @@ jobs:
       sonar_token: ${{ secrets.SONAR_TOKEN }}
 
   upload-sarif:
+    # Wait for the preview job to complete
     needs: preview
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # Required for uploading SARIF
+      actions: read
+      contents: read
+
     steps:
-      - name: Download Artifact
+      - name: Checkout (required for upload-sarif)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Trivy results artifact
         uses: actions/download-artifact@v4
         with:
           name: trivy-results
-          path: .  
+          path: .
+
+      - name: Verify SARIF file
+        run: |
+          echo "Checking downloaded SARIF file..."
+          ls -l trivy-results.sarif || (echo "❌ trivy-results.sarif not found!" && exit 1)
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-scan'
+
