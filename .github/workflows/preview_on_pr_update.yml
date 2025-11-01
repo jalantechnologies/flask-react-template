@@ -42,14 +42,11 @@ jobs:
       sonar_token: ${{ secrets.SONAR_TOKEN }}
       target_token: ${{ secrets.TOKEN }}
 
-      
+
   upload-sarif:
     needs: preview
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Download trivy results
         uses: actions/download-artifact@v3
         with:
