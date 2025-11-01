@@ -6,6 +6,16 @@ on:
     types: [opened, synchronize, reopened,ready_for_review]
 
 jobs:
+  upload_artifacts:
+    needs: preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: trivy-results
+          path: .  
+
   preview:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
