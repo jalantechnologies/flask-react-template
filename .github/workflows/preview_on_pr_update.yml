@@ -45,7 +45,6 @@ jobs:
   upload-sarif:
     needs: preview
     runs-on: ubuntu-latest
-    if: always()
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
