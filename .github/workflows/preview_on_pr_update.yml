@@ -16,6 +16,12 @@ jobs:
           name: trivy-results
           path: .  
 
+      - name: Upload SARIF file
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-results-sarif
+          path: trivy-results.sarif
+
   preview:
     # Run only if PR is open and not draft
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
