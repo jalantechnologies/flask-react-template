@@ -20,7 +20,7 @@ jobs:
         run: pwd
 
       - name: gzip files to confirm path
-        run: gzip -c results.sarif > results.sarif.gz
+        run: gzip -c trivy-results.sarif > results.sarif.gz
 
       - name: Checkout code
         uses: actions/checkout@v3
