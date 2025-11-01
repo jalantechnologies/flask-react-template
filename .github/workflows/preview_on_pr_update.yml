@@ -42,6 +42,7 @@ jobs:
       sonar_token: ${{ secrets.SONAR_TOKEN }}
       target_token: ${{ secrets.TOKEN }}
 
+      
   upload-sarif:
     needs: preview
     runs-on: ubuntu-latest
