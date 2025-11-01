@@ -40,6 +40,4 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
-    
-  
-      
+      target_token: ${{ secrets.TOKEN }}
