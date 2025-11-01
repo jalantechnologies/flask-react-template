@@ -20,6 +20,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
+          token: ${{ secrets.TOKEN }}
           sha: ${{ github.event.pull_request.head.sha }}
           ref: ${{ github.event.pull_request.head.ref }}
 
