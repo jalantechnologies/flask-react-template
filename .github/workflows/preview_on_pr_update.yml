@@ -19,8 +19,8 @@ jobs:
       - name: List files to confirm path
         run: pwd
 
-      - name: List files to confirm path
-        run: ls -la
+      - name: gzip files to confirm path
+        run: gzip -c results.sarif > results.sarif.gz
 
       - name: Checkout code
         uses: actions/checkout@v3
