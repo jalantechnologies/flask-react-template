@@ -17,8 +17,8 @@ jobs:
           path: .  
       
       - name: List files to confirm path
-        run: ls -R trivy-results
-        
+        run: ls -la
+
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v4
         with:
