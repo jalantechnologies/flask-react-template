@@ -25,7 +25,7 @@ jobs:
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: ./trivy-results.sarif
           sha: ${{ github.event.pull_request.head.sha }}
           ref: ${{ github.event.pull_request.head.ref }}
 
