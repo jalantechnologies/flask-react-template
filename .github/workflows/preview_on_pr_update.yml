@@ -17,6 +17,9 @@ jobs:
           path: ./
       
       - name: List files to confirm path
+        run: pwd
+        
+      - name: List files to confirm path
         run: ls -la
 
       - name: Checkout code
