@@ -30,12 +30,14 @@ jobs:
           # Encode SARIF file to base64 (no line wrapping)
           base64 -w0 trivy-results.sarif > sarif.b64
           
+          env
+          
 
-          jq -n \
-            --arg commit_sha "$GITHUB_SHA" \
-            --arg ref "$GITHUB_REF" \
-            --slurpfile sarif sarif.b64 \
-            '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }' > payload.json
+          # jq -n \
+          #   --arg commit_sha "$GITHUB_SHA" \
+          #   --arg ref "$GITHUB_REF" \
+          #   --slurpfile sarif sarif.b64 \
+          #   '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }' > payload.json
 
           # HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
           #   -H "Accept: application/vnd.github+json" \
