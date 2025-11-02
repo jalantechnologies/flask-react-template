@@ -1,4 +1,4 @@
-name: clean_on_pr_closed
+name: clean
 
 on:
   pull_request_target:
@@ -11,7 +11,11 @@ jobs:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
+<<<<<<< HEAD:.github/workflows/clean_on_pr_closed.yml
       hosting_provider: 'AWS'  # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
+=======
+      hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+>>>>>>> bc25c86 (Optimize CI/CD pipeline architecture (#434)):.github/workflows/clean.yml
       app_name: flask-react-template
       app_env: preview
       branch: ${{ github.event.pull_request.head.ref }}

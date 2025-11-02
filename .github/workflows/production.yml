@@ -1,0 +1,54 @@
+name: cd_production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cd-production
+      cancel-in-progress: true
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v3
+        with:
+          path: app
+
+      - name: Checkout github-ci
+        uses: actions/checkout@v3
+        with:
+          repository: jalantechnologies/github-ci
+          path: platform
+          ref: v3.2.5
+
+      - name: Build Docker image
+        id: build
+        uses: ./platform/.github/actions/build
+        with:
+          app_name: flask-react-template
+          tag: production
+          context: app/.
+          docker_registry: ${{ vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Deploy to production
+        uses: ./platform/.github/actions/deploy
+        with:
+          app_name: flask-react-template
+          app_env: production
+          app_hostname: flask-react-template.platform.bettrhq.com
+          branch: main
+          deploy_id: ${{ github.run_number }}
+          deploy_root: app/lib/kube
+          deploy_labels: gh/env=production
+          deploy_image: ${{ steps.build.outputs.image_ref }}
+          docker_registry: ${{ vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+          doppler_token: ${{ secrets.DOPPLER_PRODUCTION_TOKEN }}

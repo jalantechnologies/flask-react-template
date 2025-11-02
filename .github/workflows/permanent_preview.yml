@@ -1,4 +1,4 @@
-name: permanent_preview
+name: cd_permanent_preview
 
 on:
   push:
@@ -6,11 +6,17 @@ on:
       - main
 
 jobs:
+<<<<<<< HEAD
   permanent_preview:
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@vikram/feat/add-aws-ecr-image-cleanup
+=======
+  deploy:
+    runs-on: ubuntu-latest
+>>>>>>> bc25c86 (Optimize CI/CD pipeline architecture (#434))
     concurrency:
-      group: ci-permanent-preview
+      group: cd-permanent-preview
       cancel-in-progress: true
+<<<<<<< HEAD
     with:
       hosting_provider: 'AWS' # 'DIGITAL_OCEAN' or 'AWS' (Hardcoded to AWS for testing)
       app_name: flask-react-template
@@ -32,3 +38,46 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
+=======
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v3
+        with:
+          path: app
+
+      - name: Checkout github-ci
+        uses: actions/checkout@v3
+        with:
+          repository: jalantechnologies/github-ci
+          path: platform
+          ref: v3.2.5
+
+      - name: Build Docker image
+        id: build
+        uses: ./platform/.github/actions/build
+        with:
+          app_name: flask-react-template
+          tag: preview
+          context: app/.
+          docker_registry: ${{ vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Deploy to permanent preview
+        uses: ./platform/.github/actions/deploy
+        with:
+          app_name: flask-react-template
+          app_env: preview
+          app_hostname: preview.flask-react-template.platform.bettrhq.com
+          branch: main
+          deploy_id: ${{ github.run_number }}
+          deploy_root: app/lib/kube
+          deploy_labels: gh/env=preview
+          deploy_image: ${{ steps.build.outputs.image_ref }}
+          docker_registry: ${{ vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+          doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+>>>>>>> bc25c86 (Optimize CI/CD pipeline architecture (#434))

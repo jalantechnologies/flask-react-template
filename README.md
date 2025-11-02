@@ -4,7 +4,7 @@ Boilerplate project for Flask, React & MongoDB based projects. This README docum
 
 | Build Status                                                                                                                                                                                                                                     | Code Coverage                                                                                                                                                                                                                                                                                                   |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [![Production Deploy](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production_on_push.yml/badge.svg?branch=main)](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production_on_push.yml) | [![Code Coverage](https://sonarqube.platform.bettrhq.com/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=a4dd71c68afbb8da4b7ed1026329bf0933298f79)](https://sonarqube.platform.bettrhq.com/dashboard?id=jalantechnologies_flask-react-template) |
+| [![Production Deploy](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production.yml/badge.svg?branch=main)](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production.yml) | [![Code Coverage](https://sonarqube.platform.bettrhq.com/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=a4dd71c68afbb8da4b7ed1026329bf0933298f79)](https://sonarqube.platform.bettrhq.com/dashboard?id=jalantechnologies_flask-react-template) |
 
 ### Environments & URLs
 This project has three deployment environments that everyone can access:
@@ -37,7 +37,7 @@ This project has three deployment environments that everyone can access:
 - [Scripts](docs/scripts.md)
 - [Code Formatting](docs/code-formatting.md)
 - [Workers](docs/workers.md)
-- [Deployment](docs/deployment.md)
+- [CI/CD](docs/deployment.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)
 
 ## Best Practices

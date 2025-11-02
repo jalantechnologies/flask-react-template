@@ -1,0 +1,110 @@
+name: ci
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  lint:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.1'
+          cache: 'npm'
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install Python dependencies
+        run: pipenv install --dev --deploy
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+  sonarqube:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get github-ci version
+        id: ci_version
+        run: |
+          # Extract version from cd.yml workflow
+          workflow_yaml=$(cat .github/workflows/cd.yml)
+          uses_data=$(echo "$workflow_yaml" | grep 'jalantechnologies/github-ci')
+          tag=$(echo $uses_data | sed -n 's/.*@\(.*\)/\1/p')
+          echo "version=$(echo $tag)" >> $GITHUB_OUTPUT
+
+      - name: Checkout github-ci
+        uses: actions/checkout@v3
+        with:
+          repository: jalantechnologies/github-ci
+          path: platform
+          ref: ${{ steps.ci_version.outputs.version }}
+
+      - name: Run SonarQube analysis
+        uses: ./platform/.github/actions/analyze
+        with:
+          sonar_host_url: ${{ vars.SONAR_HOST_URL }}
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          branch: ${{ github.head_ref }}
+          branch_base: main
+          pull_request_number: ${{ github.event.number }}
+
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder for code review
+        run: |
+          echo "Code review placeholder"
+          echo "Future implementation: AI-powered review for architecture, security, and best practices"
+
+  test:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run integration tests
+        run: docker compose -f docker-compose.test.yml up --exit-code-from app
+
+      - name: Coverage report
+        continue-on-error: true
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: output/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
+
+      - name: Add coverage PR comment
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: code-coverage-results.md
