@@ -12,20 +12,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.13.1'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install Python dependencies
+        run: pipenv install --dev --deploy
+
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Run ESLint
+      - name: Run linting
         run: npm run lint
-
-      - name: Run Markdown lint
-        run: npm run lint:md
 
   sonarqube:
     if: github.event.pull_request.draft == false
