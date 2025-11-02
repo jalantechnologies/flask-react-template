@@ -45,9 +45,9 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs")
 
           
-          # echo "HTTP status: $HTTP_STATUS"
-          # echo "API response:"
-          # cat response.json | jq .
+          echo "HTTP status: $HTTP_STATUS"
+          echo "API response:"
+          cat response.json | jq .
 
   preview:
     # Run only if PR is open and not draft
