@@ -2,9 +2,9 @@ name: preview_on_pr_update
 # Runs only when updating an 'Open' PR (not draft)
 
 on:
-  push:
-    branches:
-      - 'joel/test-vulnerability-scan'
+  pull_request:
+    types: [opened, synchronize, reopened,ready_for_review]
+
 jobs:
   upload_artifacts:
     needs: preview
@@ -54,7 +54,7 @@ jobs:
 
   preview:
     # Run only if PR is open and not draft
-    # if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     # Temporarily change to test branch
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.3.0-alpha.9
     concurrency:
