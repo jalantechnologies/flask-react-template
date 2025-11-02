@@ -32,9 +32,8 @@ jobs:
           # Encode SARIF file to base64 (no line wrapping)
           base64 -w0 results.sarif.gz > sarif.b64
           ls -la      
-          env    
 
-          echo $GITHUB_TOKEN
+          echo "token $GITHUB_TOKEN"
 
           jq -n \
             --arg commit_sha "$GITHUB_SHA" \
