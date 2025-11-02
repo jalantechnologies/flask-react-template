@@ -32,8 +32,8 @@ jobs:
           SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
           env
 
-          # jq -n \
-          #   '{ commit_sha: $GITHUB_SHA, ref: $GITHUB_REF, sarif: $SARIF_BASE64 }' > payload.json
+          jq -n \
+            '{ commit_sha: $GITHUB_SHA, ref: $GITHUB_REF, sarif: SARIF_BASE64 }' > payload.json
 
           # HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
           #   -H "Accept: application/vnd.github+json" \
