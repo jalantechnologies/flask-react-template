@@ -29,7 +29,7 @@ jobs:
         run: |
           # Encode SARIF file to base64 (no line wrapping)
           # base64 -w0 trivy-results.sarif > sarif.b64
-          export SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
+          SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
           env
 
           # jq -n \
