@@ -34,9 +34,11 @@ jobs:
           ls -la      
           env    
 
+          echo $GITHUB_TOKEN
+
           jq -n \
             --arg commit_sha "$GITHUB_SHA" \
-            --arg ref refs/head/main \
+            --arg ref "refs/head/main" \
             --rawfile sarif sarif.b64 \
             '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }' > payload.json
 
