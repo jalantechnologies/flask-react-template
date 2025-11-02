@@ -29,7 +29,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: /home/runner/work/flask-react-template/flask-react-template/trivy-results.sarif
-          sha: ${{ github.sha }}
+          sha: ${{ github.event.pull_request.head.sha }}
           ref: ${{ github.ref }}
 
   preview:
