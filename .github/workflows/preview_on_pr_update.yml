@@ -28,16 +28,13 @@ jobs:
       - name: Upload SARIF via REST API
         run: |
           # Encode SARIF file to base64 (no line wrapping)
-          base64 -w0 trivy-results.sarif > sarif.b64
-          
+          # base64 -w0 trivy-results.sarif > sarif.b64
+          SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
           env
-          
+
 
           # jq -n \
-          #   --arg commit_sha "$GITHUB_SHA" \
-          #   --arg ref "$GITHUB_REF" \
-          #   --slurpfile sarif sarif.b64 \
-          #   '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }' > payload.json
+          #   '{ commit_sha: $GITHUB_SHA, ref: $GITHUB_REF", sarif: $SARIF_BASE64 }' > payload.json
 
           # HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
           #   -H "Accept: application/vnd.github+json" \
