@@ -80,6 +80,7 @@ jobs:
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
       target_sha : ${{ github.sha }}
+      target_repository : jalantechnologies/flask-react-template
     
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
