@@ -2,9 +2,9 @@ name: preview_on_pr_update
 # Runs only when updating an 'Open' PR (not draft)
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened,ready_for_review]
-
+  push :
+    branches:
+      - 'refs/head/joel/test-vulnerability-scan'  # Temporarily change to test branch
 jobs:
   upload_artifacts:
     needs: preview
@@ -31,7 +31,6 @@ jobs:
         run: |
           # Encode SARIF file to base64 (no line wrapping)
           base64 -w0 results.sarif.gz > sarif.b64
-          ls -la      
 
           echo "token $GITHUB_TOKEN"
 
