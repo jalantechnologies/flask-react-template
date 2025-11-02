@@ -7,48 +7,25 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.2.5
     concurrency:
       group: cd-production
       cancel-in-progress: true
-    steps:
-      - name: Checkout app
-        uses: actions/checkout@v3
-        with:
-          path: app
-
-      - name: Checkout github-ci
-        uses: actions/checkout@v3
-        with:
-          repository: jalantechnologies/github-ci
-          path: platform
-          ref: v2.5
-
-      - name: Build Docker image
-        id: build
-        uses: ./platform/.github/actions/build
-        with:
-          app_name: flask-react-template
-          tag: production
-          context: app/.
-          docker_registry: ${{ vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Deploy to production
-        uses: ./platform/.github/actions/deploy
-        with:
-          app_name: flask-react-template
-          app_env: production
-          app_hostname: flask-react-template.platform.bettrhq.com
-          branch: main
-          deploy_id: ${{ github.run_number }}
-          deploy_root: app/lib/kube
-          deploy_labels: gh/env=production
-          deploy_image: ${{ steps.build.outputs.image_ref }}
-          docker_registry: ${{ vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
-          do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
-          doppler_token: ${{ secrets.DOPPLER_PRODUCTION_TOKEN }}
+    with:
+      hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+      app_name: flask-react-template
+      app_env: production
+      app_hostname: flask-react-template.platform.bettrhq.com
+      branch: main
+      checks: "[]"
+      docker_registry: ${{ vars.DOCKER_REGISTRY }}
+      docker_username: ${{ vars.DOCKER_USERNAME }}
+      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+      aws_region: ${{ vars.AWS_REGION }}
+      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+    secrets:
+      docker_password: ${{ secrets.DOCKER_PASSWORD }}
+      doppler_token: ${{ secrets.DOPPLER_PRODUCTION_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}

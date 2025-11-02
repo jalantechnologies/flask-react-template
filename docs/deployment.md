@@ -146,4 +146,4 @@ Single job that builds Docker image and deploys:
 ### Cleanup Workflows
 - **cleanup_pr** - Automatically removes preview environment when PR is closed
 
-All credentials and secrets are securely managed via GitHub secrets and environment variables. Deployments use github-ci actions for Docker image building and Kubernetes deployment to DigitalOcean.
+All credentials and secrets are securely managed via GitHub secrets and environment variables. Deployments use github-ci v3.2.5 reusable workflows for Docker image building and Kubernetes deployment.
