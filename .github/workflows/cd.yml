@@ -1,15 +1,15 @@
-name: cd_permanent_preview
+name: cd
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   deploy:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     concurrency:
-      group: cd-permanent-preview
+      group: cd-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     steps:
       - name: Checkout app
@@ -24,27 +24,35 @@ jobs:
           path: platform
           ref: v2.5
 
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+
       - name: Build Docker image
         id: build
         uses: ./platform/.github/actions/build
         with:
           app_name: flask-react-template
-          tag: preview
+          tag: ${{ steps.extract_branch.outputs.branch_hash }}
+          build_args: APP_ENV=preview
           context: app/.
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Deploy to permanent preview
+      - name: Deploy to DigitalOcean
         uses: ./platform/.github/actions/deploy
         with:
           app_name: flask-react-template
           app_env: preview
-          app_hostname: preview.flask-react-template.platform.bettrhq.com
-          branch: main
+          app_hostname: '{1}.preview.platform.bettrhq.com'
+          branch: ${{ github.event.pull_request.head.ref }}
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube
-          deploy_labels: gh/env=preview
+          deploy_labels: gh/pr=${{ github.event.number }}
           deploy_image: ${{ steps.build.outputs.image_ref }}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
