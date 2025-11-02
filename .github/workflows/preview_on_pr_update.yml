@@ -35,11 +35,11 @@ jobs:
             --arg commit_sha "$GITHUB_SHA" \
             --arg ref "$GITHUB_REF" \
             --slurpfile sarif sarif.b64 \
-            '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif[0] }' > payload.json
+            '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }' > payload.json
 
           HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.TOKEN }}" \
             -H "Content-Type: application/json" \
             --data-binary @payload.json \
             "https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs")
