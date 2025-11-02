@@ -28,7 +28,7 @@ jobs:
       - name: Upload SARIF via REST API
         run: |
           # Encode SARIF file to base64 (no line wrapping)
-          base64 -w0 trivy-results.sarif > sarif.b64
+          base64 -w0 results.sarif.gz > sarif.b64
           ls -la          
 
           jq -n \
