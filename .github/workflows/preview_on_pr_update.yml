@@ -4,7 +4,7 @@ name: preview_on_pr_update
 on:
   push :
     branches:
-      - 'joel/test-vulnerability-scan'  # Temporarily change to test branch
+      - 'ref/head/joel/test-vulnerability-scan'  # Temporarily change to test branch
 jobs:
   upload_artifacts:
     needs: preview
