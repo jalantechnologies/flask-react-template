@@ -2,8 +2,9 @@ name: preview_on_pr_update
 # Runs only when updating an 'Open' PR (not draft)
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened,ready_for_review]
+  push:
+    branches:
+      - 'joel/test-vulnerability-scan'
 
 jobs:
   # upload_artifacts:
@@ -54,19 +55,19 @@ jobs:
 
   preview:
     # Run only if PR is open and not draft
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    # if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     # Temporarily change to test branch
     uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.3.0-alpha.9
-    concurrency:
-      group: ci-preview-${{ github.event.pull_request.head.ref }}
-      cancel-in-progress: true
+    # concurrency:
+      # group: ci-preview-${{ github.event.pull_request.head.ref }}
+      # cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
       analyze_base: main
       app_name: flask-react-app
       app_env: preview
       app_hostname: '{1}.preview.platform.bettrhq.com'
-      branch: ${{ github.event.pull_request.head.ref }}
+      branch: joel/test-vulnerability-scan
       build_args: |
         APP_ENV=preview
       # ✅ Ensure preview only deploys if these checks succeed
@@ -75,7 +76,7 @@ jobs:
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
       aws_region: ${{ vars.AWS_REGION }}
-      pull_request_number: ${{ github.event.number }}
+      # pull_request_number: ${{ github.event.number }}
       sonar_host_url: ${{ vars.SONAR_HOST_URL }}
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
       target_sha : ${{ github.sha }}
