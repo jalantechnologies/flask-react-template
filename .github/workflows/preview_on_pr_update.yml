@@ -30,10 +30,7 @@ jobs:
           # Encode SARIF file to base64 (no line wrapping)
           # base64 -w0 trivy-results.sarif > sarif.b64
           export SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
-          env | grep SARIF_BASE64
-          env | grep GITHUB_SHA
-          env | grep GITHUB_REF
-
+          env
 
           # jq -n \
           #   '{ commit_sha: $GITHUB_SHA, ref: $GITHUB_REF, sarif: $SARIF_BASE64 }' > payload.json
