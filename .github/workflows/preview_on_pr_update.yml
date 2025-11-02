@@ -2,9 +2,9 @@ name: preview_on_pr_update
 # Runs only when updating an 'Open' PR (not draft)
 
 on:
-  push :
+  push:
     branches:
-      - 'ref/head/joel/test-vulnerability-scan'  # Temporarily change to test branch
+      - 'joel/test-vulnerability-scan'
 jobs:
   upload_artifacts:
     needs: preview
