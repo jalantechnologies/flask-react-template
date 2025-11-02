@@ -26,6 +26,8 @@ jobs:
         run: ls -la
 
       - name: Upload SARIF via REST API
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           # Encode SARIF file to base64 (no line wrapping)
           base64 -w0 results.sarif.gz > sarif.b64
