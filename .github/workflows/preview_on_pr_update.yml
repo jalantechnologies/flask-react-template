@@ -28,23 +28,26 @@ jobs:
       - name: Upload SARIF via REST API
         run: |
           # Encode SARIF file to base64 (no line wrapping)
-          SARIF_BASE64=$(base64 -w0 trivy-results.sarif)
+          base64 -w0 trivy-results.sarif > sarif.b64
+          
 
-          # Prepare JSON payload
-          PAYLOAD=$(jq -n \
+          jq -n \
             --arg commit_sha "$GITHUB_SHA" \
             --arg ref "$GITHUB_REF" \
-            --arg sarif "$SARIF_BASE64" \
-            '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif }')
+            --slurpfile sarif sarif.b64 \
+            '{ commit_sha: $commit_sha, ref: $ref, sarif: $sarif[0] }' > payload.json
 
-          # Upload to GitHub Code Scanning API
-          curl -s -o response.json -w "%{http_code}" \
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --data "$PAYLOAD" \
-            "https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs"
+            --data-binary @payload.json \
+            "https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs")
 
+          
+          echo "HTTP status: $HTTP_STATUS"
+          echo "API response:"
+          cat response.json | jq .
 
   preview:
     # Run only if PR is open and not draft
