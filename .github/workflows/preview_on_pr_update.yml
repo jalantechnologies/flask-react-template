@@ -26,6 +26,8 @@ jobs:
         run: ls -la
 
       - name: Upload SARIF via REST API
+        env:
+            GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           # Encode SARIF file to base64 (no line wrapping)
           base64 -w0 results.sarif.gz > sarif.b64
@@ -40,7 +42,7 @@ jobs:
 
           HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token  ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token  $GITHUB_TOKEN" \
             -H "Content-Type: application/json" \
             --data-binary @payload.json \
             "https://api.github.com/repos/jalantechnologies/flask-react-template/code-scanning/sarifs")
