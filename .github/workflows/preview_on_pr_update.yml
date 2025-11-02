@@ -81,7 +81,7 @@ jobs:
       do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
       target_sha : ${{ github.sha }}
       target_repository : jalantechnologies/flask-react-template
-      target_ref : ${{ github.ref }}
+      target_ref : refs/head/main
     
     secrets:
       docker_password: ${{ secrets.DOCKER_PASSWORD }}
