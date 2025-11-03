@@ -46,7 +46,7 @@ jobs:
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
-          hosting_provider: 'DIGITAL_OCEAN'
+          hosting_provider: 'AWS'
           app_name: flask-react-template
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
