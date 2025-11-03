@@ -8,6 +8,11 @@ jobs:
   deploy:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    env:
+      # Optional override for this branch/PR only. Set to 'AWS' or 'DIGITAL_OCEAN'.
+      OVERRIDE_HOSTING_PROVIDER: 'AWS'
+      # If override is set, use it; otherwise fall back to repo variable.
+      HOSTING_PROVIDER: ${{ env.OVERRIDE_HOSTING_PROVIDER != '' && env.OVERRIDE_HOSTING_PROVIDER || vars.HOSTING_PROVIDER }}
     concurrency:
       group: cd-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
@@ -32,7 +37,7 @@ jobs:
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
-        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
+        if: ${{ env.HOSTING_PROVIDER == 'AWS' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -40,7 +45,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
+        if: ${{ env.HOSTING_PROVIDER == 'AWS' }}
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -52,14 +57,14 @@ jobs:
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
-          docker_registry: ${{ vars.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || vars.DOCKER_USERNAME }}
-          docker_password: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || secrets.DOCKER_PASSWORD }}
+          docker_registry: ${{ env.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
+          docker_username: ${{ env.HOSTING_PROVIDER == 'AWS' && '' || vars.DOCKER_USERNAME }}
+          docker_password: ${{ env.HOSTING_PROVIDER == 'AWS' && '' || secrets.DOCKER_PASSWORD }}
 
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
-          hosting_provider: 'AWS'
+          hosting_provider: ${{ env.HOSTING_PROVIDER }}
           app_name: flask-react-template
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
@@ -68,7 +73,7 @@ jobs:
           deploy_root: app/lib/kube
           deploy_labels: gh/pr=${{ github.event.number }}
           deploy_image: ${{ steps.build.outputs.image_ref }}
-          docker_registry: ${{ vars.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
+          docker_registry: ${{ env.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
           aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
           aws_region: ${{ vars.AWS_REGION }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
