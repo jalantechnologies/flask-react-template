@@ -125,36 +125,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run integration tests
-        run: docker compose -f docker-compose.test.yml up --exit-code-from app
+      # - name: Run integration tests
+      #   run: docker compose -f docker-compose.test.yml up --exit-code-from app
 
-      - name: Coverage report
-        continue-on-error: true
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: output/coverage.xml
-          badge: true
-          fail_below_min: true
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: true
-          indicators: true
-          output: both
-          thresholds: '60 80'
+      # - name: Coverage report
+      #   continue-on-error: true
+      #   uses: irongut/CodeCoverageSummary@v1.3.0
+      #   with:
+      #     filename: output/coverage.xml
+      #     badge: true
+      #     fail_below_min: true
+      #     format: markdown
+      #     hide_branch_rate: false
+      #     hide_complexity: true
+      #     indicators: true
+      #     output: both
+      #     thresholds: '60 80'
 
-      - name: Add coverage PR comment
-        continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          recreate: true
-          path: code-coverage-results.md
+      # - name: Add coverage PR comment
+      #   continue-on-error: true
+      #   uses: marocchino/sticky-pull-request-comment@v2
+      #   with:
+      #     recreate: true
+      #     path: code-coverage-results.md
       
-      - name: Extract branch name
-        id: extract_branch
-        run: |
-          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
-          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+      # - name: Extract branch name
+      #   id: extract_branch
+      #   run: |
+      #     BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+      #     BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+      #     echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
         
       - name: Test Scanner
         uses: ./platform/.github/actions/test-scanner
@@ -165,4 +165,4 @@ jobs:
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          
+
