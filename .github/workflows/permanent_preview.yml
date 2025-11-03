@@ -38,6 +38,7 @@ jobs:
       - name: Deploy to permanent preview
         uses: ./platform/.github/actions/deploy
         with:
+          hosting_provider: 'AWS'
           app_name: flask-react-template
           app_env: preview
           app_hostname: preview.flask-react-template.platform.bettrhq.com
@@ -49,6 +50,11 @@ jobs:
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+          aws_region: ${{ vars.AWS_REGION }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+        secrets:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
