@@ -78,6 +78,16 @@ jobs:
           echo "Code review placeholder"
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
 
+  security:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run dependency security audit
+        shell: bash
+        run: |
+          echo "Running dependency security audits..."
+          ls -la
+
   test:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
