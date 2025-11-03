@@ -100,6 +100,7 @@ jobs:
           if [ -f Pipfile.lock ] || [ -f requirements.txt ]; then
             echo "::group::Python Audit"
             pip install pip-audit
+            pip install pipenv
 
             if [ -f Pipfile.lock ]; then
               pipenv requirements > /tmp/requirements.txt
