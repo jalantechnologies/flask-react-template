@@ -22,7 +22,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: v3.2.5
+          ref: punith/ci/fix-set-output-deprecation
 
       - name: Extract branch name
         id: extract_branch
