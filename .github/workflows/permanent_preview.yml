@@ -28,7 +28,7 @@ jobs:
         id: build
         uses: ./platform/.github/actions/build
         with:
-          app_name: flask-react-template
+          app_name: flask-react-app
           tag: preview
           context: app/.
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
@@ -38,7 +38,7 @@ jobs:
       - name: Deploy to permanent preview
         uses: ./platform/.github/actions/deploy
         with:
-          app_name: flask-react-template
+          app_name: flask-react-app
           app_env: preview
           app_hostname: preview.flask-react-template.platform.bettrhq.com
           branch: main
