@@ -98,7 +98,7 @@ jobs:
             echo "::endgroup::"
           fi
 
-           if [ -f Pipfile.lock ] || [ -f requirements.txt ]; then
+          if [ -f Pipfile.lock ] || [ -f requirements.txt ]; then
             echo "::group::Python Audit"
             pip install pip-audit
 
