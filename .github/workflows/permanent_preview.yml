@@ -51,5 +51,4 @@ jobs:
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-        secrets:
           do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
