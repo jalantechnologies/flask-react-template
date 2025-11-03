@@ -93,7 +93,6 @@ jobs:
             echo "::group::NPM Audit"
             npm audit --production --audit-level=high || {
               echo "::error ::NPM audit found vulnerabilities"
-              exit 0
             }
             echo "::endgroup::"
           fi
