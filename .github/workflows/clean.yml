@@ -11,7 +11,7 @@ jobs:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+      hosting_provider: 'AWS'
       app_name: flask-react-template
       app_env: preview
       branch: ${{ github.event.pull_request.head.ref }}
