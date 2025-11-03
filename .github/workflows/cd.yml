@@ -45,6 +45,7 @@ jobs:
           target_sha : ${{ github.sha }}
           target_repository : jalantechnologies/flask-react-template
           target_ref : refs/heads/main
+          target_token : ${{ secrets.TOKEN }}
     
 
       - name: Deploy to preview
