@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   deploy:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
