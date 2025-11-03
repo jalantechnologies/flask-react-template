@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Optional override for this branch/PR only. Set to 'AWS' or 'DIGITAL_OCEAN'.
-      OVERRIDE_HOSTING_PROVIDER: 'AWS'
+      OVERRIDE_HOSTING_PROVIDER: 'DIGITAL_OCEAN'
     concurrency:
       group: cd-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
