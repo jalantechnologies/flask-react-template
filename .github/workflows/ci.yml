@@ -125,7 +125,7 @@ jobs:
               echo "::error ::NPM audit found vulnerabilities"
               exit 1
             }
-            echo "::endgroup::"
+            echo "High severity vulnerabilities fixed automatically where possible"
           fi
 
           # Python audit
