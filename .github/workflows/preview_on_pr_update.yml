@@ -1,0 +1,41 @@
+name: preview_on_pr_update
+# Runs only when updating an 'Open' PR (not draft)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened,ready_for_review]
+
+jobs:
+  preview:
+    # Run only if PR is open and not draft
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    # Temporarily change to test branch
+    uses: jalantechnologies/github-ci/.github/workflows/ci.yml@v3.3.0-alpha.1
+    concurrency:
+      group: ci-preview-${{ github.event.pull_request.head.ref }}
+      cancel-in-progress: true
+    with:
+      hosting_provider: ${{ vars.HOSTING_PROVIDER }} # 'DIGITAL_OCEAN' or 'AWS'
+      analyze_base: main
+      app_name: flask-react-app
+      app_env: preview
+      app_hostname: '{1}.preview.platform.bettrhq.com'
+      branch: ${{ github.event.pull_request.head.ref }}
+      build_args: |
+        APP_ENV=preview
+      # ✅ Ensure preview only deploys if these checks succeed
+      checks: "['npm:coverage', 'npm:lint', 'compose:test']"
+      docker_registry: ${{ vars.DOCKER_REGISTRY }}
+      docker_username: ${{ vars.DOCKER_USERNAME }}
+      aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+      aws_region: ${{ vars.AWS_REGION }}
+      pull_request_number: ${{ github.event.number }}
+      sonar_host_url: ${{ vars.SONAR_HOST_URL }}
+      do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+    secrets:
+      docker_password: ${{ secrets.DOCKER_PASSWORD }}
+      doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+      sonar_token: ${{ secrets.SONAR_TOKEN }}
