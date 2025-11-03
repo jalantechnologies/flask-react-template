@@ -35,7 +35,7 @@ jobs:
         id: build
         uses: ./platform/.github/actions/build
         with:
-          app_name: flask-react-app
+          app_name: flask-react-template
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
