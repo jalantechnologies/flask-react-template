@@ -93,7 +93,7 @@ jobs:
             echo "::group::NPM Audit"
             npm audit --production --audit-level=high || {
               echo "::error ::NPM audit found vulnerabilities"
-              exit 0
+              exit 1
             }
             echo "::endgroup::"
           fi
@@ -107,12 +107,12 @@ jobs:
               pipenv requirements > /tmp/requirements.txt
               pip-audit -r /tmp/requirements.txt --vulnerability-service pypi || {
                 echo "::error ::pip-audit found vulnerabilities"
-                exit 0
+                exit 1
               }
             elif [ -f requirements.txt ]; then
               pip-audit -r requirements.txt --vulnerability-service pypi || {
                 echo "::error ::pip-audit found vulnerabilities"
-                exit 0
+                exit 1
               }
             fi
             echo "::endgroup::"
@@ -122,65 +122,29 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run integration tests
+        run: docker compose -f docker-compose.test.yml up --exit-code-from app
+
+      - name: Coverage report
+        continue-on-error: true
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          fetch-depth: 0
+          filename: output/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
 
-      - name: Get github-ci version
-        id: ci_version
-        run: |
-          # Extract version from cd.yml workflow
-          workflow_yaml=$(cat .github/workflows/cd.yml)
-          uses_data=$(echo "$workflow_yaml" | grep 'jalantechnologies/github-ci')
-          tag=$(echo $uses_data | sed -n 's/.*@\(.*\)/\1/p')
-          echo "version=$(echo $tag)" >> $GITHUB_OUTPUT
-
-      - name: Checkout github-ci
-        uses: actions/checkout@v3
+      - name: Add coverage PR comment
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          repository: jalantechnologies/github-ci
-          path: platform
-          ref: v3.3.0-alpha.9
-
-      # - name: Run integration tests
-      #   run: docker compose -f docker-compose.test.yml up --exit-code-from app
-
-      # - name: Coverage report
-      #   continue-on-error: true
-      #   uses: irongut/CodeCoverageSummary@v1.3.0
-      #   with:
-      #     filename: output/coverage.xml
-      #     badge: true
-      #     fail_below_min: true
-      #     format: markdown
-      #     hide_branch_rate: false
-      #     hide_complexity: true
-      #     indicators: true
-      #     output: both
-      #     thresholds: '60 80'
-
-      # - name: Add coverage PR comment
-      #   continue-on-error: true
-      #   uses: marocchino/sticky-pull-request-comment@v2
-      #   with:
-      #     recreate: true
-      #     path: code-coverage-results.md
-      
-      # - name: Extract branch name
-      #   id: extract_branch
-      #   run: |
-      #     BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-      #     BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
-      #     echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
-        
-      - name: Test Scanner
-        uses: ./platform/.github/actions/test-scanner
-        with:
-          app_name: flask-react-template
-          build_args: APP_ENV=preview
-          context: app/.
-          docker_registry: ${{ vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-
+          recreate: true
+          path: code-coverage-results.md
