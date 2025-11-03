@@ -122,6 +122,20 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get github-ci version
+        id: ci_version
+        run: |
+          # Extract version from cd.yml workflow
+          workflow_yaml=$(cat .github/workflows/cd.yml)
+          uses_data=$(echo "$workflow_yaml" | grep 'jalantechnologies/github-ci')
+          tag=$(echo $uses_data | sed -n 's/.*@\(.*\)/\1/p')
+          echo "version=$(echo $tag)" >> $GITHUB_OUTPUT
+
       - name: Checkout github-ci
         uses: actions/checkout@v3
         with:
