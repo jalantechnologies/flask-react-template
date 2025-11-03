@@ -51,6 +51,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Check AWS caller identity
+        if: ${{ steps.resolve.outputs.hosting_provider == 'AWS' }}
+        run: aws sts get-caller-identity
+      
+
       - name: Login to Amazon ECR
         if: ${{ steps.resolve.outputs.hosting_provider == 'AWS' }}
         id: ecr
