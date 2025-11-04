@@ -77,6 +77,31 @@ jobs:
         run: |
           echo "Code review placeholder"
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
+  
+
+  image_scan:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image for scanning
+        env:
+          DOCKER_SCAN_TOKEN: ${{ secrets.DOCKER_SCAN_TOKEN }}
+        run: echo "$DOCKER_SCAN_TOKEN" | docker login --username myusername --password-stdin
+
+      # - name: Scan Docker image for vulnerabilities
+      #   uses: aquasecurity/trivy-action@0.16.1
+      #   with:
+      #     image-ref: ${{ steps.tag.outputs.value }}:${{ inputs.tag }}
+      #     format: 'sarif'
+      #     output: 'trivy-results.sarif'
+      #     severity: ${{ inputs.trivy_severity }}
+      #     exit-code: '0'
+      #     timeout: '10m'
+      #     vuln-type: 'os,library'
+      #     scanners: 'vuln,secret,config'
 
   security:
     if: github.event.pull_request.draft == false
