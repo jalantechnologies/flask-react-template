@@ -96,6 +96,25 @@ jobs:
           username: ${{ vars.docker_username }}
           password: ${{ secrets.docker_password }}
 
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.16.1  # Pin to specific SHA in production
+        with:
+          image-ref: ${{ vars.docker_registry }}/${{ vars.docker_username }}/flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL, HIGH'
+          exit-code: '0'
+          timeout: '10m'
+          vuln-type: 'os,library'
+          scanners: 'vuln,secret,config'
+
       # - name: Scan Docker image for vulnerabilities
       #   uses: aquasecurity/trivy-action@0.16.1
       #   with:
