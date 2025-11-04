@@ -31,39 +31,30 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
-      - name: Configure AWS credentials
+      - name: Login to Amazon ECR
         if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Check AWS caller identity
-        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
-        run: aws sts get-caller-identity
-
-      - name: Login to Amazon ECR
-        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
       - name: Build Docker image
         id: build
         uses: ./platform/.github/actions/build
-        env:
-          # Pass AWS credentials to build action so docker/login-action can use them for ECR
-          AWS_ACCESS_KEY_ID: ${{ vars.HOSTING_PROVIDER == 'AWS' && secrets.AWS_ACCESS_KEY_ID || '' }}
-          AWS_SECRET_ACCESS_KEY: ${{ vars.HOSTING_PROVIDER == 'AWS' && secrets.AWS_SECRET_ACCESS_KEY || '' }}
-          AWS_REGION: ${{ vars.HOSTING_PROVIDER == 'AWS' && vars.AWS_REGION || '' }}
         with:
+          hosting_provider: ${{ vars.HOSTING_PROVIDER }}
           app_name: flask-react-template
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
-          docker_registry: ${{ vars.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || vars.DOCKER_USERNAME }}
-          docker_password: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || secrets.DOCKER_PASSWORD }}
+          docker_registry: ${{ vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.DOCKER_USERNAME }}
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
