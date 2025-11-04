@@ -130,7 +130,7 @@ jobs:
               URL=$(echo "$vuln" | jq -r '.url')
               echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
             done
-          done
+          done || true
 
           cat audit_table.md
           echo "table_md<<EOF" >> $GITHUB_OUTPUT
