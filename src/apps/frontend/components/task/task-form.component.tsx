@@ -112,10 +112,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const isDescriptionOverLimit = descriptionCharacterCount > 2000;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold mb-6">{title}</h2>
+    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+      <h2 className="text-xl font-semibold mb-4 sm:mb-6">{title}</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Title Field */}
         <FormControl
           label="Task Title"
@@ -132,14 +132,18 @@ const TaskForm: React.FC<TaskFormProps> = ({
               isTitleOverLimit && 'border-red-500 focus:ring-red-500'
             )}
             maxLength={200}
+            aria-label="Task title"
+            aria-describedby={getErrorMessage('title') ? 'title-error' : 'title-help'}
+            aria-required="true"
           />
           <div className="flex justify-between items-center mt-1">
-            <span className="text-xs text-gray-500">
+            <span id="title-help" className="text-xs text-gray-500">
               Required
             </span>
             <span className={clsx(
               'text-xs',
-              isTitleOverLimit ? 'text-red-500' : 'text-gray-500'
+              isTitleOverLimit ? 'text-red-500' : 'text-gray-500',
+              isTitleOverLimit && 'font-medium'
             )}>
               {titleCharacterCount}/200
             </span>
@@ -165,14 +169,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
             )}
             maxLength={2000}
             rows={4}
+            aria-label="Task description"
+            aria-describedby={getErrorMessage('description') ? 'description-error' : 'description-help'}
           />
           <div className="flex justify-between items-center mt-1">
-            <span className="text-xs text-gray-500">
+            <span id="description-help" className="text-xs text-gray-500">
               Optional
             </span>
             <span className={clsx(
               'text-xs',
-              isDescriptionOverLimit ? 'text-red-500' : 'text-gray-500'
+              isDescriptionOverLimit ? 'text-red-500' : 'text-gray-500',
+              isDescriptionOverLimit && 'font-medium'
             )}>
               {descriptionCharacterCount}/2000
             </span>
