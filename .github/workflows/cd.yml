@@ -49,20 +49,21 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
-  id: build
-  uses: ./platform/.github/actions/build
-  with:
-    hosting_provider: ${{ vars.HOSTING_PROVIDER }}
-    app_name: flask-react-template
-    aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    aws_region: ${{ vars.AWS_REGION }}
-    tag: ${{ steps.extract_branch.outputs.branch_hash }}
-    build_args: APP_ENV=preview
-    context: app/.
-    docker_registry: ${{ vars.DOCKER_REGISTRY }}
-    docker_username: ${{ vars.DOCKER_USERNAME }}
-    docker_password: ${{ secrets.DOCKER_PASSWORD }}
+        id: build
+        uses: ./platform/.github/actions/build
+        with:
+          hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+          app_name: flask-react-template
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
+          tag: ${{ steps.extract_branch.outputs.branch_hash }}
+          build_args: APP_ENV=preview
+          context: app/.
+          docker_registry: ${{ vars.HOSTING_PROVIDER == 'AWS' && steps.ecr.outputs.registry || vars.DOCKER_REGISTRY }}
+          docker_username: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || vars.DOCKER_USERNAME }}
+          docker_password: ${{ vars.HOSTING_PROVIDER == 'AWS' && '' || secrets.DOCKER_PASSWORD }}
+
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
