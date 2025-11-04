@@ -134,8 +134,8 @@ jobs:
             done
           done
 
-
-          cat audit_table.md >> $GITHUB_OUTPUT
+          cat audit_table.md > TEMP
+          echo $TEMP >> $GITHUB_OUTPUT
 
       - name: Comment PR with audit results
         if: steps.deps.outputs.changed_packages != ''
