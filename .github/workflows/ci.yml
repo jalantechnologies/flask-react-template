@@ -110,7 +110,8 @@ jobs:
         if: steps.deps.outputs.changed_packages != ''
         run: |
           npm ci
-          npm audit --json > audit-report.json || true
+          npm audit --json > audit.json || true
+          
       
       - name: Generate Markdown table for vulnerabilities
         if: steps.deps.outputs.changed_packages != ''
