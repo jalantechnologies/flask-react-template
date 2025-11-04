@@ -107,7 +107,7 @@ jobs:
           echo "Changed packages: $CHANGED_PKGS"
 
           echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
-          
+
       - name: Run npm audit for changed dependencies
         if: steps.deps.outputs.changed_packages != ''
         run: |
