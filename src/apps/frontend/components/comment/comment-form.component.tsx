@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { Button } from 'frontend/components';
 import FormControl from 'frontend/components/form-control';
 import { ParagraphMedium } from 'frontend/components/typography';
+import { ButtonType, ButtonKind } from 'frontend/types/button';
 
 interface CommentFormProps {
   onSubmit: (content: string) => Promise<void>;
