@@ -110,7 +110,6 @@ jobs:
         if: steps.deps.outputs.changed_packages != ''
         run: |
           npm ci
-          echo "Auditing changed packages..."
           npm audit
           
   test:
