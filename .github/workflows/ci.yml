@@ -86,11 +86,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image for scanning
+      - name: Docker login
+        uses: docker/login-action@v2
         env:
-          DOCKER_SCAN_TOKEN: ${{ secrets.DOCKER_SCAN_TOKEN }}
-          DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
-        run: echo "$DOCKER_SCAN_TOKEN" | docker login --username $DOCKER_USERNAME --password-stdin
+          DOCKER_USERNAME: ${{ vars.docker_username }}
+        if: "${{ env.DOCKER_USERNAME != '' }}"
+        with:
+          registry: ${{ vars.docker_registry }}
+          username: ${{ vars.docker_username }}
+          password: ${{ secrets.docker_password }}
 
       # - name: Scan Docker image for vulnerabilities
       #   uses: aquasecurity/trivy-action@0.16.1
