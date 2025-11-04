@@ -7,7 +7,16 @@ import {
   UseAsyncResponse,
 } from 'frontend/types/async-operation';
 import { AccessToken, KeyboardKeys, PhoneNumber } from 'frontend/types/auth';
+import {
+  Comment,
+  CommentListResponse,
+  CommentDeletionResult,
+  CreateCommentRequest,
+  UpdateCommentRequest,
+  PaginationParams,
+} from 'frontend/types/comment';
 import { ApiResponse, ApiError } from 'frontend/types/service-response';
+import { Task } from 'frontend/types/task';
 import { UserMenuDropdownItem } from 'frontend/types/user-menu-dropdown-item';
 
 export {
@@ -17,8 +26,15 @@ export {
   ApiResponse,
   AsyncError,
   AsyncResult,
+  Comment,
+  CommentListResponse,
+  CommentDeletionResult,
+  CreateCommentRequest,
+  UpdateCommentRequest,
   KeyboardKeys,
+  PaginationParams,
   PhoneNumber,
+  Task,
   UseAsyncResponse,
   DatadogUser,
   UserMenuDropdownItem,
