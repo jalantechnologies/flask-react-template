@@ -51,6 +51,11 @@ jobs:
       - name: Build Docker image
         id: build
         uses: ./platform/.github/actions/build
+        env:
+          # Pass AWS credentials to build action so docker/login-action can use them for ECR
+          AWS_ACCESS_KEY_ID: ${{ vars.HOSTING_PROVIDER == 'AWS' && secrets.AWS_ACCESS_KEY_ID || '' }}
+          AWS_SECRET_ACCESS_KEY: ${{ vars.HOSTING_PROVIDER == 'AWS' && secrets.AWS_SECRET_ACCESS_KEY || '' }}
+          AWS_REGION: ${{ vars.HOSTING_PROVIDER == 'AWS' && vars.AWS_REGION || '' }}
         with:
           app_name: flask-react-template
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
