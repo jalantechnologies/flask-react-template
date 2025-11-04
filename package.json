@@ -40,7 +40,7 @@
     "@datadog/browser-rum": "^6.6.4",
     "@datadog/browser-rum-react": "^6.6.4",
     "autoprefixer": "^10.4.18",
-    "axios": "^1.1.0",
+    "axios": "^1.11.0",
     "clsx": "^2.1.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
