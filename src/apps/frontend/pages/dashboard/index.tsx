@@ -61,13 +61,13 @@ const Dashboard: React.FC<DashboardProps> = ({ currentAccountId }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <VerticalStackLayout gap={8}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <VerticalStackLayout gap={6}>
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <H2>Task Management Dashboard</H2>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">
                 Manage your tasks efficiently with full CRUD operations
               </p>
             </div>
@@ -75,6 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentAccountId }) => {
               type={ButtonType.BUTTON}
               kind={ButtonKind.PRIMARY}
               onClick={() => setShowCreateForm(true)}
+              className="w-full sm:w-auto"
             >
               Create New Task
             </Button>
