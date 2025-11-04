@@ -117,21 +117,27 @@ jobs:
         if: steps.deps.outputs.changed_packages != ''
         id: table
         run: |
+          CHANGED_PKGS="${{ steps.deps.outputs.changed_packages }}"
+          
           echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
           echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
           echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
 
-          jq -c '.vulnerabilities | to_entries[] | select(.value.via | length > 0)' audit.json | while read dep; do
-            PKG=$(echo "$dep" | jq -r '.key')
-            echo "$dep" | jq -c '.value.via[] | select(.name=="'$PKG'")' | while read vuln; do
-              TITLE=$(echo "$vuln" | jq -r '.title')
-              SEV=$(echo "$vuln" | jq -r '.severity')
-              RANGE=$(echo "$vuln" | jq -r '.range')
-              FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
-              URL=$(echo "$vuln" | jq -r '.url')
-              echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
+          for PKG in $CHANGED_PKGS; do
+            # Get vulnerabilities for this package (skip if none)
+            jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty' audit.json | while read dep; do
+              # Loop through each vulnerability entry for this package
+              echo "$dep" | jq -c '.via[] | select(.name==$PKG)' | while read vuln; do
+                TITLE=$(echo "$vuln" | jq -r '.title')
+                SEV=$(echo "$vuln" | jq -r '.severity')
+                RANGE=$(echo "$vuln" | jq -r '.range')
+                FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
+                URL=$(echo "$vuln" | jq -r '.url')
+                echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
+              done
             done
           done || true
+
 
           cat audit_table.md
           echo "table_md<<EOF" >> $GITHUB_OUTPUT
