@@ -100,13 +100,11 @@ jobs:
           DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
 
           echo "Dependency changes:"
-          echo "$DIFF"
-
-          # Extract only package names that changed
-          CHANGED_PKGS=$(echo "$DIFF" | grep '^[+]'\|'^-' | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort | uniq)
+          CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
           echo "Changed packages: $CHANGED_PKGS"
 
           echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
+
 
       - name: Run npm audit for changed dependencies
         if: steps.deps.outputs.changed_packages != ''
