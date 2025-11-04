@@ -144,12 +144,13 @@ jobs:
           github-token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           script: |
             const body = `${{ steps.table.outputs['GITHUB_OUTPUT'] }}`;
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            })
+            console.log("Comment body:\n", body);
+            # github.rest.issues.createComment({
+            #   owner: context.repo.owner,
+            #   repo: context.repo.repo,
+            #   issue_number: context.issue.number,
+            #   body
+            # })
 
           
   test:
