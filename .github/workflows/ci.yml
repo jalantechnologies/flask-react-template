@@ -160,7 +160,7 @@ jobs:
       - name: Check for npm dependency changes
         id: npm_changes
         run: |
-          if git diff --quiet origin/main -- package-lock.json; then
+          if git diff --quiet origin/main -- package.json; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -169,7 +169,7 @@ jobs:
       - name: Audit npm dependencies (if changed)
         if: steps.npm_changes.outputs.changed == 'true'
         run: |
-          echo "Detected changes in package-lock.json"
+          echo "Detected changes in package.json"
           npm ci
           npm audit --json > npm-audit-new.json
 
