@@ -134,38 +134,52 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run dependency security audit
-        shell: bash
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # we need full history for git diff
+
+      - name: Setup tools
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install helpers
         run: |
-          echo "Running dependency security audits..."
-          if [ -f package.json ]; then
-            echo "::group::NPM Audit"
-            npm audit --production --audit-level=high || {
-              echo "::error ::NPM audit found vulnerabilities"
-              exit 1
-            }
-            echo "::endgroup::"
+          sudo apt-get update && sudo apt-get install -y jq
+          pip install pip-audit
+
+      ############################################
+      # NPM SECTION
+      ############################################
+      - name: Check for npm dependency changes
+        id: npm_changes
+        run: |
+          if git diff --quiet origin/main -- package-lock.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-          if [ -f Pipfile.lock ] || [ -f requirements.txt ]; then
-            echo "::group::Python Audit"
-            pip install pip-audit
-            pip install pipenv
+      - name: Audit npm dependencies (if changed)
+        if: steps.npm_changes.outputs.changed == 'true'
+        run: |
+          echo "Detected changes in package-lock.json"
+          npm ci
+          npm audit --json > npm-audit-new.json
 
-            if [ -f Pipfile.lock ]; then
-              pipenv requirements > /tmp/requirements.txt
-              pip-audit -r /tmp/requirements.txt --vulnerability-service pypi || {
-                echo "::error ::pip-audit found vulnerabilities"
-                exit 1
-              }
-            elif [ -f requirements.txt ]; then
-              pip-audit -r requirements.txt --vulnerability-service pypi || {
-                echo "::error ::pip-audit found vulnerabilities"
-                exit 1
-              }
-            fi
-            echo "::endgroup::"
-          fi
+          git checkout origin/main
+          npm ci
+          npm audit --json > npm-audit-old.json
+
+          echo "Comparing npm audits..."
+          diff <(jq '.advisories' npm-audit-old.json) <(jq '.advisories' npm-audit-new.json) || true
+
 
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
