@@ -31,31 +31,38 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
-      - name: Login to Amazon ECR
+      - name: Configure AWS credentials
         if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Build Docker image
-        id: build
-        uses: ./platform/.github/actions/build
-        with:
-          hosting_provider: ${{ vars.HOSTING_PROVIDER }}
-          app_name: flask-react-template
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ vars.AWS_REGION }}
-          tag: ${{ steps.extract_branch.outputs.branch_hash }}
-          build_args: APP_ENV=preview
-          context: app/.
-          docker_registry: ${{ vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Check AWS caller identity
+        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
+        run: aws sts get-caller-identity
 
+      - name: Login to Amazon ECR
+        if: ${{ vars.HOSTING_PROVIDER == 'AWS' }}
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+  id: build
+  uses: ./platform/.github/actions/build
+  with:
+    hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+    app_name: flask-react-template
+    aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    aws_region: ${{ vars.AWS_REGION }}
+    tag: ${{ steps.extract_branch.outputs.branch_hash }}
+    build_args: APP_ENV=preview
+    context: app/.
+    docker_registry: ${{ vars.DOCKER_REGISTRY }}
+    docker_username: ${{ vars.DOCKER_USERNAME }}
+    docker_password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
