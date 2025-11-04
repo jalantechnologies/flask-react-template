@@ -111,6 +111,10 @@ jobs:
         run: |
           npm ci
           npm audit --json > audit-report.json || true
+
+          for pkg in ${{ steps.deps.outputs.changed_packages }}; do
+            cat audit-report.json | jq -c '.vulnerabilities[] | select(.name=="'$pkg'")' >> audit.json
+          done
       
       - name: Generate Markdown table for vulnerabilities
         if: steps.deps.outputs.changed_packages != ''
