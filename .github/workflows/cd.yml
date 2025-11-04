@@ -22,7 +22,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: v3.2.5
+          ref: punith/ci/fix-set-output-deprecation
 
       - name: Extract branch name
         id: extract_branch
@@ -60,53 +60,5 @@ jobs:
           do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-
-      - name: Extract and format Temporal Dashboard URL
-        id: temporal
-        run: |
-          full_url="${{ steps.deploy.outputs.url }}"
-          domain="${full_url#*://}"
-
-          first_label="${domain%%.*}"
-
-          rest="${domain#*.}"
-
-          temporal_dashboard_url="https://${first_label}.workers-dashboard.${rest}"
-
-          echo "temporal_dashboard_url=${temporal_dashboard_url}" >> $GITHUB_OUTPUT
-
-      - name: Show diagnostics in logs
-        if: failure()
-        run: |
-          echo "===== K8s Diagnostics (raw) ====="
-          if [ -d ci_artifacts ]; then
-            while IFS= read -r -d '' f; do
-              echo "::group::${f}"
-              cat "$f" || true
-              echo "::endgroup::"
-            done < <(find ci_artifacts -type f -print0 | sort -z)
-          else
-            echo "No diagnostics found."
-          fi
-
-      - name: Comment diagnostics summary on PR
-        if: always() && github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          path: ci_artifacts/summary.md
-          header: diagnostics-summary
-          hide_and_recreate: true
-          hide_classify: "OUTDATED"
-
-      - uses: marocchino/sticky-pull-request-comment@v2
-        # only run this step if enabled and pull request number was provided
-        if: inputs.deploy_annotate_pr == true && inputs.pull_request_number
-        with:
-          header: ${{ inputs.app_name }}
-          hide_and_recreate: true
-          hide_classify: "OUTDATED"
-          number: ${{ inputs.pull_request_number }}
-          message: |
-            Deployment (${{ inputs.app_name }}) is available -
-            Web App: ${{ steps.deploy.outputs.url }}
-            Workers Dashboard: ${{ steps.temporal.outputs.temporal_dashboard_url }}
+          pull_request_number: ${{  github.event.pull_request.number }}
+          deploy_annotate_pr: "true"
