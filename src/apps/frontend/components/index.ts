@@ -1,4 +1,5 @@
 import Button from 'frontend/components/button';
+import { CommentForm, CommentItem, CommentList, CommentSection } from 'frontend/components/comment';
 import FlexItem from 'frontend/components/flex/flex-item.component';
 import Flex from 'frontend/components/flex/flex.component';
 import FormControl from 'frontend/components/form-control';
@@ -14,6 +15,10 @@ import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
 
 export {
   Button,
+  CommentForm,
+  CommentItem,
+  CommentList,
+  CommentSection,
   Flex,
   FlexItem,
   FormControl,
