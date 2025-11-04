@@ -114,7 +114,7 @@ jobs:
           echo "Auditing changed packages..."
           for pkg in ${{ steps.deps.outputs.changed_packages }}; do
             echo "🔍 Auditing $pkg..."
-            npm audit --json | jq '.vulnerabilities.axios'
+            npm audit --json | jq '.vulnerabilities.$pkg'
           done
 
   test:
