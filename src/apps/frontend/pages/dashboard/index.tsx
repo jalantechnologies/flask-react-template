@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 
-import { Button, TaskItem, VerticalStackLayout, H2 } from 'frontend/components';
-import { Task } from 'frontend/types';
+import { Button, TaskForm, TaskList, VerticalStackLayout, H2 } from 'frontend/components';
+import { Task, TaskFormData } from 'frontend/types';
 import { ButtonType, ButtonKind } from 'frontend/types/button';
 import TaskService from 'frontend/services/task.service';
 
@@ -11,180 +11,211 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ currentAccountId }) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // For refreshing task list
 
   const taskService = new TaskService();
 
-  const loadTasks = async () => {
+  const handleCreateTask = async (data: TaskFormData) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsCreating(true);
+      setCreateError(null);
 
-      const response = await taskService.getTasks(currentAccountId);
-
-      if (response.data) {
-        setTasks(response.data.items);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load tasks';
-      setError(errorMessage);
-      console.error('Error loading tasks:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (currentAccountId) {
-      loadTasks();
-    }
-  }, [currentAccountId]);
-
-  const handleCreateTask = async () => {
-    // For now, just create a sample task
-    try {
       const response = await taskService.createTask(
         currentAccountId,
-        'Sample Task',
-        'This is a sample task for demonstration purposes.'
+        data.title,
+        data.description
       );
 
       if (response.data) {
-        setTasks(prev => [response.data!, ...prev]);
         setShowCreateForm(false);
+        // Refresh the task list
+        setRefreshKey(prev => prev + 1);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
+      setCreateError(errorMessage);
       console.error('Error creating task:', err);
+      throw err; // Re-throw to let the form handle it
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await taskService.deleteTask(currentAccountId, taskId);
-      setTasks(prev => prev.filter(task => task.id !== taskId));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete task';
-      console.error('Error deleting task:', err);
-    }
+  const handleTaskUpdate = (taskId: string, updatedTask: Task) => {
+    // Task list component will handle the update
+    console.log('Task updated:', taskId, updatedTask);
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    // Task list component will handle the deletion
+    console.log('Task deleted:', taskId);
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateForm(false);
+    setCreateError(null);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <VerticalStackLayout gap={8}>
           {/* Header */}
           <div className="flex items-center justify-between">
-            <H2>My Tasks</H2>
+            <div>
+              <H2>Task Management Dashboard</H2>
+              <p className="text-gray-600 mt-1">
+                Manage your tasks efficiently with full CRUD operations
+              </p>
+            </div>
             <Button
               type={ButtonType.BUTTON}
               kind={ButtonKind.PRIMARY}
               onClick={() => setShowCreateForm(true)}
             >
-              Create Task
+              Create New Task
             </Button>
           </div>
 
           {/* Create Task Form */}
           {showCreateForm && (
-            <div className="bg-white rounded-lg p-6 border border-gray-200">
-              <h3 className="text-lg font-medium mb-4">Create New Task</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded-lg p-2"
-                    placeholder="Task title"
-                    defaultValue="Sample Task"
-                  />
+            <TaskForm
+              onSubmit={handleCreateTask}
+              onCancel={handleCancelCreate}
+              isSubmitting={isCreating}
+              submitButtonText="Create Task"
+              showCancelButton={true}
+              title="Create New Task"
+              autoFocus={true}
+              errors={createError ? { general: createError } : undefined}
+            />
+          )}
+
+          {/* Task Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-lg p-2"
-                    rows={3}
-                    placeholder="Task description"
-                    defaultValue="This is a sample task for demonstration purposes."
-                  />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {/* This will be populated by the task list component */}
+                  </p>
                 </div>
-                <div className="flex gap-2">
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Active Tasks</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {/* This will be populated by the task list component */}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                  <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Recently Updated</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {/* This will be populated by the task list component */}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Task List - Takes up 2/3 of the space */}
+            <div className="lg:col-span-2">
+              <TaskList
+                key={refreshKey} // This forces re-render when tasks change
+                accountId={currentAccountId}
+                currentAccountId={currentAccountId}
+                onTaskUpdate={handleTaskUpdate}
+                onTaskDelete={handleTaskDelete}
+                showSearch={true}
+                showFilters={true}
+                pageSize={10}
+              />
+            </div>
+
+            {/* Sidebar - Takes up 1/3 of the space */}
+            <div className="space-y-6">
+              {/* Quick Actions */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium mb-4">Quick Actions</h3>
+                <div className="space-y-3">
                   <Button
                     type={ButtonType.BUTTON}
-                    kind={ButtonKind.PRIMARY}
-                    onClick={handleCreateTask}
+                    kind={ButtonKind.SECONDARY}
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full"
                   >
                     Create Task
                   </Button>
                   <Button
                     type={ButtonType.BUTTON}
-                    kind={ButtonKind.SECONDARY}
-                    onClick={() => setShowCreateForm(false)}
+                    kind={ButtonKind.TERTIARY}
+                    onClick={() => setRefreshKey(prev => prev + 1)}
+                    className="w-full"
                   >
-                    Cancel
+                    Refresh Tasks
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className="text-center py-8">
-              <div className="text-gray-500">Loading tasks...</div>
-            </div>
-          )}
+              {/* Tips */}
+              <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
+                <h3 className="text-lg font-medium mb-4 text-blue-900">
+                  💡 Pro Tips
+                </h3>
+                <ul className="space-y-2 text-sm text-blue-800">
+                  <li>• Use descriptive titles for better organization</li>
+                  <li>• Add detailed descriptions to provide context</li>
+                  <li>• Comments help collaborate on tasks</li>
+                  <li>• Search and filter to find specific tasks quickly</li>
+                  <li>• Edit tasks to keep information up-to-date</li>
+                </ul>
+              </div>
 
-          {/* Error State */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-red-700">{error}</div>
-              <Button
-                type={ButtonType.BUTTON}
-                kind={ButtonKind.TERTIARY}
-                onClick={loadTasks}
-                className="mt-2"
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-
-          {/* Tasks List */}
-          {!isLoading && !error && (
-            <div className="space-y-6">
-              {tasks.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                  <div className="text-gray-500 mb-4">No tasks found</div>
-                  <Button
-                    type={ButtonType.BUTTON}
-                    kind={ButtonKind.PRIMARY}
-                    onClick={() => setShowCreateForm(true)}
-                  >
-                    Create Your First Task
-                  </Button>
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0 h-2 w-2 bg-green-500 rounded-full"></div>
+                    <p className="text-sm text-gray-600">System ready</p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0 h-2 w-2 bg-blue-500 rounded-full"></div>
+                    <p className="text-sm text-gray-600">Tasks loaded</p>
+                  </div>
                 </div>
-              ) : (
-                <VerticalStackLayout gap={6}>
-                  {tasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      currentAccountId={currentAccountId}
-                      onDelete={handleDeleteTask}
-                    />
-                  ))}
-                </VerticalStackLayout>
-              )}
+              </div>
             </div>
-          )}
+          </div>
         </VerticalStackLayout>
       </div>
     </div>
