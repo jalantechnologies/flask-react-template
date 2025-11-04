@@ -112,9 +112,10 @@ jobs:
           npm ci
 
           echo "Auditing changed packages..."
+          AUDIT_JSON=$(npm audit --json)
           for pkg in ${{ steps.deps.outputs.changed_packages }}; do
             echo "🔍 Auditing $pkg..."
-            npm audit --json | jq '.vulnerabilities.$pkg'
+            echo "$AUDIT_JSON" | jq --arg PKG "$pkg" '.vulnerabilities[$PKG]'
           done
 
   test:
