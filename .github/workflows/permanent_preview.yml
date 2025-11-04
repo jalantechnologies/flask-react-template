@@ -22,7 +22,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: v3.2.5
+          ref: v3.2.6
 
       - name: Build Docker image
         id: build
