@@ -107,6 +107,17 @@ jobs:
           echo "Changed packages: $CHANGED_PKGS"
 
           echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
+          
+      - name: Run npm audit for changed dependencies
+        if: steps.deps.outputs.changed_packages != ''
+        run: |
+          npm ci
+
+          echo "Auditing changed packages..."
+          for pkg in ${{ steps.deps.outputs.changed_packages }}; do
+            echo "🔍 Auditing $pkg..."
+            npm audit --package=$pkg || echo "Audit completed with issues for $pkg"
+          done
 
   test:
     if: github.event.pull_request.draft == false
