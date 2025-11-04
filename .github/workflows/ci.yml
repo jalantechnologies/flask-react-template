@@ -124,19 +124,15 @@ jobs:
           echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
 
           for PKG in $CHANGED_PKGS; do
-            # Get vulnerabilities for this package (skip if none)
-            jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty' audit.json | while read dep; do
-              # Loop through each vulnerability entry for this package
-              echo "$dep" | jq -c '.via[] | select(.name==$PKG)' | while read vuln; do
-                TITLE=$(echo "$vuln" | jq -r '.title')
-                SEV=$(echo "$vuln" | jq -r '.severity')
-                RANGE=$(echo "$vuln" | jq -r '.range')
-                FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
-                URL=$(echo "$vuln" | jq -r '.url')
-                echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
-              done
+            jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty | .via[] | select(.name==$PKG)' audit.json | while read vuln; do
+              TITLE=$(echo "$vuln" | jq -r '.title')
+              SEV=$(echo "$vuln" | jq -r '.severity')
+              RANGE=$(echo "$vuln" | jq -r '.range')
+              FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
+              URL=$(echo "$vuln" | jq -r '.url')
+              echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
             done
-          done || true
+          done
 
 
           cat audit_table.md
