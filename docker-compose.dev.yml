@@ -24,8 +24,6 @@ services:
       - './:/app:delegated'
       - '/app/node_modules/'
     working_dir: /app
-    # Run container as non-root user (appuser) for security
-    user: "999:999"
 
   app-db:
     image: mongo:5.0
