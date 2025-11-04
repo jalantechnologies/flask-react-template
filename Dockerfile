@@ -50,17 +50,13 @@ RUN npm run build
 RUN groupadd -r appuser -g 999 && \
     useradd -r -u 999 -g 999 -m appuser
 
-# Switch to appuser and install dependencies
-USER appuser
-RUN pipenv install --dev
-USER root
-
 # Create directories and set ownership for non-root user to write files
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
     chown -R appuser:999 /opt/app /home/appuser /app/output
 
-# Switch from root user to appuser for running the app
+# Switch to appuser and install dependencies
 USER appuser
+RUN pipenv install --dev
 
 CMD [ "npm", "start" ]
 
