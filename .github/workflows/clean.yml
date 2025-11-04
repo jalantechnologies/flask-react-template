@@ -12,7 +12,7 @@ jobs:
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }}
-      app_name: flask-react-template
+      app_name: flask-react-app
       app_env: preview
       branch: ${{ github.event.pull_request.head.ref }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}

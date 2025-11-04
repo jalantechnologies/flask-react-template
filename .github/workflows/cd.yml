@@ -2,7 +2,7 @@ name: cd
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
 
 jobs:
   deploy:
@@ -35,7 +35,7 @@ jobs:
         id: build
         uses: ./platform/.github/actions/build
         with:
-          app_name: flask-react-template
+          app_name: flask-react-app
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
@@ -46,7 +46,7 @@ jobs:
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
-          app_name: flask-react-template
+          app_name: flask-react-app
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
           branch: ${{ github.event.pull_request.head.ref }}
