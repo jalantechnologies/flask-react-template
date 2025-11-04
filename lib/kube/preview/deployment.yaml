@@ -28,6 +28,13 @@ spec:
         app: $KUBE_APP
     spec:
       priorityClassName: $KUBE_APP-$KUBE_DEPLOY_ID-priority
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -43,6 +50,13 @@ spec:
         - name: $KUBE_APP
           image: $KUBE_DEPLOYMENT_IMAGE
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
              memory: '400Mi'        
@@ -56,6 +70,11 @@ spec:
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /opt/app/tmp
+            - name: logs
+              mountPath: /opt/app/logs
           startupProbe:
             httpGet:
               path: /
@@ -72,3 +91,8 @@ spec:
               path: /
               port: 8080
             initialDelaySeconds: 30
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}

@@ -23,6 +23,13 @@ spec:
       labels:
         app: temporal
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -39,11 +46,21 @@ spec:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 7233
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               memory: '200Mi'
@@ -52,9 +69,19 @@ spec:
         - name: temporal-admin-tools
           image: temporalio/admin-tools:1.27.2-tctl-1.18
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           stdin: true
           tty: true
           resources:
@@ -66,11 +93,21 @@ spec:
         - name: temporal-ui
           image: temporalio/ui:2.37.2
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               memory: '200Mi'
@@ -93,12 +130,29 @@ spec:
         - name: python-worker
           image: $KUBE_DEPLOYMENT_IMAGE
           workingDir: /opt/app/src/apps/backend
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /opt/app/tmp
+            - name: logs
+              mountPath: /opt/app/logs
           resources:
             requests:
               memory: '150Mi'
             limits:
               memory: '300Mi'
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}

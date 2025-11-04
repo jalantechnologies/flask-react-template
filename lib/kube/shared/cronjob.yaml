@@ -17,12 +17,26 @@ spec:
           labels:
             app: $KUBE_APP-cronjob
         spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
           imagePullSecrets:
             - name: regcred
           containers:
             - name: $KUBE_APP
               image: $KUBE_DEPLOYMENT_IMAGE
               imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
               command: [ "npm", "run", "script", "--file=my_worker_script" ]
               env:
                 - name: WEB_APP_HOST
@@ -30,4 +44,10 @@ spec:
               envFrom:
                 - secretRef:
                     name: $DOPPLER_MANAGED_SECRET_NAME
+              volumeMounts:
+                - name: tmp
+                  mountPath: /opt/app/tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
           restartPolicy: OnFailure
