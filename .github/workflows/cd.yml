@@ -22,7 +22,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: punith/ci/fix-set-output-deprecation
+          ref: punith/chore/refactor-cleanup-script
 
       - name: Extract branch name
         id: extract_branch

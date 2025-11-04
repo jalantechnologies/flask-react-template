@@ -6,7 +6,7 @@ on:
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@punith/ci/fix-set-output-deprecation
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@punith/chore/refactor-cleanup-script
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
