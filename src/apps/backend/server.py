@@ -59,6 +59,10 @@ api_blueprint.register_blueprint(account_blueprint)
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
 
+# Register comment apis
+comment_blueprint = CommentRestApiServer.create()
+api_blueprint.register_blueprint(comment_blueprint)
+
 app.register_blueprint(api_blueprint)
 
 # Register frontend elements
