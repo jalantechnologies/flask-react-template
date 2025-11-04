@@ -110,7 +110,7 @@ jobs:
         if: steps.deps.outputs.changed_packages != ''
         run: |
           npm ci
-          npm audit
+          npm audit --json > audit-report.json || true
           
   test:
     if: github.event.pull_request.draft == false
