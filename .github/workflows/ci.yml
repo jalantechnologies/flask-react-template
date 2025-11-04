@@ -139,18 +139,11 @@ jobs:
 
       - name: Comment PR with audit results
         if: steps.deps.outputs.changed_packages != ''
-        uses: actions/github-script@v7
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          github-token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          script: |
-            const body = `${{ steps.table.outputs['GITHUB_OUTPUT'] }}`;
-            console.log(body);
-            # github.rest.issues.createComment({
-            #   owner: context.repo.owner,
-            #   repo: context.repo.repo,
-            #   issue_number: context.issue.number,
-            #   body
-            # })
+          recreate: true
+          path: audit_table.md
 
           
   test:
