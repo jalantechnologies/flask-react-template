@@ -144,7 +144,7 @@ jobs:
           github-token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           script: |
             const body = `${{ steps.table.outputs['GITHUB_OUTPUT'] }}`;
-            console.log("Comment body:\n", body);
+            console.log(body);
             # github.rest.issues.createComment({
             #   owner: context.repo.owner,
             #   repo: context.repo.repo,
