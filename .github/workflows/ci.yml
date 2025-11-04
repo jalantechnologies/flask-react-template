@@ -134,6 +134,7 @@ jobs:
             done
           done
 
+          cat audit_table.md
           cat audit_table.md > TEMP
           echo $TEMP >> $GITHUB_OUTPUT
 
