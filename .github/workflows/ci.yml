@@ -111,6 +111,32 @@ jobs:
         run: |
           npm ci
           npm audit --json > audit-report.json || true
+      
+      - name: Generate Markdown table for vulnerabilities
+        if: steps.deps.outputs.changed_packages != ''
+        id: table
+        run: |
+          echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
+          echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
+          echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
+
+          jq -c '.vulnerabilities | to_entries[] | select(.value.via | length > 0)' audit.json | while read dep; do
+            PKG=$(echo "$dep" | jq -r '.key')
+            echo "$dep" | jq -c '.value.via[] | select(.name=="'$PKG'")' | while read vuln; do
+              TITLE=$(echo "$vuln" | jq -r '.title')
+              SEV=$(echo "$vuln" | jq -r '.severity')
+              RANGE=$(echo "$vuln" | jq -r '.range')
+              FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
+              URL=$(echo "$vuln" | jq -r '.url')
+              echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
+            done
+          done
+
+          cat audit_table.md
+          echo "table_md<<EOF" >> $GITHUB_OUTPUT
+          cat audit_table.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
           
   test:
     if: github.event.pull_request.draft == false
