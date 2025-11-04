@@ -2,11 +2,11 @@ name: ci
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened, ready_for_review ]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   lint:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,7 +36,7 @@ jobs:
         run: npm run lint
 
   sonarqube:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -70,7 +70,7 @@ jobs:
           pull_request_number: ${{ github.event.number }}
 
   review:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Placeholder for code review
@@ -78,8 +78,68 @@ jobs:
           echo "Code review placeholder"
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
 
+  security:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq for JSON parsing
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Detect changed dependencies in package.json
+        id: deps
+        run: |
+          BASE_BRANCH=${{ github.event.pull_request.base.ref }}
+          echo "Comparing current branch with $BASE_BRANCH..."
+
+          git fetch origin $BASE_BRANCH
+
+          # Extract dependency differences
+          DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
+
+          echo "Dependency changes:"
+          CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
+          echo "Changed packages: $CHANGED_PKGS"
+
+          echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
+
+
+      - name: Run npm audit for changed dependencies
+        if: steps.deps.outputs.changed_packages != ''
+        run: |
+          npm ci
+          npm audit --json > audit-report.json || true
+      
+      - name: Generate Markdown table for vulnerabilities
+        if: steps.deps.outputs.changed_packages != ''
+        id: table
+        run: |
+          echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
+          echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
+          echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
+
+          jq -c '.vulnerabilities | to_entries[] | select(.value.via | length > 0)' audit.json | while read dep; do
+            PKG=$(echo "$dep" | jq -r '.key')
+            echo "$dep" | jq -c '.value.via[] | select(.name=="'$PKG'")' | while read vuln; do
+              TITLE=$(echo "$vuln" | jq -r '.title')
+              SEV=$(echo "$vuln" | jq -r '.severity')
+              RANGE=$(echo "$vuln" | jq -r '.range')
+              FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
+              URL=$(echo "$vuln" | jq -r '.url')
+              echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
+            done
+          done || true
+
+          cat audit_table.md
+          echo "table_md<<EOF" >> $GITHUB_OUTPUT
+          cat audit_table.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          
   test:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
