@@ -99,9 +99,36 @@ jobs:
           vulnerability-check: true
 
       - name: Dependency review result
+        id: deps
         run: |
           echo "Dependency review completed. See above for details."
           echo "Vulnerabilities found: ${{ steps.review.outputs.vulnerable-changes }}"
+          echo "${{ steps.review.outputs.vulnerable-changes}}" >> dependency.json 
+          # Create Markdown header
+          echo "### 🧩 Dependency Review Summary" > deps-summary.md
+          echo "" >> deps-summary.md
+          echo "| Change Type | Package | Version | Severity | Details |" >> deps-summary.md
+          echo "|--------------|----------|----------|-----------|----------|" >> deps-summary.md
+
+          # Append rows
+          jq -r '
+            .[]
+            | select(any(.vulnerabilities[]?; .severity == "high" or .severity == "critical"))
+            | "| \(.change_type) | \(.name) | \(.version // "-") | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .severity] | join(", ")) | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .advisory_summary] | join(" / ")) |"
+          ' dependency.json >> deps-summary.md
+
+          cat deps-summary.md
+          cat deps-summary.md > TEMP
+          echo $TEMP >> $GITHUB_OUTPUT
+
+
+      - name: Comment PR with audit results
+        if: steps.deps.outputs.changed_packages != ''
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: deps-summary.md
 
       # - name: Install jq for JSON parsing
       #   run: sudo apt-get update && sudo apt-get install -y jq
