@@ -112,6 +112,12 @@ jobs:
 
           cat checkov_report.md
 
+      - name: Comment PR with checkov results
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: checkov_report.md
 
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
