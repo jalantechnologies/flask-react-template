@@ -95,8 +95,8 @@ jobs:
           DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
         if: "${{ env.DOCKER_USERNAME != '' }}"
         with:
-          registry: ${{ vars.docker_registry }}
-          username: ${{ vars.docker_username }}
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Extract branch name
