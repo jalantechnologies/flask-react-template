@@ -94,8 +94,8 @@ jobs:
           --output json --download-external-modules true \
           --framework kubernetes > result.json
 
-
-          cat result.json >> $GITHUB_OUTPUT
+          RESUTS=$(cat result.json)
+          echo "results=$RESUTS" >> $GITHUB_OUTPUT
       
       - name: Convert JSON to Markdown
         run: |
