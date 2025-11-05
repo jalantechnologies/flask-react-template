@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-bcrypt = "==2.0.0"
+bcrypt = "==4.0.1"
 certifi = "==2023.11.17"
 flask = "==3.0.0"
-flask-cors = "==4.0.0"
+flask-cors = "==3.0.10"
 gunicorn = "==21.2.0"
 phonenumbers = "==8.13.44"
 pyjwt = "==2.8.0"
