@@ -95,20 +95,48 @@ jobs:
 
       - name: Run Trivy scan
         id: trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: my-app:${{ github.sha }}
+          format: 'json'
+          output: 'reports/trivy.json'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+
+      # Convert JSON to Markdown for nice PR output
+      - name: Convert Trivy report to Markdown
         run: |
           mkdir -p reports
-          trivy image --exit-code 0 --severity HIGH,CRITICAL --format json \
-            -o reports/trivy.json my-app:${{ github.sha }}
-
-          # Convert JSON to Markdown
           echo "# 🧪 Trivy Vulnerability Report" > reports/trivy-report.md
-          jq -r '.Results[]?.Vulnerabilities[]? |
-            "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title) |"' \
-            reports/trivy.json >> reports/trivy-report.md
+          echo "" >> reports/trivy-report.md
+          echo "| ID | Package | Version | Severity | Title |" >> reports/trivy-report.md
+          echo "|----|----------|----------|-----------|--------|" >> reports/trivy-report.md
+
+          jq -r '
+            .Results[]?.Vulnerabilities[]? |
+            "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title | gsub("\n"; " ")) |"
+          ' reports/trivy.json >> reports/trivy-report.md
 
           if ! grep -q "CVE" reports/trivy-report.md; then
-            echo "No vulnerabilities found" >> reports/trivy-report.md
+            echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> reports/trivy-report.md
           fi
+
+      # - name: Run Trivy scan
+      #   id: trivy
+      #   run: |
+      #     mkdir -p reports
+      #     trivy image --exit-code 0 --severity HIGH,CRITICAL --format json \
+      #       -o reports/trivy.json my-app:${{ github.sha }}
+
+      #     # Convert JSON to Markdown
+      #     echo "# 🧪 Trivy Vulnerability Report" > reports/trivy-report.md
+      #     jq -r '.Results[]?.Vulnerabilities[]? |
+      #       "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title) |"' \
+      #       reports/trivy.json >> reports/trivy-report.md
+
+      #     if ! grep -q "CVE" reports/trivy-report.md; then
+      #       echo "No vulnerabilities found" >> reports/trivy-report.md
+      #     fi
 
   security:
     if: github.event.pull_request.draft == false
