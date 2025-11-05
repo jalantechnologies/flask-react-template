@@ -90,8 +90,8 @@ jobs:
           directory: 'lib/kube'
           framework: kubernetes
           soft_fail: true
-          output_format: json
-          output_file_path: kube-checkov-report.json
+          output_format: md
+          output_file_path: kube-checkov-report.md
           skip_check: CKV_K8S_8,CKV_K8S_9
           download_external_modules: true
           quiet: true
