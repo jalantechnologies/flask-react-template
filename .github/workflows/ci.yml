@@ -2,7 +2,7 @@ name: ci
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
 
 permissions:
   contents: read
@@ -82,6 +82,62 @@ jobs:
           echo "Code review placeholder"
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
 
+  scan: 
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        env:
+          DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+        if: "${{ env.DOCKER_USERNAME != '' }}"
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+
+      - name: Get changes
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} ${{ github.ref }}
+          if ${{ github.event_name == 'pull_request' }}; then
+              echo "changed_files=$(git diff --name-only -r HEAD^1 HEAD | xargs)" >> $GITHUB_OUTPUT
+          else
+              echo "changed_files=$(git diff --name-only ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }} | xargs)" >> $GITHUB_OUTPUT
+          fi
+
+
+
+
+      - name: Run Trivy scan
+        id: trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'filesystem'
+          scan-ref: '.'
+          format: 'template'
+          template: '@markdown.tpl'
+          output: 'trivy-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+
+      - name: Comment PR with audit results
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: trivy-report.md
+
   security:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -132,70 +188,6 @@ jobs:
         with:
           recreate: true
           path: deps-summary.md
-
-      # - name: Install jq for JSON parsing
-      #   run: sudo apt-get update && sudo apt-get install -y jq
-
-      # - name: Detect changed dependencies in package.json
-      #   id: deps
-      #   run: |
-      #     BASE_BRANCH=${{ github.event.pull_request.base.ref }}
-      #     echo "Comparing current branch with $BASE_BRANCH..."
-
-      #     git fetch origin $BASE_BRANCH
-
-      #     # Extract dependency differences
-      #     DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
-
-      #     echo "Dependency changes:"
-      #     CHANGED_PKGS_JSON=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/"\1"/' | sort -u | jq -s '.')
-      #     echo "changed_packages=$CHANGED_PKGS_JSON" >> $GITHUB_OUTPUT
-
-      #     # CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
-      #     # echo "Changed packages: $CHANGED_PKGS"
-
-      #     echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
-
-
-      # - name: Run npm audit for changed dependencies
-      #   if: steps.deps.outputs.changed_packages != ''
-      #   run: |
-      #     npm ci
-      #     npm audit --json > audit.json || true
-          
-      
-      # - name: Generate Markdown table for vulnerabilities
-      #   if: steps.deps.outputs.changed_packages != ''
-      #   id: table
-      #   run: |
-      #     CHANGED_PKGS="${{ steps.deps.outputs.changed_packages }}"
-          
-      #     echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
-      #     echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
-      #     echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
-
-      #     for PKG in $CHANGED_PKGS; do
-      #       jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty | .via[] | select(.name==$PKG)' audit.json | while read vuln; do
-      #         TITLE=$(echo "$vuln" | jq -r '.title')
-      #         SEV=$(echo "$vuln" | jq -r '.severity')
-      #         RANGE=$(echo "$vuln" | jq -r '.range')
-      #         FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
-      #         URL=$(echo "$vuln" | jq -r '.url')
-      #         echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
-      #       done
-      #     done
-
-      #     cat audit_table.md
-      #     cat audit_table.md > TEMP
-      #     echo $TEMP >> $GITHUB_OUTPUT
-
-      # - name: Comment PR with audit results
-      #   if: steps.deps.outputs.changed_packages != ''
-      #   continue-on-error: true
-      #   uses: marocchino/sticky-pull-request-comment@v2
-      #   with:
-      #     recreate: true
-      #     path: audit_table.md
 
           
   test:
