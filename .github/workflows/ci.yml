@@ -102,8 +102,7 @@ jobs:
           echo "${{ steps.checkov.outputs.results }}" > result.json
           echo "# Checkov Scan Report" > checkov_report.md
           echo "" >> checkov_report.md
-          cat result.json 
-          # jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Severity: `\(.severity)`\n- Message: \(.message)\n"' kube-checkov-report.json >> checkov_report.md
+          jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Severity: `\(.severity)`\n- Message: \(.message)\n"' result.json >> checkov_report.md
 
           cat checkov_report.md
 
