@@ -99,26 +99,25 @@ jobs:
         with:
           image-ref: my-app:${{ github.sha }}
           format: 'json'
-          output: 'reports/trivy.json'
+          output: 'trivy.json'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
 
       # Convert JSON to Markdown for nice PR output
       - name: Convert Trivy report to Markdown
         run: |
-          mkdir -p reports
-          echo "# 🧪 Trivy Vulnerability Report" > reports/trivy-report.md
+          echo "# 🧪 Trivy Vulnerability Report" > trivy-report.md
           echo "" >> reports/trivy-report.md
-          echo "| ID | Package | Version | Severity | Title |" >> reports/trivy-report.md
-          echo "|----|----------|----------|-----------|--------|" >> reports/trivy-report.md
+          echo "| ID | Package | Version | Severity | Title |" >> trivy-report.md
+          echo "|----|----------|----------|-----------|--------|" >> trivy-report.md
 
           jq -r '
             .Results[]?.Vulnerabilities[]? |
             "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title | gsub("\n"; " ")) |"
-          ' reports/trivy.json >> reports/trivy-report.md
+          ' trivy.json >> trivy-report.md
 
-          if ! grep -q "CVE" reports/trivy-report.md; then
-            echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> reports/trivy-report.md
+          if ! grep -q "CVE" trivy-report.md; then
+            echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> trivy-report.md
           fi
 
       # - name: Run Trivy scan
