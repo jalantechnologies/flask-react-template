@@ -124,9 +124,9 @@ jobs:
           #   | "| \(.change_type) | \(.name) | \(.version // "-") | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .severity] | join(", ")) | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .advisory_summary] | join(" / ")) |"
           # ' dependency.json >> deps-summary.md
 
-          # cat deps-summary.md
-          # cat deps-summary.md > TEMP
-          # echo $TEMP >> $GITHUB_OUTPUT
+          cat deps-summary.md
+          cat deps-summary.md > TEMP
+          echo $TEMP >> $GITHUB_OUTPUT
 
 
       - name: Comment PR with audit results
