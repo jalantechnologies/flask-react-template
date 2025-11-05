@@ -104,7 +104,7 @@ jobs:
           # echo "" >> checkov_report.md
           # jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Check Result: `\(.check_result.result)`\n"' result.json >> checkov_report.md
 
-          cat checkov_report.md
+          # cat checkov_report.md
 
 
   test:
