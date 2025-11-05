@@ -108,7 +108,12 @@ jobs:
           echo "Dependency review completed. See above for details."
           echo "Vulnerabilities found: ${{ steps.review.outputs.comment-content }}"
           echo "${{ steps.review.outputs.comment-content}}" > input.html
-          sed '/<div id="scorecard">/,/<\/div>/d' input.html > filtered.html
+          sed '/<h2>OpenSSF Scorecard<\/h2>/,/<h2>/{
+            /<h2>OpenSSF Scorecard<\/h2>/!{
+              /<h2>/!d
+            }
+          }' input.html > filtered.html || cp report.html filtered.html
+
           pandoc -f html -t gfm -o deps-summary.md filtered.html
           # echo "${{ steps.review.outputs.vulnerable-changes}}" >> dependency.json 
           # # Create Markdown header
