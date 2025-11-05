@@ -1,0 +1,144 @@
+[
+  {
+    "change_type": "added",
+    "manifest": ".github/workflows/ci.yml",
+    "ecosystem": "actions",
+    "name": "actions/dependency-review-action",
+    "version": "4.*.*",
+    "package_url": "pkg:githubactions/actions/dependency-review-action@4.%2A.%2A",
+    "license": null,
+    "source_repository_url": "https://github.com/actions/dependency-review-action",
+    "scope": "runtime",
+    "vulnerabilities": []
+  },
+  {
+    "change_type": "removed",
+    "manifest": "package-lock.json",
+    "ecosystem": "npm",
+    "name": "form-data",
+    "version": "4.0.0",
+    "package_url": "pkg:npm/form-data",
+    "license": "MIT",
+    "source_repository_url": "https://github.com/form-data/form-data",
+    "scope": "runtime",
+    "vulnerabilities": [
+      {
+        "severity": "critical",
+        "advisory_ghsa_id": "GHSA-fjxv-7rqg-78g4",
+        "advisory_summary": "form-data uses unsafe random function in form-data for choosing boundary",
+        "advisory_url": "https://github.com/advisories/GHSA-fjxv-7rqg-78g4"
+      }
+    ]
+  },
+  {
+    "change_type": "removed",
+    "manifest": "package-lock.json",
+    "ecosystem": "npm",
+    "name": "axios",
+    "version": "1.7.9",
+    "package_url": "pkg:npm/axios",
+    "license": "MIT",
+    "source_repository_url": "https://github.com/axios/axios",
+    "scope": "runtime",
+    "vulnerabilities": [
+      {
+        "severity": "high",
+        "advisory_ghsa_id": "GHSA-jr5f-v2jv-69x6",
+        "advisory_summary": "axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL",
+        "advisory_url": "https://github.com/advisories/GHSA-jr5f-v2jv-69x6"
+      },
+      {
+        "severity": "high",
+        "advisory_ghsa_id": "GHSA-4hjh-wcwx-xvwj",
+        "advisory_summary": "Axios is vulnerable to DoS attack through lack of data size check",
+        "advisory_url": "https://github.com/advisories/GHSA-4hjh-wcwx-xvwj"
+      }
+    ]
+  },
+  {
+    "change_type": "added",
+    "manifest": "package-lock.json",
+    "ecosystem": "npm",
+    "name": "axios",
+    "version": "1.13.1",
+    "package_url": "pkg:npm/axios@1.13.1",
+    "license": "MIT",
+    "source_repository_url": "https://github.com/axios/axios",
+    "scope": "runtime",
+    "vulnerabilities": []
+  },
+  {
+    "change_type": "added",
+    "manifest": "package.json",
+    "ecosystem": "npm",
+    "name": "webpack-dev-server",
+    "version": "^4.11.2",
+    "package_url": "pkg:npm/webpack-dev-server",
+    "license": null,
+    "source_repository_url": "https://github.com/webpack/webpack-dev-server",
+    "scope": "development",
+    "vulnerabilities": [
+      {
+        "severity": "moderate",
+        "advisory_ghsa_id": "GHSA-4v9v-hfq4-rm2v",
+        "advisory_summary": "webpack-dev-server users source code may be stolen when they access a malicious web site",
+        "advisory_url": "https://github.com/advisories/GHSA-4v9v-hfq4-rm2v"
+      },
+      {
+        "severity": "moderate",
+        "advisory_ghsa_id": "GHSA-9jgg-88mc-972h",
+        "advisory_summary": "webpack-dev-server users source code may be stolen when they access a malicious web site with non-Chromium based browser",
+        "advisory_url": "https://github.com/advisories/GHSA-9jgg-88mc-972h"
+      }
+    ]
+  },
+  {
+    "change_type": "removed",
+    "manifest": "package.json",
+    "ecosystem": "npm",
+    "name": "webpack-dev-server",
+    "version": "^4.11.1",
+    "package_url": "pkg:npm/webpack-dev-server",
+    "license": null,
+    "source_repository_url": "https://github.com/webpack/webpack-dev-server",
+    "scope": "development",
+    "vulnerabilities": [
+      {
+        "severity": "moderate",
+        "advisory_ghsa_id": "GHSA-4v9v-hfq4-rm2v",
+        "advisory_summary": "webpack-dev-server users source code may be stolen when they access a malicious web site",
+        "advisory_url": "https://github.com/advisories/GHSA-4v9v-hfq4-rm2v"
+      },
+      {
+        "severity": "moderate",
+        "advisory_ghsa_id": "GHSA-9jgg-88mc-972h",
+        "advisory_summary": "webpack-dev-server users source code may be stolen when they access a malicious web site with non-Chromium based browser",
+        "advisory_url": "https://github.com/advisories/GHSA-9jgg-88mc-972h"
+      }
+    ]
+  },
+  {
+    "change_type": "added",
+    "manifest": "package.json",
+    "ecosystem": "npm",
+    "name": "axios",
+    "version": "^1.1.0",
+    "package_url": "pkg:npm/axios",
+    "license": null,
+    "source_repository_url": "https://github.com/axios/axios",
+    "scope": "runtime",
+    "vulnerabilities": []
+  },
+  {
+    "change_type": "removed",
+    "manifest": "package.json",
+    "ecosystem": "npm",
+    "name": "axios",
+    "version": "^1.0.0",
+    "package_url": "pkg:npm/axios",
+    "license": null,
+    "source_repository_url": "https://github.com/axios/axios",
+    "scope": "runtime",
+    "vulnerabilities": []
+  }
+]
