@@ -93,6 +93,7 @@ jobs:
         id: review
         uses: actions/dependency-review-action@v4
         with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           comment-summary-in-pr: always
 
       # - name: Install jq for JSON parsing
