@@ -89,15 +89,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Extract branch name
+        id: extract_branch
         run: |
-          docker build -t my-app:${{ github.sha }} .
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
       - name: Run Trivy scan
         id: trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: my-app:${{ github.sha }}
+          image-ref: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_USERNAME }}/flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}
           format: 'json'
           output: 'trivy.json'
           severity: 'HIGH,CRITICAL'
