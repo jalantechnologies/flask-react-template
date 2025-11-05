@@ -100,11 +100,11 @@ jobs:
         run: |
           echo "${{ steps.checkov.outputs.results }}" > result.json
           cat result.json
-          # echo "# Checkov Scan Report" > checkov_report.md
-          # echo "" >> checkov_report.md
-          # jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Check Result: `\(.check_result.result)`\n"' result.json >> checkov_report.md
+          echo "# Checkov Scan Report" > checkov_report.md
+          echo "" >> checkov_report.md
+          jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Check Result: `\(.check_result.result)`\n"' result.json >> checkov_report.md
 
-          # cat checkov_report.md
+          cat checkov_report.md
 
 
   test:
