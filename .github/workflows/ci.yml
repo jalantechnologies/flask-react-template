@@ -93,9 +93,10 @@ jobs:
           --quiet --soft-fail \
           --output json --download-external-modules true \
           --framework kubernetes || true > result.json
-          cat result.json
+
           RESULTS=$(cat result.json)
-          # echo "::set-output name=results::${RESULTS}"
+
+          echo "results=${RESULTS}" >> $GITHUB_OUTPUT
       
       - name: Convert JSON to Markdown
         run: |
