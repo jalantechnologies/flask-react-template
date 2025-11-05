@@ -120,6 +120,17 @@ jobs:
             echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> trivy-report.md
           fi
 
+          # cat trivy-report.md
+          # cat trivy-report.md > TEMP
+          # echo $TEMP >> $GITHUB_OUTPUT
+
+      - name: Comment PR with audit results
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: trivy-report.md
+
       # - name: Run Trivy scan
       #   id: trivy
       #   run: |
