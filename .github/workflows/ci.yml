@@ -89,13 +89,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run dependency review (npm only)
+      - name: Run dependency review
         id: review
         uses: actions/dependency-review-action@v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           comment-summary-in-pr: always
           vulnerability-check: true
+
+      - name: Dependency review result
+        run: |
+          echo "Dependency review completed. See above for details."
+          echo "Vulnerabilities found: ${{ steps.review.outputs.vulnerable-changes }}"
 
       # - name: Install jq for JSON parsing
       #   run: sudo apt-get update && sudo apt-get install -y jq
