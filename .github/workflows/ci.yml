@@ -92,7 +92,7 @@ jobs:
           --skip-check CKV_K8S_8,CKV_K8S_9  \
           --quiet --soft-fail \
           --output json --download-external-modules true \
-          --framework kubernetes || true > result.json
+          --framework kubernetes > result.json
 
           RESULTS=$(cat result.json)
 
