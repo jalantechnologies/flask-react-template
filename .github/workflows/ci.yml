@@ -84,8 +84,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      # - name: Run Checkov on Kubernetes manifests
+      #   id: checkov
+      #   run: |
+      #     pip install checkov
+      #     checkov -d lib/kube  \
+      #     --skip-check CKV_K8S_8,CKV_K8S_9  \
+      #     --quiet --soft-fail \
+      #     --output json --download-external-modules true \
+      #     --framework kubernetes > result.json
+
+      #     RESUTS=$(cat result.json)
+      #     echo "results=$RESUTS" >> $GITHUB_OUTPUT
+      
       - name: Run Checkov on Kubernetes manifests
-        id: checkov
         run: |
           pip install checkov
           checkov -d lib/kube  \
@@ -94,13 +106,6 @@ jobs:
           --output json --download-external-modules true \
           --framework kubernetes > result.json
 
-          RESUTS=$(cat result.json)
-          echo "results=$RESUTS" >> $GITHUB_OUTPUT
-      
-      - name: Convert JSON to Markdown
-        run: |
-          echo "${{ steps.checkov.outputs.results }}" > result.json
-          cat result.json
           echo "# Checkov Scan Report" > checkov_report.md
           echo "" >> checkov_report.md
           # jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Check Result: `\(.check_result.result)`\n"' result.json >> checkov_report.md
