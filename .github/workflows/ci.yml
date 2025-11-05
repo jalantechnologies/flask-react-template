@@ -100,8 +100,11 @@ jobs:
           DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
 
           echo "Dependency changes:"
-          CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
-          echo "Changed packages: $CHANGED_PKGS"
+          CHANGED_PKGS_JSON=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/"\1"/' | sort -u | jq -s '.')
+          echo "changed_packages=$CHANGED_PKGS_JSON" >> $GITHUB_OUTPUT
+
+          # CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
+          # echo "Changed packages: $CHANGED_PKGS"
 
           echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
 
