@@ -97,7 +97,7 @@ jobs:
         with:
           registry: ${{ vars.docker_registry }}
           username: ${{ vars.docker_username }}
-          password: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Extract branch name
         id: extract_branch
