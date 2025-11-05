@@ -101,7 +101,7 @@ jobs:
       - name: Dependency review result
         run: |
           echo "Dependency review completed. See above for details."
-          echo "Vulnerabilities found: ${{ steps.review.outputs.dependency-changes }}"
+          echo "Vulnerabilities found: ${{ steps.review.outputs.vulnerable-changes }}"
 
       # - name: Install jq for JSON parsing
       #   run: sudo apt-get update && sudo apt-get install -y jq
