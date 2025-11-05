@@ -107,7 +107,7 @@ jobs:
       - name: Convert Trivy report to Markdown
         run: |
           echo "# 🧪 Trivy Vulnerability Report" > trivy-report.md
-          echo "" >> reports/trivy-report.md
+          echo "" >> trivy-report.md
           echo "| ID | Package | Version | Severity | Title |" >> trivy-report.md
           echo "|----|----------|----------|-----------|--------|" >> trivy-report.md
 
