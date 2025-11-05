@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   lint:
     if: github.event.pull_request.draft == false
@@ -85,69 +89,75 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install jq for JSON parsing
-        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Run dependency review (npm only)
+        id: review
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: true
 
-      - name: Detect changed dependencies in package.json
-        id: deps
-        run: |
-          BASE_BRANCH=${{ github.event.pull_request.base.ref }}
-          echo "Comparing current branch with $BASE_BRANCH..."
+      # - name: Install jq for JSON parsing
+      #   run: sudo apt-get update && sudo apt-get install -y jq
 
-          git fetch origin $BASE_BRANCH
+      # - name: Detect changed dependencies in package.json
+      #   id: deps
+      #   run: |
+      #     BASE_BRANCH=${{ github.event.pull_request.base.ref }}
+      #     echo "Comparing current branch with $BASE_BRANCH..."
 
-          # Extract dependency differences
-          DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
+      #     git fetch origin $BASE_BRANCH
 
-          echo "Dependency changes:"
-          CHANGED_PKGS_JSON=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/"\1"/' | sort -u | jq -s '.')
-          echo "changed_packages=$CHANGED_PKGS_JSON" >> $GITHUB_OUTPUT
+      #     # Extract dependency differences
+      #     DIFF=$(git diff origin/$BASE_BRANCH -- package.json | grep '^[+-]\s*"[^"]*":' || true)
 
-          # CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
-          # echo "Changed packages: $CHANGED_PKGS"
+      #     echo "Dependency changes:"
+      #     CHANGED_PKGS_JSON=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/"\1"/' | sort -u | jq -s '.')
+      #     echo "changed_packages=$CHANGED_PKGS_JSON" >> $GITHUB_OUTPUT
 
-          echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
+      #     # CHANGED_PKGS=$(echo "$DIFF" | sed -E 's/^[+-]\s*"([^"]*)".*/\1/' | sort -u)
+      #     # echo "Changed packages: $CHANGED_PKGS"
+
+      #     echo "changed_packages=$CHANGED_PKGS" >> $GITHUB_OUTPUT
 
 
-      - name: Run npm audit for changed dependencies
-        if: steps.deps.outputs.changed_packages != ''
-        run: |
-          npm ci
-          npm audit --json > audit.json || true
+      # - name: Run npm audit for changed dependencies
+      #   if: steps.deps.outputs.changed_packages != ''
+      #   run: |
+      #     npm ci
+      #     npm audit --json > audit.json || true
           
       
-      - name: Generate Markdown table for vulnerabilities
-        if: steps.deps.outputs.changed_packages != ''
-        id: table
-        run: |
-          CHANGED_PKGS="${{ steps.deps.outputs.changed_packages }}"
+      # - name: Generate Markdown table for vulnerabilities
+      #   if: steps.deps.outputs.changed_packages != ''
+      #   id: table
+      #   run: |
+      #     CHANGED_PKGS="${{ steps.deps.outputs.changed_packages }}"
           
-          echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
-          echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
-          echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
+      #     echo "### ⚠️ Vulnerabilities in changed dependencies" > audit_table.md
+      #     echo "| Package | Severity | Title | Affected Versions | Fix Available | Advisory |" >> audit_table.md
+      #     echo "|---------|---------|-------|-----------------|---------------|---------|" >> audit_table.md
 
-          for PKG in $CHANGED_PKGS; do
-            jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty | .via[] | select(.name==$PKG)' audit.json | while read vuln; do
-              TITLE=$(echo "$vuln" | jq -r '.title')
-              SEV=$(echo "$vuln" | jq -r '.severity')
-              RANGE=$(echo "$vuln" | jq -r '.range')
-              FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
-              URL=$(echo "$vuln" | jq -r '.url')
-              echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
-            done
-          done
+      #     for PKG in $CHANGED_PKGS; do
+      #       jq -c --arg PKG "$PKG" '.vulnerabilities[$PKG] // empty | .via[] | select(.name==$PKG)' audit.json | while read vuln; do
+      #         TITLE=$(echo "$vuln" | jq -r '.title')
+      #         SEV=$(echo "$vuln" | jq -r '.severity')
+      #         RANGE=$(echo "$vuln" | jq -r '.range')
+      #         FIX=$(echo "$vuln" | jq -r 'if .fixAvailable then "Yes" else "No" end')
+      #         URL=$(echo "$vuln" | jq -r '.url')
+      #         echo "| $PKG | $SEV | $TITLE | $RANGE | $FIX | [$URL]($URL) |" >> audit_table.md
+      #       done
+      #     done
 
-          cat audit_table.md
-          cat audit_table.md > TEMP
-          echo $TEMP >> $GITHUB_OUTPUT
+      #     cat audit_table.md
+      #     cat audit_table.md > TEMP
+      #     echo $TEMP >> $GITHUB_OUTPUT
 
-      - name: Comment PR with audit results
-        if: steps.deps.outputs.changed_packages != ''
-        continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          recreate: true
-          path: audit_table.md
+      # - name: Comment PR with audit results
+      #   if: steps.deps.outputs.changed_packages != ''
+      #   continue-on-error: true
+      #   uses: marocchino/sticky-pull-request-comment@v2
+      #   with:
+      #     recreate: true
+      #     path: audit_table.md
 
           
   test:
