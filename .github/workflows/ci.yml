@@ -86,6 +86,7 @@ jobs:
 
       - name: Run Checkov on Kubernetes manifests
         uses: bridgecrewio/checkov-action@v12
+        id: checkov
         with:
           directory: 'lib/kube'
           framework: kubernetes
@@ -98,10 +99,10 @@ jobs:
       
       - name: Convert JSON to Markdown
         run: |
+          echo "${{ steps.checkov.outputs.results }}" > result.json
           echo "# Checkov Scan Report" > checkov_report.md
           echo "" >> checkov_report.md
-          ls -al
-          # cat report/result_json.json 
+          cat result.json 
           # jq -r '.results.failed_checks[] | "## \(.check_id) - \(.check_name)\n- File: `\(.file_path)`\n- Resource: `\(.resource)`\n- Severity: `\(.severity)`\n- Message: \(.message)\n"' kube-checkov-report.json >> checkov_report.md
 
           cat checkov_report.md
