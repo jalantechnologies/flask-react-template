@@ -117,7 +117,7 @@ jobs:
             /<h2>Scanned Files<\/h2>/!{
               /<h2>/!d
             }
-          }' rinput.html > filtered.html || cp report.html filtered.html
+          }' input.html > filtered.html || cp input.html filtered.html
 
           pandoc -f html -t gfm -o deps-summary.md filtered.html
           # echo "${{ steps.review.outputs.vulnerable-changes}}" >> dependency.json 
