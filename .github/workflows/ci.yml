@@ -120,20 +120,7 @@ jobs:
           }' input.html > filtered.html || cp report.html filtered.html
 
           pandoc -f html -t gfm -o deps-summary.md filtered.html
-          # echo "${{ steps.review.outputs.vulnerable-changes}}" >> dependency.json 
-          # # Create Markdown header
-          # echo "### 🧩 Dependency Review Summary" > deps-summary.md
-          # echo "" >> deps-summary.md
-          # echo "| Change Type | Package | Version | Severity | Details |" >> deps-summary.md
-          # echo "|--------------|----------|----------|-----------|----------|" >> deps-summary.md
-
-          # # Append rows
-          # jq -r '
-          #   .[]
-          #   | select(any(.vulnerabilities[]?; .severity == "high" or .severity == "critical"))
-          #   | "| \(.change_type) | \(.name) | \(.version // "-") | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .severity] | join(", ")) | \([.vulnerabilities[]? | select(.severity == "high" or .severity == "critical") | .advisory_summary] | join(" / ")) |"
-          # ' dependency.json >> deps-summary.md
-
+          
           cat deps-summary.md
           cat deps-summary.md > TEMP
           echo $TEMP >> $GITHUB_OUTPUT
