@@ -113,8 +113,10 @@ jobs:
           CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
           mkdir -p scan-targets
           for file in $CHANGED_FILES; do
-            dir=$(dirname "$file")
-            cp -r "$dir" scan-targets/
+            if [[ -f "$file" ]]; then
+              mkdir -p "changed_files/$(dirname "$file")"
+                cp "$file" "changed_files/$file"
+              fi
           done
 
       - name: Run Trivy scan
