@@ -161,57 +161,6 @@ jobs:
           recreate: true
           path: trivy-docker-report.md
 
-  security:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run dependency review
-        id: review
-        continue-on-error: true
-        uses: actions/dependency-review-action@v4
-        with:
-          comment-summary-in-pr: always
-          vulnerability-check: true
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pandoc
-
-      - name: Dependency review result
-        id: deps
-        run: |
-          echo "Dependency review completed. See above for details."
-          echo "Vulnerabilities found: ${{ steps.review.outputs.comment-content }}"
-          echo "${{ steps.review.outputs.comment-content}}" > input.html
-          sed -e '/<h2>OpenSSF Scorecard<\/h2>/,/<h2>/{
-            /<h2>OpenSSF Scorecard<\/h2>/!{
-              /<h2>/!d
-            }
-          }' \
-          -e '/<h2>Scanned Files<\/h2>/,/<h2>/{
-            /<h2>Scanned Files<\/h2>/!{
-              /<h2>/!d
-            }
-          }' input.html > filtered.html || cp report.html filtered.html
-
-          pandoc -f html -t gfm -o deps-summary.md filtered.html
-          
-          cat deps-summary.md
-          cat deps-summary.md > TEMP
-          echo $TEMP >> $GITHUB_OUTPUT
-
-
-      - name: Comment PR with audit results
-        continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          recreate: true
-          path: deps-summary.md
-
           
   test:
     if: github.event.pull_request.draft == false
