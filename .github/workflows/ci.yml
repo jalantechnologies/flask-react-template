@@ -97,14 +97,27 @@ jobs:
       #     RESUTS=$(cat result.json)
       #     echo "results=$RESUTS" >> $GITHUB_OUTPUT
       
-      - name: Detect changes in lib/kube
+      - name: Get changed Kubernetes manifests
         id: changes
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1 || true
-          if git diff --quiet origin/${{ github.base_ref }} HEAD -- lib/kube; then
-            echo "changed=false" >> $GITHUB_OUTPUT
+          # Determine the base commit (works for PRs or pushes)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base_ref="${{ github.base_ref }}"
+            git fetch origin "$base_ref" --depth=1
+            git diff --name-only origin/$base_ref HEAD -- 'lib/kube/**' > changed_files.txt
           else
+            git diff --name-only HEAD^ HEAD -- 'lib/kube/**' > changed_files.txt
+          fi
+
+          echo "Changed files:"
+          cat changed_files.txt || true
+
+          if [ -s changed_files.txt ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
+            # Join filenames with space so we can pass them to Checkov
+            echo "files=$(tr '\n' ' ' < changed_files.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
 
