@@ -22,7 +22,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: v3.3.0-alpha.9
+          ref: v3.2.6
 
       - name: Extract branch name
         id: extract_branch
@@ -42,11 +42,6 @@ jobs:
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          target_sha : ${{ github.sha }}
-          target_repository : jalantechnologies/flask-react-template
-          target_ref : refs/heads/main
-          target_token : ${{ secrets.TRIVY_SCAN_TOKEN }}
-      
       
 
       - name: Deploy to preview
