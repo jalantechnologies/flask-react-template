@@ -118,9 +118,12 @@ jobs:
                 cp "$file" "changed_files/$file"
               fi
           done
+          echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
-      - name: Run Trivy scan
+
+      - name: Run Trivy scan on changed files
         id: trivy
+        if: steps.changes.outputs.changed_files != ''
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: 'filesystem'
@@ -131,12 +134,31 @@ jobs:
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
 
+      - name: Run Trivy scan on docker images
+        id: trivy-docker
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'image'
+          scan-ref: '${{vars.DOCKER_REGISTRY}}/${{vars.DOCKER_USERNAME}}/flask-react-app:${{steps.extract_branch.outputs.branch_hash}}'
+          format: 'template'
+          template: '@markdown.tpl'
+          output: 'trivy-docker-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+
       - name: Comment PR with audit results
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
           path: trivy-report.md
+
+      - name: Comment PR with docker image results
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: trivy-docker-report.md
 
   security:
     if: github.event.pull_request.draft == false
