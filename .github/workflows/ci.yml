@@ -107,11 +107,21 @@ jobs:
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
       - name: Get changed files in PR
-        id: changed-files
+        id: changed
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.ref }} ${{ github.ref }})
-          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          echo "Base: $BASE_SHA"
+          echo "Head: $HEAD_SHA"
+
+          git fetch origin $BASE_SHA --depth=1
+          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA)
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Changed files:"
+          echo "$CHANGED"
 
 
       - name: Run Trivy scan
