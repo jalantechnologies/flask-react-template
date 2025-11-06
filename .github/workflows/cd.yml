@@ -41,8 +41,7 @@ jobs:
           context: app/.
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-      
+          docker_password: ${{ secrets.DOCKER_PASSWORD }}      
 
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
