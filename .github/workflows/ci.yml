@@ -97,7 +97,19 @@ jobs:
       #     RESUTS=$(cat result.json)
       #     echo "results=$RESUTS" >> $GITHUB_OUTPUT
       
+      - name: Detect changes in lib/kube
+        id: changes
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1 || true
+          if git diff --quiet origin/${{ github.base_ref }} HEAD -- lib/kube; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+
       - name: Run Checkov on Kubernetes manifests
+        if: steps.changes.outputs.changed == 'true'
         run: |
           pip install checkov
           checkov -d lib/kube  \
