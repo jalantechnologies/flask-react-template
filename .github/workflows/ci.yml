@@ -89,16 +89,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Docker login
-        uses: docker/login-action@v2
-        env:
-          DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
-        if: "${{ env.DOCKER_USERNAME != '' }}"
-        with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Extract branch name
         id: extract_branch
         run: |
@@ -129,7 +119,7 @@ jobs:
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
-          template: '@markdown.tpl'
+          template: '@fs-markdown.tpl'
           output: 'trivy-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
@@ -155,7 +145,7 @@ jobs:
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
-          template: '@markdown.tpl'
+          template: '@docker-markdown.tpl'
           output: 'trivy-docker-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
