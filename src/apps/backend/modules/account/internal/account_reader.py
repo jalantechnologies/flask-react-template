@@ -55,6 +55,41 @@ class AccountReader:
             raise AccountWithUserNameExistsError(username=params.username)
 
     @staticmethod
+    def check_email_not_exist(*, email: str) -> None:
+        """
+        Check that an account with this email (username) does not already exist
+        
+        Args:
+            email: Email address to check
+            
+        Raises:
+            AccountWithUserNameExistsError: If account with email exists
+        """
+        account_bson = AccountRepository.collection().find_one({"active": True, "username": email})
+
+        if account_bson:
+            raise AccountWithUserNameExistsError(username=email)
+
+    @staticmethod
+    def get_account_by_email_optional(*, email: str) -> Optional[Account]:
+        """
+        Get account by email (using username field)
+        
+        Args:
+            email: Email address
+            
+        Returns:
+            Account if found, None otherwise
+        """
+        account_bson = AccountRepository.collection().find_one({"username": email, "active": True})
+        
+        if account_bson is None:
+            return None
+        
+        return AccountUtil.convert_account_bson_to_account(account_bson)
+    # ═══════════════════════════════════════════════════════════════
+
+    @staticmethod
     def get_account_by_phone_number_optional(*, phone_number: PhoneNumber) -> Optional[Account]:
         phone_number_dict = asdict(phone_number)
         account_bson = AccountRepository.collection().find_one({"phone_number": phone_number_dict, "active": True})

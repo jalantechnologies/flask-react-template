@@ -14,6 +14,7 @@ from modules.account.types import (
     Account,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    CreateAccountByEmailAndPasswordParams,  # ← NEW IMPORT
     AccountDeletionResult,
     PhoneNumber,
     UpdateAccountProfileParams,
@@ -58,6 +59,50 @@ class AccountWriter:
         account_bson = AccountRepository.collection().find_one({"_id": query.inserted_id})
 
         return AccountUtil.convert_account_bson_to_account(account_bson)
+    @staticmethod
+    def create_account_by_email_and_password(*, params: CreateAccountByEmailAndPasswordParams) -> Account:
+        """
+        Create a new account with email and password
+        
+        Args:
+            params: CreateAccountByEmailAndPasswordParams containing email, password, first_name, last_name
+            
+        Returns:
+            Account: Newly created account
+        """
+        params_dict = asdict(params)
+        
+        # Hash the password
+        params_dict["hashed_password"] = AccountUtil.hash_password(password=params.password)
+        del params_dict["password"]
+        
+        # Check if email (username) already exists
+        AccountReader.check_email_not_exist(email=params.email)
+        
+        # Use email as username
+        username = params.email
+        
+        # Handle phone number
+        phone_number = None
+        if params.phone_number is not None:
+            phone_number = PhoneNumber(**params_dict["phone_number"])
+        
+        # Create account BSON document
+        account_bson = AccountModel(
+            first_name=params.first_name,
+            hashed_password=params_dict["hashed_password"],
+            id=None,
+            last_name=params.last_name,
+            phone_number=phone_number,
+            username=username,
+        ).to_bson()
+        
+        # Insert into MongoDB
+        query = AccountRepository.collection().insert_one(account_bson)
+        account_bson = AccountRepository.collection().find_one({"_id": query.inserted_id})
+
+        return AccountUtil.convert_account_bson_to_account(account_bson)
+    # ═══════════════════════════════════════════════════════════════
 
     @staticmethod
     def update_password_by_account_id(account_id: str, password: str) -> Account:
@@ -102,4 +147,4 @@ class AccountWriter:
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)
 
-        return AccountDeletionResult(account_id=account_id, deleted_at=deletion_time, success=True)
+        return AccountDeletionResult(account_id=account_id, deleted_at=deletion_time,success=True)

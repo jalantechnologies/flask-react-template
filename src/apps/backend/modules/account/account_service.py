@@ -6,6 +6,7 @@ from modules.account.types import (
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
+    CreateAccountByEmailAndPasswordParams,  # ← NEW IMPORT
     AccountDeletionResult,
     PhoneNumber,
     ResetPasswordParams,
@@ -31,6 +32,30 @@ class AccountService:
             ),
         )
         return account
+
+    # ═══════════════════════════════════════════════════════════════
+    # ✅ NEW METHOD - ADD THIS
+    # ═══════════════════════════════════════════════════════════════
+    @staticmethod
+    def create_account_by_email_and_password(*, params: CreateAccountByEmailAndPasswordParams) -> Account:
+        """
+        Create a new account with email and password
+        
+        Args:
+            params: CreateAccountByEmailAndPasswordParams
+            
+        Returns:
+            Account: Newly created account
+        """
+        account = AccountWriter.create_account_by_email_and_password(params=params)
+        AccountService.create_or_update_account_notification_preferences(
+            account_id=account.id,
+            preferences=CreateOrUpdateAccountNotificationPreferencesParams(
+                email_enabled=True, push_enabled=True, sms_enabled=True
+            ),
+        )
+        return account
+    # ═══════════════════════════════════════════════════════════════
 
     @staticmethod
     def get_account_by_phone_number(*, phone_number: PhoneNumber) -> Account:

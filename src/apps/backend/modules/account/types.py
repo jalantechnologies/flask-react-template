@@ -29,6 +29,15 @@ class PhoneNumber:
 
     def __str__(self) -> str:
         return f"{self.country_code} {self.phone_number}"
+    
+@dataclass(frozen=True)
+class CreateAccountByEmailAndPasswordParams:
+    """Parameters for creating account with email and password"""
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    phone_number: Optional[PhoneNumber] = None
 
 
 @dataclass(frozen=True)
@@ -36,7 +45,11 @@ class CreateAccountByPhoneNumberParams:
     phone_number: PhoneNumber
 
 
-CreateAccountParams = Union[CreateAccountByUsernameAndPasswordParams, CreateAccountByPhoneNumberParams]
+CreateAccountParams = Union[
+    CreateAccountByUsernameAndPasswordParams, 
+    CreateAccountByPhoneNumberParams,
+    CreateAccountByEmailAndPasswordParams
+]
 
 
 @dataclass(frozen=True)
