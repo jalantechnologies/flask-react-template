@@ -109,7 +109,7 @@ jobs:
       - name: Get changes
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.head.ref }}
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} ${{ github.ref }}
           if ${{ github.event_name == 'pull_request' }}; then
               echo "changed_files=$(git diff --name-only -r HEAD^1 HEAD | xargs)" >> $GITHUB_OUTPUT
           else
