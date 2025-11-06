@@ -148,6 +148,7 @@ jobs:
 
       - name: Comment PR with audit results
         continue-on-error: true
+        if: steps.changes.outputs.changed_files != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
