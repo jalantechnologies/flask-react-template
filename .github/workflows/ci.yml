@@ -123,6 +123,7 @@ jobs:
           output: 'trivy-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
+          trivyignores: .trivyignore
 
       
 
