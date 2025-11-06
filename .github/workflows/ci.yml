@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   lint:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -40,7 +40,7 @@ jobs:
         run: npm run lint
 
   sonarqube:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -74,7 +74,7 @@ jobs:
           pull_request_number: ${{ github.event.number }}
 
   review:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Placeholder for code review
@@ -83,7 +83,7 @@ jobs:
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
 
   scan: 
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -162,7 +162,7 @@ jobs:
 
           
   test:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
