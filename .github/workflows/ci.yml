@@ -129,7 +129,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: 'filesystem'
-          scan-ref: '${{ steps.changed-files.outputs.changed_files }}'
+          scan-ref: '${{ steps.changed.outputs.changed_files }}'
           format: 'template'
           template: '@markdown.tpl'
           output: 'trivy-report.md'
