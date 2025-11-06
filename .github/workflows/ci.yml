@@ -111,32 +111,66 @@ jobs:
         id: trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_USERNAME }}/flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}
-          format: 'json'
-          output: 'trivy.json'
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'template'
+          template: |
+            {
+              # Trivy Filesystem Scan Report
+
+                Generated at: {{ now }}
+
+                ---
+
+                {{- range . }}
+                ## Target: {{ .Target }}
+
+                {{- if .Vulnerabilities }}
+                ### Vulnerabilities
+                | Package | Vulnerability | Severity | Installed | Fixed | Title |
+                |----------|----------------|-----------|------------|--------|--------|
+                {{- range .Vulnerabilities }}
+                | {{ .PkgName }} | {{ .VulnerabilityID }} | {{ .Severity }} | {{ .InstalledVersion }} | {{ .FixedVersion }} | {{ .Title }} |
+                {{- end }}
+                {{- end }}
+
+                {{- if .Misconfigurations }}
+                ### Misconfigurations
+                | ID | Severity | Title | Description | Resolution |
+                |----|-----------|--------|--------------|-------------|
+                {{- range .Misconfigurations }}
+                | {{ .ID }} | {{ .Severity }} | {{ .Title }} | {{ .Description | replace "\n" " " }} | {{ .Resolution | replace "\n" " " }} |
+                {{- end }}
+                {{- end }}
+
+                ---
+
+                {{- end }}
+            }
+          output: 'trivy-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
 
       # Convert JSON to Markdown for nice PR output
-      - name: Convert Trivy report to Markdown
-        run: |
-          echo "# 🧪 Trivy Vulnerability Report" > trivy-report.md
-          echo "" >> trivy-report.md
-          echo "| ID | Package | Version | Severity | Title |" >> trivy-report.md
-          echo "|----|----------|----------|-----------|--------|" >> trivy-report.md
+      # - name: Convert Trivy report to Markdown
+      #   run: |
+      #     echo "# 🧪 Trivy Vulnerability Report" > trivy-report.md
+      #     echo "" >> trivy-report.md
+      #     echo "| ID | Package | Version | Severity | Title |" >> trivy-report.md
+      #     echo "|----|----------|----------|-----------|--------|" >> trivy-report.md
 
-          jq -r '
-            .Results[]?.Vulnerabilities[]? |
-            "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title | gsub("\n"; " ")) |"
-          ' trivy.json >> trivy-report.md
+      #     jq -r '
+      #       .Results[]?.Vulnerabilities[]? |
+      #       "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title | gsub("\n"; " ")) |"
+      #     ' trivy.json >> trivy-report.md
 
-          if ! grep -q "CVE" trivy-report.md; then
-            echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> trivy-report.md
-          fi
+      #     if ! grep -q "CVE" trivy-report.md; then
+      #       echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> trivy-report.md
+      #     fi
 
-          # cat trivy-report.md
-          # cat trivy-report.md > TEMP
-          # echo $TEMP >> $GITHUB_OUTPUT
+      #     # cat trivy-report.md
+      #     # cat trivy-report.md > TEMP
+      #     # echo $TEMP >> $GITHUB_OUTPUT
 
       - name: Comment PR with audit results
         continue-on-error: true
