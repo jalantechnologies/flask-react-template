@@ -151,29 +151,6 @@ jobs:
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
 
-      # Convert JSON to Markdown for nice PR output
-      - name: Convert Trivy report to Markdown
-        run: |
-          cat trivy-report.md
-                  
-          # echo "# 🧪 Trivy Vulnerability Report" > trivy-report.md
-          # echo "" >> trivy-report.md
-          # echo "| ID | Package | Version | Severity | Title |" >> trivy-report.md
-          # echo "|----|----------|----------|-----------|--------|" >> trivy-report.md
-
-          # jq -r '
-          #   .Results[]?.Vulnerabilities[]? |
-          #   "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.Severity) | \(.Title | gsub("\n"; " ")) |"
-          # ' trivy.json >> trivy-report.md
-
-          # if ! grep -q "CVE" trivy-report.md; then
-          #   echo "_✅ No HIGH or CRITICAL vulnerabilities found._" >> trivy-report.md
-          # fi
-
-          # cat trivy-report.md
-          # cat trivy-report.md > TEMP
-          # echo $TEMP >> $GITHUB_OUTPUT
-
       - name: Comment PR with audit results
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
