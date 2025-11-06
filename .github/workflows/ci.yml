@@ -88,7 +88,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
 
       - name: Docker login
         uses: docker/login-action@v2
@@ -107,59 +106,25 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
-
-
       - name: Get changed files in PR
-        id: changed
+        id: changed-files
         run: |
-          BASE_SHA=${{ github.event.pull_request.base.sha }}
-          HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          echo "Base: $BASE_SHA"
-          echo "Head: $HEAD_SHA"
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
-          git fetch origin $BASE_SHA --depth=1
-          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA)
-          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "Changed files:"
-          echo "$CHANGED"
-
-      - name: Run Trivy scan on changed files
-        if: steps.changed.outputs.changed_files != ''
-        run: |
-          echo "Changed files: ${{ steps.changed.outputs.changed_files }}"
-          for file in ${{ steps.changed.outputs.changed_files }}; do
-            echo "🔍 Scanning $file..."
-            trivy fs --quiet \
-              --ignore-unfixed \
-              --pkg-types os,library \
-              --severity HIGH,CRITICAL \
-              --format template --template "@.github/workflows/markdown.tpl" \
-              --output trivy-reports/$(basename "$file").md . || true
-          done
-
-          # Merge all reports into one file
-          echo "# Trivy Security Scan Report" > trivy-report.md
-          echo "" >> trivy-report.md
-          cat trivy-reports/*.md >> trivy-report.md
-
-  
-      # - name: Run Trivy scan
-      #   id: trivy
-      #   uses: aquasecurity/trivy-action@0.24.0
-      #   with:
-      #     scan-type: 'filesystem'
-      #     scan-ref: '${{ steps.changed.outputs.changed_files }}'
-      #     format: 'template'
-      #     template: '@markdown.tpl'
-      #     output: 'trivy-report.md'
-      #     severity: 'HIGH,CRITICAL'
-      #     ignore-unfixed: true
+      - name: Run Trivy scan
+        id: trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'filesystem'
+          scan-ref: '${{ steps.changed-files.outputs.changed_files }}'
+          format: 'template'
+          template: '@markdown.tpl'
+          output: 'trivy-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
 
       - name: Comment PR with audit results
         continue-on-error: true
