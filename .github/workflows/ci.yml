@@ -130,10 +130,10 @@ jobs:
           echo "$CHANGED"
 
       - name: Run Trivy scan on changed files
-        if: steps.changed.outputs.all_changed_files != ''
+        if: steps.changed.outputs.changed_files != ''
         run: |
-          echo "Changed files: ${{ steps.changed.outputs.all_changed_files }}"
-          for file in ${{ steps.changed.outputs.all_changed_files }}; do
+          echo "Changed files: ${{ steps.changed.outputs.changed_files }}"
+          for file in ${{ steps.changed.outputs.changed_files }}; do
             echo "🔍 Scanning $file..."
             trivy fs --quiet \
               --ignore-unfixed \
