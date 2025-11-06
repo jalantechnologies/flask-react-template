@@ -109,7 +109,7 @@ jobs:
       - name: Get changed files in PR
         id: changed-files
         run: |
-          git fetch origin ${{ github.event.pull_request.base.sha }}
+          git fetch origin ${{ github.event.pull_request.base.ref }}
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
           echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
