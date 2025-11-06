@@ -72,4 +72,3 @@ spec:
               path: /
               port: 8080
             initialDelaySeconds: 30
-            
