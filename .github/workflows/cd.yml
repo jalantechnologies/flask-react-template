@@ -3,23 +3,13 @@ name: cd
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch name to deploy'
-        required: true
-        type: string
-      pr_number:
-        description: 'PR number (optional, for preview deployments)'
-        required: false
-        type: string
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.state == 'open' && github.event.pull_request.draft == false)
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     concurrency:
-      group: cd-preview-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.event.pull_request.head.ref }}
+      group: cd-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     steps:
       - name: Checkout app
@@ -37,14 +27,9 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            BRANCH_NAME="${{ github.event.inputs.branch }}"
-          else
-            BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-          fi
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
-          echo "branch_name=$(echo $BRANCH_NAME)" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         id: build
@@ -69,10 +54,10 @@ jobs:
           app_name: flask-react-template
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
-          branch: ${{ github.event_name == 'workflow_dispatch' && steps.extract_branch.outputs.branch_name || github.event.pull_request.head.ref }}
+          branch: ${{ github.event.pull_request.head.ref }}
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube
-          deploy_labels: gh/pr=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number || github.event.number }}
+          deploy_labels: gh/pr=${{ github.event.number }}
           deploy_image: ${{ steps.build.outputs.image_ref }}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}

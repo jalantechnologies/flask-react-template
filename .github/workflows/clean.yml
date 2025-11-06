@@ -3,24 +3,18 @@ name: clean
 on:
   pull_request_target:
     types: [closed]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch name to clean up'
-        required: true
-        type: string
 
 jobs:
   clean:
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@namra/feat/adding-aws-depployment 
     concurrency:
-      group: ci-preview-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.event.pull_request.head.ref }}
+      group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
       app_name: flask-react-template
       app_env: preview
-      branch: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.event.pull_request.head.ref }}
+      branch: ${{ github.event.pull_request.head.ref }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
