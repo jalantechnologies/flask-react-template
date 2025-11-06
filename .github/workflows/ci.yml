@@ -106,13 +106,20 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
+      - name: Get changed files in PR
+        id: changed-files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.sha }}
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
 
       - name: Run Trivy scan
         id: trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: 'filesystem'
-          scan-ref: '.'
+          scan-ref: '${{ steps.changed-files.outputs.changed_files }}'
           format: 'template'
           template: '@markdown.tpl'
           output: 'trivy-report.md'
