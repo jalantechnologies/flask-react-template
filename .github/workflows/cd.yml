@@ -66,5 +66,6 @@ jobs:
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}          pull_request_number: ${{  github.event.pull_request.number }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          pull_request_number: ${{ github.event.pull_request.number }}
           deploy_annotate_pr: "true"
