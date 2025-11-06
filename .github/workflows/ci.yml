@@ -159,12 +159,12 @@ jobs:
           trivyignores: .trivyignore
 
     
-      - name: Comment PR with docker image results
-        continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          recreate: true
-          path: trivy-docker-report.md
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-docker-report.md
 
           
   test:
