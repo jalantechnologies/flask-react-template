@@ -114,7 +114,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'template'
-          template: markdown.tpl
+          template: '@markdown.tpl'
           output: 'trivy-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
