@@ -106,8 +106,14 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
+
+
       - name: Run Trivy scan
         id: trivy
+        if : ${{ steps.changed-files.outputs.any_changed == 'true' }}
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: 'filesystem'
