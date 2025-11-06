@@ -140,7 +140,7 @@ jobs:
               --pkg-types os,library \
               --severity HIGH,CRITICAL \
               --format template --template "@.github/workflows/markdown.tpl" \
-              --output trivy-reports/$(basename "$file").md "$file" || true
+              --output trivy-reports/$(basename "$file").md $file || true
           done
 
           # Merge all reports into one file
