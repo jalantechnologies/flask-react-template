@@ -1,7 +1,7 @@
 # Managing Secrets with Doppler
 
 We use **Doppler** as the single source of truth for sensitive configuration across environments.  
-Secrets stored in Doppler are automatically injected into the app at runtime and mapped to configuration keys via `custom-environment-variables.yml`.
+Secret stored in Doppler are automatically injected into the app at runtime and mapped to configuration keys via `custom-environment-variables.yml`.
 
 ---
 
