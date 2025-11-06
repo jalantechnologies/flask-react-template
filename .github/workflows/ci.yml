@@ -150,6 +150,8 @@ jobs:
           output: 'trivy-docker-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
+          trivyignores: .trivyignore
+
     
       - name: Comment PR with docker image results
         continue-on-error: true
