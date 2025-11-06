@@ -2,7 +2,7 @@ name: cd
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened,ready_for_review  ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
 
 jobs:
   deploy:
@@ -36,7 +36,7 @@ jobs:
         uses: ./platform/.github/actions/build
         with:
           hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
-          app_name: flask-react-template
+          app_name: flask-react-app
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ vars.AWS_REGION }}
@@ -51,7 +51,7 @@ jobs:
         uses: ./platform/.github/actions/deploy
         with:
           hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
-          app_name: flask-react-template
+          app_name: flask-react-app
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
           branch: ${{ github.event.pull_request.head.ref }}
@@ -66,4 +66,5 @@ jobs:
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}          pull_request_number: ${{  github.event.pull_request.number }}
+          deploy_annotate_pr: "true"
