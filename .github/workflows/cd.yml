@@ -47,24 +47,7 @@ jobs:
           target_ref : refs/heads/main
           target_token : ${{ secrets.TRIVY_SCAN_TOKEN }}
       
-      - name: Run Trivy scan on docker images
-        id: trivy-docker
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: 'image'
-          image-ref: '${{vars.DOCKER_REGISTRY}}/${{vars.DOCKER_USERNAME}}/flask-react-app:${{steps.extract_branch.outputs.branch_hash}}'
-          format: 'template'
-          template: '@markdown.tpl'
-          output: 'trivy-docker-report.md'
-          severity: 'HIGH,CRITICAL'
-          ignore-unfixed: true
-    
-      - name: Comment PR with docker image results
-        continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          recreate: true
-          path: trivy-docker-report.md
+      
 
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
