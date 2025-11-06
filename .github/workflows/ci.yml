@@ -111,7 +111,12 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
           git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD
-          echo "changed_files=$(git diff --name-only ${{ github.event.pull_request.base.ref }} HEAD | xargs)" >> $GITHUB_OUTPUT
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.ref }} HEAD)
+          mkdir -p scan-targets
+          for file in $CHANGED_FILES; do
+            dir=$(dirname "$file")
+            cp -r "$dir" scan-targets/
+          done
 
       - name: Run Trivy scan
         id: trivy
