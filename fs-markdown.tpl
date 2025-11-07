@@ -1,6 +1,8 @@
-# Trivy File Scan Report
 
+
+# Trivy Docker Image Scan Report
 Generated at: {{ now }}
+
 
 ---
 {{- $found := false }}
@@ -9,9 +11,8 @@ Generated at: {{ now }}
 ## Target: {{ .Target }}
 {{- end}}
 
-
 {{- if .Vulnerabilities }}
-
+    {{- $ := set $. "found" true }}
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
@@ -29,9 +30,9 @@ Generated at: {{ now }}
 {{- end }}
 {{- end }}
 
+
 {{- end }}
 
-
-{{- if not $found }}
+{{- if not $.found }}
 ✅ **No vulnerabilities found.**
 {{- end }}
