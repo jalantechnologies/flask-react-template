@@ -136,13 +136,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-report.md
 
-      - name: Fail job if Trivy found issues
-        if: steps.trivy.outcome == 'failure'
-        run: |
-          echo "❌ Trivy found vulnerabilities — failing the job."
-          exit 1
-      
-
       - name: Build Docker image for scanning
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
@@ -172,7 +165,7 @@ jobs:
           body-path: trivy-docker-report.md
 
       - name: Fail job if Trivy found issues
-        if: steps.trivy-docker.outcome == 'failure'
+        if: steps.trivy-docker.outcome == 'failure' || steps.trivy.outcome == 'failure'
         run: |
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
