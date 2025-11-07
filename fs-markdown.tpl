@@ -12,7 +12,7 @@ Generated at: {{ now }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
-    {{- $ := set $. "found" true }}
+    {{- $found = true }}
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
@@ -33,6 +33,6 @@ Generated at: {{ now }}
 
 {{- end }}
 
-{{- if not $.found }}
+{{- if not $found }}
 ✅ **No vulnerabilities found.**
 {{- end }}
