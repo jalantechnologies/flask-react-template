@@ -5,14 +5,14 @@ Generated at: {{ now }}
 
 
 ---
-{{- $found := false }}
 {{- range . }}
 {{- if .Vulnerabilities }}
-## Target: {{ .Target }}
+## Target: {{ base .Target }}
+
+Path: {{ .Target }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
-    {{- $found := true }}
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
@@ -31,8 +31,4 @@ Generated at: {{ now }}
 {{- end }}
 
 
-{{- end }}
-
-{{- if not $found }}
-✅ **No vulnerabilities found.**
 {{- end }}

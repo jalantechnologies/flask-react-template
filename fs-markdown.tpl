@@ -1,17 +1,17 @@
-# Trivy File Scan Report
 
+
+# Trivy File Scan Report
 Generated at: {{ now }}
 
 ---
-{{- $found := false }}
 {{- range . }}
 {{- if .Vulnerabilities }}
-## Target: {{ .Target }}
+## Target: {{ base .Target }}
+
+Path: {{ .Target }}
 {{- end}}
 
-
 {{- if .Vulnerabilities }}
-
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
@@ -29,9 +29,5 @@ Generated at: {{ now }}
 {{- end }}
 {{- end }}
 
-{{- end }}
 
-
-{{- if not $found }}
-✅ **No vulnerabilities found.**
 {{- end }}
