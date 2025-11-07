@@ -6,7 +6,6 @@ Generated at: {{ now }}
 
 ---
 {{- $found := false }}
-{{- $_ := set $. "vulnCount" 0 }}
 {{- range . }}
 {{- if .Vulnerabilities }}
 ## Target: {{ .Target }}
