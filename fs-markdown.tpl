@@ -8,6 +8,8 @@ Generated at: {{ now }}
 {{- range . }}
 {{- if .Vulnerabilities }}
 ## Target: {{ base .Target }}
+
+Path: {{ .Target }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
