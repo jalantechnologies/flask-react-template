@@ -9,8 +9,11 @@ Generated at: {{ now }}
 {{- range . }}
 {{- if .Vulnerabilities }}
 ## Target: {{ .Target }}
-{{- $found = true }}
 {{- end}}
+
+{{- if .Vulnerabilities }}
+    {{- $found = true }}
+{{- end }}
 
 {{- if .Vulnerabilities }}
 ### Vulnerabilities
