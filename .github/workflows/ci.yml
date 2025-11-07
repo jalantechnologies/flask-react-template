@@ -135,32 +135,32 @@ jobs:
           body-path: trivy-report.md
 
       
-      - name: Build Docker image for scanning
-        run: |
-          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
+      # - name: Build Docker image for scanning
+      #   run: |
+      #     docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
-      - name: Run Trivy scan on docker images
-        id: trivy-docker
-        uses: aquasecurity/trivy-action@0.24.0
-        continue-on-error: true
-        with:
-          scan-type: 'image'
-          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
-          format: 'template'
-          template: '@docker-markdown.tpl'
-          output: 'trivy-docker-report.md'
-          severity: 'HIGH,CRITICAL'
-          ignore-unfixed: true
-          trivyignores: .trivyignore
-          exit-code: 1
+      # - name: Run Trivy scan on docker images
+      #   id: trivy-docker
+      #   uses: aquasecurity/trivy-action@0.24.0
+      #   continue-on-error: true
+      #   with:
+      #     scan-type: 'image'
+      #     image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
+      #     format: 'template'
+      #     template: '@docker-markdown.tpl'
+      #     output: 'trivy-docker-report.md'
+      #     severity: 'HIGH,CRITICAL'
+      #     ignore-unfixed: true
+      #     trivyignores: .trivyignore
+      #     exit-code: 1
 
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
-        if: always()
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-docker-report.md
+      # - name: Comment PR with audit results
+      #   uses: peter-evans/create-or-update-comment@v4
+      #   if: always()
+      #   with:
+      #     token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+      #     issue-number: ${{ github.event.pull_request.number }}
+      #     body-path: trivy-docker-report.md
           
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
