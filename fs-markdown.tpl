@@ -8,6 +8,8 @@ Generated at: {{ now }}
 ## Target: {{ .Target }}
 
 {{- if .Vulnerabilities }}
+    {{- $found := true }}
+
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
