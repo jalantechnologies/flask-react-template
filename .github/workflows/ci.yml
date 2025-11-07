@@ -124,7 +124,7 @@ jobs:
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           trivyignores: .trivyignore
-
+          exit-code: 1
       
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
@@ -157,6 +157,7 @@ jobs:
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           trivyignores: .trivyignore
+          exit-code: 1
 
     
       - name: Comment PR with audit results
