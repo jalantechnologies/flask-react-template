@@ -50,6 +50,7 @@
     "google-libphonenumber": "^3.2.38",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.8.1",
+    "minimatch": "^10.1.1",
     "path": "^0.12.7",
     "postcss": "^8.4.35",
     "postcss-loader": "^8.1.1",
