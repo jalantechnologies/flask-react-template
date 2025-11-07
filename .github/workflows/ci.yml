@@ -129,7 +129,7 @@ jobs:
       
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: always() 
+        if: steps.trivy.outputs.vulnCount != '0' 
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -164,7 +164,7 @@ jobs:
     
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: always() 
+        if: steps.trivy-docker.outputs.vulnCount != '0' 
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
