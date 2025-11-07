@@ -99,8 +99,8 @@ jobs:
       - name: Get changes
         id: changes
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+          git fetch origin main --depth=1
+          CHANGED_FILES=$(git diff --name-only origin/main HEAD)
           mkdir -p scan-targets
           for file in $CHANGED_FILES; do
             if [[ -f "$file" ]]; then
