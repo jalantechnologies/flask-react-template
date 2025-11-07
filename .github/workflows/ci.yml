@@ -166,6 +166,23 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
 
+      - name: Dependency Review
+        id: review
+        uses: actions/dependency-review-action@v4
+          
+
+      - name: Generate Markdown summary
+        id: summary
+        run: |
+          cat ${{ steps.review.outputs.vulnerable-changes }}  > dependency-review-report.json
+          echo "### 🧩 Dependency Review Summary" > summary.md
+          echo "" >> summary.md
+          if [ -f dependency-review-report.json ]; then
+            jq -r '.[] | "- **\(.dependency)** (\(.version)): \(.vulnerabilities | length) vulnerabilities"' dependency-review-report.json >> summary.md
+          else
+            echo "✅ No dependency issues found." >> summary.md
+          fi
+
           
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
