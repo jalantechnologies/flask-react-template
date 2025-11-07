@@ -143,7 +143,7 @@ jobs:
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
-          template: '@contrib/html.tpl'
+          template: '@docker-markdown.tpl'
           output: 'trivy-docker-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
