@@ -137,6 +137,7 @@ jobs:
           body-path: trivy-report.md
 
       
+
       # - name: Build Docker image for scanning
       #   run: |
       #     docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
