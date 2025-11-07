@@ -1,6 +1,6 @@
 
 
-# Trivy Docker Image Scan Report
+# Trivy File Scan Report
 Generated at: {{ now }}
 
 
