@@ -8,7 +8,7 @@ Generated at: {{ now }}
 {{- $found := false }}
 {{- range . }}
 {{- if .Vulnerabilities }}
-     {{- $found = true }}
+     {{- $found := true }}
 ## Target: {{ .Target }}
 
 {{- if .Vulnerabilities }}
