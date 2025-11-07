@@ -30,7 +30,6 @@ Generated at: {{ now }}
 {{- end }}
 {{- end }}
 
----
 
 {{- end }}
 
