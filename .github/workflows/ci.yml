@@ -135,13 +135,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-report.md
 
-      # - name: Comment PR with audit results
-      #   continue-on-error: true
-      #   if: steps.changes.outputs.changed_files != ''
-      #   uses: marocchino/sticky-pull-request-comment@v2
-      #   with:
-      #     recreate: true
-      #     path: trivy-report.md
       
       - name: Build Docker image for scanning
         run: |
