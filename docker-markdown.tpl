@@ -1,13 +1,15 @@
 
 
-# Trivy Docker Image Scan Report
+# Trivy File Scan Report
 Generated at: {{ now }}
 
 
 ---
 {{- range . }}
 {{- if .Vulnerabilities }}
-## Target: {{ .Target }}
+## Target: {{ base .Target }}
+
+Path: {{ .Target }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
