@@ -4,10 +4,6 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   lint:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -110,7 +106,6 @@ jobs:
           done
           echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
-
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
@@ -155,7 +150,6 @@ jobs:
           trivyignores: .trivyignore
           exit-code: 1
 
-    
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
         if: steps.trivy-docker.outputs.vulnCount != '0' 
@@ -163,7 +157,6 @@ jobs:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
-
           
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
