@@ -30,7 +30,3 @@ Generated at: {{ now }}
 ---
 
 {{- end }}
-
-{{- if not $found }}
-    ✅ **No new vulnerabilities found.**
-{{- end }}
