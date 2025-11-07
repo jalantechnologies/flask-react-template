@@ -35,5 +35,5 @@ Generated at: {{ now }}
 
 
 {{- if not $found  }}
-## No Vulnerabilities found
+## **No Vulnerabilities found**
 {{- end }}
