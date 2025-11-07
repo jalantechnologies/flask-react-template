@@ -136,6 +136,11 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-report.md
 
+      - name: Fail job if Trivy found issues
+        if: steps.trivy.outcome == 'failure'
+        run: |
+          echo "❌ Trivy found vulnerabilities — failing the job."
+          exit 1
       
 
       - name: Build Docker image for scanning
@@ -160,12 +165,17 @@ jobs:
     
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: steps.trivy.outcome == 'failure'
+        if: steps.trivy-docker.outcome == 'failure'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
 
+      - name: Fail job if Trivy found issues
+        if: steps.trivy-docker.outcome == 'failure'
+        run: |
+          echo "❌ Trivy found vulnerabilities — failing the job."
+          exit 1
           
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
