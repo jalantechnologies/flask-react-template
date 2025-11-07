@@ -12,7 +12,7 @@ Generated at: {{ now }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
-    {{- $ := set $. "found" true }}
+    {{- $found = true }}
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
