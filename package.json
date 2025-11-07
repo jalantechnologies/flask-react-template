@@ -41,6 +41,7 @@
     "@datadog/browser-rum-react": "^6.6.4",
     "autoprefixer": "^10.4.18",
     "axios": "^1.0.0",
+    "babel-traverse": "^6.26.0",
     "clsx": "^2.1.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
@@ -107,7 +108,6 @@
   "overrides": {
     "braces": "3.0.3",
     "minimist": "^1.2.8",
-    "babel-traverse": "6.26.0",
     "nconf": "0.11.4"
   }
 }
