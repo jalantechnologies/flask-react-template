@@ -5,9 +5,11 @@ Generated at: {{ now }}
 
 
 ---
+{{- $found := false}}
 {{- range . }}
 {{- if .Vulnerabilities }}
 ## Target: {{ .Target }}
+{{- $found = true }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
@@ -29,4 +31,9 @@ Generated at: {{ now }}
 {{- end }}
 
 
+{{- end }}
+
+
+{{- if not $found  }}
+###No Vulnerabilities found
 {{- end }}
