@@ -1,14 +1,10 @@
-
-
 # Trivy File Scan Report
+
 Generated at: {{ now }}
 
-
 ---
-{{- $found := false }}
+
 {{- range . }}
-{{- if .Vulnerabilities }}
-     {{- $found = true }}
 ## Target: {{ .Target }}
 
 {{- if .Vulnerabilities }}
