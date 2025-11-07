@@ -22,6 +22,7 @@ twilio = "==9.2.4"
 waitress = "==3.0.1"
 datadog-api-client = "==2.31.0"
 temporalio = "==1.10.0"
+protobuf = "==5.29.5"
 
 [dev-packages]
 black = "==24.8.0"
