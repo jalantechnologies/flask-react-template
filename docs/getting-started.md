@@ -15,7 +15,7 @@ This project can run either in **Docker** or **locally with Node**. Choose which
 
 ---
 
-# Running the App
+## Running the App on Windows
 
 1. **Install Docker Desktop**  
    [Official Installation Guide](https://docs.docker.com/desktop/install/windows-install/)
@@ -24,15 +24,14 @@ This project can run either in **Docker** or **locally with Node**. Choose which
    Wait until the **Docker Engine** is running — the whale icon in the system tray should indicate it’s active.
 
 3. **Run the Application Stack**
+
    ```bash
-   # start everything
    docker compose -f docker-compose.dev.yml up --build
-   wait for 7-10 minutes to start all services 
+   ```
+  Wait for 7–10 minutes to start all services. The full stack (frontend, backend, MongoDB, Temporal, etc.) starts in hot-reload mode. Once the containers are healthy, your browser should open automatically at http://localhost:3000.
+  If it doesn’t, visit the URL manually.
 
-   The full stack (frontend, backend, MongoDB, Temporal, etc.) starts in hot-reload mode.
-   Once the containers are healthy, your browser should open automatically at http://localhost:3000.If it doesn’t, visit the URL manually.
-
-### 2. Running on Linux (npm run serve)
+### Running on Linux 
 
 ```bash
 # Install JS deps
