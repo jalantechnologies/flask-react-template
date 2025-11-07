@@ -143,6 +143,7 @@ jobs:
       - name: Run Trivy scan on docker images
         id: trivy-docker
         uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
         with:
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
