@@ -3,7 +3,7 @@
 Generated at: {{ now }}
 
 ---
-{{- $found = false }}
+{{- $found := false }}
 {{- range . }}
 ## Target: {{ .Target }}
 
