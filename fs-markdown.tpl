@@ -11,7 +11,6 @@ Generated at: {{ now }}
 
 
 {{- if .Vulnerabilities }}
-    {{- $found := true }}
 
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
@@ -29,8 +28,6 @@ Generated at: {{ now }}
 | {{ .ID }} | {{ .Severity }} | {{ .Title }} | {{ .Description | replace "\n" " " }} | {{ .Resolution | replace "\n" " " }} |
 {{- end }}
 {{- end }}
-
----
 
 {{- end }}
 
