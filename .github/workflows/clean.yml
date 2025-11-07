@@ -6,7 +6,7 @@ on:
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@namra/feat/adding-aws-depployment
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@clean
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
