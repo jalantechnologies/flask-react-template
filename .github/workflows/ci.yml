@@ -141,7 +141,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: 'image'
-          image-ref: '${{ vars.DOCKER_REGISTRY}}/${{ vars.DOCKER_USERNAME}}/flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
+          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
           template: '@docker-markdown.tpl'
           output: 'trivy-docker-report.md'
