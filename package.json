@@ -44,7 +44,7 @@
     "clsx": "^2.1.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
-    "cpx": "^1.5.0",
+    "cpx": "^1.2.1",
     "eslint-config-prettier": "^9.1.0",
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
@@ -82,7 +82,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-tailwindcss": "^3.14.2",
-    "forever": "^4.0.3",
+    "forever": "^1.0.1",
     "html-webpack-plugin": "^5.5.0",
     "husky": "^9.1.4",
     "js-yaml": "^4.1.0",
@@ -101,5 +101,10 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^5.2.0",
     "webpack-merge": "^5.8.0"
+  },
+  "overrides": {
+    "braces": "3.0.3",
+    "minimist": "^1.2.8"
   }
 }
+

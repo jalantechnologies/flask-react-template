@@ -1,5 +1,4 @@
 import os
-from unittest import mock
 
 from modules.authentication.internals.otp.otp_util import OTPUtil
 from modules.config.config_service import ConfigService
