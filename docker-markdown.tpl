@@ -5,7 +5,7 @@ Generated at: {{ now }}
 
 
 ---
-
+{{- $found := false }}
 {{- $_ := set $. "vulnCount" 0 }}
 {{- range . }}
 {{- if .Vulnerabilities }}
@@ -13,7 +13,7 @@ Generated at: {{ now }}
 {{- end}}
 
 {{- if .Vulnerabilities }}
-{{- $_ := set $. "vulnCount" (add $.vulnCount (len .Vulnerabilities)) }}
+    {{- $ := set $. "found" true }}
 ### Vulnerabilities
 | Package | Vulnerability | Severity | Installed | Fixed | Title |
 |----------|----------------|-----------|------------|--------|--------|
@@ -34,8 +34,6 @@ Generated at: {{ now }}
 
 {{- end }}
 
-{{- if eq $.vulnCount 0 }}
+{{- if not $.found }}
 ✅ **No vulnerabilities found.**
-{{- else }}
-⚠️ **{{ $.vulnCount }} vulnerabilities found.**
 {{- end }}
