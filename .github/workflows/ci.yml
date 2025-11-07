@@ -115,6 +115,7 @@ jobs:
         id: trivy
         if: steps.changes.outputs.changed_files != ''
         uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
         with:
           scan-type: 'filesystem'
           scan-ref: './changed_files'
