@@ -5,7 +5,10 @@ Generated at: {{ now }}
 ---
 {{- $found := false }}
 {{- range . }}
+{{- if .Vulnerabilities }}
 ## Target: {{ .Target }}
+{{- end}}
+
 
 {{- if .Vulnerabilities }}
     {{- $found := true }}
