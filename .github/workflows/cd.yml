@@ -39,6 +39,7 @@ jobs:
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
+          aws_use_ecr: true
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
