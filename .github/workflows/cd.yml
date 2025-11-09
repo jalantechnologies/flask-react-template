@@ -40,6 +40,9 @@ jobs:
           build_args: APP_ENV=preview
           context: app/.
           aws_use_ecr: true
+          aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: ${{vars.AWS_REGION}}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
@@ -50,6 +53,10 @@ jobs:
           app_name: flask-react-app
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
+          aws_use_ecr: true
+          aws_access_key_id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_region: ${{vars.AWS_REGION}}
           branch: ${{ github.event.pull_request.head.ref }}
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube
