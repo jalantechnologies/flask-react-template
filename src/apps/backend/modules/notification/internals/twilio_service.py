@@ -4,9 +4,10 @@ from twilio.base.exceptions import TwilioException
 from twilio.rest import Client
 
 from modules.config.config_service import ConfigService
+from modules.logger.logger import Logger
 from modules.notification.errors import ServiceError
 from modules.notification.internals.twilio_params import SMSParams
-from modules.notification.types import SendSMSParams
+from modules.notification.types import NotificationErrorCode, SendSMSParams
 
 
 class TwilioService:
@@ -27,6 +28,21 @@ class TwilioService:
             )
 
         except TwilioException as err:
+            recipient_phone_number = getattr(params.recipient_phone, "phone_number", None)
+            recipient_country_code = getattr(params.recipient_phone, "country_code", None)
+            twilio_error_code = getattr(err, "code", None)
+            twilio_status = getattr(err, "status", None)
+
+            Logger.error(
+                message=(
+                    "[notification.twilio_sms_failure] Twilio SMS delivery failed while sending OTP | "
+                    f"notification_error_code={NotificationErrorCode.SERVICE_ERROR} "
+                    f"recipient_country_code={recipient_country_code} "
+                    f"recipient_phone_number={recipient_phone_number} "
+                    f"twilio_error_code={twilio_error_code} "
+                    f"twilio_status={twilio_status}"
+                )
+            )
             raise ServiceError(
                 message="Our system is facing challenge to deliver OTP to you at the moment, and the team has been notified. We recommend you to come back and try again later",
                 original_error=err,
