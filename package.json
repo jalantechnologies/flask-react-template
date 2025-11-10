@@ -45,13 +45,12 @@
     "clsx": "^2.1.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
-    "cpx": "^1.2.1",
+    "cpx": "^1.5.0",
     "eslint-config-prettier": "^9.1.0",
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.8.1",
-    "minimatch": "^10.1.1",
     "path": "^0.12.7",
     "postcss": "^8.4.35",
     "postcss-loader": "^8.1.1",
@@ -104,12 +103,6 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^5.2.0",
     "webpack-merge": "^5.8.0"
-  },
-  "overrides": {
-    "braces": "3.0.3",
-    "minimist": "^1.2.8",
-    "@babel/traverse": "7.23.2",
-    "nconf": "0.11.4"
   }
 }
 
