@@ -26,8 +26,12 @@ class AccountNotificationPreferencesNotFoundError(AppError):
 
 
 class ServiceError(AppError):
-    def __init__(self, err: Exception) -> None:
-        super().__init__(message=err.args[2], code=NotificationErrorCode.SERVICE_ERROR)
-        self.code = NotificationErrorCode.SERVICE_ERROR
-        self.stack = getattr(err, "stack", None)
-        self.http_status_code = 503
+    def __init__(self, message: str, original_error: Optional[Exception] = None) -> None:
+        super().__init__(
+            code=NotificationErrorCode.SERVICE_ERROR,
+            http_status_code=503,
+            message=message,
+        )
+        self.original_error = original_error
+        self.original_error_message = str(original_error) if original_error else None
+        self.stack = getattr(original_error, "stack", None)
