@@ -198,6 +198,8 @@ jobs:
             fi
           done
 
+          echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
+
       - name: Run Trivy scan on IaC
         id: trivy_iac
         uses: aquasecurity/trivy-action@0.33.0
@@ -223,17 +225,17 @@ jobs:
       
       - name: Run Checkov action
         id: checkov
-        if : steps.changes.outputs.FILTERED_FILES != ''
+        if : ${{ steps.changes.outputs.FILTERED_FILES }} != ''
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: changed_files/
           output_format: 'json'
           output_file_path: checkov_result
           quiet: 'true'
-
+          soft_fail: 'true'
+      
       - name: Process Checkov results
         id: display
-        if : steps.changes.outputs.FILTERED_FILES != ''
         run: |
           echo "Checkov Results:"
           echo "# Checkov IaC Scan Report" > checkov_report.md
@@ -241,20 +243,28 @@ jobs:
           echo "| Check ID | Check Name | File | Lines | Resource | Result |" >> checkov_report.md
           echo "|-----------|-------------|-------|--------|-----------|---------|" >> checkov_report.md
 
-          jq -r '.results.failed_checks[] |
-            "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
+          jq -r '
+          if .results and .results.failed_checks then
+            .results.failed_checks[] |
+              "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
+          else
+            empty
+          end
           ' checkov_result/results_json.json >> checkov_report.md
+
+          failed=$(jq 'if .summary then .summary.failed else .failed end' checkov_result/results_json.json)
+          echo "errors=$failed" >> $GITHUB_OUTPUT
 
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: steps.checkov.outcome == 'failure'
+        if: steps.display.outputs.errors > 0
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_report.md
 
       - name: Fail job if Trivy found issues
-        if: steps.checkov.outcome == 'failure'
+        if: steps.display.outputs.errors > 0
         run: |
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
