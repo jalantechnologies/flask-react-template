@@ -1,6 +1,6 @@
 from typing import Optional
 
-from twilio.base.exceptions import TwilioException
+from twilio.base.exceptions import TwilioException, TwilioRestException
 from twilio.rest import Client
 
 from modules.config.config_service import ConfigService
@@ -28,10 +28,10 @@ class TwilioService:
             )
 
         except TwilioException as err:
-            recipient_phone_number = getattr(params.recipient_phone, "phone_number", None)
-            recipient_country_code = getattr(params.recipient_phone, "country_code", None)
-            twilio_error_code = getattr(err, "code", None)
-            twilio_status = getattr(err, "status", None)
+            recipient_phone_number = params.recipient_phone.phone_number
+            recipient_country_code = params.recipient_phone.country_code
+            twilio_error_code = err.code if isinstance(err, TwilioRestException) else None
+            twilio_status = err.status if isinstance(err, TwilioRestException) else None
 
             Logger.error(
                 message=(
