@@ -45,12 +45,13 @@
     "clsx": "^2.1.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
-    "cpx": "^1.5.0",
     "eslint-config-prettier": "^9.1.0",
+    "forever": "^4.0.3",
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.8.1",
+    "minimatch": "^10.1.1",
     "path": "^0.12.7",
     "postcss": "^8.4.35",
     "postcss-loader": "^8.1.1",
@@ -74,6 +75,7 @@
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
     "concurrently": "^7.2.2",
+    "cpy": "^12.1.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.1",
     "eslint": "^7.32.0",
@@ -84,7 +86,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-tailwindcss": "^3.14.2",
-    "forever": "^1.0.0",
+    "forever": "^4.0.3",
     "html-webpack-plugin": "^5.5.0",
     "husky": "^9.1.4",
     "js-yaml": "^4.1.0",
@@ -105,7 +107,6 @@
     "webpack-merge": "^5.8.0"
   },
   "overrides": {
-    "braces": "3.0.3",
     "minimist": "^1.2.8",
     "nconf": "0.11.4"
   }
