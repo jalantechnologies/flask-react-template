@@ -18,11 +18,13 @@ spec:
       labels:
         app: $KUBE_APP
     spec:
+      # Security: Run all containers as non-root user 999 to prevent privilege escalation
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
+        # Security: Enable kernel-level syscall filtering to reduce attack surface
         seccompProfile:
           type: RuntimeDefault
       affinity:
@@ -40,6 +42,7 @@ spec:
         - name: $KUBE_APP
           image: $KUBE_DEPLOYMENT_IMAGE
           imagePullPolicy: Always
+          # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -61,10 +64,13 @@ spec:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
+            # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
               mountPath: /opt/app/tmp
             - name: logs
               mountPath: /opt/app/logs
+            - name: system-tmp
+              mountPath: /tmp
           startupProbe:
             httpGet:
               path: /
@@ -85,4 +91,6 @@ spec:
         - name: tmp
           emptyDir: {}
         - name: logs
+          emptyDir: {}
+        - name: system-tmp
           emptyDir: {}
