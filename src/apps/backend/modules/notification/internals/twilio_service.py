@@ -27,7 +27,10 @@ class TwilioService:
             )
 
         except TwilioException as err:
-            raise ServiceError(err)
+            raise ServiceError(
+                message="Our system is facing challenge to deliver OTP to you at the moment. Please try again shortly.",
+                original_error=err,
+            ) from err
 
     @staticmethod
     def get_client() -> Client:
