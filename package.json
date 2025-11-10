@@ -36,6 +36,7 @@
   "author": "jalantechnologies",
   "license": "MIT",
   "dependencies": {
+    "@babel/traverse": "^7.28.5",
     "@datadog/browser-logs": "^6.6.4",
     "@datadog/browser-rum": "^6.6.4",
     "@datadog/browser-rum-react": "^6.6.4",
