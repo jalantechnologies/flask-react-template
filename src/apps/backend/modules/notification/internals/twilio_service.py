@@ -28,7 +28,7 @@ class TwilioService:
 
         except TwilioException as err:
             raise ServiceError(
-                message="Our system is facing challenge to deliver OTP to you at the moment. Please try again shortly.",
+                message="Our system is facing challenge to deliver OTP to you at the moment, and the team has been notified. We recommend you to come back and try again later",
                 original_error=err,
             ) from err
 
