@@ -107,7 +107,6 @@ jobs:
           ls changed_files/
           echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
-
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
@@ -150,7 +149,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
-
+          
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
         if: steps.trivy_docker.outcome == 'failure'
