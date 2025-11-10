@@ -242,6 +242,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+
       - name: Get changes in k8s folder and subfolders
         id: changes
         run: |
@@ -263,85 +270,64 @@ jobs:
             fi
           done
 
-          # Output filtered files
-          echo "Changed files in lib/kube/: $FILTERED_FILES"
-          ls changed_files/
-          echo "changed_files=$FILTERED_FILES" >> $GITHUB_OUTPUT
-
+      - name: Run Trivy scan on IaC
+        id: trivy_iac
+        uses: aquasecurity/trivy-action@0.33.0
+        continue-on-error: true
+        with:
+          scan-type: 'config'
+          scan-ref: 'changed_files'
+          format: 'template'
+          template: '@iac-markdown.tpl'
+          output: 'trivy-iac-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 1
+          
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: steps.trivy_iac.outcome == 'failure'
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-iac-report.md
+      
       - name: Run Checkov action
         id: checkov
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: changed_files/
-          output_format: github_md
-          # output_file_path: checkov_result.json
+          output_format: 'json'
+          output_file_path: checkov_result
           quiet: 'true'
-          soft_fail: 'true'
+          soft_fail: 'true'      
 
-      # - uses: buildingcash/json-to-markdown-table-action@v1
-      #   id: table
-      #   with:
-      #     json: '${{ steps.checkov.outputs.results }}'
+      - name: Display Results
+        id: display
+        run: |
+          echo "Checkov Results:"
+          echo "# Checkov IaC Scan Report" > checkov_report.md
+          echo "" >> checkov_report.md
+          echo "| Check ID | Check Name | File | Lines | Resource | Result |" >> checkov_report.md
+          echo "|-----------|-------------|-------|--------|-----------|---------|" >> checkov_report.md
 
-      # - name: Display Results
-      #   run: |
-      #     echo "Checkov Results:"
-      #     echo "${{ toJson(steps.checkov.outputs.results) }}" >> checkout_result.json
-      #     cat checkout_result.json
-          
- 
-      # - name: Get changed Kubernetes manifests
-      #   id: changes
-      #   run: |
-      #     # Determine the base commit (works for PRs or pushes)
-      #     if [ "${{ github.event_name }}" = "pull_request" ]; then
-      #       base_ref="${{ github.base_ref }}"
-      #       git fetch origin "$base_ref" --depth=1
-      #       git diff --name-only origin/$base_ref HEAD -- 'lib/kube/**' > changed_files.txt
-      #     else
-      #       git diff --name-only HEAD^ HEAD -- 'lib/kube/**' > changed_files.txt
-      #     fi
+          jq -r '.results.failed_checks[] |
+            "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
+          ' checkov_result/results_json.json >> checkov_report.md
 
-      #     echo "Changed files:"
-      #     cat changed_files.txt || true
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: checkov_report.md
 
-      #     if [ -s changed_files.txt ]; then
-      #       echo "changed=true" >> $GITHUB_OUTPUT
-      #       # Join filenames with space so we can pass them to Checkov
-      #       echo "files=$(tr '\n' ' ' < changed_files.txt)" >> $GITHUB_OUTPUT
-      #     else
-      #       echo "changed=false" >> $GITHUB_OUTPUT
-      #     fi
-
-
-      # - name: Run Checkov on Kubernetes manifests
-      #   if: steps.changes.outputs.changed == 'true'
-      #   run: |
-      #     pip install checkov
-      #     echo "Running Checkov on changed files:"
-      #     echo "${{ steps.changes.outputs.files }}"
-      #     checkov -f  ${{ steps.changes.outputs.files }}  \
-      #     --skip-check CKV_K8S_8,CKV_K8S_9  \
-      #     --quiet --soft-fail \
-      #     --output json --download-external-modules true \
-      #     --framework kubernetes > result.json
-
-      #     echo "# Checkov Scan Report" > checkov_report.md
-      #     echo "" >> checkov_report.md
-      #     echo "| Check ID | Check Name | File | Lines | Resource | Result |" >> checkov_report.md
-      #     echo "|-----------|-------------|-------|--------|-----------|---------|" >> checkov_report.md
-
-      #     jq -r '.results.failed_checks[] |
-      #       "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
-      #     ' result.json >> checkov_report.md
-
-
-      # - name: Comment PR with checkov results
-      #   continue-on-error: true
-      #   uses: marocchino/sticky-pull-request-comment@v2
-      #   with:
-      #     recreate: true
-      #     path: checkov_report.md
+      - name: Fail job if Trivy found issues
+        if: steps.trivy_iac.outcome == 'failure'
+        run: |
+          echo "❌ Trivy found vulnerabilities — failing the job."
+          exit 1
 
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
