@@ -1,5 +1,0 @@
-
-
-#Description: This issue is not fixable and pertains to babel-traverse. 
-#The version 7.23.2 being recommended by trivy is not available at https://www.npmjs.com/package/babel-traverse.
-# CVE-2023-45133 
