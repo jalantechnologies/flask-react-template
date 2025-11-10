@@ -48,6 +48,13 @@ spec:
                       - platform-cluster-01-staging-pool
       imagePullSecrets:
         - name: regcred
+      resources:
+        requests:
+          cpu: '250m'
+          memory: '400Mi'        
+        limits:
+          cpu: '250m'
+          memory: '800Mi' 
       containers:
         - name: $KUBE_APP
           image: $KUBE_DEPLOYMENT_IMAGE
@@ -62,9 +69,11 @@ spec:
                 - ALL
           resources:
             requests:
-             memory: '400Mi'        
+              cpu: '250m'
+              memory: '400Mi'        
             limits:
-             memory: '800Mi' 
+              cpu: '250m'
+              memory: '800Mi' 
           ports:
             - containerPort: 8080
           env:
