@@ -34,7 +34,6 @@ spec:
               imagePullPolicy: Always
               # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
               securityContext:
-                allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
                 capabilities:

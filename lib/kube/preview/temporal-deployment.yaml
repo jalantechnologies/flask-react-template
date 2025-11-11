@@ -55,7 +55,6 @@ spec:
             - name: temporal-ui-config
               mountPath: /tmp/ui-config
           securityContext:
-            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             capabilities:
