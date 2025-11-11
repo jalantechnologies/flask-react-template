@@ -11,16 +11,17 @@ spec:
   schedule: "10 * * * *"
   concurrencyPolicy: "Replace"
   jobTemplate:
-    spec:
+    spec: 
       template:
         metadata:
           labels:
             app: $KUBE_APP-cronjob
         spec:
-          # Security: Run all containers as non-root user 999 to prevent privilege escalation
+          automountServiceAccountToken: false
+          # Security: Run all containers as non-root user 10001 to prevent privilege escalation
           securityContext:
             runAsNonRoot: true
-            runAsUser: 999
+            runAsUser: 10001
             runAsGroup: 999
             fsGroup: 999
             # Security: Enable kernel-level syscall filtering to reduce attack surface
@@ -34,12 +35,20 @@ spec:
               imagePullPolicy: Always
               # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
               securityContext:
+                allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
                 capabilities:
                   drop:
                     - ALL
               command: [ "npm", "run", "script", "--file=my_worker_script" ]
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: '400Mi'
+                requests:
+                  cpu: 250m
+                  memory: '200Mi'
               env:
                 - name: WEB_APP_HOST
                   value: $KUBE_INGRESS_HOSTNAME

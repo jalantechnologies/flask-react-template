@@ -23,10 +23,11 @@ spec:
       labels:
         app: temporal
     spec:
-      # Security: Run all containers as non-root user 999 to prevent privilege escalation
+      automountServiceAccountToken: false
+      # Security: Run all containers as non-root user 10001 to prevent privilege escalation
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
+        runAsUser: 10001
         runAsGroup: 999
         fsGroup: 999
         # Security: Enable kernel-level syscall filtering to reduce attack surface
@@ -48,6 +49,7 @@ spec:
       initContainers:
         - name: copy-temporal-config
           image: temporalio/auto-setup:1.27.2
+          imagePullPolicy: Always
           command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
           volumeMounts:
             - name: temporal-config
@@ -55,19 +57,19 @@ spec:
             - name: temporal-ui-config
               mountPath: /tmp/ui-config
           securityContext:
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
-
-      resources:
-        requests:
-          cpu: 250m
-          memory: '200Mi'
-        limits:
-          cpu: 250m
-          memory: '1300Mi'
+          resources:
+            requests:
+              cpu: 250m
+              memory: '200Mi'
+            limits:
+              cpu: 500m
+              memory: '400Mi'
       containers:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2
