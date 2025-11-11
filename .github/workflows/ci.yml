@@ -170,6 +170,113 @@ jobs:
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
           
+  iac_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get changes in k8s folder and subfolders
+        id: changes
+        run: |
+          # Fetch base branch
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+
+          # Get all changed files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+
+          # Initialize filtered variable
+          FILTERED_FILES=""
+          mkdir -p changed_files/
+          # Loop and copy only files in k8s/ or subdirectories
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" && "$file" == lib/kube/* ]]; then
+              mkdir -p "changed_files/$(dirname "$file")"
+              cp "$file" "changed_files/$file"
+              FILTERED_FILES="$FILTERED_FILES $file"
+            fi
+          done
+
+          # Output filtered files
+          echo "Changed files in lib/kube/: $FILTERED_FILES"
+          ls changed_files/
+          echo "changed_files=$FILTERED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Run Checkov action
+        id: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: changed_files/
+          output_format: github_md
+          # output_file_path: checkov_result.json
+          quiet: 'true'
+          soft_fail: 'true'
+
+      # - uses: buildingcash/json-to-markdown-table-action@v1
+      #   id: table
+      #   with:
+      #     json: '${{ steps.checkov.outputs.results }}'
+
+      # - name: Display Results
+      #   run: |
+      #     echo "Checkov Results:"
+      #     echo "${{ toJson(steps.checkov.outputs.results) }}" >> checkout_result.json
+      #     cat checkout_result.json
+          
+ 
+      # - name: Get changed Kubernetes manifests
+      #   id: changes
+      #   run: |
+      #     # Determine the base commit (works for PRs or pushes)
+      #     if [ "${{ github.event_name }}" = "pull_request" ]; then
+      #       base_ref="${{ github.base_ref }}"
+      #       git fetch origin "$base_ref" --depth=1
+      #       git diff --name-only origin/$base_ref HEAD -- 'lib/kube/**' > changed_files.txt
+      #     else
+      #       git diff --name-only HEAD^ HEAD -- 'lib/kube/**' > changed_files.txt
+      #     fi
+
+      #     echo "Changed files:"
+      #     cat changed_files.txt || true
+
+      #     if [ -s changed_files.txt ]; then
+      #       echo "changed=true" >> $GITHUB_OUTPUT
+      #       # Join filenames with space so we can pass them to Checkov
+      #       echo "files=$(tr '\n' ' ' < changed_files.txt)" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "changed=false" >> $GITHUB_OUTPUT
+      #     fi
+
+
+      # - name: Run Checkov on Kubernetes manifests
+      #   if: steps.changes.outputs.changed == 'true'
+      #   run: |
+      #     pip install checkov
+      #     echo "Running Checkov on changed files:"
+      #     echo "${{ steps.changes.outputs.files }}"
+      #     checkov -f  ${{ steps.changes.outputs.files }}  \
+      #     --skip-check CKV_K8S_8,CKV_K8S_9  \
+      #     --quiet --soft-fail \
+      #     --output json --download-external-modules true \
+      #     --framework kubernetes > result.json
+
+      #     echo "# Checkov Scan Report" > checkov_report.md
+      #     echo "" >> checkov_report.md
+      #     echo "| Check ID | Check Name | File | Lines | Resource | Result |" >> checkov_report.md
+      #     echo "|-----------|-------------|-------|--------|-----------|---------|" >> checkov_report.md
+
+      #     jq -r '.results.failed_checks[] |
+      #       "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
+      #     ' result.json >> checkov_report.md
+
+
+      # - name: Comment PR with checkov results
+      #   continue-on-error: true
+      #   uses: marocchino/sticky-pull-request-comment@v2
+      #   with:
+      #     recreate: true
+      #     path: checkov_report.md
+
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
