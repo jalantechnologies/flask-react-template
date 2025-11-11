@@ -1,3 +1,4 @@
+---
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -5,30 +6,36 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      npm-all:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
-    reviewers:
-      - "platform-team"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      pip-all:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "security"
 
-  # NEW: GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      gha-all:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
-      - "github-actions"
       - "security"
-    reviewers:
-      - "platform-team"
