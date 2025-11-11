@@ -17,12 +17,29 @@ spec:
           labels:
             app: $KUBE_APP-cronjob
         spec:
+          # Security: Run all containers as non-root user 999 to prevent privilege escalation
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+            # Security: Enable kernel-level syscall filtering to reduce attack surface
+            seccompProfile:
+              type: RuntimeDefault
           imagePullSecrets:
             - name: regcred
           containers:
             - name: $KUBE_APP
               image: $KUBE_DEPLOYMENT_IMAGE
               imagePullPolicy: Always
+              # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
               command: [ "npm", "run", "script", "--file=my_worker_script" ]
               env:
                 - name: WEB_APP_HOST
@@ -30,4 +47,15 @@ spec:
               envFrom:
                 - secretRef:
                     name: $DOPPLER_MANAGED_SECRET_NAME
+              volumeMounts:
+                # Security: Use temporary volume for writable directory since root filesystem is read-only
+                - name: tmp
+                  mountPath: /opt/app/tmp
+                - name: system-tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+            - name: system-tmp
+              emptyDir: {}
           restartPolicy: OnFailure

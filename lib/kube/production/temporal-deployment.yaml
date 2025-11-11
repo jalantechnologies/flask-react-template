@@ -23,6 +23,15 @@ spec:
       labels:
         app: temporal
     spec:
+      # Security: Run all containers as non-root user 999 to prevent privilege escalation
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        # Security: Enable kernel-level syscall filtering to reduce attack surface
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -35,15 +44,50 @@ spec:
       imagePullSecrets:
         - name: regcred
 
+      # Init container: Copies Temporal configuration files to shared volumes before main containers start
+      initContainers:
+        - name: copy-temporal-config
+          image: temporalio/auto-setup:1.27.2
+          command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
+          volumeMounts:
+            - name: temporal-config
+              mountPath: /tmp/config
+            - name: temporal-ui-config
+              mountPath: /tmp/ui-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+
       containers:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2
           imagePullPolicy: Always
+          # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 7233
+          # Security: USER env var required when running as non-root with dropped capabilities
+          env:
+            - name: USER
+              value: "temporal"
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: temporal-config
+              mountPath: /etc/temporal/config
           resources:
             requests:
               memory: '200Mi'
@@ -52,9 +96,20 @@ spec:
         - name: temporal-admin-tools
           image: temporalio/admin-tools:1.27.2-tctl-1.18
           imagePullPolicy: Always
+          # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           stdin: true
           tty: true
           resources:
@@ -66,11 +121,24 @@ spec:
         - name: temporal-ui
           image: temporalio/ui:2.37.2
           imagePullPolicy: Always
+          # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: temporal-ui-config
+              mountPath: /home/ui-server/config
           resources:
             requests:
               memory: '200Mi'
@@ -93,12 +161,35 @@ spec:
         - name: python-worker
           image: $KUBE_DEPLOYMENT_IMAGE
           workingDir: /opt/app/src/apps/backend
+          # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
           envFrom:
             - secretRef:
                 name: $DOPPLER_MANAGED_SECRET_NAME
+          volumeMounts:
+            # Security: Use temporary volumes for writable directories since root filesystem is read-only
+            - name: tmp
+              mountPath: /opt/app/tmp
+            - name: logs
+              mountPath: /opt/app/logs
           resources:
             requests:
               memory: '150Mi'
             limits:
               memory: '300Mi'
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: temporal-config
+          emptyDir: {}
+        - name: temporal-ui-config
+          emptyDir: {}
