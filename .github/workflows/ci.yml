@@ -11,6 +11,15 @@ permissions:
   id-token: write       # Allow OIDC tokens for secure cloud authentication
 
 jobs:
+  test-oidc:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test OIDC Authentication
+        run: |
+          aws sts get-caller-identity
+          echo "OIDC authentication successful"
+
   lint:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
