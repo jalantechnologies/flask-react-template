@@ -36,4 +36,3 @@ spec:
                 name: temporal-service
                 port:
                   number: 8080
-
