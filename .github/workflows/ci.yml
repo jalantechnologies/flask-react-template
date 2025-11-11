@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11'
 
       - name: Setup Node.js
-        uses: actions/setup-node@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903
         with:
           node-version: '22.13.1'
           cache: 'npm'
