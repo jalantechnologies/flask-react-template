@@ -78,6 +78,92 @@ jobs:
           echo "Code review placeholder"
           echo "Future implementation: AI-powered review for architecture, security, and best practices"
 
+  scan: 
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
+          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
+
+      - name: Get changes
+        id: changes
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" ]]; then
+              mkdir -p "changed_files/$(dirname "$file")"
+                cp "$file" "changed_files/$file"
+              fi
+          done
+          echo $CHANGED_FILES
+          ls changed_files/
+          echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy scan on changed files
+        id: trivy
+        if: steps.changes.outputs.changed_files != ''
+        uses: aquasecurity/trivy-action@0.33.0
+        continue-on-error: true
+        with:
+          scan-type: 'filesystem'
+          scan-ref: './changed_files'
+          format: 'template'
+          template: '@fs-markdown.tpl'
+          output: 'trivy-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 1
+      
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: steps.trivy.outcome == 'failure'
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-report.md
+
+      - name: Build Docker image for scanning
+        run: |
+          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
+
+      - name: Run Trivy scan on docker images
+        id: trivy_docker
+        uses: aquasecurity/trivy-action@0.33.0
+        continue-on-error: true
+        with:
+          scan-type: 'image'
+          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
+          format: 'template'
+          template: '@docker-markdown.tpl'
+          output: 'trivy-docker-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 1
+          
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: steps.trivy_docker.outcome == 'failure'
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-docker-report.md
+      
+      - name: Fail job if Trivy found issues
+        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' 
+        run: |
+          echo "❌ Trivy found vulnerabilities — failing the job."
+          exit 1
+          
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
