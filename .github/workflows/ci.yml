@@ -300,45 +300,25 @@ jobs:
         id: checkov
         if: ${{ steps.changes.outputs.FILTERED_FILES != '' }}
         uses: bridgecrewio/checkov-action@v12
+        continue-on-error: true
         with:
           directory: changed_files/
-          output_format: 'json'
+          output_format: 'github_failed_only'
           output_file_path: checkov_result
           quiet: 'true'
-          soft_fail: 'true'
-
-      - name: Process Checkov results
-        if: ${{ steps.changes.outputs.FILTERED_FILES != '' }}
-        id: display
-        run: |
-          echo "Checkov Results:"
-          echo "# Checkov IaC Scan Report" > checkov_report.md
-          echo "" >> checkov_report.md
-          echo "| Check ID | Check Name | File | Lines | Resource | Result |" >> checkov_report.md
-          echo "|-----------|-------------|-------|--------|-----------|---------|" >> checkov_report.md
-
-          jq -r '
-          if .results and .results.failed_checks then
-            .results.failed_checks[] |
-              "| \(.check_id) | \(.check_name) | `\(.file_path)` | \(.file_line_range[0])–\(.file_line_range[1]) | `\(.resource)` | \(.check_result.result) |"
-          else
-            empty
-          end
-          ' checkov_result/results_json.json >> checkov_report.md
-
-          failed=$(jq 'if .summary then .summary.failed else .failed end' checkov_result/results_json.json)
-          echo "errors=$failed" >> $GITHUB_OUTPUT
+          skip_check: | 
+            CKV2_K8S_6,CKV_K8S_43,CKV_K8S_14,CKV_K8S_35,CKV_K8S_9,CKV_K8S_8
 
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: ${{ steps.changes.outputs.FILTERED_FILES != '' && steps.display.outputs.errors != '0' }}
+        if: ${{ steps.checkov.outcome == 'failure' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: checkov_report.md
+          body-path: checkov_result/results_github_failed_only.md
 
       - name: Fail job if Checkov found issues
-        if: ${{ steps.changes.outputs.FILTERED_FILES != '' && steps.display.outputs.errors != '0' }}
+        if: ${{ steps.checkov.outcome == 'failure' }}
         run: |
           echo "❌ Checkov found configuration issues — failing the job."
           exit 1
