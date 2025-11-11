@@ -1,0 +1,25 @@
+name: Test OIDC
+
+on:
+  push:
+    branches: [ rehan/test/oidc-permissions ]
+  pull_request:
+    branches: [ rehan/test/oidc-permissions ]
+
+jobs:
+  test-aws-access:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::448033705902:role/github-oidc-test-role
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+          output-env-credentials: true
+
+      - name: Test AWS access
+        run: aws sts get-caller-identity
