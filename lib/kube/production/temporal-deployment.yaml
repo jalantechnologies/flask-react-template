@@ -44,6 +44,23 @@ spec:
       imagePullSecrets:
         - name: regcred
 
+      initContainers:
+        - name: copy-temporal-config
+          image: temporalio/auto-setup:1.27.2
+          command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
+          volumeMounts:
+            - name: temporal-config
+              mountPath: /tmp/config
+            - name: temporal-ui-config
+              mountPath: /tmp/ui-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+
       containers:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2
@@ -68,6 +85,8 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: temporal-config
+              mountPath: /etc/temporal/config
             - name: temporal-var
               mountPath: /var/lib/temporal
           resources:
@@ -119,7 +138,7 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            - name: temporal-config
+            - name: temporal-ui-config
               mountPath: /home/ui-server/config
           resources:
             requests:
@@ -170,6 +189,10 @@ spec:
         - name: tmp
           emptyDir: {}
         - name: logs
+          emptyDir: {}
+        - name: temporal-config
+          emptyDir: {}
+        - name: temporal-ui-config
           emptyDir: {}
         - name: temporal-var
           emptyDir: {}
