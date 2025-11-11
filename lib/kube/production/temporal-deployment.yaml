@@ -88,8 +88,6 @@ spec:
               mountPath: /tmp
             - name: temporal-config
               mountPath: /etc/temporal/config
-            - name: temporal-var
-              mountPath: /var/lib/temporal
           resources:
             requests:
               memory: '200Mi'
@@ -190,12 +188,6 @@ spec:
         - name: tmp
           emptyDir: {}
         - name: logs
-          emptyDir: {}
-        - name: temporal-config
-          emptyDir: {}
-        - name: temporal-ui-config
-          emptyDir: {}
-        - name: temporal-var
           emptyDir: {}
         - name: temporal-config
           emptyDir: {}
