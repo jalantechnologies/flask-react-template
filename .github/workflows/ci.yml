@@ -305,7 +305,7 @@ jobs:
       
       - name: Run Checkov action
         id: checkov
-        if : ${{ steps.changes.outputs.FILTERED_FILES }} != ''
+        if: ${{ steps.changes.outputs.FILTERED_FILES != '' }}
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: changed_files/
@@ -313,8 +313,9 @@ jobs:
           output_file_path: checkov_result
           quiet: 'true'
           soft_fail: 'true'
-      
+
       - name: Process Checkov results
+        if: ${{ steps.changes.outputs.FILTERED_FILES != '' }}
         id: display
         run: |
           echo "Checkov Results:"
@@ -337,16 +338,16 @@ jobs:
 
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: steps.display.outputs.errors > 0
+        if: ${{ steps.changes.outputs.FILTERED_FILES != '' && steps.display.outputs.errors != '0' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_report.md
 
-      - name: Fail job if Trivy found issues
-        if: steps.display.outputs.errors > 0
+      - name: Fail job if Checkov found issues
+        if: ${{ steps.changes.outputs.FILTERED_FILES != '' && steps.display.outputs.errors != '0' }}
         run: |
-          echo "❌ Trivy found vulnerabilities — failing the job."
+          echo "❌ Checkov found configuration issues — failing the job."
           exit 1
 
   test:
