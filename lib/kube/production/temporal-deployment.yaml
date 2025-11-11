@@ -44,6 +44,7 @@ spec:
       imagePullSecrets:
         - name: regcred
 
+      # Init container: Copies Temporal configuration files to shared volumes before main containers start
       initContainers:
         - name: copy-temporal-config
           image: temporalio/auto-setup:1.27.2
@@ -195,4 +196,8 @@ spec:
         - name: temporal-ui-config
           emptyDir: {}
         - name: temporal-var
+          emptyDir: {}
+        - name: temporal-config
+          emptyDir: {}
+        - name: temporal-ui-config
           emptyDir: {}
