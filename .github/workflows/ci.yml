@@ -170,13 +170,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Extract branch name
-        id: extract_branch
-        run: |
-          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
-          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
-
       - name: Get changes in k8s folder and subfolders
         id: changes
         run: |
