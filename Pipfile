@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 bcrypt = "==4.0.1"
-certifi = "==2023.11.17"
+certifi = "==2024.7.4"
 flask = "==3.0.0"
 flask-cors = "==4.0.2"
 gunicorn = "==22.0.0"
