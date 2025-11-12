@@ -23,10 +23,11 @@ spec:
       labels:
         app: temporal
     spec:
-      # Security: Run all containers as non-root user 999 to prevent privilege escalation
+      automountServiceAccountToken: false
+      # Security: Run all containers as non-root user 10001 to prevent privilege escalation
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
+        runAsUser: 10001
         runAsGroup: 999
         fsGroup: 999
         # Security: Enable kernel-level syscall filtering to reduce attack surface
@@ -48,12 +49,20 @@ spec:
       initContainers:
         - name: copy-temporal-config
           image: temporalio/auto-setup:1.27.2
+          imagePullPolicy: Always
           command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
           volumeMounts:
             - name: temporal-config
               mountPath: /tmp/config
             - name: temporal-ui-config
               mountPath: /tmp/ui-config
+          resources:
+            requests:
+              cpu: 250m
+              memory: '200Mi'
+            limits:
+              cpu: 500m
+              memory: '400Mi'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -90,8 +99,10 @@ spec:
               mountPath: /etc/temporal/config
           resources:
             requests:
+              cpu: 250m
               memory: '200Mi'
             limits:
+              cpu: 500m
               memory: '400Mi'
         - name: temporal-admin-tools
           image: temporalio/admin-tools:1.27.2-tctl-1.18
@@ -114,8 +125,10 @@ spec:
           tty: true
           resources:
             requests:
+              cpu: 250m
               memory: '100Mi'
             limits:
+              cpu: 500m
               memory: '200Mi'
 
         - name: temporal-ui
@@ -141,8 +154,10 @@ spec:
               mountPath: /home/ui-server/config
           resources:
             requests:
+              cpu: 250m
               memory: '200Mi'
             limits:
+              cpu: 500m
               memory: '400Mi'
           startupProbe:
             httpGet:
@@ -181,8 +196,10 @@ spec:
               mountPath: /opt/app/logs
           resources:
             requests:
+              cpu: 250m
               memory: '150Mi'
             limits:
+              cpu: 500m
               memory: '300Mi'
       volumes:
         - name: tmp
