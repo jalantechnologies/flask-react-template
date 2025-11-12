@@ -101,6 +101,9 @@ spec:
               port: 8080
             initialDelaySeconds: 30
       volumes:
+        # - name: secret-volume
+        #   secret:
+        #     secretName: $DOPPLER_MANAGED_SECRET_NAME
         - name: tmp
           emptyDir: {}
         - name: logs
