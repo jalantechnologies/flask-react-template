@@ -10,13 +10,14 @@ from modules.application.application_service import ApplicationService
 from modules.application.errors import AppError, WorkerClientConnectionError
 from modules.application.workers.health_check_worker import HealthCheckWorker
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
-from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
-
 load_dotenv()
+
+from modules.config.config_service import ConfigService
+
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
