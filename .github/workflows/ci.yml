@@ -168,7 +168,6 @@ jobs:
             envsubst < "$file" > "$tmpfile" && mv "$tmpfile" "$file"
           done
 
-
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
