@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract branch name
         id: extract_branch
@@ -116,7 +116,7 @@ jobs:
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@0.33.0
+        uses: aquasecurity/trivy-action@0.33.1
         continue-on-error: true
         with:
           scan-type: 'filesystem'
@@ -130,7 +130,7 @@ jobs:
           exit-code: 1
       
       - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         if: steps.trivy.outcome == 'failure'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
-        uses: aquasecurity/trivy-action@0.33.0
+        uses: aquasecurity/trivy-action@0.33.1
         continue-on-error: true
         with:
           scan-type: 'config'
@@ -185,7 +185,7 @@ jobs:
           exit-code: 1
 
       - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'failure' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
@@ -204,7 +204,7 @@ jobs:
           quiet: 'true'
 
       - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         if: ${{ steps.checkov.outcome == 'failure' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
@@ -217,7 +217,7 @@ jobs:
 
       - name: Run Trivy scan on docker images
         id: trivy_docker
-        uses: aquasecurity/trivy-action@0.33.0
+        uses: aquasecurity/trivy-action@0.33.1
         continue-on-error: true
         with:
           scan-type: 'image'
@@ -231,7 +231,7 @@ jobs:
           exit-code: 1
           
       - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         if: steps.trivy_docker.outcome == 'failure'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
