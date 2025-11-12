@@ -1,0 +1,37 @@
+# Default resource limits for containers and pods
+# Aligned with IaC team's standardized resource specifications
+# All containers: 250m/500m CPU, varying memory based on container type
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: $KUBE_NS
+spec:
+  limits:
+    # Container resource limits (matching IaC specifications)
+    - max:
+        cpu: "1"        # Max 1 CPU per container (2x IaC limit for flexibility)
+        memory: 1Gi     # Max 1GB per container (above highest IaC limit of 800Mi)
+      min:
+        cpu: 50m        # Min below IaC request of 250m
+        memory: 50Mi    # Min below IaC request of 100Mi
+      default:
+        cpu: 500m       # Match IaC CPU limit
+        memory: 400Mi   # Match IaC standard memory limit
+      defaultRequest:
+        cpu: 250m       # Match IaC CPU request
+        memory: 200Mi   # Match IaC standard memory request
+      type: Container
+
+    # Pod resource limits (sum of all containers in pod)
+    - max:
+        cpu: "2"        # Max 2 CPUs per pod (temporal pod has 4 containers)
+        memory: 2Gi     # Max 2GB per pod (temporal pod total)
+      type: Pod
+
+    # Storage limits
+    - max:
+        storage: 20Gi   # Max 20GB per volume (generous for logs/temp)
+      min:
+        storage: 500Mi  # Min 500MB
+      type: PersistentVolumeClaim

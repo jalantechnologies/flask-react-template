@@ -1,0 +1,115 @@
+---
+# Block all incoming traffic by default
+# This prevents unauthorized access to our pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: $KUBE_NS
+spec:
+  podSelector: {}  # Apply to all pods
+  policyTypes:
+    - Ingress
+
+---
+# Block all outgoing traffic by default
+# This prevents data exfiltration and unauthorized external calls
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: $KUBE_NS
+spec:
+  podSelector: {}  # Apply to all pods
+  policyTypes:
+    - Egress
+
+---
+# Allow our app to make necessary outbound connections
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      app: $KUBE_APP
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS lookups (needed for domain resolution)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    
+    # Allow communication with Temporal service
+    - to:
+        - podSelector:
+            matchLabels:
+              app: temporal
+      ports:
+        - protocol: TCP
+          port: 7233
+    
+    # Allow HTTPS calls to external APIs
+    - ports:
+        - protocol: TCP
+          port: 443
+
+---
+# Allow nginx ingress to reach our app
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-app
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      app: $KUBE_APP
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from nginx ingress controller (in default namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Allow Temporal to connect to databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-temporal-egress
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      app: temporal
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS lookups
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    
+    # Allow database connections
+    - ports:
+        - protocol: TCP
+          port: 5432   # PostgreSQL
+        - protocol: TCP
+          port: 27017  # MongoDB

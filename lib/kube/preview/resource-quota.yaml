@@ -1,0 +1,24 @@
+# Resource limits for preview environments
+# Aligned with IaC resource optimization: 250m/500m CPU, 400Mi/800Mi memory per container
+# Allows 2-3 concurrent previews per staging node
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: preview-quota
+  namespace: $KUBE_NS
+spec:
+  hard:
+    # CPU limits (based on IaC optimization: 250m request, 500m limit per container)
+    requests.cpu: "1"      # ~4 containers per preview (250m x 4)
+    limits.cpu: "2"        # ~4 containers per preview (500m x 4)
+
+    # Memory limits (based on IaC optimization: 400Mi request, 800Mi limit per container)
+    requests.memory: 1.6Gi # ~4 containers per preview (400Mi x 4)
+    limits.memory: 3.2Gi   # ~4 containers per preview (800Mi x 4)
+
+    # Object limits (align with current usage patterns)
+    pods: "8"                     # Current: 5-8 pods per preview
+    services: "4"                 # Max 4 services per preview
+    configmaps: "8"               # Max 8 config maps
+    persistentvolumeclaims: "2"   # Max 2 storage volumes
+    secrets: "8"                  # Max 8 secrets
