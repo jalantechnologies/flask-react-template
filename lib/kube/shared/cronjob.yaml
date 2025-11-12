@@ -67,5 +67,3 @@ spec:
             - name: system-tmp
               emptyDir: {}
           restartPolicy: OnFailure
-
-
