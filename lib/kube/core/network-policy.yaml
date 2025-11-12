@@ -70,8 +70,10 @@ metadata:
   namespace: $KUBE_NS
 spec:
   podSelector:
-    matchLabels:
-      app: $KUBE_APP
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [$KUBE_APP, "flask-react-app-preview"]
   policyTypes:
     - Ingress
   ingress:
