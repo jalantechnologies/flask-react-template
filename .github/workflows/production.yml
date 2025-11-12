@@ -18,16 +18,16 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout app
-        uses: actions/checkout@v3
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           path: app
 
       - name: Checkout github-ci
-        uses: actions/checkout@v3
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: v3.2.6
+          ref: 1e27a09243327a4ed01d42a9bc54965436ac0ba4
 
       - name: Build Docker image
         id: build
