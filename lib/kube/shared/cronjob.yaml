@@ -17,12 +17,13 @@ spec:
           labels:
             app: $KUBE_APP-cronjob
         spec:
-          # Security: Run all containers as non-root user 999 to prevent privilege escalation
+          automountServiceAccountToken: false
+          # Security: Run all containers as non-root user 10001 to prevent privilege escalation
           securityContext:
             runAsNonRoot: true
-            runAsUser: 999
-            runAsGroup: 999
-            fsGroup: 999
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
             # Security: Enable kernel-level syscall filtering to reduce attack surface
             seccompProfile:
               type: RuntimeDefault
@@ -41,6 +42,13 @@ spec:
                   drop:
                     - ALL
               command: [ "npm", "run", "script", "--file=my_worker_script" ]
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: '400Mi'
+                requests:
+                  cpu: 250m
+                  memory: '200Mi'
               env:
                 - name: WEB_APP_HOST
                   value: $KUBE_INGRESS_HOSTNAME
@@ -51,11 +59,8 @@ spec:
                 # Security: Use temporary volume for writable directory since root filesystem is read-only
                 - name: tmp
                   mountPath: /opt/app/tmp
-                - name: system-tmp
-                  mountPath: /tmp
           volumes:
             - name: tmp
               emptyDir: {}
-            - name: system-tmp
-              emptyDir: {}
           restartPolicy: OnFailure
+

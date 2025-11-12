@@ -137,6 +137,80 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-report.md
 
+      - name: Get changes in k8s folder and subfolders
+        id: iac_changes
+        run: |
+          # Fetch base branch
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+
+          # Get all changed files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+
+          # Initialize filtered variable
+          FILTERED_FILES=""
+          mkdir -p iac_changed_files/
+          # Loop and copy only files in k8s/ or subdirectories
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" && "$file" == lib/kube/* ]]; then
+              mkdir -p "iac_changed_files/$(dirname "$file")"
+              cp "$file" "iac_changed_files/$file"
+              FILTERED_FILES="$FILTERED_FILES $file"
+            fi
+          done
+          
+          echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
+      
+      - name: Format Deployment Files
+        run: | 
+          export KUBE_DEPLOYMENT_IMAGE=flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}@sha256:123
+          for file in iac_changed_files/lib/kube/{preview,production,shared}/*.yaml; do
+            tmpfile=$(mktemp)
+            envsubst < "$file" > "$tmpfile" && mv "$tmpfile" "$file"
+          done
+
+      - name: Run Trivy scan on IaC
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
+        id: trivy_iac
+        uses: aquasecurity/trivy-action@0.33.0
+        continue-on-error: true
+        with:
+          scan-type: 'config'
+          scan-ref: 'iac_changed_files'
+          format: 'template'
+          template: '@iac-markdown.tpl'
+          output: 'trivy-iac-report.md'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 1
+
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'failure' }}
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-iac-report.md
+      
+      - name: Run Checkov action
+        id: checkov
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
+        uses: bridgecrewio/checkov-action@v12
+        continue-on-error: true
+        with:
+          directory: iac_changed_files/
+          output_format: 'github_failed_only'
+          output_file_path: checkov_result
+          quiet: 'true'
+
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: ${{ steps.checkov.outcome == 'failure' }}
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: checkov_result/results_github_failed_only.md
+
       - name: Build Docker image for scanning
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
@@ -165,7 +239,7 @@ jobs:
           body-path: trivy-docker-report.md
       
       - name: Fail job if Trivy found issues
-        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' 
+        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' || steps.checkov.outcome == 'failure'
         run: |
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1

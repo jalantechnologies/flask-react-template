@@ -23,12 +23,13 @@ spec:
       labels:
         app: temporal
     spec:
-      # Security: Run all containers as non-root user 999 to prevent privilege escalation
+      automountServiceAccountToken: false
+      # Security: Run all containers as non-root user 10001 to prevent privilege escalation
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 999
-        fsGroup: 999
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
         # Security: Enable kernel-level syscall filtering to reduce attack surface
         seccompProfile:
           type: RuntimeDefault
@@ -47,13 +48,21 @@ spec:
       # Init container: Copies Temporal configuration files to shared volumes before main containers start
       initContainers:
         - name: copy-temporal-config
-          image: temporalio/auto-setup:1.27.2
+          image: temporalio/auto-setup:1.27.2@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
+          imagePullPolicy: Always
           command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
           volumeMounts:
             - name: temporal-config
               mountPath: /tmp/config
             - name: temporal-ui-config
               mountPath: /tmp/ui-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: '200Mi'
+            limits:
+              cpu: 100m
+              memory: '400Mi'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -64,7 +73,7 @@ spec:
 
       containers:
         - name: temporal-server
-          image: temporalio/auto-setup:1.27.2
+          image: temporalio/auto-setup:1.27.2@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -76,6 +85,8 @@ spec:
                 - ALL
           ports:
             - containerPort: 7233
+          livenessProbe: {}
+          readinessProbe: {}
           # Security: USER env var required when running as non-root with dropped capabilities
           env:
             - name: USER
@@ -90,11 +101,14 @@ spec:
               mountPath: /etc/temporal/config
           resources:
             requests:
+              cpu: 50m
               memory: '200Mi'
             limits:
+              cpu: 100m
               memory: '400Mi'
+
         - name: temporal-admin-tools
-          image: temporalio/admin-tools:1.27.2-tctl-1.18
+          image: temporalio/admin-tools:1.27.2-tctl-1.18@sha256:b5ae59dae6ea00c22fc2bdf04a2cfaf59e3e036b8b09ca777f99e2c871396fa2
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -112,14 +126,18 @@ spec:
               mountPath: /tmp
           stdin: true
           tty: true
+          livenessProbe: {}
+          readinessProbe: {}
           resources:
             requests:
+              cpu: 50m
               memory: '100Mi'
             limits:
+              cpu: 100m
               memory: '200Mi'
 
         - name: temporal-ui
-          image: temporalio/ui:2.37.2
+          image: temporalio/ui:2.37.2@sha256:3d7b36849d7ca5245f59f6ab558bebbd6b83aa1518f4505e97927419360d1f25
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -141,8 +159,10 @@ spec:
               mountPath: /home/ui-server/config
           resources:
             requests:
+              cpu: 50m
               memory: '200Mi'
             limits:
+              cpu: 100m
               memory: '400Mi'
           startupProbe:
             httpGet:
@@ -157,9 +177,17 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
 
         - name: python-worker
           image: $KUBE_DEPLOYMENT_IMAGE
+          imagePullPolicy: Always
           workingDir: /opt/app/src/apps/backend
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -179,10 +207,14 @@ spec:
               mountPath: /opt/app/tmp
             - name: logs
               mountPath: /opt/app/logs
+          livenessProbe: {}
+          readinessProbe: {}
           resources:
             requests:
+              cpu: 50m
               memory: '150Mi'
             limits:
+              cpu: 100m
               memory: '300Mi'
       volumes:
         - name: tmp

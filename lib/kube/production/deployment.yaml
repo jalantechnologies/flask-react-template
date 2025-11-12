@@ -18,12 +18,13 @@ spec:
       labels:
         app: $KUBE_APP
     spec:
-      # Security: Run all containers as non-root user 999 to prevent privilege escalation
+      automountServiceAccountToken: false
+      # Security: Run all containers as non-root user 10001 to prevent privilege escalation
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 999
-        fsGroup: 999
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
         # Security: Enable kernel-level syscall filtering to reduce attack surface
         seccompProfile:
           type: RuntimeDefault
@@ -38,9 +39,16 @@ spec:
                       - platform-cluster-01-production-pool
       imagePullSecrets:
         - name: regcred
+      resources:
+        requests:
+          cpu: 250m
+          memory: '400Mi'
+        limits:
+          cpu: 500m
+          memory: '800Mi'
       containers:
         - name: $KUBE_APP
-          image: $KUBE_DEPLOYMENT_IMAGE
+          image: "$KUBE_DEPLOYMENT_IMAGE
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -52,8 +60,10 @@ spec:
                 - ALL
           resources:
             requests:
+              cpu: 250m
               memory: '400Mi'
             limits:
+              cpu: 500m
               memory: '800Mi'
           ports:
             - containerPort: 8080

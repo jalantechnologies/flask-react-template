@@ -47,8 +47,8 @@ ARG APP_ENV
 RUN npm run build
 
 # Create non-root user for security - use consistent UID/GID across environments
-RUN groupadd -r -g 999 app && \
-    useradd -r -u 999 -g 999 -m appuser
+RUN groupadd -r -g 10001 app && \
+    useradd -r -u 10001 -g 10001 -m appuser
 
 # Create directories and set ownership for non-root user to write files
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
