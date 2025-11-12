@@ -59,11 +59,7 @@ spec:
                 # Security: Use temporary volume for writable directory since root filesystem is read-only
                 - name: tmp
                   mountPath: /opt/app/tmp
-                - name: system-tmp
-                  mountPath: /tmp
           volumes:
             - name: tmp
-              emptyDir: {}
-            - name: system-tmp
               emptyDir: {}
           restartPolicy: OnFailure
