@@ -1,0 +1,24 @@
+# Resource limits for preview environments
+# Based on actual usage analysis: 8 pods, ~731m CPU, ~5300Mi memory needed
+# Allows 4-5 concurrent previews with room for growth
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: preview-quota
+  namespace: $KUBE_NS
+spec:
+  hard:
+    # CPU limits (based on actual usage: ~731m used, with headroom)
+    requests.cpu: "3"      # Current: ~731m, allow 3000m total
+    limits.cpu: "6"        # Allow 6000m total limits
+    
+    # Memory limits (based on error analysis: 5300Mi needed, with headroom)
+    requests.memory: 8Gi   # Current: ~2650Mi, allow 8Gi total  
+    limits.memory: 16Gi    # Current: ~5300Mi, allow 16Gi total
+
+    # Object limits (based on current usage with growth room)
+    pods: "15"                    # Current: 8, allow room for 7 more
+    services: "25"                # Current: 10, allow room for growth
+    configmaps: "15"              # Allow multiple per deployment
+    persistentvolumeclaims: "10"  # Allow multiple storage volumes
+    secrets: "15"                 # Allow multiple per deployment

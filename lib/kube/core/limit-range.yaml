@@ -1,0 +1,37 @@
+# Default resource limits for containers and pods
+# Synced with resource quota based on actual usage analysis
+# Supports current usage: ~400Mi per app pod, ~244Mi per temporal pod
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: $KUBE_NS
+spec:
+  limits:
+    # Container resource limits (based on actual usage patterns)
+    - max:
+        cpu: "2"        # Max 2 CPU per container (headroom for temporal containers)
+        memory: 2Gi     # Max 2GB per container (well above current 400Mi usage)
+      min:
+        cpu: 50m        # Min below current usage
+        memory: 50Mi    # Min below current usage
+      default:
+        cpu: 500m       # Default for new containers
+        memory: 400Mi   # Matches current app pod usage
+      defaultRequest:
+        cpu: 250m       # Conservative request
+        memory: 200Mi   # Conservative request
+      type: Container
+
+    # Pod resource limits (accommodate multiple containers per pod)
+    - max:
+        cpu: "4"        # Max 4 CPUs per pod (temporal pods have multiple containers)
+        memory: 4Gi     # Max 4GB per pod (accommodate temporal + app containers)
+      type: Pod
+
+    # Storage limits (generous for development)
+    - max:
+        storage: 50Gi   # Increased from 20Gi for development needs
+      min:
+        storage: 500Mi  # Min 500MB
+      type: PersistentVolumeClaim

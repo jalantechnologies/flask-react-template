@@ -14,6 +14,9 @@ metadata:
   namespace: $KUBE_NS
   labels:
     app: $KUBE_APP
+    # Component label provides consistent selector for network policies across all preview deployments
+    # This prevents network policy issues when commit hashes change between deployments
+    component: flask-react-app-preview
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
@@ -26,6 +29,8 @@ spec:
     metadata:
       labels:
         app: $KUBE_APP
+        # Component label ensures network policies work consistently across all preview deployments
+        component: flask-react-app-preview
     spec:
       priorityClassName: $KUBE_APP-$KUBE_DEPLOY_ID-priority
       # Security: Run all containers as non-root user 999 to prevent privilege escalation

@@ -40,6 +40,27 @@ This project has three deployment environments that everyone can access:
 - [CI/CD](docs/deployment.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)
 
+## Security Policies
+
+### Network Security
+- **Default Deny**: All network traffic is blocked by default
+- **Selective Allow**: Only necessary connections are permitted:
+  - App ↔ Temporal communication (port 7233)
+  - App → External HTTPS APIs (port 443)
+  - Nginx → App (port 8080)
+  - DNS resolution (port 53)
+
+### Resource Limits
+- **Preview Environments**: Limited to 1 CPU request/2 CPU limit and 1.6Gi request/3.2Gi limit per preview
+- **Container Defaults**: 250m CPU request/500m limit, 200Mi memory request/400Mi limit (aligned with IaC)
+- **Pod Limits**: Maximum 8 pods per preview environment
+- **Storage**: 20GB maximum per volume (generous for logs and temporary files)
+
+### Pod Security Standards
+- **Restricted Mode**: Enforced to prevent privileged containers
+- **Security Context**: All pods must run with proper security settings
+- **No Root Access**: Containers cannot run as root user
+
 ## Best Practices
 
 Once you have familiarized yourself with the documentation, head over to the [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md) to learn about the best practices we follow at Better Software.

@@ -1,0 +1,18 @@
+# Secure namespace configuration
+# Enforces Pod Security Standards to prevent privileged containers
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $KUBE_NS
+  labels:
+    # App identification
+    app.kubernetes.io/name: $KUBE_APP
+    app.kubernetes.io/managed-by: github-ci
+    
+    # Pod Security Standards - blocks dangerous containers
+    pod-security.kubernetes.io/enforce: restricted   # Block non-compliant pods
+    pod-security.kubernetes.io/audit: restricted     # Log violations
+    pod-security.kubernetes.io/warn: restricted      # Warn about violations
+    
+    # Required for NetworkPolicy selectors
+    kubernetes.io/metadata.name: $KUBE_NS
