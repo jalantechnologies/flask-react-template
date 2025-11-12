@@ -1,6 +1,6 @@
 # Resource limits for preview environments
-# Aligned with IaC resource optimization: 250m/500m CPU, 400Mi/800Mi memory per container
-# Allows 2-3 concurrent previews per staging node
+# Based on actual usage analysis: 8 pods, ~731m CPU, ~5300Mi memory needed
+# Allows 4-5 concurrent previews with room for growth
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -8,17 +8,17 @@ metadata:
   namespace: $KUBE_NS
 spec:
   hard:
-    # CPU limits (based on IaC optimization: 250m request, 500m limit per container)
-    requests.cpu: "1.25"   # 5 containers per preview (250m x 5: 1 app + 4 Temporal)
-    limits.cpu: "2.5"      # 5 containers per preview (500m x 5: 1 app + 4 Temporal)
+    # CPU limits (based on actual usage: ~731m used, with headroom)
+    requests.cpu: "3"      # Current: ~731m, allow 3000m total
+    limits.cpu: "6"        # Allow 6000m total limits
+    
+    # Memory limits (based on error analysis: 5300Mi needed, with headroom)
+    requests.memory: 8Gi   # Current: ~2650Mi, allow 8Gi total  
+    limits.memory: 16Gi    # Current: ~5300Mi, allow 16Gi total
 
-    # Memory limits (based on IaC optimization: 400Mi request, 800Mi limit per container)
-    requests.memory: 2.4Gi # ~6 containers per preview (400Mi x 6: multiple deployments)
-    limits.memory: 4.8Gi   # ~6 containers per preview (800Mi x 6: multiple deployments)
-
-    # Object limits (align with current usage patterns)
-    pods: "8"                     # Current: 5-8 pods per preview
-    services: "4"                 # Max 4 services per preview
-    configmaps: "8"               # Max 8 config maps
-    persistentvolumeclaims: "2"   # Max 2 storage volumes
-    secrets: "8"                  # Max 8 secrets
+    # Object limits (based on current usage with growth room)
+    pods: "15"                    # Current: 8, allow room for 7 more
+    services: "25"                # Current: 10, allow room for growth
+    configmaps: "15"              # Allow multiple per deployment
+    persistentvolumeclaims: "10"  # Allow multiple storage volumes
+    secrets: "15"                 # Allow multiple per deployment
