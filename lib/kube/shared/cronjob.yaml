@@ -22,8 +22,8 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 10001
-            runAsGroup: 999
-            fsGroup: 999
+            runAsGroup: 10001
+            fsGroup: 10001
             # Security: Enable kernel-level syscall filtering to reduce attack surface
             seccompProfile:
               type: RuntimeDefault
@@ -63,3 +63,4 @@ spec:
             - name: tmp
               emptyDir: {}
           restartPolicy: OnFailure
+
