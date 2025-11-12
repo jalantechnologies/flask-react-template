@@ -70,10 +70,10 @@ metadata:
   namespace: $KUBE_NS
 spec:
   podSelector:
-    matchExpressions:
-      - key: app
-        operator: In
-        values: [$KUBE_APP, "flask-react-app-preview"]
+    matchLabels:
+      # Use component label for consistent matching across all preview deployments
+      # This prevents downtime when commit hashes change between deployments
+      component: flask-react-app-preview
   policyTypes:
     - Ingress
   ingress:
