@@ -85,6 +85,28 @@ spec:
           port: 8080
 
 ---
+# Allow app to connect to Temporal
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-temporal
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      app: temporal
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: $KUBE_APP
+      ports:
+        - protocol: TCP
+          port: 7233
+
+---
 # Allow Temporal to connect to databases
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

@@ -9,8 +9,8 @@ metadata:
 spec:
   hard:
     # CPU limits (based on IaC optimization: 250m request, 500m limit per container)
-    requests.cpu: "1"      # ~4 containers per preview (250m x 4)
-    limits.cpu: "2"        # ~4 containers per preview (500m x 4)
+    requests.cpu: "1.25"   # 5 containers per preview (250m x 5: 1 app + 4 Temporal)
+    limits.cpu: "2.5"      # 5 containers per preview (500m x 5: 1 app + 4 Temporal)
 
     # Memory limits (based on IaC optimization: 400Mi request, 800Mi limit per container)
     requests.memory: 1.6Gi # ~4 containers per preview (400Mi x 4)
