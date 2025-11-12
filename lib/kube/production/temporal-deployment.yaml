@@ -8,6 +8,7 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
+    checkov.io/skip1: CKV_K8S_35=App uses third party docker images
 spec:
   replicas: 1
   strategy:
@@ -249,3 +250,4 @@ spec:
           emptyDir: {}
         - name: temporal-ui-config
           emptyDir: {}
+

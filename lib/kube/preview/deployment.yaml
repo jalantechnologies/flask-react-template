@@ -73,9 +73,10 @@ spec:
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
+
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
@@ -84,6 +85,8 @@ spec:
               mountPath: /opt/app/logs
             - name: system-tmp
               mountPath: /tmp
+            - name: secret-ref
+              mountPath: /opt/app/secrets
           startupProbe:
             httpGet:
               path: /
@@ -101,12 +104,13 @@ spec:
               port: 8080
             initialDelaySeconds: 30
       volumes:
-        # - name: secret-volume
-        #   secret:
-        #     secretName: $DOPPLER_MANAGED_SECRET_NAME
+        - name: secret-ref
+          secret:
+            secretName: $DOPPLER_MANAGED_SECRET_NAME
         - name: tmp
           emptyDir: {}
         - name: logs
           emptyDir: {}
         - name: system-tmp
           emptyDir: {}
+

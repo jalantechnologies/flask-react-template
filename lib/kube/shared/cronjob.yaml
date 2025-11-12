@@ -53,9 +53,9 @@ spec:
               env:
                 - name: WEB_APP_HOST
                   value: $KUBE_INGRESS_HOSTNAME
-              envFrom:
-                - secretRef:
-                    name: $DOPPLER_MANAGED_SECRET_NAME
+              # envFrom:
+              #   - secretRef:
+              #       name: $DOPPLER_MANAGED_SECRET_NAME
               volumeMounts:
                 # Security: Use temporary volume for writable directory since root filesystem is read-only
                 - name: tmp
@@ -64,4 +64,5 @@ spec:
             - name: tmp
               emptyDir: {}
           restartPolicy: OnFailure
+
 
