@@ -13,8 +13,8 @@ spec:
     limits.cpu: "2.5"      # 5 containers per preview (500m x 5: 1 app + 4 Temporal)
 
     # Memory limits (based on IaC optimization: 400Mi request, 800Mi limit per container)
-    requests.memory: 1.6Gi # ~4 containers per preview (400Mi x 4)
-    limits.memory: 3.2Gi   # ~4 containers per preview (800Mi x 4)
+    requests.memory: 2.4Gi # ~6 containers per preview (400Mi x 6: multiple deployments)
+    limits.memory: 4.8Gi   # ~6 containers per preview (800Mi x 6: multiple deployments)
 
     # Object limits (align with current usage patterns)
     pods: "8"                     # Current: 5-8 pods per preview
