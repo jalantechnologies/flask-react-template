@@ -26,8 +26,7 @@ run-vulture:
 		&& pipenv run vulture
 
 run-engine:
-	cd src/apps/backend \
-		&& source ./set_env.sh \
+	source source ./set_env.sh && cd src/apps/backend \
 		&& pipenv run python --version \
 		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
 
