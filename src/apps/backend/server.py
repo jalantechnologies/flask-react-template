@@ -15,7 +15,9 @@ from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
+from modules.config.loadenv import init_secrets_from_files
 
+init_secrets_from_files() 
 load_dotenv()
 
 app = Flask(__name__)
