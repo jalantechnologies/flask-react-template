@@ -8,6 +8,7 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
+    checkov.io/skip1: CKV_K8S_35=App uses third party containers
 spec:
   replicas: 1
   selector:
@@ -63,9 +64,9 @@ spec:
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
-          # envFrom:
-          #   - secretRef:
-          #       name: $DOPPLER_MANAGED_SECRET_NAME
+          envFrom:
+            - secretRef:
+                name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
