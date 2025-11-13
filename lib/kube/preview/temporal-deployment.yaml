@@ -202,7 +202,7 @@ spec:
             failureThreshold: 5
 
         - name: python-worker
-          image: $KUBE_DEPLOYMENT_IMAGE
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOY_TAG@$KUBE_DEPLOY_DIGEST
           imagePullPolicy: Always
           workingDir: /opt/app/src/apps/backend
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities

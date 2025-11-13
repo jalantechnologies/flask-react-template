@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: 1e27a09243327a4ed01d42a9bc54965436ac0ba4
+          ref: d188ab6a2b2abfc42a9af2ecbcad71f3d9dc663d
 
       - name: Extract branch name
         id: extract_branch
@@ -60,6 +60,8 @@ jobs:
           deploy_root: app/lib/kube
           deploy_labels: gh/pr=${{ github.event.number }}
           deploy_image: ${{ steps.build.outputs.image_ref }}
+          deploy_tag: ${{ steps.extract_branch.outputs.branch_hash }}
+          deploy_digest: ${{ steps.build.outputs.image_digest }}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
