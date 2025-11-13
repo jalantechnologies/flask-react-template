@@ -7,6 +7,7 @@ metadata:
   labels:
     app: $KUBE_APP-cronjob
     version: $GITHUB_SHA
+    checkov.io/skip1: CKV_K8S_35=App uses third party containers
 spec:
   schedule: "10 * * * *"
   concurrencyPolicy: "Replace"
@@ -53,9 +54,9 @@ spec:
               env:
                 - name: WEB_APP_HOST
                   value: $KUBE_INGRESS_HOSTNAME
-              # envFrom:
-              #   - secretRef:
-              #       name: $DOPPLER_MANAGED_SECRET_NAME
+              envFrom:
+                - secretRef:
+                    name: $DOPPLER_MANAGED_SECRET_NAME
               volumeMounts:
                 # Security: Use temporary volume for writable directory since root filesystem is read-only
                 - name: tmp
