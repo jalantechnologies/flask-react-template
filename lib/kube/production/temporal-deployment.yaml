@@ -126,9 +126,9 @@ spec:
             capabilities:
               drop:
                 - ALL
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -165,9 +165,9 @@ spec:
                 - ALL
           ports:
             - containerPort: 8080
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -214,9 +214,9 @@ spec:
               drop:
                 - ALL
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
