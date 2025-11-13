@@ -248,3 +248,4 @@ spec:
           emptyDir: {}
         - name: temporal-ui-config
           emptyDir: {}
+
