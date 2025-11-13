@@ -1,7 +1,5 @@
 import multiprocessing
-from modules.config.loadenv import init_secrets_from_files
 
-init_secrets_from_files() 
 # Server Socket
 bind = "0.0.0.0:8080"
 
