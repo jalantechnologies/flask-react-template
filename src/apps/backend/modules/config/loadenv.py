@@ -13,4 +13,4 @@ def init_secrets_from_files():
             print(env_name)
             print(file.read_text().strip())
 
-            os.environ[env_name] = file.read_text().strip()
+            os.environ[f'{env_name}'] = file.read_text().strip()
