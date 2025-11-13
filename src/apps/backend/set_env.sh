@@ -8,5 +8,3 @@ for f in "$SECRETS_DIR"/*; do
   value=$(cat "$f")
   export "$name=$value"
 done
-
-exit 0
