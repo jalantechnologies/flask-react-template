@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 SECRETS_DIR = Path("/opt/app/secrets")
 
 def init_secrets_from_files():
