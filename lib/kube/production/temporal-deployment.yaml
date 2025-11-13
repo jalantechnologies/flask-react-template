@@ -85,8 +85,16 @@ spec:
                 - ALL
           ports:
             - containerPort: 7233
-          livenessProbe: {}
-          readinessProbe: {}
+          livenessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
+          readinessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
           # Security: USER env var required when running as non-root with dropped capabilities
           env:
             - name: USER
@@ -126,8 +134,16 @@ spec:
               mountPath: /tmp
           stdin: true
           tty: true
-          livenessProbe: {}
-          readinessProbe: {}
+          livenessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
+          readinessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
           resources:
             requests:
               cpu: 50m
@@ -207,8 +223,16 @@ spec:
               mountPath: /opt/app/tmp
             - name: logs
               mountPath: /opt/app/logs
-          livenessProbe: {}
-          readinessProbe: {}
+          livenessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
+          readinessProbe: 
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 0
+            periodSeconds: 10
           resources:
             requests:
               cpu: 50m
