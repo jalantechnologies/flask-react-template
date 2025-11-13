@@ -223,9 +223,9 @@ spec:
               command: ["true"]
             initialDelaySeconds: 0
             periodSeconds: 10
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp

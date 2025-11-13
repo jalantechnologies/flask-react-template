@@ -99,9 +99,9 @@ spec:
           env:
             - name: USER
               value: "temporal"
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          # envFrom:
+          #   - secretRef:
+          #       name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
