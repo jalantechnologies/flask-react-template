@@ -20,6 +20,7 @@ run-format-tests:
 		&& pipenv run isort . \
 		&& pipenv run black .
 
+
 run-vulture:
 	cd src/apps/backend \
 		&& pipenv run vulture
