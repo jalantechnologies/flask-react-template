@@ -10,4 +10,7 @@ def init_secrets_from_files():
     for file in SECRETS_DIR.iterdir():
         if file.is_file():
             env_name = file.name.upper()
+            print(env_name)
+            print(file.read_text().strip())
+
             os.environ[env_name] = file.read_text().strip()
