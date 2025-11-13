@@ -1,4 +1,3 @@
-SHELL := /bin/bash
 run-lint:
 	cd src/apps/backend && \
 	pipenv run mypy --config-file mypy.ini . && \
@@ -26,7 +25,14 @@ run-vulture:
 		&& pipenv run vulture
 
 run-engine:
-	source src/apps/backend/set_env.sh && cd src/apps/backend \
+	cd src/apps/backend \
+		SECRETS_DIR=/opt/app/secrets; \
+		for f in "$$SECRETS_DIR"/*; do \
+		[ -f "$$f" ] || continue; \
+		name=$$(basename "$$f" | tr '[:lower:]' '[:upper:]'); \
+		value=$$(cat "$$f"); \
+		export $$name="$$value"; \
+		done; \
 		&& pipenv run python --version \
 		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
 
