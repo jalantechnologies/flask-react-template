@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "Boilerplate project for React & Flask",
   "engines": {
-    "npm": "10.9.2",
-    "node": "22.13.1"
+    "npm": "11.6.2",
+    "node": "24.11.1"
   },
   "scripts": {
     "build": "cross-env APP_ENV=production concurrently --kill-others-on-fail npm:build:*",

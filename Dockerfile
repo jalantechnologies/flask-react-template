@@ -17,7 +17,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
   apt-get install python3.12 python3-pip -y && \
   pip install pipenv
 
-  RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+  RUN curl -sL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
   bash nodesource_setup.sh && \
   cat /etc/apt/sources.list.d/nodesource.list
 
@@ -45,6 +45,8 @@ COPY . /opt/app
 ARG APP_ENV
 
 RUN npm run build
+
+RUN chmod +x /opt/app/scripts/export_doppler_env.sh
 
 # Create non-root user for security - use consistent UID/GID across environments
 RUN groupadd -r -g 10001 app && \
