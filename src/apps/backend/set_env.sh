@@ -1,3 +1,5 @@
+#!/bin/bash
+
 SECRETS_DIR=/opt/app/secrets
 
 for f in "$SECRETS_DIR"/*; do
