@@ -73,7 +73,7 @@ spec:
     matchLabels:
       # Use component label for consistent matching across all preview deployments
       # This prevents downtime when commit hashes change between deployments
-      component: flask-react-app-preview
+      app: $KUBE_APP
   policyTypes:
     - Ingress
   ingress:
