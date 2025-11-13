@@ -86,7 +86,7 @@ spec:
             - name: system-tmp
               mountPath: /tmp
             - name: secret-ref
-              mountPath: /opt/app
+              mountPath: /opt/app/secrets
           startupProbe:
             httpGet:
               path: /
