@@ -7,11 +7,11 @@ name = "pypi"
 bcrypt = "==4.0.1"
 certifi = "==2023.11.17"
 flask = "==3.0.0"
-flask-cors = "==4.0.0"
-gunicorn = "==21.2.0"
+flask-cors = "==4.0.2"
+gunicorn = "==22.0.0"
 phonenumbers = "==8.13.44"
 pyjwt = "==2.8.0"
-pydantic = "==2.4"
+pydantic = ">=2.6.0,<2.10.0"
 pymongo = { extras = ["srv"], version = "==3.12" }
 pyyaml = "==6.0.1"
 python-dotenv = "==1.0.1"
@@ -19,9 +19,10 @@ requests = "==2.31.0"
 sendgrid = "==6.11.0"
 tomli = "==2.0.1"
 twilio = "==9.2.4"
-waitress = "==2.1.2"
+waitress = "==3.0.1"
 datadog-api-client = "==2.31.0"
-temporalio = "==1.10.0"
+temporalio = ">=1.10.0"
+protobuf = "==5.29.5"
 
 [dev-packages]
 black = "==24.8.0"
@@ -38,3 +39,4 @@ pylint = "*"
 
 [requires]
 python_version = "3.12"
+

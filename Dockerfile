@@ -46,5 +46,17 @@ ARG APP_ENV
 
 RUN npm run build
 
+# Create non-root user for security - use consistent UID/GID across environments
+RUN groupadd -r -g 10001 app && \
+    useradd -r -u 10001 -g 10001 -m appuser
+
+# Create directories and set ownership for non-root user to write files
+RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
+    chown -R appuser:app /opt/app /home/appuser /app/output
+
+# Switch to appuser and install dependencies
+USER appuser
+RUN pipenv install --dev
+
 CMD [ "npm", "start" ]
 

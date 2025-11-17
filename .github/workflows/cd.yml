@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
+# Ensures preview deployment has minimal permissions for security
+permissions:
+  contents: read        # Read-only access to repo contents for safer workflows
+  pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
+  id-token: write       # Allow OIDC tokens for secure cloud authentication
+
 jobs:
   deploy:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -13,12 +19,12 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout app
-        uses: actions/checkout@v3
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           path: app
 
       - name: Checkout github-ci
-        uses: actions/checkout@v3
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           repository: jalantechnologies/github-ci
           path: platform
