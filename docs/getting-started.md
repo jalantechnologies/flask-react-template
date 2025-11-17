@@ -26,7 +26,17 @@ docker compose -f docker-compose.dev.yml up --build
 
 * The full stack (frontend, backend, MongoDB, Temporal, etc.) starts in hot‑reload mode.  
 * Once the containers are healthy, your browser should open automatically at **http://localhost:3000**.  
-  If it doesn’t, visit the URL manually.  
+  If it doesn't, visit the URL manually.
+
+#### Running on Windows
+
+```bash
+# Start containers
+docker compose -f docker-compose.dev.yml up --build
+
+# Stop and remove all resources
+docker compose -f docker-compose.dev.yml down
+```  
 
 ### 2. Locally (npm run serve)
 

@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: 1e27a09243327a4ed01d42a9bc54965436ac0ba4
+          ref: v3.3.1
 
       - name: Extract branch name
         id: extract_branch
@@ -41,7 +41,11 @@ jobs:
         id: build
         uses: ./platform/.github/actions/build
         with:
+          hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
           app_name: flask-react-app
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ vars.AWS_REGION }}
           tag: ${{ steps.extract_branch.outputs.branch_hash }}
           build_args: APP_ENV=preview
           context: app/.
@@ -52,6 +56,7 @@ jobs:
       - name: Deploy to preview
         uses: ./platform/.github/actions/deploy
         with:
+          hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
           app_name: flask-react-app
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
@@ -61,10 +66,12 @@ jobs:
           deploy_labels: gh/pr=${{ github.event.number }}
           deploy_image: ${{ steps.build.outputs.image_ref }}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
-          docker_username: ${{ vars.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}
+          aws_region: ${{ vars.AWS_REGION }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
-          pull_request_number: ${{  github.event.pull_request.number }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+          pull_request_number: ${{ github.event.pull_request.number }}
           deploy_annotate_pr: "true"

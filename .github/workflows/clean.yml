@@ -12,12 +12,12 @@ permissions:
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@1e27a09243327a4ed01d42a9bc54965436ac0ba4
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@v3.3.1
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
       cancel-in-progress: true
     with:
-      hosting_provider: ${{ vars.HOSTING_PROVIDER }}
+      hosting_provider: ${{ vars.HOSTING_PROVIDER1 }}
       app_name: flask-react-app
       app_env: preview
       branch: ${{ github.event.pull_request.head.ref }}
