@@ -1,4 +1,3 @@
----
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -6,36 +5,31 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
-    groups:
-      npm-all:
-        patterns:
-          - "*"
-    labels:
-      - "dependencies"
-      - "security"
 
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
     groups:
-      pip-all:
+      security-all:
+        applies-to: security-updates
         patterns:
           - "*"
-    labels:
-      - "dependencies"
-      - "security"
+
+      npm-updates:
+        applies-to: version-updates
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
     groups:
-      gha-all:
+      gha-security:
+        applies-to: security-updates
         patterns:
           - "*"
-    labels:
-      - "dependencies"
-      - "security"
+
+      gha-updates:
+        applies-to: version-updates
+        patterns:
+          - "*"
