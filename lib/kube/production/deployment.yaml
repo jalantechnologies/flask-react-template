@@ -42,7 +42,7 @@ spec:
         - name: regcred
       containers:
         - name: $KUBE_APP
-          image: $KUBE_DEPLOYMENT_IMAGE
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOY_TAG@$KUBE_DEPLOY_DIGEST
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:

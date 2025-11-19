@@ -160,23 +160,6 @@ jobs:
           
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
-      - name: Format Deployment Files
-        run: | 
-          export KUBE_DEPLOYMENT_IMAGE=flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}@sha256:123
-          export KUBE_DEPLOYMENT_IMAGE=flask-react-app:latest@123
-          export KUBE_APP=flask-react-app
-          export KUBE_INGRESS_HOSTNAME=test.com
-          export DOPPLER_MANAGED_SECRET_NAME=secret
-          export GITHUB_SHA=test_sha
-          export KUBE_DEPLOY_ID=123
-          export KUBE_ENV=preview
-          export KUBE_NS=flask-react-app-preview
-          for file in iac_changed_files/lib/kube/{preview,production,shared}/*.yaml; do
-            [ -e "$file" ] || continue
-            tmpfile=$(mktemp)
-            envsubst < "$file" >> "$tmpfile" && mv "$tmpfile" "$file"
-          done
-
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
