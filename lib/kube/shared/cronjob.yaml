@@ -58,6 +58,13 @@ spec:
                   mountPath: /opt/app/tmp
                 - name: secret-ref
                   mountPath: /opt/app/secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
           volumes:
             - name: tmp
               emptyDir: {}
