@@ -51,7 +51,6 @@ ARG APP_ENV
 
 RUN npm run build
 
-RUN chmod +x /opt/app/scripts/export_doppler_env.sh
 
 # Create non-root user for security - use consistent UID/GID across environments
 RUN groupadd -r -g 10001 app && \

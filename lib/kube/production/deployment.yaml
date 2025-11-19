@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: $KUBE_APP
+        component: $KUBE_NS
     spec:
       automountServiceAccountToken: false
       # Security: Run all containers as non-root user 10001 to prevent privilege escalation

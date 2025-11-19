@@ -7,8 +7,6 @@ metadata:
   labels:
     app: $KUBE_APP-cronjob
     version: $GITHUB_SHA
-  annotations:
-    checkov.io/skip1: CKV_K8S_35=App uses third party containers
 spec:
   schedule: "10 * * * *"
   concurrencyPolicy: "Replace"
@@ -34,22 +32,8 @@ spec:
             - name: regcred
           containers:
             - name: $KUBE_APP
-              image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOY_TAG@$KUBE_DEPLOY_DIGEST
+              image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
               imagePullPolicy: Always
-              # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
-              securityContext:
-                allowPrivilegeEscalation: false
-                readOnlyRootFilesystem: true
-                runAsNonRoot: true
-                capabilities:
-                  drop:
-                    - ALL
-              command:
-                - /opt/app/scripts/export_doppler_env.sh
-                - npm
-                - run
-                - script
-                - --file=my_worker_script
               resources:
                 limits:
                   cpu: 500m
@@ -66,6 +50,13 @@ spec:
                   mountPath: /opt/app/tmp
                 - name: secret-ref
                   mountPath: /opt/app/secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
           volumes:
             - name: tmp
               emptyDir: {}

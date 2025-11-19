@@ -26,6 +26,7 @@ spec:
     metadata:
       labels:
         app: $KUBE_APP
+        component: $KUBE_NS
     spec:
       automountServiceAccountToken: false
       priorityClassName: $KUBE_APP-$KUBE_DEPLOY_ID-priority
@@ -70,10 +71,6 @@ spec:
               memory: '800Mi' 
           ports:
             - containerPort: 8080
-          command:
-            - /opt/app/scripts/export_doppler_env.sh
-            - npm
-            - start
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
