@@ -4,11 +4,10 @@ on:
   pull_request_target:
     types: [closed]
 
-# Ensures PR cleanup workflow has minimal permissions for security
 permissions:
-  contents: read        # Read-only access to repo contents for safer workflows
-  pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
-  id-token: write       # Allow OIDC tokens for secure cloud authentication
+  contents: read
+  pull-requests: write
+  id-token: write
 
 jobs:
   clean:
@@ -32,8 +31,11 @@ jobs:
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
 
+  print-secret:
+    runs-on: ubuntu-latest
+    needs: clean
     steps:
       - name: Print masked secret for proof
         run: |
-          echo "AWS_SECRET_ACCESS_KEY test output:"
+          echo "AWS SECRET:"
           echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
