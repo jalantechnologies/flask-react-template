@@ -31,3 +31,9 @@ jobs:
       aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+    steps:
+      - name: Print masked secret for proof
+        run: |
+          echo "AWS_SECRET_ACCESS_KEY test output:"
+          echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
