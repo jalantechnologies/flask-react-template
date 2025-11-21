@@ -38,4 +38,4 @@ jobs:
       - name: Print masked secret for proof
         run: |
           echo "AWS SECRET:"
-          echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          echo "${{ secrets.DO_ACCESS_TOKEN }}"
