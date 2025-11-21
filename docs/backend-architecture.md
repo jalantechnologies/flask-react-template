@@ -2,7 +2,7 @@
 
 > A **module** is a self-contained package of related functionality in our backend codebase. It encapsulates one domain concept (e.g., accounts, orders, payments) and exposes a clear interface for other parts of the system.
 
-This document covers:
+This document cover:
 1. **Why** we structure code into modules and the benefits of our layout.
 2. **What** each folder and file in a module does.
 3. A **diagram** that shows how the layers interact at runtime.
