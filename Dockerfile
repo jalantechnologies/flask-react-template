@@ -46,6 +46,7 @@ ARG APP_ENV
 
 RUN npm run build
 
+
 # Create non-root user for security - use consistent UID/GID across environments
 RUN groupadd -r -g 10001 app && \
     useradd -r -u 10001 -g 10001 -m appuser
