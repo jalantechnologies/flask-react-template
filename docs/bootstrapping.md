@@ -27,7 +27,7 @@ You can run the script directly for ad-hoc bootstrapping:
 cd src/apps/backend && pipenv run python scripts/bootstrap_app.py
 ```
 
-### Example Use-Case
+### Example Use-Cases
 - **Seeding a test user account** if `account.create_test_user_account` is enabled in config and the user does not already exist.
 - Credentials are read from `account.test_user` in your environment config.
 
