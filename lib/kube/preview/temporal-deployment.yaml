@@ -252,3 +252,4 @@ spec:
         - name: doppler-secrets
           secret:
             secretName: $DOPPLER_MANAGED_SECRET_NAME
+

@@ -25,6 +25,9 @@ spec:
             runAsUser: 10001
             runAsGroup: 10001
             fsGroup: 10001
+            capabilities:
+              drop:
+                - ALL
             # Security: Enable kernel-level syscall filtering to reduce attack surface
             seccompProfile:
               type: RuntimeDefault
@@ -34,6 +37,17 @@ spec:
             - name: $KUBE_APP
               image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
               imagePullPolicy: Always
+              # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10001
+                runAsGroup: 10001
+                fsGroup: 10001
+                capabilities:
+                  drop:
+                    - ALL
               resources:
                 limits:
                   cpu: 500m
@@ -50,13 +64,6 @@ spec:
                   mountPath: /opt/app/tmp
                 - name: secret-ref
                   mountPath: /opt/app/secrets
-              securityContext:
-                allowPrivilegeEscalation: false
-                readOnlyRootFilesystem: true
-                runAsNonRoot: true
-                capabilities:
-                  drop:
-                    - ALL
           volumes:
             - name: tmp
               emptyDir: {}
