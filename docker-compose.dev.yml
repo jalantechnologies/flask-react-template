@@ -12,6 +12,7 @@ services:
     environment:
       APP_ENV: 'docker-dev'
     command: /bin/sh -c "npm install && npm run serve -- --no-temporal"
+    user: root
     depends_on:
       app-db:
         condition: service_started
