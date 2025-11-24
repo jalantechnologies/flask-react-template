@@ -60,12 +60,14 @@ WORKDIR /app
 # make is needed for npm start (runs make run-engine)
 # Node.js is needed for npm commands
 # procps provides ps command needed by concurrently for process management
+# jq is needed by Makefile serve script to enumerate serve:* scripts
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
         make \
         curl \
         tzdata \
         procps \
+        jq \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     apt-get remove -y curl && \
