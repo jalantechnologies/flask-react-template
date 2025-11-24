@@ -25,9 +25,6 @@ spec:
             runAsUser: 10001
             runAsGroup: 10001
             fsGroup: 10001
-            capabilities:
-              drop:
-                - ALL
             # Security: Enable kernel-level syscall filtering to reduce attack surface
             seccompProfile:
               type: RuntimeDefault
