@@ -83,6 +83,21 @@ spec:
             capabilities:
               drop:
                 - ALL
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              if [ -d /var/run/doppler-secrets ]; then
+                for secret_file in /var/run/doppler-secrets/*; do
+                  [ -f "${secret_file}" ] || continue
+                  key="$(basename "${secret_file}")"
+                  value="$(cat "${secret_file}")"
+                  export "${key}"="${value}"
+                done
+              fi
+              exec /etc/temporal/entrypoint.sh autosetup
           livenessProbe: 
             exec:
               command: ["true"]
@@ -99,14 +114,13 @@ spec:
           env:
             - name: USER
               value: "temporal"
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
             - name: temporal-config
               mountPath: /etc/temporal/config
+            - name: doppler-secrets
+              mountPath: /var/run/doppler-secrets
           resources:
             requests:
               cpu: 50m
@@ -126,6 +140,21 @@ spec:
             capabilities:
               drop:
                 - ALL
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              if [ -d /var/run/doppler-secrets ]; then
+                for secret_file in /var/run/doppler-secrets/*; do
+                  [ -f "${secret_file}" ] || continue
+                  key="$(basename "${secret_file}")"
+                  value="$(cat "${secret_file}")"
+                  export "${key}"="${value}"
+                done
+              fi
+              exec tini -- sleep infinity
           livenessProbe:
             exec:
               command: ["true"]
@@ -136,12 +165,11 @@ spec:
               command: ["true"]
             initialDelaySeconds: 0
             periodSeconds: 10
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: doppler-secrets
+              mountPath: /var/run/doppler-secrets
           stdin: true
           tty: true
           resources:
@@ -163,16 +191,30 @@ spec:
             capabilities:
               drop:
                 - ALL
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              if [ -d /var/run/doppler-secrets ]; then
+                for secret_file in /var/run/doppler-secrets/*; do
+                  [ -f "${secret_file}" ] || continue
+                  key="$(basename "${secret_file}")"
+                  value="$(cat "${secret_file}")"
+                  export "${key}"="${value}"
+                done
+              fi
+              exec ./start-ui-server.sh
           ports:
             - containerPort: 8080
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             - name: tmp
               mountPath: /tmp
             - name: temporal-ui-config
               mountPath: /home/ui-server/config
+            - name: doppler-secrets
+              mountPath: /var/run/doppler-secrets
           resources:
             requests:
               cpu: 50m
@@ -213,7 +255,12 @@ spec:
             capabilities:
               drop:
                 - ALL
-          command: ['pipenv', 'run', 'python', 'temporal_server.py']
+          command:
+            - /opt/app/scripts/export_doppler_env.sh
+            - pipenv
+            - run
+            - python
+            - temporal_server.py
           livenessProbe:
             exec:
               command: ["true"]
@@ -234,7 +281,7 @@ spec:
             - name: doppler-secrets
               mountPath: /opt/app/secrets
           resources:
-            requests:
+            requests:                                                                                                                                                                                                                                                                                                 
               cpu: 50m
               memory: '150Mi'
             limits:

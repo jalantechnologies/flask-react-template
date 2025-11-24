@@ -8,7 +8,6 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
-    checkov.io/skip1: CKV_K8S_35=App uses third party containers
 spec:
   replicas: 1
   selector:
@@ -62,6 +61,10 @@ spec:
               memory: '800Mi'
           ports:
             - containerPort: 8080
+          command:
+            - /opt/app/scripts/export_doppler_env.sh
+            - npm
+            - start
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
