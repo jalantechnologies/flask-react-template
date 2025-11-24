@@ -1,7 +1,7 @@
 name: clean
 
 on:
-  pull_request_target:
+  pull_request:
     types: [closed]
 
 # Ensures PR cleanup workflow has minimal permissions for security
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   clean:
+    environment: preview-cleanup  # Requires manual approval in Settings
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@1e27a09243327a4ed01d42a9bc54965436ac0ba4
     concurrency:
       group: ci-preview-${{ github.event.pull_request.head.ref }}
