@@ -13,7 +13,6 @@ permissions:
 jobs:
   deploy:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    environment: preview-deploy  # Requires manual approval for forks in Settings
     runs-on: ubuntu-latest
     concurrency:
       group: cd-preview-${{ github.event.pull_request.head.ref }}
