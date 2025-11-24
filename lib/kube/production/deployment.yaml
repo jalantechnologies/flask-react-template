@@ -8,7 +8,6 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
-    checkov.io/skip1: CKV_K8S_35=App uses third party containers
 spec:
   replicas: 1
   selector:
@@ -42,7 +41,7 @@ spec:
         - name: regcred
       containers:
         - name: $KUBE_APP
-          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOY_TAG@$KUBE_DEPLOY_DIGEST
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -61,12 +60,13 @@ spec:
               memory: '800Mi'
           ports:
             - containerPort: 8080
+          command:
+            - /opt/app/scripts/export_doppler_env.sh
+            - npm
+            - start
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
@@ -75,6 +75,8 @@ spec:
               mountPath: /opt/app/logs
             - name: system-tmp
               mountPath: /tmp
+            - name: secret-ref
+              mountPath: /opt/app/secrets
           startupProbe:
             httpGet:
               path: /
@@ -98,4 +100,7 @@ spec:
           emptyDir: {}
         - name: system-tmp
           emptyDir: {}
+        - name: secret-ref
+          secret:
+            secretName: $DOPPLER_MANAGED_SECRET_NAME
 
