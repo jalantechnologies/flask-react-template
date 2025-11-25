@@ -24,6 +24,10 @@ RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
 RUN apt-get install nodejs -y
 RUN node --version && npm --version
 
+# Set PIPENV_VENV_IN_PROJECT early so virtualenv is created in project directory
+# This ensures the virtualenv is accessible to both root and appuser
+ENV PIPENV_VENV_IN_PROJECT=1
+
 # Copy dependency files first for better layer caching
 COPY Pipfile Pipfile.lock /app/
 COPY package.json package-lock.json /app/
@@ -34,16 +38,12 @@ RUN pipenv install --dev
 # Install Node dependencies once
 RUN npm ci
 
-# Copy to final location
+# Copy to final location (including .venv)
 RUN mkdir -p /opt/app && cp -a /app/. /opt/app/
 
 WORKDIR /opt/app
 
-# Set PIPENV_VENV_IN_PROJECT so virtualenv is created in project directory
-# This ensures the virtualenv is accessible to both root and appuser
-ENV PIPENV_VENV_IN_PROJECT=1
-
-# Copy application code (overwrites with latest)
+# Copy application code (preserves .venv since it's in .dockerignore)
 COPY . /opt/app
 
 # build arguments
@@ -70,7 +70,10 @@ RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /ap
 # This ensures production pods can use the venv immediately
 RUN if [ -d "/opt/app/.venv" ]; then \
       /opt/app/.venv/bin/python -c "import gunicorn, flask, pymongo" && \
+      /opt/app/.venv/bin/python -c "import pytest" && \
       echo "✓ Virtualenv verified - all critical dependencies available"; \
+    else \
+      echo "✗ ERROR: .venv directory not found!" && exit 1; \
     fi
 
 # Switch to appuser (dependencies already installed as root above)
