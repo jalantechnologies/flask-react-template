@@ -13,8 +13,8 @@ services:
       APP_ENV: 'docker-dev'
       PIPENV_VENV_IN_PROJECT: '1'
     # Ensure dependencies are installed before starting services
-    # pipenv install is idempotent - it will skip if already installed
-    command: /bin/sh -c "npm install && cd /opt/app && pipenv install --dev --python python3.12 && npm run serve -- --no-temporal"
+    # Skip installs if dependencies already exist to speed up container startup
+    command: /bin/sh -c "([ -d node_modules ] || npm install) && cd /opt/app && ([ -f .venv/bin/python ] || pipenv install --dev --python python3.12) && npm run serve -- --no-temporal"
     # Override to root user for local development to avoid bind mount permission issues
     user: root
     depends_on:
