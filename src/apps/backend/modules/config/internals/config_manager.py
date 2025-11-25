@@ -16,9 +16,9 @@ class ConfigManager:
         default_content = DefaultConfig.load()
         app_env_content = AppEnvConfig.load()
         os_env_content = CustomEnvConfig.load()
-        secret_content = SecretConfig.load()
+        SecretConfig.load()
 
-        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, os_env_content, secret_content)
+        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, os_env_content)
 
         self.config_store: Config = merged_content
 
