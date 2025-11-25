@@ -24,7 +24,7 @@ class SecretConfig:
         if not isinstance(data, dict):
             return data
 
-        updated_data = {}
+        updated_data: dict[str, Any] = {}
 
         for key, value in data.items():
             if isinstance(value, dict):
