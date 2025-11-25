@@ -36,6 +36,11 @@ output
 node_modules
 jspm_packages
 
+# Python virtual environment (created during Docker build)
+.venv
+venv
+env
+
 # optional npm cache directory
 .npm
 
@@ -53,6 +58,10 @@ jspm_packages
 
 # temp files
 tmp
+
+# runtime data directories (created by docker-compose, not needed in image)
+data
+logs
 
 # distribution
 dist

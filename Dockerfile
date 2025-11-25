@@ -36,7 +36,14 @@ RUN mkdir -p /opt/app && cp -a /.project/. /opt/app/
 
 WORKDIR /opt/app
 
+# Set PIPENV_VENV_IN_PROJECT so virtualenv is created in project directory
+# This ensures the virtualenv is accessible to both root and appuser
+ENV PIPENV_VENV_IN_PROJECT=1
+
 RUN npm ci
+
+# Install Python dependencies - this creates /opt/app/.venv
+# Ensure all dependencies are installed including datadog-api-client
 RUN pipenv install --dev
 
 COPY . /opt/app
@@ -47,16 +54,30 @@ ARG APP_ENV
 RUN npm run build
 
 # Create non-root user for security - use consistent UID/GID across environments
+# This matches Kubernetes production securityContext (runAsUser: 10001)
 RUN groupadd -r -g 10001 app && \
     useradd -r -u 10001 -g 10001 -m appuser
 
 # Create directories and set ownership for non-root user to write files
+# Ensure .venv directory is accessible to appuser for production use
+# Production uses readOnlyRootFilesystem, so .venv must be readable by appuser
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
-    chown -R appuser:app /opt/app /home/appuser /app/output
+    chown -R appuser:app /opt/app /home/appuser /app/output && \
+    if [ -d "/opt/app/.venv" ]; then \
+      chown -R appuser:app /opt/app/.venv && \
+      chmod -R u+rX,go+rX /opt/app/.venv; \
+    fi
 
-# Switch to appuser and install dependencies
+# Verify .venv is functional before switching users
+# This ensures production pods can use the venv immediately
+RUN if [ -d "/opt/app/.venv" ]; then \
+      /opt/app/.venv/bin/python -c "import gunicorn, flask, pymongo" && \
+      echo "✓ Virtualenv verified - all critical dependencies available"; \
+    fi
+
+# Switch to appuser (dependencies already installed as root above)
+# Production Kubernetes runs as this user (10001)
+# Note: docker-compose.dev.yml overrides to root user for local development
 USER appuser
-RUN pipenv install --dev
 
 CMD [ "npm", "start" ]
-

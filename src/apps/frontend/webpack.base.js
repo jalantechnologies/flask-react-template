@@ -29,7 +29,8 @@ module.exports = {
   output: {
     publicPath: '/',
     filename: '[name].bundle.js',
-    clean: true,
+    // clean is not set here - will be enabled only in production config
+    // webpack-dev-server doesn't support output.clean in dev mode
   },
   module: {
     rules: [
