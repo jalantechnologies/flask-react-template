@@ -24,15 +24,18 @@ RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
 RUN apt-get install nodejs -y
 RUN node --version && npm --version
 
-COPY Pipfile /app/Pipfile
-COPY Pipfile.lock /app/Pipfile.lock
-RUN pipenv install --dev
-RUN cp -a /app/. /.project/
+# Copy dependency files first for better layer caching
+COPY Pipfile Pipfile.lock /app/
+COPY package.json package-lock.json /app/
 
-COPY package.json /.project/package.json
-COPY package-lock.json /.project/package-lock.json
-RUN cd /.project && npm ci
-RUN mkdir -p /opt/app && cp -a /.project/. /opt/app/
+# Install Python dependencies once
+RUN pipenv install --dev
+
+# Install Node dependencies once
+RUN npm ci
+
+# Copy to final location
+RUN mkdir -p /opt/app && cp -a /app/. /opt/app/
 
 WORKDIR /opt/app
 
@@ -40,12 +43,7 @@ WORKDIR /opt/app
 # This ensures the virtualenv is accessible to both root and appuser
 ENV PIPENV_VENV_IN_PROJECT=1
 
-RUN npm ci
-
-# Install Python dependencies - creates /opt/app/.venv
-# Ensure all dependencies are installed including datadog-api-client
-RUN pipenv install --dev
-
+# Copy application code (overwrites with latest)
 COPY . /opt/app
 
 # build arguments
