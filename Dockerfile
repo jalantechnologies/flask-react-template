@@ -52,7 +52,6 @@ ARG APP_ENV
 RUN npm run build
 
 # Create non-root user for security - use consistent UID/GID across environments
-# This matches Kubernetes production securityContext (runAsUser: 10001)
 RUN groupadd -r -g 10001 app && \
     useradd -r -u 10001 -g 10001 -m appuser
 
@@ -63,9 +62,6 @@ RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /ap
     chown -R appuser:app /opt/app /home/appuser /app/output
 
 # Switch to appuser (dependencies already installed as root above)
-# Production Kubernetes runs as this user (10001)
-# Note: docker-compose.dev.yml overrides to root user for local development
-# CI builds and tests the image, so .venv verification happens there
 USER appuser
 
 CMD [ "npm", "start" ]

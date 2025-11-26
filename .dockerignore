@@ -38,8 +38,6 @@ jspm_packages
 
 # Python virtual environment (created during Docker build)
 .venv
-venv
-env
 
 # optional npm cache directory
 .npm
