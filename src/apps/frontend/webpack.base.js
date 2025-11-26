@@ -29,7 +29,7 @@ module.exports = {
   output: {
     publicPath: '/',
     filename: '[name].bundle.js',
-    // webpack-dev-server doesn't support output.clean in dev mode
+    clean: true,
   },
   module: {
     rules: [

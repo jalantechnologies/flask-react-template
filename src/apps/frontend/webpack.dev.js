@@ -16,29 +16,14 @@ const config = {
   },
   devtool: 'inline-source-map',
   devServer: {
-    host: '0.0.0.0',
-    port: devServerPort,
-    allowedHosts: 'all',
     historyApiFallback: true,
     hot: true,
     open: devServerOpen,
-    client: {
-      webSocketURL: {
-        hostname: '0.0.0.0',
-        pathname: '/ws',
-        protocol: 'ws',
-      },
-    },
+    port: devServerPort,
     proxy: {
       secure: false,
-      '/api': {
-        target: `http://localhost:${devServerAPIProxyPort}`,
-        changeOrigin: true,
-      },
-      '/assets': {
-        target: `http://localhost:${devServerAPIProxyPort}`,
-        changeOrigin: true,
-      },
+      '/api': `http://localhost:${devServerAPIProxyPort}`,
+      '/assets': `http://localhost:${devServerAPIProxyPort}`,
     },
   },
 };
