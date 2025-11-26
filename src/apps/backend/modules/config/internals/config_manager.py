@@ -3,6 +3,7 @@ from typing import Optional, cast
 from modules.config.internals.config_files.app_env_config_file import AppEnvConfig
 from modules.config.internals.config_files.custom_env_config_file import CustomEnvConfig
 from modules.config.internals.config_files.default_config_file import DefaultConfig
+from modules.config.internals.config_files.secret_config_file import SecretConfig
 from modules.config.internals.config_utils import ConfigUtil
 from modules.config.internals.types import Config
 from modules.config.types import ConfigType
@@ -16,8 +17,9 @@ class ConfigManager:
         default_content = DefaultConfig.load()
         app_env_content = AppEnvConfig.load()
         os_env_content = CustomEnvConfig.load()
+        secret_content = SecretConfig.load()
 
-        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, os_env_content)
+        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, os_env_content, secret_content)
 
         self.config_store: Config = merged_content
 
