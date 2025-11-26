@@ -49,3 +49,26 @@ class ConfigUtil:
             raise FileNotFoundError(f"Config directory does not exist: {config_directory}")
 
         return config_path
+
+    @staticmethod
+    def read_value_from_file(file_path: str) -> str | None:
+        """
+        Read secret value from a file path.
+        Strips whitespace and newlines from the file content.
+
+        Args:
+            file_path: Absolute or relative path to the secret file
+
+        Returns:
+            Secret value as string, or None if file doesn't exist
+        """
+        try:
+            path = Path(file_path)
+            if not path.exists():
+                return None
+
+            with open(path, "r", encoding="utf-8") as file:
+                content = file.read()
+                return content.strip()
+        except (FileNotFoundError, IOError):
+            return None
