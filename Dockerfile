@@ -57,28 +57,15 @@ RUN groupadd -r -g 10001 app && \
     useradd -r -u 10001 -g 10001 -m appuser
 
 # Create directories and set ownership for non-root user to write files
-# Ensure .venv directory is accessible to appuser for production use
+# chown -R appuser:app /opt/app covers .venv and all other files/directories
 # Production uses readOnlyRootFilesystem, so .venv must be readable by appuser
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
-    chown -R appuser:app /opt/app /home/appuser /app/output && \
-    if [ -d "/opt/app/.venv" ]; then \
-      chown -R appuser:app /opt/app/.venv && \
-      chmod -R u+rX,go+rX /opt/app/.venv; \
-    fi
-
-# Verify .venv is functional before switching users
-# This ensures production pods can use the venv immediately
-RUN if [ -d "/opt/app/.venv" ]; then \
-      /opt/app/.venv/bin/python -c "import gunicorn, flask, pymongo" && \
-      /opt/app/.venv/bin/python -c "import pytest" && \
-      echo "✓ Virtualenv verified - all critical dependencies available"; \
-    else \
-      echo "✗ ERROR: .venv directory not found!" && exit 1; \
-    fi
+    chown -R appuser:app /opt/app /home/appuser /app/output
 
 # Switch to appuser (dependencies already installed as root above)
 # Production Kubernetes runs as this user (10001)
 # Note: docker-compose.dev.yml overrides to root user for local development
+# CI builds and tests the image, so .venv verification happens there
 USER appuser
 
 CMD [ "npm", "start" ]
