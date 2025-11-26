@@ -17,28 +17,33 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
   apt-get install python3.12 python3-pip -y && \
   pip install pipenv
 
-  RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
   bash nodesource_setup.sh && \
   cat /etc/apt/sources.list.d/nodesource.list
 
 RUN apt-get install nodejs -y
 RUN node --version && npm --version
 
-COPY Pipfile /app/Pipfile
-COPY Pipfile.lock /app/Pipfile.lock
-RUN pipenv install --dev
-RUN cp -a /app/. /.project/
+# Set PIPENV_VENV_IN_PROJECT early so virtualenv is created in project directory
+# This ensures the virtualenv is accessible to both root and appuser
+ENV PIPENV_VENV_IN_PROJECT=1
 
-COPY package.json /.project/package.json
-COPY package-lock.json /.project/package-lock.json
-RUN cd /.project && npm ci
-RUN mkdir -p /opt/app && cp -a /.project/. /opt/app/
+# Copy dependency files first for better layer caching
+COPY Pipfile Pipfile.lock /app/
+COPY package.json package-lock.json /app/
+
+# Install Python dependencies once
+RUN pipenv install --dev
+
+# Install Node dependencies once
+RUN npm ci
+
+# Copy to final location (including .venv)
+RUN mkdir -p /opt/app && cp -a /app/. /opt/app/
 
 WORKDIR /opt/app
 
-RUN npm ci
-RUN pipenv install --dev
-
+# Copy application code (preserves .venv since it's in .dockerignore)
 COPY . /opt/app
 
 # build arguments
@@ -51,12 +56,12 @@ RUN groupadd -r -g 10001 app && \
     useradd -r -u 10001 -g 10001 -m appuser
 
 # Create directories and set ownership for non-root user to write files
+# chown -R appuser:app /opt/app covers .venv and all other files/directories
+# Production uses readOnlyRootFilesystem, so .venv must be readable by appuser
 RUN mkdir -p /opt/app/tmp /opt/app/logs /opt/app/output /home/appuser/.cache /app/output && \
     chown -R appuser:app /opt/app /home/appuser /app/output
 
-# Switch to appuser and install dependencies
+# Switch to appuser (dependencies already installed as root above)
 USER appuser
-RUN pipenv install --dev
 
 CMD [ "npm", "start" ]
-

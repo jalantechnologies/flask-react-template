@@ -11,19 +11,27 @@ services:
         APP_ENV: 'docker-dev'
     environment:
       APP_ENV: 'docker-dev'
-    command: /bin/sh -c "npm install && npm run serve -- --no-temporal"
+      PIPENV_VENV_IN_PROJECT: '1'
+    # Ensure dependencies are installed before starting services
+    # Skip installs if dependencies already exist to speed up container startup
+    command: /bin/sh -c "([ -d node_modules ] || npm install) && cd /opt/app && ([ -f .venv/bin/python ] || pipenv install --dev --python python3.12) && npm run serve -- --no-temporal"
+    # Override to root user for local development to avoid bind mount permission issues
+    user: root
     depends_on:
       app-db:
         condition: service_started
-      temporal:
-        condition: service_healthy
+      # Temporal is optional when using --no-temporal flag, so we don't need to wait for it
     ports:
       - '3000:3000'
       - '8080:8080'
     volumes:
-      - './:/app:delegated'
-      - '/app/node_modules/'
-    working_dir: /app
+      # Mount local directory to /opt/app for hot reload
+      - './:/opt/app:delegated'
+      # Preserve node_modules from image build
+      - '/opt/app/node_modules/'
+      # Preserve .venv in anonymous volume (prevents empty local .venv from breaking pipenv)
+      - '/opt/app/.venv'
+    working_dir: /opt/app
 
   app-db:
     image: mongo:5.0
