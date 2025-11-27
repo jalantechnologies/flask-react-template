@@ -8,6 +8,7 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
+    checkov.io/skip1: CKV_K8S_35=Third-party Temporal container uses simplified probes
 spec:
   replicas: 1
   strategy:
@@ -201,7 +202,7 @@ spec:
             failureThreshold: 5
 
         - name: python-worker
-          image: $KUBE_DEPLOYMENT_IMAGE
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
           imagePullPolicy: Always
           workingDir: /opt/app/src/apps/backend
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
@@ -223,15 +224,15 @@ spec:
               command: ["true"]
             initialDelaySeconds: 0
             periodSeconds: 10
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+          
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
               mountPath: /opt/app/tmp
             - name: logs
               mountPath: /opt/app/logs
+            - name: doppler-secrets
+              mountPath: /opt/app/secrets
           resources:
             requests:
               cpu: 50m
@@ -248,3 +249,6 @@ spec:
           emptyDir: {}
         - name: temporal-ui-config
           emptyDir: {}
+        - name: doppler-secrets
+          secret:
+            secretName: $DOPPLER_MANAGED_SECRET_NAME

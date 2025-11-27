@@ -27,7 +27,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: 1e27a09243327a4ed01d42a9bc54965436ac0ba4
+          ref: 4083bbf5abc5a3e79d85a9f551c75919aaad6dfb
 
       - name: Build Docker image
         id: build
@@ -50,7 +50,9 @@ jobs:
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube
           deploy_labels: gh/env=preview
-          deploy_image: ${{ steps.build.outputs.image_ref }}
+          deploy_image: ${{ steps.build.outputs.image_name }}
+          deploy_tag: ${{ steps.build.outputs.image_tag }}
+          deploy_digest: ${{ steps.build.outputs.image_digest }}
           docker_registry: ${{ vars.DOCKER_REGISTRY }}
           docker_username: ${{ vars.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}

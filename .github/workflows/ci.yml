@@ -122,7 +122,7 @@ jobs:
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
-          template: '@fs-markdown.tpl'
+          template: 'markdown-templates/@fs-markdown.tpl'
           output: 'trivy-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
@@ -169,7 +169,7 @@ jobs:
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
           format: 'template'
-          template: '@iac-markdown.tpl'
+          template: 'markdown-templates/@iac-markdown.tpl'
           output: 'trivy-iac-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
@@ -215,7 +215,7 @@ jobs:
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
-          template: '@docker-markdown.tpl'
+          template: 'markdown-templates/@docker-markdown.tpl'
           output: 'trivy-docker-report.md'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true

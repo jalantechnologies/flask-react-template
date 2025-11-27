@@ -26,6 +26,7 @@ spec:
     metadata:
       labels:
         app: $KUBE_APP
+        component: $KUBE_NS
     spec:
       automountServiceAccountToken: false
       priorityClassName: $KUBE_APP-$KUBE_DEPLOY_ID-priority
@@ -51,7 +52,7 @@ spec:
         - name: regcred
       containers:
         - name: $KUBE_APP
-          image: $KUBE_DEPLOYMENT_IMAGE
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -73,9 +74,7 @@ spec:
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
-          envFrom:
-            - secretRef:
-                name: $DOPPLER_MANAGED_SECRET_NAME
+
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
@@ -84,6 +83,8 @@ spec:
               mountPath: /opt/app/logs
             - name: system-tmp
               mountPath: /tmp
+            - name: secret-ref
+              mountPath: /opt/app/secrets
           startupProbe:
             httpGet:
               path: /
@@ -101,9 +102,13 @@ spec:
               port: 8080
             initialDelaySeconds: 30
       volumes:
+        - name: secret-ref
+          secret:
+            secretName: $DOPPLER_MANAGED_SECRET_NAME
         - name: tmp
           emptyDir: {}
         - name: logs
           emptyDir: {}
         - name: system-tmp
           emptyDir: {}
+
