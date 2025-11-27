@@ -242,9 +242,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      
+      - name: Prepare coverage directory
+        run: mkdir -p output
 
       - name: Run integration tests
         run: docker compose -f docker-compose.test.yml up --exit-code-from app
+
+      - name: Copy coverage artifacts from container
+        if: always()
+        run: |
+          if docker compose -f docker-compose.test.yml ps -q app >/dev/null 2>&1; then
+            docker compose -f docker-compose.test.yml cp app:/app/output/coverage.xml output/coverage.xml || echo "coverage.xml not found in app container"
+          fi
+
+      - name: Tear down test stack
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v || true
 
       - name: Coverage report
         continue-on-error: true
