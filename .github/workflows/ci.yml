@@ -243,9 +243,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       
-      - name: Prepare output directory
-        run: mkdir -p output
-
       - name: Run integration tests
         run: docker compose -f docker-compose.test.yml up --exit-code-from app
 
@@ -253,7 +250,7 @@ jobs:
         continue-on-error: true
         uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95
         with:
-          filename: output/coverage.xml
+          filename: test_output/coverage.xml
           badge: true
           fail_below_min: true
           format: markdown
