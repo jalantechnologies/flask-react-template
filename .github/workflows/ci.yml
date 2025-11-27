@@ -242,6 +242,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      
+      - name: Prepare output directory
+        run: mkdir -p output
 
       - name: Run integration tests
         run: docker compose -f docker-compose.test.yml up --exit-code-from app
