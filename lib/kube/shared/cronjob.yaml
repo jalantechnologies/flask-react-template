@@ -10,6 +10,7 @@ metadata:
 spec:
   schedule: "10 * * * *"
   concurrencyPolicy: "Replace"
+  suspend: true
   jobTemplate:
     spec:
       template:
