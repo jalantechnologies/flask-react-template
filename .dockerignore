@@ -76,8 +76,7 @@ dev
 # GitHub files
 .github
 
-# environment files - may contain secrets, handled separately in deployment
-.env*
+
 
 # Python cache files - will be regenerated during build, reduces image size
 __pycache__
