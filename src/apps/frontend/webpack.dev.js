@@ -4,7 +4,7 @@ const baseConfig = require('./webpack.base');
 
 const devServerOpen = process.env.WEBPACK_DEV_DISABLE_OPEN !== 'true';
 const devServerPort = 3000;
-const devServerAPIProxyPort = 8080;
+const devServerAPIProxyPort = 5000;
 
 const config = {
   mode: 'development',
