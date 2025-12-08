@@ -16,6 +16,7 @@ class TaskModel(BaseModel):
     created_at: Optional[datetime] = datetime.now()
     id: Optional[ObjectId | str] = None
     updated_at: Optional[datetime] = datetime.now()
+    comments: Optional[list[dict]] = None
 
     @classmethod
     def from_bson(cls, bson_data: dict) -> "TaskModel":
@@ -27,6 +28,7 @@ class TaskModel(BaseModel):
             id=bson_data.get("_id"),
             title=bson_data.get("title", ""),
             updated_at=bson_data.get("updated_at"),
+            comments=bson_data.get("comments"),
         )
 
     @staticmethod
