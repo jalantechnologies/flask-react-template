@@ -60,6 +60,11 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    
+    # Allow MongoDB database connections
+    - ports:
+        - protocol: TCP
+          port: 27017
 
 ---
 # Allow nginx ingress to reach our app
