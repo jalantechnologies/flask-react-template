@@ -15,5 +15,5 @@ access_log_format = "app - request - %(h)s - %(s)s - %(m)s - %(M)sms - %(U)s - %
 errorlog = "-"
 
 # Timeout
-timeout = 31
+timeout = 30
 keepalive = 2
