@@ -43,12 +43,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </h3>
           <ul className="mb-6 flex flex-col gap-1.5">
             <SidebarMenuItem
-              iconPath="/assets/img/icon/dashboard-sidebar-icon.svg"
-              path={routes.DASHBOARD}
-              setIsSidebarOpen={setIsSidebarOpen}
-              title="Dashboard"
-            />
-            <SidebarMenuItem
               iconPath="/assets/img/icon/tasks-sidebar-icon.svg"
               path={routes.TASKS}
               setIsSidebarOpen={setIsSidebarOpen}

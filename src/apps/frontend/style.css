@@ -138,3 +138,29 @@
 .apexcharts-yaxistooltip {
   @apply text-body dark:text-bodydark;
 }
+
+/* Task Management Styles */
+.tasks-page {
+  @apply p-6 max-w-7xl mx-auto;
+}
+
+.tasks-header {
+  @apply flex justify-between items-center mb-6 flex-wrap gap-4;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .tasks-page {
+    @apply p-4;
+  }
+  
+  .tasks-header {
+    @apply flex-col items-stretch;
+  }
+}

@@ -20,7 +20,7 @@ export const OTPVerificationPage: React.FC = () => {
   const navigate = useNavigate();
 
   const onVerifyOTPSuccess = () => {
-    navigate(routes.DASHBOARD);
+    navigate(routes.TASKS, { replace: true });
   };
 
   const onResendOTPSuccess = () => {
