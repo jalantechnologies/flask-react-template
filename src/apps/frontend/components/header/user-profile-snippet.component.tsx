@@ -61,10 +61,6 @@ const UserProfileSnippet: React.FC<DropdownUserProps> = ({
           <span className="block text-xs">User</span>
         </span>
 
-        <span className="size-12 rounded-full">
-          <img src="/assets/img/user.png" alt="User" />
-        </span>
-
         <img
           className="hidden fill-current opacity-50 sm:block"
           src="/assets/img/icon/drop-down-arrow.svg"

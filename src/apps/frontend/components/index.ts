@@ -27,3 +27,5 @@ export {
   Select,
   VerticalStackLayout,
 };
+
+export { RouteGuard } from 'frontend/components/route-guard';
