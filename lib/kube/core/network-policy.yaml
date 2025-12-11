@@ -85,6 +85,9 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+        # Allow HTTP traffic for ACME challenges
+        - protocol: TCP
+          port: 8080
 
 ---
 # Allow app to connect to Temporal
@@ -137,4 +140,37 @@ spec:
           port: 5432   # PostgreSQL
         - protocol: TCP
           port: 27017  # MongoDB
+
+---
+# Allow ACME challenge solver pods for SSL certificate generation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-challenges
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow nginx ingress to reach ACME challenge endpoints
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 8089
+  egress:
+    # Allow DNS lookups for challenge solver pods
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
 
