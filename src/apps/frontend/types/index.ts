@@ -8,6 +8,13 @@ import {
 } from 'frontend/types/async-operation';
 import { AccessToken, KeyboardKeys, PhoneNumber } from 'frontend/types/auth';
 import { ApiResponse, ApiError } from 'frontend/types/service-response';
+import { 
+  Task, 
+  CreateTaskRequest, 
+  UpdateTaskRequest, 
+  TasksListResponse,
+  PaginationParams 
+} from 'frontend/types/task';
 import { UserMenuDropdownItem } from 'frontend/types/user-menu-dropdown-item';
 
 export {
@@ -19,6 +26,11 @@ export {
   AsyncResult,
   KeyboardKeys,
   PhoneNumber,
+  Task,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TasksListResponse,
+  PaginationParams,
   UseAsyncResponse,
   DatadogUser,
   UserMenuDropdownItem,

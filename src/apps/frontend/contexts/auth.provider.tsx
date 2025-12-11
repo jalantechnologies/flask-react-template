@@ -1,4 +1,4 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react';
+import React, { createContext, PropsWithChildren, useContext, useState, useEffect } from 'react';
 
 import useAsync from 'frontend/contexts/async.hook';
 import { AuthService } from 'frontend/services';
@@ -68,8 +68,6 @@ const loginFn = async (
   return result;
 };
 
-const logoutFn = (): void => removeAccessTokenFromStorage();
-
 const isUserAuthenticated = () => !!getAccessTokenFromStorage();
 
 const sendOTPFn = async (
@@ -88,6 +86,17 @@ const verifyOTPFn = async (
 };
 
 export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(isUserAuthenticated);
+
+  useEffect(() => {
+    setIsAuthenticated(isUserAuthenticated());
+  }, []);
+
+  const logout = (): void => {
+    removeAccessTokenFromStorage();
+    setIsAuthenticated(false);
+  };
+
   const {
     asyncCallback: signup,
     error: signupError,
@@ -99,7 +108,13 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     error: loginError,
     result: loginResult,
     asyncCallback: login,
-  } = useAsync(loginFn);
+  } = useAsync(async (username: string, password: string) => {
+    const result = await loginFn(username, password);
+    if (result.data) {
+      setIsAuthenticated(true);
+    }
+    return result;
+  });
 
   const {
     isLoading: isSendOTPLoading,
@@ -112,7 +127,13 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     error: verifyOTPError,
     result: verifyOTPResult,
     asyncCallback: verifyOTP,
-  } = useAsync(verifyOTPFn);
+  } = useAsync(async (phoneNumber: PhoneNumber, otp: string) => {
+    const result = await verifyOTPFn(phoneNumber, otp);
+    if (result.data) {
+      setIsAuthenticated(true);
+    }
+    return result;
+  });
 
   return (
     <AuthContext.Provider
@@ -120,12 +141,12 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         isLoginLoading,
         isSendOTPLoading,
         isSignupLoading,
-        isUserAuthenticated,
+        isUserAuthenticated: () => isAuthenticated,
         isVerifyOTPLoading,
         login,
         loginError,
         loginResult,
-        logout: logoutFn,
+        logout,
         sendOTP,
         sendOTPError,
         signup,
