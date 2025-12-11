@@ -16,4 +16,4 @@ errorlog = "-"
 
 # Timeout
 timeout = 30
-keepalive = 2
+keepalive = 3
