@@ -19,6 +19,11 @@ export class Account {
   }
 
   displayName(): string {
-    return `${this.firstName} ${this.lastName}`.trim();
+    const firstName = this.firstName || '';
+    const lastName = this.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // If no name is available, fallback to username
+    return fullName || this.username || 'User';
   }
 }

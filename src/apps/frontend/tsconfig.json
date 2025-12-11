@@ -1,6 +1,12 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "jsx": "react"
-  }
+    "jsx": "react-jsx",
+    "noEmit": false
+  },
+  "exclude": [
+    "webpack.base.js",
+    "webpack.dev.js",
+    "webpack.prod.js"
+  ]
 }
