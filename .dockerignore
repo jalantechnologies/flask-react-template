@@ -75,3 +75,13 @@ dev
 
 # GitHub files
 .github
+
+
+
+# Python cache files - will be regenerated during build, reduces image size
+__pycache__
+*.pyc
+.pytest_cache
+
+# test coverage reports - testing artifacts not needed in production
+.coverage
