@@ -1,4 +1,4 @@
-# Backend Architecture
+# Backend Architectu
 
 > A **module** is a self-contained package of related functionality in our backend codebase. It encapsulates one domain concept (e.g., accounts, orders, payments) and exposes a clear interface for other parts of the system.
 
