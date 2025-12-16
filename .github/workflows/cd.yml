@@ -15,7 +15,7 @@ jobs:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     concurrency:
-      group: cd-preview-${{ github.event.pull_request.head.ref }}
+      group: cd-preview-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
       - name: Checkout app
@@ -33,8 +33,8 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
+          PREVIEW_KEY="pr-${{ github.event.pull_request.number }}"
+          BRANCH_HASH=$(sha1sum < <(printf '%s' "$PREVIEW_KEY") | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
@@ -55,7 +55,7 @@ jobs:
           app_name: flask-react-app
           app_env: preview
           app_hostname: '{1}.preview.platform.bettrhq.com'
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: pr-${{ github.event.pull_request.number }}
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube
           deploy_labels: gh/pr=${{ github.event.number }}
