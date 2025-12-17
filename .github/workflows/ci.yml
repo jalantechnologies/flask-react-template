@@ -86,8 +86,6 @@ jobs:
 
   scan: 
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    env:
-      TRIVY_DB_VERSION: 'trivy-db-v1'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -97,7 +95,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .trivy
-          key: ${{ env.TRIVY_DB_VERSION }}
+          key: trivy-db-v1
 
       - name: Extract branch name
         id: extract_branch
