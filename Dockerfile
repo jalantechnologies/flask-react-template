@@ -82,7 +82,6 @@ RUN pip install --no-cache-dir pipenv
 
 # Copy Pipfile first (needed for pipenv virtualenv detection)
 COPY Pipfile Pipfile.lock ./
-RUN pipenv install
 # Copy Python virtual environment from builder (.venv directory)
 # Using PIPENV_VENV_IN_PROJECT=1 ensures venv is in project directory
 COPY --from=python-builder /build/.venv ./.venv
