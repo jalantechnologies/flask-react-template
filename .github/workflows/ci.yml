@@ -137,13 +137,6 @@ jobs:
           exit-code: 1
           cache-dir: .trivy
       
-      - name: Check if report contains any real vulnerabilities
-        id: vuln_check
-        run: |
-          # Count how many vulnerabilities are listed in the markdown
-          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
-
       - name: Get changes in k8s folder and subfolders
         id: iac_changes
         run: |
@@ -232,13 +225,6 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 1
           cache-dir: .trivy
-        
-      - name: Check if report contains any real vulnerabilities
-        id: vuln_check
-        run: |
-          # Count how many vulnerabilities are listed in the markdown
-          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
           
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
