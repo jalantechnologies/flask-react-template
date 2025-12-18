@@ -91,6 +91,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: .trivy
+          key: trivy-db-v1
+
       - name: Extract branch name
         id: extract_branch
         run: |
@@ -119,6 +125,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
@@ -128,6 +135,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
+          cache-dir: .trivy
       
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
@@ -166,6 +174,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
           format: 'template'
@@ -175,6 +184,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
+          cache-dir: .trivy
 
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
@@ -212,6 +222,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
@@ -221,6 +232,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
+          cache-dir: .trivy
           
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
