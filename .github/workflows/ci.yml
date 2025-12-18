@@ -233,10 +233,17 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 1
           cache-dir: .trivy
+
+      - name: Check if report contains any real vulnerabilities
+        id: vuln_check
+        run: |
+          # Count how many vulnerabilities are listed in the markdown
+          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
           
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
-        if: steps.trivy_docker.outcome == 'failure'
+        if: steps.trivy_docker.outcome == 'failure' && hashFiles('trivy-docker-report.md') != '' && steps.vuln_check.outputs.vuln_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
