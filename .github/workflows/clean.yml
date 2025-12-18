@@ -1,7 +1,7 @@
 name: clean
 
 on:
-  pull_request_target:
+  pull_request:
     types: [closed]
 
 # Ensures PR cleanup workflow has minimal permissions for security
@@ -14,13 +14,13 @@ jobs:
   clean:
     uses: jalantechnologies/github-ci/.github/workflows/clean.yml@1e27a09243327a4ed01d42a9bc54965436ac0ba4
     concurrency:
-      group: ci-preview-${{ github.event.pull_request.head.ref }}
+      group: ci-preview-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     with:
       hosting_provider: ${{ vars.HOSTING_PROVIDER }}
       app_name: flask-react-app
       app_env: preview
-      branch: ${{ github.event.pull_request.head.ref }}
+      branch: pr-${{ github.event.pull_request.number }}
       docker_registry: ${{ vars.DOCKER_REGISTRY }}
       docker_username: ${{ vars.DOCKER_USERNAME }}
       aws_cluster_name: ${{ vars.AWS_CLUSTER_NAME }}

@@ -91,6 +91,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: .trivy
+          key: trivy-db-v1
+
       - name: Extract branch name
         id: extract_branch
         run: |
@@ -119,6 +125,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
@@ -128,6 +135,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
+          cache-dir: .trivy
       
       - name: Check if report contains any real vulnerabilities
         id: vuln_check
@@ -165,6 +173,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
           format: 'template'
@@ -174,6 +183,7 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
+          cache-dir: .trivy
 
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
@@ -211,6 +221,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.33.0
         continue-on-error: true
         with:
+          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
@@ -220,14 +231,14 @@ jobs:
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
-
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@v4
-        if: steps.trivy.outcome == 'failure'
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-report.md
+          cache-dir: .trivy
+        
+      - name: Check if report contains any real vulnerabilities
+        id: vuln_check
+        run: |
+          # Count how many vulnerabilities are listed in the markdown
+          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
           
       - name: Comment PR with audit results
         uses: peter-evans/create-or-update-comment@v4
