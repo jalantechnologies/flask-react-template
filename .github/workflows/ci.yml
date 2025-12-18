@@ -137,6 +137,14 @@ jobs:
           exit-code: 1
           cache-dir: .trivy
       
+      - name: Comment PR with audit results
+        uses: peter-evans/create-or-update-comment@v4
+        if: steps.trivy.outcome == 'failure'
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-report.md
+
       - name: Get changes in k8s folder and subfolders
         id: iac_changes
         run: |
