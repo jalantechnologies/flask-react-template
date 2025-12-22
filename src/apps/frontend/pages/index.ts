@@ -8,11 +8,16 @@ import Dashboard from 'frontend/pages/dashboard';
 import Login from 'frontend/pages/login';
 import NotFound from 'frontend/pages/not-found/not-found.page';
 
+import TasksPage from 'frontend/pages/tasks/TasksPage';
+import TaskForm from 'frontend/pages/tasks/TaskForm';
+
 export {
   About,
   Dashboard,
   ForgotPassword,
   NotFound,
+  TasksPage,
+  TaskForm,
   ResetPassword,
   Signup,
   OTPVerificationPage,

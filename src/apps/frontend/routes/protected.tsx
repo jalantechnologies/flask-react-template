@@ -34,6 +34,9 @@ export const protectedRoutes = [
     element: <App />,
     children: [
       { path: '', element: <Dashboard /> },
+      { path: 'tasks', element: <TasksPage /> },
+      { path: 'tasks/new', element: <TaskForm /> },
+      { path: 'tasks/:taskId/edit', element: <TaskForm /> },
       { path: '*', element: <NotFound /> },
     ],
   },

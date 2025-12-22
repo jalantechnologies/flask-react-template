@@ -37,7 +37,7 @@ types-requests = "==2.31.0.10"
 vulture = "==2.10"
 autoflake = "==2.3.1"
 pylint = "*"
+mongomock = "*"
 
 [requires]
 python_version = "3.12"
-
