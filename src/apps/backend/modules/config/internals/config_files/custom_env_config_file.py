@@ -8,6 +8,8 @@ from modules.config.internals.types import Config
 class CustomEnvConfig:
 
     FILENAME: str = "custom-environment-variables.yml"
+    SECRETS_DIR: str = "/opt/app/secrets"
+
 
     @staticmethod
     def load() -> Config:
@@ -27,6 +29,10 @@ class CustomEnvConfig:
             if isinstance(value, dict):
                 updated_data[key] = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
             elif isinstance(value, str):
+                result = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
+                if result is not None:
+                    updated_data[key] = result
+                    
                 result = CustomEnvConfig._search_and_get_str_value_from_env(value)
                 if result is not None:
                     updated_data[key] = result
