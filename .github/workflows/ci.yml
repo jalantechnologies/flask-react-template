@@ -166,6 +166,13 @@ jobs:
             fi
           done
           
+          # Always include NetworkPolicy for Checkov context validation
+          # This allows Checkov to verify that deployments have associated NetworkPolicies
+          if [[ -f "lib/kube/core/network-policy.yaml" ]]; then
+            mkdir -p "iac_changed_files/lib/kube/core"
+            cp lib/kube/core/network-policy.yaml iac_changed_files/lib/kube/core/
+          fi
+          
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
       - name: Run Trivy scan on IaC

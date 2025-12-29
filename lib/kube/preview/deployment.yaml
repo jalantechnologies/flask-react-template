@@ -7,7 +7,6 @@ value: $KUBE_DEPLOY_ID
 globalDefault: false
 description: "This priority class is used for preview pods."
 ---
-# checkov:skip=CKV2_K8S_6: NetworkPolicy exists in lib/kube/core/network-policy.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
