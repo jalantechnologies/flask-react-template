@@ -1,0 +1,17 @@
+# PodDisruptionBudget ensures high availability during voluntary disruptions
+# such as node drains, cluster upgrades, or maintenance operations.
+# This prevents Kubernetes from evicting too many pods at once.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: $KUBE_APP-pdb
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP
+spec:
+  # Ensure at least 1 pod is always running during disruptions.
+  # With 2 replicas, this allows draining 1 pod at a time.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: $KUBE_APP

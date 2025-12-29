@@ -9,7 +9,13 @@ metadata:
   annotations:
     secrets.doppler.com/reload: 'true'
 spec:
-  replicas: 1
+  replicas: 2
+  # Explicit rollout strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Allow 1 extra pod during rollout
+      maxUnavailable: 0  # Never kill old pods until new ones are Ready
   selector:
     matchLabels:
       app: $KUBE_APP

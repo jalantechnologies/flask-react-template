@@ -1,0 +1,18 @@
+# PodDisruptionBudget for preview environments.
+# While preview is less critical than production, this still helps
+# prevent complete outages during cluster maintenance.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: $KUBE_APP-pdb
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP
+spec:
+  # For preview with 1 replica, use maxUnavailable instead of minAvailable
+  # This allows the pod to be evicted but signals to the cluster that
+  # this workload should be rescheduled promptly.
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: $KUBE_APP
