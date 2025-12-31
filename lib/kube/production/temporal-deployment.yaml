@@ -217,6 +217,10 @@ spec:
           env:
             - name: TMPDIR
               value: "/opt/app/tmp"
+            - name: PIPENV_VENV_IN_PROJECT
+              value: "false"
+            - name: WORKON_HOME
+              value: "/opt/app/tmp/.virtualenvs"
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
