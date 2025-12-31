@@ -39,6 +39,7 @@ This project has three deployment environments that everyone can access:
 - [Workers](docs/workers.md)
 - [CI/CD](docs/deployment.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)
+- [REST API Endpoints](docs/rest-api-endpoints.md)
 
 ## Best Practices
 
