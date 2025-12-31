@@ -52,11 +52,11 @@ class DeviceTokenWriter:
     def deactivate_device_token(*, params: DeleteDeviceTokenParams) -> DeviceTokenDeletionResult:
         deletion_time = datetime.now()
         try:
-            oid = ObjectId(params.device_token_id)
+            ObjectId(params.device_token_id)
         except InvalidId:
             raise DeviceTokenNotFoundError(device_token_id=params.device_token_id)
 
-        updated_token_bson = DeviceTokenRepository.collection().find_one_and_update(
+        DeviceTokenRepository.collection().find_one_and_update(
             {
                 "_id": ObjectId(params.device_token_id),
                 "account_id": params.account_id,
