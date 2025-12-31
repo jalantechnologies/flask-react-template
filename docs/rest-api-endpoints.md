@@ -4,18 +4,6 @@ This document covers all available REST API endpoints, their request/response fo
 
 ---
 
-## Authentication
-
-All endpoints require an `Authorization: Bearer <token>` header. Tokens are obtained through the authentication module and expire based on your configuration.
-
-**Example:**
-
-```bash
-curl -H "Authorization: Bearer eyJhbGc..." https://api.example.com/endpoint
-```
-
----
-
 ## Device Token Endpoints
 
 The Device Token API manages push notification device registrations.
