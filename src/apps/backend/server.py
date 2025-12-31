@@ -14,6 +14,7 @@ from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
+from modules.device_token.rest_api.device_token_rest_api_server import DeviceTokenRestApiServer
 from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
@@ -57,6 +58,10 @@ api_blueprint.register_blueprint(account_blueprint)
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
+
+# Register device token apis
+device_token_blueprint = DeviceTokenRestApiServer.create()
+api_blueprint.register_blueprint(device_token_blueprint)
 
 app.register_blueprint(api_blueprint)
 
