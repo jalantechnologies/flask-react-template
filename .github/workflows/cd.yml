@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: 4083bbf5abc5a3e79d85a9f551c75919aaad6dfb
+          ref: rehan/fix/temporal-url
 
       - name: Extract branch name
         id: extract_branch
@@ -70,3 +70,4 @@ jobs:
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
           pull_request_number: ${{  github.event.pull_request.number }}
           deploy_annotate_pr: "true"
+          enable_temporal: "true"
