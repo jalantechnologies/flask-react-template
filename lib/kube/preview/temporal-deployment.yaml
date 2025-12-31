@@ -213,6 +213,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+          env:
+            - name: TMPDIR
+              value: "/opt/app/tmp"
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
           livenessProbe:
             exec:

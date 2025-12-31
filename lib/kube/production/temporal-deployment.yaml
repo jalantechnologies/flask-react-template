@@ -214,6 +214,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+          env:
+            - name: TMPDIR
+              value: "/opt/app/tmp"
           command: ['pipenv', 'run', 'python', 'temporal_server.py']
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
