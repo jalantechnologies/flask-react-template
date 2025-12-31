@@ -79,4 +79,4 @@ class DeviceTokenWriter:
             {"$set": {"active": False, "updated_at": datetime.now()}}
         )
 
-        return result.modified_count
+        return int(result.modified_count)

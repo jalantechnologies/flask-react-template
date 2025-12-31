@@ -120,4 +120,4 @@ class DeviceTokenService:
             )
         )
 
-        return result.modified_count
+        return int(result.modified_count)

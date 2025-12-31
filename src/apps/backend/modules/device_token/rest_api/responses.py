@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Optional
 
 @dataclass(frozen=True)
@@ -9,7 +8,7 @@ class RegisterDeviceTokenResponse:
     platform: str
     device_info: Optional[dict]
     active: bool
-    created_at: datetime
+    created_at: Optional[str]
 
 @dataclass(frozen=True)
 class DeviceTokenListItemResponse:

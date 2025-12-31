@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime
 
 from modules.device_token.internal.store.device_token_model import DeviceTokenModel
 from modules.device_token.types import DeviceToken
@@ -16,6 +17,6 @@ class DeviceTokenUtil:
             device_info=validated_device_token_data.device_info,
             last_used_at=validated_device_token_data.last_used_at,
             active=validated_device_token_data.active,
-            created_at=validated_device_token_data.created_at,
-            updated_at=validated_device_token_data.updated_at
+            created_at=validated_device_token_data.created_at or datetime.now(),
+            updated_at=validated_device_token_data.updated_at or datetime.now()
         )

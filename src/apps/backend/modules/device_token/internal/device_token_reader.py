@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 
 from bson.objectid import ObjectId
 
@@ -22,7 +22,7 @@ class DeviceTokenReader:
 
     @staticmethod
     def get_device_tokens_by_account_id(*, params: GetDeviceTokensParams) -> list[DeviceToken]:
-        filter_query = {"account_id": params.account_id}
+        filter_query: dict[str, Any] = {"account_id": params.account_id}
         if params.active_only:
             filter_query["active"] = True
 
