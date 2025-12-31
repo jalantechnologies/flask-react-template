@@ -47,7 +47,7 @@ Register or update a device token for push notifications. If a device token alre
     "device_model": "iPhone14"
   },
   "active": true,
-  "created_at": "2025-01-15T10:30:00Z",
+  "created_at": "2025-01-15T10:30:00Z"
 }
 ```
 
@@ -141,7 +141,7 @@ Retrieve all active device tokens for the authenticated account.
         "device_model": "Pixel6"
       },
       "active": true,
-      "last_used_at": "2025-01-15T10:30:00Z",
+      "last_used_at": "2025-01-15T10:30:00Z"
     },
   ]
 }
@@ -208,7 +208,7 @@ All errors follow a consistent format:
 
 ```json
 {
-  "error": "error_message",
+  "message": "error_message",
   "code": "ERROR_CODE"
 }
 ```
@@ -244,7 +244,7 @@ All errors follow a consistent format:
 
 | Field | Description |
 |-------|-------------|
-| `account_id` | ObjectId reference to the account |
+| `account_id` | String representation of the account ID (e.g., MongoDB ObjectId hex string) |
 | `device_token` | FCM or APNs token string |
 | `platform` | One of 'android', 'ios', or 'web' |
 | `device_info` | Optional object containing `app_version`, `os_version`, `device_model` |
