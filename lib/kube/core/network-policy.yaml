@@ -103,7 +103,7 @@ spec:
           port: 8080
 
 ---
-# Allow app to connect to Temporal
+# Allow app to connect to Temporal and allow ingress controller to reach Temporal UI
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -116,6 +116,15 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # Allow traffic from nginx ingress controller to Temporal UI (port 8080)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow app pods to connect to Temporal server (port 7233)
     - from:
         - podSelector:
             matchLabels:
