@@ -49,7 +49,7 @@ spec:
       # Init container: Copies Temporal configuration files to shared volumes before main containers start
       initContainers:
         - name: copy-temporal-config
-          image: temporalio/auto-setup:1.24.2
+          image: temporalio/auto-setup:1.27.2@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
           imagePullPolicy: Always
           command: ['sh', '-c', 'cp -r /etc/temporal/config/* /tmp/config/ && mkdir -p /tmp/ui-config']
           volumeMounts:
@@ -73,7 +73,7 @@ spec:
               memory: '400Mi'
       containers:
         - name: temporal-server
-          image: temporalio/auto-setup:1.24.2
+          image: temporalio/auto-setup:1.27.2@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -116,7 +116,7 @@ spec:
               memory: '400Mi'
 
         - name: temporal-admin-tools
-          image: temporalio/admin-tools:1.24.2-tctl-1.18
+          image: temporalio/admin-tools:1.27.2-tctl-1.18@sha256:b5ae59dae6ea00c22fc2bdf04a2cfaf59e3e036b8b09ca777f99e2c871396fa2
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
@@ -153,7 +153,7 @@ spec:
               memory: '200Mi'
 
         - name: temporal-ui
-          image: temporalio/ui:2.24.0
+          image: temporalio/ui:2.37.2@sha256:3d7b36849d7ca5245f59f6ab558bebbd6b83aa1518f4505e97927419360d1f25
           imagePullPolicy: Always
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
