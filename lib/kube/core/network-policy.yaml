@@ -147,14 +147,13 @@ spec:
         - protocol: UDP
           port: 53
     
-    # Allow database connections (internal cluster)
+    # Allow database connections
     - ports:
         - protocol: TCP
           port: 5432   # PostgreSQL
         - protocol: TCP
           port: 27017  # MongoDB
     
-    # Allow external database connections (DigitalOcean managed databases)
     - to: []
       ports:
         - protocol: TCP
