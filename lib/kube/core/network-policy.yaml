@@ -65,6 +65,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 27017
+    
+    # Allow external database connections (DigitalOcean managed databases)
+    - to: []  # Allow to any external IP
+      ports:
+        - protocol: TCP
+          port: 25061  # DigitalOcean PostgreSQL port
+        - protocol: TCP
+          port: 27017  # External MongoDB port
 
 ---
 # Allow nginx ingress to reach our app
