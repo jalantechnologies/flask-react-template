@@ -139,12 +139,18 @@ spec:
         - protocol: UDP
           port: 53
     
-    # Allow database connections
+    # Allow database connections (internal cluster)
     - ports:
         - protocol: TCP
           port: 5432   # PostgreSQL
         - protocol: TCP
           port: 27017  # MongoDB
+    
+    # Allow external database connections (DigitalOcean managed databases)
+    - to: []  # Allow to any external IP
+      ports:
+        - protocol: TCP
+          port: 25061  # DigitalOcean PostgreSQL port
 
 ---
 # Allow ACME challenge solver pods for SSL certificate generation
