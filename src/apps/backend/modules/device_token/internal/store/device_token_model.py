@@ -5,13 +5,14 @@ from typing import Optional
 from bson import ObjectId
 
 from modules.application.base_model import BaseModel
+from modules.device_token.types import Platform
 
 
 @dataclass
 class DeviceTokenModel(BaseModel):
     account_id: str
     device_token: str
-    platform: str
+    platform: Platform
     device_info: Optional[dict] = None
     active: bool = True
     last_used_at: Optional[datetime] = None

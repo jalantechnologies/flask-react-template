@@ -12,7 +12,7 @@ from modules.device_token.errors import DeviceTokenNotFoundError
 
 class DeviceTokenWriter:
     @staticmethod
-    def create_device_token(*, params: CreateDeviceTokenParams) -> DeviceToken:
+    def create_or_update_device_token(*, params: CreateDeviceTokenParams) -> DeviceToken:
         device_token_data = {
             "account_id": params.account_id,
             "device_token": params.device_token,

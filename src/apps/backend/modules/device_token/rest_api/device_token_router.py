@@ -13,7 +13,7 @@ class DeviceTokenRouter:
         )
 
         blueprint.add_url_rule(
-            "/accounts/<account_id>/devices/<device_token_id>",
+            "/accounts/<account_id>/devices/<device_id>",
             view_func=DeviceTokenView.as_view("device_token_view_by_id"),
             methods=["DELETE"],
         )

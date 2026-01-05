@@ -43,7 +43,7 @@ class TestDeviceTokenService(BaseTestDeviceToken):
         assert device_token.active is True
 
     def test_register_device_token_all_platforms(self) -> None:
-        for platform in ["android", "ios", "web"]:
+        for platform in ["android", "ios"]:
             device_token = DeviceTokenService.register_device_token(
                 account_id=self.account.id,
                 device_token=f"{platform}_token",

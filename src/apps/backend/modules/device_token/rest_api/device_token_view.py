@@ -47,7 +47,7 @@ class DeviceTokenView(MethodView):
         return jsonify({"devices": devices}), 200
 
     @access_auth_middleware
-    def delete(self, account_id: str, device_token_id: str) -> ResponseReturnValue:
-        DeviceTokenService.unregister_device_token(account_id=account_id, device_token_id=device_token_id)
+    def delete(self, account_id: str, device_id: str) -> ResponseReturnValue:
+        DeviceTokenService.unregister_device_token(account_id=account_id, device_token_id=device_id)
 
         return jsonify({"message": "Device unregistered successfully"}), 200

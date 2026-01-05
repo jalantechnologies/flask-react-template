@@ -7,7 +7,6 @@ from typing import Optional, Dict
 class Platform(Enum):
     ANDROID = "android"
     IOS = "ios"
-    WEB = "web"
 
 
 @dataclass(frozen=True)

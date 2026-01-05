@@ -14,7 +14,7 @@ DEVICE_TOKEN_VALIDATION_SCHEMA = {
             "device_token": {"bsonType": "string"},
             "platform": {
                 "bsonType": "string",
-                "enum": ["android", "ios", "web"]
+                "enum": ["android", "ios"]
             },
             "device_info": {"bsonType": ["object", "null"]},
             "active": {"bsonType": "bool"},
@@ -33,8 +33,11 @@ class DeviceTokenRepository(ApplicationRepository):
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index([("device_token", 1)],  unique=True, name="device_token_unique_index")
 
-        collection.create_index(
-            [("account_id", 1), ("active", 1)], name="account_id_active_index", partialFilterExpression={"active": True}
+        collection.create_index([
+            ("account_id", 1),
+            ("active", 1),
+            ("created_at", -1),],
+            name="account_id_active_created_at_index",
         )
 
         collection.create_index("last_used_at", expireAfterSeconds=30 * 24 * 60 * 60, name="last_used_at_ttl_index", sparse=True)

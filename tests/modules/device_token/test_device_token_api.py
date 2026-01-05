@@ -128,7 +128,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         active = self.create_test_device_token(account_id=account.id, device_token="active")
         inactive = self.create_test_device_token(account_id=account.id, device_token="inactive")
 
-        self.make_authenticated_request("DELETE", account.id, token, device_token_id=inactive.id)
+        self.make_authenticated_request("DELETE", account.id, token, device_id=inactive.id)
 
         response = self.make_authenticated_request("GET", account.id, token)
 
@@ -149,7 +149,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         device_token = self.create_test_device_token(account_id=account.id)
 
         response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_token_id=device_token.id
+            "DELETE", account.id, token, device_id=device_token.id
         )
 
         assert response.status_code == 200
@@ -163,7 +163,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         account, token = self.create_account_and_get_token()
 
         response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_token_id="nonexistent_id"
+            "DELETE", account.id, token, device_id="nonexistent_id"
         )
 
         self.assert_error_response(response, 404, DeviceTokenErrorCode.NOT_FOUND)
@@ -173,7 +173,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         device_token = self.create_test_device_token(account_id=account.id)
 
         response = self.make_unauthenticated_request(
-            "DELETE", account_id=account.id, device_token_id=device_token.id
+            "DELETE", account_id=account.id, device_id=device_token.id
         )
 
         self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
@@ -196,7 +196,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         # Try to delete account1's token using account2's credentials
         # This succeeds silently (200) but has no effect on account1's token
         response = self.make_authenticated_request(
-            "DELETE", account2.id, token2, device_token_id=device_token.id
+            "DELETE", account2.id, token2, device_id=device_token.id
         )
 
         assert response.status_code == 200
@@ -208,7 +208,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
     def test_register_multiple_platforms(self) -> None:
         account, token = self.create_account_and_get_token()
 
-        for platform in ["android", "ios", "web"]:
+        for platform in ["android", "ios"]:
             payload = {"device_token": f"multi_platform_token_{platform}", "platform": platform}
             response = self.make_authenticated_request("POST", account.id, token, data=payload)
             assert response.status_code == 201
@@ -216,9 +216,9 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         response = self.make_authenticated_request("GET", account.id, token)
         assert isinstance(response.json, dict)
         assert "devices" in response.json
-        assert len(response.json["devices"]) == 3
+        assert len(response.json["devices"]) == 2
         platforms = [t.get("platform") for t in response.json["devices"]]
-        assert set(platforms) == {"android", "ios", "web"}
+        assert set(platforms) == {"android", "ios"}
 
     def test_account_isolation_via_api(self) -> None:
         """Test that account tokens are isolated via API with idempotent delete behavior"""
@@ -237,7 +237,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
 
         # Account 2 delete attempt succeeds silently (idempotent) but has no effect on account1
         delete_response = self.make_authenticated_request(
-            "DELETE", account2.id, token2, device_token_id=token_id
+            "DELETE", account2.id, token2, device_id=token_id
         )
         assert delete_response.status_code == 200
 
@@ -329,13 +329,13 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         
         # Delete once
         response1 = self.make_authenticated_request(
-            "DELETE", account.id, token, device_token_id=device_token.id
+            "DELETE", account.id, token, device_id=device_token.id
         )
         assert response1.status_code == 200
         
         # Delete again - should also succeed (idempotent)
         response2 = self.make_authenticated_request(
-            "DELETE", account.id, token, device_token_id=device_token.id
+            "DELETE", account.id, token, device_id=device_token.id
         )
         assert response2.status_code == 200
 
@@ -359,7 +359,7 @@ class TestDeviceTokenApi(BaseTestDeviceToken):
         
         # Try to delete with invalid ObjectId format
         response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_token_id="invalid_object_id_format"
+            "DELETE", account.id, token, device_id="invalid_object_id_format"
         )
         
         # Should return 404 or 400 depending on implementation

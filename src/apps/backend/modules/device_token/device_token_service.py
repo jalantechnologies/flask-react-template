@@ -36,7 +36,7 @@ class DeviceTokenService:
             )
         )
 
-        return DeviceTokenWriter.create_device_token(params=params)
+        return DeviceTokenWriter.create_or_update_device_token(params=params)
     
     @staticmethod
     def unregister_device_token(account_id: str, device_token_id: str) -> DeviceTokenDeletionResult:

@@ -106,12 +106,12 @@ class BaseTestDeviceToken(unittest.TestCase):
         method: str,
         account_id: str,
         token: str,
-        device_token_id: str = None,
+        device_id: str = None,
         data: dict = None,
     ):
         url = self.DEVICE_TOKEN_URL_TEMPLATE.format(account_id=account_id)
-        if device_token_id:
-            url = f"{url}/{device_token_id}"
+        if device_id:
+            url = f"{url}/{device_id}"
 
         headers = {**self.HEADERS, "Authorization": f"Bearer {token}"}
 
@@ -123,10 +123,10 @@ class BaseTestDeviceToken(unittest.TestCase):
             elif method.upper() == "DELETE":
                 return client.delete(url, headers=headers)
 
-    def make_unauthenticated_request(self, method: str, account_id: str = "dummy_account", device_token_id: str = None, data: dict = None):
+    def make_unauthenticated_request(self, method: str, account_id: str = "dummy_account", device_id: str = None, data: dict = None):
         url = self.DEVICE_TOKEN_URL_TEMPLATE.format(account_id=account_id)
-        if device_token_id:
-            url = f"{url}/{device_token_id}"
+        if device_id:
+            url = f"{url}/{device_id}"
 
         with app.test_client() as client:
             if method.upper() == "GET":
