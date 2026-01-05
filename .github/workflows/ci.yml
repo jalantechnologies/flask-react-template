@@ -144,9 +144,24 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 0  # Report only, don't fail CI
       
+      # Check if reports contain actual vulnerabilities before commenting
+      - name: Check if CRITICAL filesystem report contains vulnerabilities
+        id: fs_vuln_check_critical
+        if: steps.trivy_critical.outcome == 'failure'
+        run: |
+          COUNT=$(grep -c "CVE-" trivy-critical-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+      
+      - name: Check if HIGH filesystem report contains vulnerabilities
+        id: fs_vuln_check_high
+        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != ''
+        run: |
+          COUNT=$(grep -c "CVE-" trivy-high-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+      
       - name: Comment PR with CRITICAL filesystem vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_critical.outcome == 'failure'
+        if: steps.trivy_critical.outcome == 'failure' && steps.fs_vuln_check_critical.outputs.vuln_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -154,7 +169,7 @@ jobs:
       
       - name: Comment PR with HIGH filesystem vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != ''
+        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != '' && steps.fs_vuln_check_high.outputs.vuln_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -217,9 +232,24 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 0  # Report only, don't fail CI
 
+      # Check if IaC reports contain actual vulnerabilities before commenting
+      - name: Check if CRITICAL IaC report contains vulnerabilities
+        id: iac_vuln_check_critical
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' }}
+        run: |
+          COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-critical-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+      
+      - name: Check if HIGH IaC report contains vulnerabilities
+        id: iac_vuln_check_high
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' }}
+        run: |
+          COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-high-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+
       - name: Comment PR with CRITICAL IaC vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' }}
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' && steps.iac_vuln_check_critical.outputs.vuln_count != '0' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -227,7 +257,7 @@ jobs:
       
       - name: Comment PR with HIGH IaC vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' }}
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' && steps.iac_vuln_check_high.outputs.vuln_count != '0' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -290,12 +320,14 @@ jobs:
 
       - name: Check if CRITICAL report contains vulnerabilities
         id: vuln_check_critical
+        if: steps.trivy_docker_critical.outcome == 'failure'
         run: |
           COUNT=$(grep -c "CVE-" trivy-docker-critical-report.md || true)
           echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
       
       - name: Check if HIGH report contains vulnerabilities
         id: vuln_check_high
+        if: steps.trivy_docker_high.outcome == 'success' && hashFiles('trivy-docker-high-report.md') != ''
         run: |
           COUNT=$(grep -c "CVE-" trivy-docker-high-report.md || true)
           echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
