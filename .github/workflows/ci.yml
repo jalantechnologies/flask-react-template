@@ -89,6 +89,12 @@ jobs:
           BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
+      # Severity-based scanning strategy:
+      # - CRITICAL vulnerabilities: FAIL CI (exit-code: 1)
+      # - HIGH vulnerabilities: WARN only via PR comment (exit-code: 0)
+      # - Always uses latest Trivy DB (no freezing/caching mechanism)
+      # This ensures security without blocking PRs for non-critical issues
+
       - name: Get changes
         id: changes
         run: |
@@ -104,6 +110,7 @@ jobs:
           ls changed_files/
           echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
+      # CRITICAL filesystem scan - FAILS CI if vulnerabilities found
       - name: Run Trivy CRITICAL scan on changed files
         id: trivy_critical
         if: steps.changes.outputs.changed_files != ''
@@ -118,8 +125,9 @@ jobs:
           severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1
+          exit-code: 1  # Fail CI for CRITICAL vulnerabilities
       
+      # HIGH filesystem scan - WARNS only, does NOT fail CI
       - name: Run Trivy HIGH scan on changed files
         id: trivy_high
         if: steps.changes.outputs.changed_files != ''
@@ -134,7 +142,7 @@ jobs:
           severity: 'HIGH'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 0
+          exit-code: 0  # Report only, don't fail CI
       
       - name: Comment PR with CRITICAL filesystem vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -175,6 +183,7 @@ jobs:
           
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
+      # CRITICAL IaC scan - FAILS CI if misconfigurations found
       - name: Run Trivy CRITICAL scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac_critical
@@ -189,8 +198,9 @@ jobs:
           severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1
+          exit-code: 1  # Fail CI for CRITICAL IaC issues
       
+      # HIGH IaC scan - WARNS only, does NOT fail CI
       - name: Run Trivy HIGH scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac_high
@@ -205,7 +215,7 @@ jobs:
           severity: 'HIGH'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 0
+          exit-code: 0  # Report only, don't fail CI
 
       - name: Comment PR with CRITICAL IaC vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -246,6 +256,7 @@ jobs:
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
+      # CRITICAL Docker image scan - FAILS CI if vulnerabilities found
       - name: Run Trivy CRITICAL scan on docker images
         id: trivy_docker_critical
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
@@ -259,8 +270,9 @@ jobs:
           severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1
+          exit-code: 1  # Fail CI for CRITICAL vulnerabilities
       
+      # HIGH Docker image scan - WARNS only, does NOT fail CI
       - name: Run Trivy HIGH scan on docker images
         id: trivy_docker_high
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
@@ -274,7 +286,7 @@ jobs:
           severity: 'HIGH'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 0
+          exit-code: 0  # Report only, don't fail CI
 
       - name: Check if CRITICAL report contains vulnerabilities
         id: vuln_check_critical
@@ -304,6 +316,8 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-high-report.md
       
+      # Final security gate: Fail CI only for CRITICAL vulnerabilities
+      # HIGH vulnerabilities are reported via PR comments but don't block merges
       - name: Fail job if CRITICAL vulnerabilities found
         if: steps.trivy_critical.outcome == 'failure' || steps.trivy_iac_critical.outcome == 'failure' || steps.trivy_docker_critical.outcome == 'failure' || steps.checkov.outcome == 'failure'
         run: |
