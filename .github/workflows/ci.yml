@@ -82,12 +82,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
-      - name: Cache Trivy DB
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: .trivy
-          key: trivy-db-v1
-
       - name: Extract branch name
         id: extract_branch
         run: |
@@ -110,31 +104,53 @@ jobs:
           ls changed_files/
           echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
-      - name: Run Trivy scan on changed files
-        id: trivy
+      - name: Run Trivy CRITICAL scan on changed files
+        id: trivy_critical
         if: steps.changes.outputs.changed_files != ''
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
-          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
           template: '@markdown-templates/fs-markdown.tpl'
-          output: 'trivy-report.md'
-          severity: 'HIGH,CRITICAL'
+          output: 'trivy-critical-report.md'
+          severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
-          cache-dir: .trivy
       
-      - name: Comment PR with audit results
+      - name: Run Trivy HIGH scan on changed files
+        id: trivy_high
+        if: steps.changes.outputs.changed_files != ''
+        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
+        continue-on-error: true
+        with:
+          scan-type: 'filesystem'
+          scan-ref: './changed_files'
+          format: 'template'
+          template: '@markdown-templates/fs-markdown.tpl'
+          output: 'trivy-high-report.md'
+          severity: 'HIGH'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 0
+      
+      - name: Comment PR with CRITICAL filesystem vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy.outcome == 'failure'
+        if: steps.trivy_critical.outcome == 'failure'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-report.md
+          body-path: trivy-critical-report.md
+      
+      - name: Comment PR with HIGH filesystem vulnerabilities
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != ''
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-high-report.md
 
       - name: Get changes in k8s folder and subfolders
         id: iac_changes
@@ -159,31 +175,53 @@ jobs:
           
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
-      - name: Run Trivy scan on IaC
+      - name: Run Trivy CRITICAL scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        id: trivy_iac
+        id: trivy_iac_critical
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
-          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
           format: 'template'
           template: '@markdown-templates/iac-markdown.tpl'
-          output: 'trivy-iac-report.md'
-          severity: 'HIGH,CRITICAL'
+          output: 'trivy-iac-critical-report.md'
+          severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
-          cache-dir: .trivy
+      
+      - name: Run Trivy HIGH scan on IaC
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
+        id: trivy_iac_high
+        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
+        continue-on-error: true
+        with:
+          scan-type: 'config'
+          scan-ref: 'iac_changed_files'
+          format: 'template'
+          template: '@markdown-templates/iac-markdown.tpl'
+          output: 'trivy-iac-high-report.md'
+          severity: 'HIGH'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 0
 
-      - name: Comment PR with audit results
+      - name: Comment PR with CRITICAL IaC vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'failure' }}
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-iac-report.md
+          body-path: trivy-iac-critical-report.md
+      
+      - name: Comment PR with HIGH IaC vulnerabilities
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' }}
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-iac-high-report.md
       
       - name: Run Checkov action
         id: checkov
@@ -208,42 +246,68 @@ jobs:
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
-      - name: Run Trivy scan on docker images
-        id: trivy_docker
+      - name: Run Trivy CRITICAL scan on docker images
+        id: trivy_docker_critical
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
-          args: '--skip-db-update --skip-java-db-update'
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
           template: '@markdown-templates/docker-markdown.tpl'
-          output: 'trivy-docker-report.md'
-          severity: 'HIGH,CRITICAL'
+          output: 'trivy-docker-critical-report.md'
+          severity: 'CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
           exit-code: 1
-          cache-dir: .trivy
+      
+      - name: Run Trivy HIGH scan on docker images
+        id: trivy_docker_high
+        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
+        continue-on-error: true
+        with:
+          scan-type: 'image'
+          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
+          format: 'template'
+          template: '@markdown-templates/docker-markdown.tpl'
+          output: 'trivy-docker-high-report.md'
+          severity: 'HIGH'
+          ignore-unfixed: true
+          trivyignores: ".trivyignore"
+          exit-code: 0
 
-      - name: Check if report contains any real vulnerabilities
-        id: vuln_check
+      - name: Check if CRITICAL report contains vulnerabilities
+        id: vuln_check_critical
         run: |
-          # Count how many vulnerabilities are listed in the markdown
-          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          COUNT=$(grep -c "CVE-" trivy-docker-critical-report.md || true)
+          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+      
+      - name: Check if HIGH report contains vulnerabilities
+        id: vuln_check_high
+        run: |
+          COUNT=$(grep -c "CVE-" trivy-docker-high-report.md || true)
           echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
           
-      - name: Comment PR with audit results
+      - name: Comment PR with CRITICAL docker vulnerabilities
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_docker.outcome == 'failure' && hashFiles('trivy-docker-report.md') != '' && steps.vuln_check.outputs.vuln_count != '0'
+        if: steps.trivy_docker_critical.outcome == 'failure' && hashFiles('trivy-docker-critical-report.md') != '' && steps.vuln_check_critical.outputs.vuln_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-docker-report.md
+          body-path: trivy-docker-critical-report.md
       
-      - name: Fail job if Trivy found issues
-        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' || steps.checkov.outcome == 'failure'
+      - name: Comment PR with HIGH docker vulnerabilities
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
+        if: steps.trivy_docker_high.outcome == 'success' && hashFiles('trivy-docker-high-report.md') != '' && steps.vuln_check_high.outputs.vuln_count != '0'
+        with:
+          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: trivy-docker-high-report.md
+      
+      - name: Fail job if CRITICAL vulnerabilities found
+        if: steps.trivy_critical.outcome == 'failure' || steps.trivy_iac_critical.outcome == 'failure' || steps.trivy_docker_critical.outcome == 'failure' || steps.checkov.outcome == 'failure'
         run: |
-          echo "❌ Trivy found vulnerabilities — failing the job."
+          echo "❌ CRITICAL vulnerabilities or security issues found — failing the job."
           exit 1
           
   test:
