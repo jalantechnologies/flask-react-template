@@ -47,12 +47,10 @@
     "cors": "^2.8.5",
     "cpx": "^1.5.0",
     "eslint-config-prettier": "^9.1.0",
-    "express": "4.17.1",
     "forever": "^4.0.3",
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
-    "json5": "1.0.1",
-    "lodash": "4.17.15",
+    "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.8.1",
     "minimatch": "^10.1.1",
     "path": "^0.12.7",
@@ -60,7 +58,6 @@
     "postcss-loader": "^8.1.1",
     "postcss-preset-env": "^9.5.1",
     "prettier": "^3.3.3",
-    "qs": "6.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
@@ -108,5 +105,10 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.11.1",
     "webpack-merge": "^5.8.0"
+  },
+  "overrides": {
+    "braces": "3.0.3",
+    "minimist": "^1.2.8",
+    "nconf": "0.11.4"
   }
 }
