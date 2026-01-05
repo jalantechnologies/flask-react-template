@@ -50,7 +50,7 @@
     "forever": "^4.0.3",
     "formik": "^2.4.5",
     "google-libphonenumber": "^3.2.38",
-    "lodash": "^4.17.21",
+    "lodash": "4.17.15",
     "mini-css-extract-plugin": "^2.8.1",
     "minimatch": "^10.1.1",
     "path": "^0.12.7",
