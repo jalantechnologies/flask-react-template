@@ -24,7 +24,7 @@ class DeviceTokenResponseMapper:
         return RegisterDeviceTokenResponse(
             id=token.id,
             device_token=token.device_token,
-            platform=token.platform,
+            platform=token.platform.value,
             device_info=token.device_info,
             active=token.active,
             created_at=to_iso8601(token.created_at),
@@ -34,7 +34,7 @@ class DeviceTokenResponseMapper:
     def to_list_item(token: DeviceToken) -> DeviceTokenListItemResponse:
         return DeviceTokenListItemResponse(
             id=token.id,
-            platform=token.platform,
+            platform=token.platform.value,
             device_info=token.device_info,
             active=token.active,
             last_used_at=to_iso8601(token.last_used_at),

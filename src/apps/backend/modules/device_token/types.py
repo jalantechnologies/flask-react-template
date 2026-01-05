@@ -14,7 +14,7 @@ class DeviceToken:
     id: str
     account_id: str
     device_token: str
-    platform: str
+    platform: Platform
     device_info: Optional[dict]
     active: bool
     last_used_at: Optional[datetime]

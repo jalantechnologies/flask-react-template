@@ -5,7 +5,7 @@ from modules.device_token.errors import (
     DeviceTokenNotFoundError,
     InvalidPlatformError
 )
-from modules.device_token.types import DeviceTokenErrorCode
+from modules.device_token.types import DeviceTokenErrorCode, Platform
 from tests.modules.device_token.base_test_device_token import BaseTestDeviceToken
 
 
@@ -24,7 +24,7 @@ class TestDeviceTokenService(BaseTestDeviceToken):
 
         assert device_token.account_id == self.account.id
         assert device_token.device_token == "fcm_token_123"
-        assert device_token.platform == "android"
+        assert device_token.platform == Platform.ANDROID
         assert device_token.device_info == {"app_version": "1.0.0"}
         assert device_token.active is True
         assert device_token.id is not None
@@ -38,7 +38,7 @@ class TestDeviceTokenService(BaseTestDeviceToken):
 
         assert device_token.account_id == self.account.id
         assert device_token.device_token == "fcm_token_456"
-        assert device_token.platform == "ios"
+        assert device_token.platform == Platform.IOS
         assert device_token.device_info is None
         assert device_token.active is True
 
@@ -49,7 +49,7 @@ class TestDeviceTokenService(BaseTestDeviceToken):
                 device_token=f"{platform}_token",
                 platform=platform,
             )
-            assert device_token.platform == platform
+            assert device_token.platform == Platform(platform)
 
     def test_register_device_token_invalid_platform(self) -> None:
         try:

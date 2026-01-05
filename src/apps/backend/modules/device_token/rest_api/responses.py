@@ -7,7 +7,7 @@ from modules.device_token.types import Platform
 class RegisterDeviceTokenResponse:
     id: str
     device_token: str
-    platform: Platform
+    platform: str
     device_info: Optional[dict]
     active: bool
     created_at: Optional[str]
@@ -15,7 +15,7 @@ class RegisterDeviceTokenResponse:
 @dataclass(frozen=True)
 class DeviceTokenListItemResponse:
     id: str
-    platform: Platform
+    platform: str
     device_info: Optional[dict]
     active: bool
     last_used_at: Optional[str]

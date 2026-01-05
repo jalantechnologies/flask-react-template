@@ -2,7 +2,7 @@ from typing import Any
 from datetime import datetime
 
 from modules.device_token.internal.store.device_token_model import DeviceTokenModel
-from modules.device_token.types import DeviceToken
+from modules.device_token.types import DeviceToken, Platform
 
 
 class DeviceTokenUtil:
@@ -13,7 +13,7 @@ class DeviceTokenUtil:
             id=str(validated_device_token_data.id),
             account_id=validated_device_token_data.account_id,
             device_token=validated_device_token_data.device_token,
-            platform=validated_device_token_data.platform,
+            platform=Platform(validated_device_token_data.platform),
             device_info=validated_device_token_data.device_info,
             last_used_at=validated_device_token_data.last_used_at,
             active=validated_device_token_data.active,
