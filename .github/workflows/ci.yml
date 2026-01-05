@@ -90,10 +90,10 @@ jobs:
           echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
 
       # Severity-based scanning strategy:
-      # - CRITICAL vulnerabilities: FAIL CI (exit-code: 1)
-      # - HIGH vulnerabilities: WARN only via PR comment (exit-code: 0)
+      # - Single scan per type detects both HIGH and CRITICAL vulnerabilities
+      # - CI fails ONLY if CRITICAL vulnerabilities are found
+      # - All findings (HIGH + CRITICAL) are reported in PR comments
       # - Always uses latest Trivy DB (no freezing/caching mechanism)
-      # This ensures security without blocking PRs for non-critical issues
 
       - name: Get changes
         id: changes
@@ -110,9 +110,9 @@ jobs:
           ls changed_files/
           echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
 
-      # CRITICAL filesystem scan - FAILS CI if vulnerabilities found
-      - name: Run Trivy CRITICAL scan on changed files
-        id: trivy_critical
+      # Scan for both HIGH and CRITICAL vulnerabilities in changed files
+      - name: Run Trivy scan on changed files
+        id: trivy
         if: steps.changes.outputs.changed_files != ''
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
@@ -121,59 +121,30 @@ jobs:
           scan-ref: './changed_files'
           format: 'template'
           template: '@markdown-templates/fs-markdown.tpl'
-          output: 'trivy-critical-report.md'
-          severity: 'CRITICAL'
+          output: 'trivy-fs-report.md'
+          severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1  # Fail CI for CRITICAL vulnerabilities
+          exit-code: 0  # Don't fail here, we'll check severity later
       
-      # HIGH filesystem scan - WARNS only, does NOT fail CI
-      - name: Run Trivy HIGH scan on changed files
-        id: trivy_high
-        if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
-        continue-on-error: true
-        with:
-          scan-type: 'filesystem'
-          scan-ref: './changed_files'
-          format: 'template'
-          template: '@markdown-templates/fs-markdown.tpl'
-          output: 'trivy-high-report.md'
-          severity: 'HIGH'
-          ignore-unfixed: true
-          trivyignores: ".trivyignore"
-          exit-code: 0  # Report only, don't fail CI
-      
-      # Check if reports contain actual vulnerabilities before commenting
-      - name: Check if CRITICAL filesystem report contains vulnerabilities
-        id: fs_vuln_check_critical
-        if: steps.trivy_critical.outcome == 'failure'
+      # Check if CRITICAL vulnerabilities exist in filesystem scan
+      - name: Check for CRITICAL filesystem vulnerabilities
+        id: fs_critical_check
+        if: steps.trivy.outcome == 'success' && hashFiles('trivy-fs-report.md') != ''
         run: |
-          COUNT=$(grep -c "CVE-" trivy-critical-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+          # Check if report contains CRITICAL severity
+          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-fs-report.md | grep -c "CVE-" || true)
+          TOTAL_COUNT=$(grep -c "CVE-" trivy-fs-report.md || true)
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
       
-      - name: Check if HIGH filesystem report contains vulnerabilities
-        id: fs_vuln_check_high
-        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != ''
-        run: |
-          COUNT=$(grep -c "CVE-" trivy-high-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
-      
-      - name: Comment PR with CRITICAL filesystem vulnerabilities
+      - name: Comment PR with filesystem scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_critical.outcome == 'failure' && steps.fs_vuln_check_critical.outputs.vuln_count != '0'
+        if: steps.trivy.outcome == 'success' && steps.fs_critical_check.outputs.total_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-critical-report.md
-      
-      - name: Comment PR with HIGH filesystem vulnerabilities
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_high.outcome == 'success' && hashFiles('trivy-high-report.md') != '' && steps.fs_vuln_check_high.outputs.vuln_count != '0'
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-high-report.md
+          body-path: trivy-fs-report.md
 
       - name: Get changes in k8s folder and subfolders
         id: iac_changes
@@ -198,10 +169,10 @@ jobs:
           
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
-      # CRITICAL IaC scan - FAILS CI if misconfigurations found
-      - name: Run Trivy CRITICAL scan on IaC
+      # Scan for both HIGH and CRITICAL IaC misconfigurations
+      - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        id: trivy_iac_critical
+        id: trivy_iac
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
@@ -209,59 +180,30 @@ jobs:
           scan-ref: 'iac_changed_files'
           format: 'template'
           template: '@markdown-templates/iac-markdown.tpl'
-          output: 'trivy-iac-critical-report.md'
-          severity: 'CRITICAL'
+          output: 'trivy-iac-report.md'
+          severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1  # Fail CI for CRITICAL IaC issues
-      
-      # HIGH IaC scan - WARNS only, does NOT fail CI
-      - name: Run Trivy HIGH scan on IaC
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        id: trivy_iac_high
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
-        continue-on-error: true
-        with:
-          scan-type: 'config'
-          scan-ref: 'iac_changed_files'
-          format: 'template'
-          template: '@markdown-templates/iac-markdown.tpl'
-          output: 'trivy-iac-high-report.md'
-          severity: 'HIGH'
-          ignore-unfixed: true
-          trivyignores: ".trivyignore"
-          exit-code: 0  # Report only, don't fail CI
+          exit-code: 0  # Don't fail here, we'll check severity later
 
-      # Check if IaC reports contain actual vulnerabilities before commenting
-      - name: Check if CRITICAL IaC report contains vulnerabilities
-        id: iac_vuln_check_critical
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' }}
+      # Check if CRITICAL vulnerabilities exist in IaC scan
+      - name: Check for CRITICAL IaC vulnerabilities
+        id: iac_critical_check
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'success' && hashFiles('trivy-iac-report.md') != '' }}
         run: |
-          COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-critical-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
-      
-      - name: Check if HIGH IaC report contains vulnerabilities
-        id: iac_vuln_check_high
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' }}
-        run: |
-          COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-high-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+          # Check if report contains CRITICAL severity
+          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-iac-report.md | grep -c "CVE-\|CKV-" || true)
+          TOTAL_COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-report.md || true)
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
 
-      - name: Comment PR with CRITICAL IaC vulnerabilities
+      - name: Comment PR with IaC scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_critical.outcome == 'failure' && steps.iac_vuln_check_critical.outputs.vuln_count != '0' }}
+        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'success' && steps.iac_critical_check.outputs.total_count != '0' }}
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-iac-critical-report.md
-      
-      - name: Comment PR with HIGH IaC vulnerabilities
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac_high.outcome == 'success' && hashFiles('trivy-iac-high-report.md') != '' && steps.iac_vuln_check_high.outputs.vuln_count != '0' }}
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-iac-high-report.md
+          body-path: trivy-iac-report.md
       
       - name: Run Checkov action
         id: checkov
@@ -286,9 +228,9 @@ jobs:
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
-      # CRITICAL Docker image scan - FAILS CI if vulnerabilities found
-      - name: Run Trivy CRITICAL scan on docker images
-        id: trivy_docker_critical
+      # Scan for both HIGH and CRITICAL vulnerabilities in Docker image
+      - name: Run Trivy scan on docker images
+        id: trivy_docker
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
@@ -296,62 +238,35 @@ jobs:
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
           template: '@markdown-templates/docker-markdown.tpl'
-          output: 'trivy-docker-critical-report.md'
-          severity: 'CRITICAL'
+          output: 'trivy-docker-report.md'
+          severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           trivyignores: ".trivyignore"
-          exit-code: 1  # Fail CI for CRITICAL vulnerabilities
-      
-      # HIGH Docker image scan - WARNS only, does NOT fail CI
-      - name: Run Trivy HIGH scan on docker images
-        id: trivy_docker_high
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
-        continue-on-error: true
-        with:
-          scan-type: 'image'
-          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
-          format: 'template'
-          template: '@markdown-templates/docker-markdown.tpl'
-          output: 'trivy-docker-high-report.md'
-          severity: 'HIGH'
-          ignore-unfixed: true
-          trivyignores: ".trivyignore"
-          exit-code: 0  # Report only, don't fail CI
+          exit-code: 0  # Don't fail here, we'll check severity later
 
-      - name: Check if CRITICAL report contains vulnerabilities
-        id: vuln_check_critical
-        if: steps.trivy_docker_critical.outcome == 'failure'
+      # Check if CRITICAL vulnerabilities exist in Docker scan
+      - name: Check for CRITICAL docker vulnerabilities
+        id: docker_critical_check
+        if: steps.trivy_docker.outcome == 'success' && hashFiles('trivy-docker-report.md') != ''
         run: |
-          COUNT=$(grep -c "CVE-" trivy-docker-critical-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
-      
-      - name: Check if HIGH report contains vulnerabilities
-        id: vuln_check_high
-        if: steps.trivy_docker_high.outcome == 'success' && hashFiles('trivy-docker-high-report.md') != ''
-        run: |
-          COUNT=$(grep -c "CVE-" trivy-docker-high-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
+          # Check if report contains CRITICAL severity
+          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-docker-report.md | grep -c "CVE-" || true)
+          TOTAL_COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
           
-      - name: Comment PR with CRITICAL docker vulnerabilities
+      - name: Comment PR with docker scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_docker_critical.outcome == 'failure' && hashFiles('trivy-docker-critical-report.md') != '' && steps.vuln_check_critical.outputs.vuln_count != '0'
+        if: steps.trivy_docker.outcome == 'success' && hashFiles('trivy-docker-report.md') != '' && steps.docker_critical_check.outputs.total_count != '0'
         with:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-docker-critical-report.md
-      
-      - name: Comment PR with HIGH docker vulnerabilities
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_docker_high.outcome == 'success' && hashFiles('trivy-docker-high-report.md') != '' && steps.vuln_check_high.outputs.vuln_count != '0'
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-docker-high-report.md
+          body-path: trivy-docker-report.md
       
       # Final security gate: Fail CI only for CRITICAL vulnerabilities
       # HIGH vulnerabilities are reported via PR comments but don't block merges
       - name: Fail job if CRITICAL vulnerabilities found
-        if: steps.trivy_critical.outcome == 'failure' || steps.trivy_iac_critical.outcome == 'failure' || steps.trivy_docker_critical.outcome == 'failure' || steps.checkov.outcome == 'failure'
+        if: steps.fs_critical_check.outputs.critical_count != '0' || steps.iac_critical_check.outputs.critical_count != '0' || steps.docker_critical_check.outputs.critical_count != '0' || steps.checkov.outcome == 'failure'
         run: |
           echo "❌ CRITICAL vulnerabilities or security issues found — failing the job."
           exit 1
