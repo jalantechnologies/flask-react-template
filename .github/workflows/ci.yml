@@ -140,8 +140,26 @@ jobs:
           # Check if report contains CRITICAL severity
           CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-fs-report.md | grep -c "CVE-" || true)
           TOTAL_COUNT=$(grep -c "CVE-" trivy-fs-report.md || true)
+          HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
+          
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
           echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+          
+          # Print summary to GitHub Actions UI
+          echo "📊 Filesystem Scan Results:"
+          echo "  - Total vulnerabilities: $TOTAL_COUNT"
+          echo "  - CRITICAL: $CRITICAL_COUNT"
+          echo "  - HIGH: $HIGH_COUNT"
+          
+          # GitHub Actions annotations for visibility
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in filesystem scan"
+          fi
+          
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in filesystem scan"
+          fi
       
       - name: Comment PR with filesystem scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -199,8 +217,26 @@ jobs:
           # Check if report contains CRITICAL severity
           CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-iac-report.md | grep -c "CVE-\|CKV-" || true)
           TOTAL_COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-report.md || true)
+          HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
+          
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
           echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+          
+          # Print summary to GitHub Actions UI
+          echo "📊 IaC Scan Results:"
+          echo "  - Total issues: $TOTAL_COUNT"
+          echo "  - CRITICAL: $CRITICAL_COUNT"
+          echo "  - HIGH: $HIGH_COUNT"
+          
+          # GitHub Actions annotations for visibility
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "::error::Found $CRITICAL_COUNT CRITICAL issues in IaC scan"
+          fi
+          
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "::warning::Found $HIGH_COUNT HIGH issues in IaC scan"
+          fi
 
       - name: Comment PR with IaC scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -229,18 +265,33 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_result/results_github_failed_only.md
 
-      - name: Build Docker image for scanning
+      # Build Docker image with only changed files for scanning
+      - name: Build Docker image for scanning (changed files only)
         run: |
-          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
+          # Create a minimal Dockerfile that only includes changed files
+          cat > Dockerfile.scan <<EOF
+          FROM python:3.12-slim
+          WORKDIR /app
+          
+          # Copy only changed files for scanning
+          COPY changed_files/ /app/
+          
+          # Copy package files if they were changed
+          $([ -f "changed_files/package.json" ] && echo "COPY changed_files/package.json /app/package.json" || echo "")
+          $([ -f "changed_files/Pipfile" ] && echo "COPY changed_files/Pipfile /app/Pipfile" || echo "")
+          $([ -f "changed_files/Pipfile.lock" ] && echo "COPY changed_files/Pipfile.lock /app/Pipfile.lock" || echo "")
+          EOF
+          
+          docker build -f Dockerfile.scan -t flask-react-app-scan:${{ steps.extract_branch.outputs.branch_hash }} .
 
-      # Scan for both HIGH and CRITICAL vulnerabilities in Docker image
-      - name: Run Trivy scan on docker images
+      # Scan only changed files in Docker context (not entire image)
+      - name: Run Trivy scan on changed files in Docker context
         id: trivy_docker
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
           scan-type: 'image'
-          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
+          image-ref: 'flask-react-app-scan:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
           template: '@markdown-templates/docker-markdown.tpl'
           output: 'trivy-docker-report.md'
@@ -257,8 +308,26 @@ jobs:
           # Check if report contains CRITICAL severity
           CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-docker-report.md | grep -c "CVE-" || true)
           TOTAL_COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
+          
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
           echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+          
+          # Print summary to GitHub Actions UI
+          echo "📊 Docker Image Scan Results:"
+          echo "  - Total vulnerabilities: $TOTAL_COUNT"
+          echo "  - CRITICAL: $CRITICAL_COUNT"
+          echo "  - HIGH: $HIGH_COUNT"
+          
+          # GitHub Actions annotations for visibility
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in Docker image"
+          fi
+          
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in changed files (Docker context)"
+          fi
           
       - name: Comment PR with docker scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -267,6 +336,39 @@ jobs:
           token: ${{ secrets.TRIVY_SCAN_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
+      
+      # Combined threshold check: Fail if total HIGH vulnerabilities across all scans exceed 5
+      - name: Check combined HIGH vulnerability threshold
+        id: combined_threshold_check
+        if: always()
+        run: |
+          # Get HIGH counts from all scans (default to 0 if not set)
+          FS_HIGH=${{ steps.fs_critical_check.outputs.high_count || 0 }}
+          IAC_HIGH=${{ steps.iac_critical_check.outputs.high_count || 0 }}
+          DOCKER_HIGH=${{ steps.docker_critical_check.outputs.high_count || 0 }}
+          
+          # Calculate total HIGH vulnerabilities from new changes
+          TOTAL_HIGH=$((FS_HIGH + IAC_HIGH + DOCKER_HIGH))
+          
+          echo "📊 Combined HIGH Vulnerability Summary (New Changes Only):"
+          echo "  - Filesystem: $FS_HIGH"
+          echo "  - IaC: $IAC_HIGH"
+          echo "  - Docker: $DOCKER_HIGH"
+          echo "  - Total: $TOTAL_HIGH"
+          echo ""
+          
+          # Combined threshold: Fail if total HIGH exceeds 5
+          COMBINED_THRESHOLD=5
+          
+          if [ "$TOTAL_HIGH" -gt "$COMBINED_THRESHOLD" ]; then
+            echo "::error::❌ Total HIGH vulnerabilities ($TOTAL_HIGH) from new changes exceeds threshold ($COMBINED_THRESHOLD)."
+            echo "::error::Please address HIGH vulnerabilities before merging. This prevents accumulation of security debt."
+            exit 1
+          elif [ "$TOTAL_HIGH" -gt 0 ]; then
+            echo "::warning::⚠️ Found $TOTAL_HIGH HIGH vulnerabilities in new changes (threshold: $COMBINED_THRESHOLD)."
+          else
+            echo "✅ No HIGH vulnerabilities found in new changes."
+          fi
       
       # Final security gate: Fail CI only for CRITICAL vulnerabilities
       # HIGH vulnerabilities are reported via PR comments but don't block merges
