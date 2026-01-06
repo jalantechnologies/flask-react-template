@@ -154,14 +154,17 @@ jobs:
           echo "  - HIGH: $HIGH_COUNT"
           
           # GitHub Actions annotations for visibility
+          # STRICT POLICY FOR NEW CODE: Fail on both HIGH and CRITICAL
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
-            echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in filesystem scan"
-            echo "❌ Failing CI immediately due to CRITICAL vulnerabilities"
+            echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in new code changes"
+            echo "❌ Failing CI immediately - CRITICAL vulnerabilities in new code are not allowed"
             exit 1
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
-            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in filesystem scan"
+            echo "::error::Found $HIGH_COUNT HIGH vulnerabilities in new code changes"
+            echo "❌ Failing CI immediately - HIGH vulnerabilities in new code are not allowed"
+            exit 1
           fi
       
       - name: Comment PR with filesystem scan results
@@ -234,14 +237,17 @@ jobs:
           echo "  - HIGH: $HIGH_COUNT"
           
           # GitHub Actions annotations for visibility
+          # STRICT POLICY FOR NEW CODE: Fail on both HIGH and CRITICAL
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
-            echo "::error::Found $CRITICAL_COUNT CRITICAL issues in IaC scan"
-            echo "❌ Failing CI immediately due to CRITICAL IaC issues"
+            echo "::error::Found $CRITICAL_COUNT CRITICAL issues in new IaC changes"
+            echo "❌ Failing CI immediately - CRITICAL IaC issues in new code are not allowed"
             exit 1
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
-            echo "::warning::Found $HIGH_COUNT HIGH issues in IaC scan"
+            echo "::error::Found $HIGH_COUNT HIGH issues in new IaC changes"
+            echo "❌ Failing CI immediately - HIGH IaC issues in new code are not allowed"
+            exit 1
           fi
 
       - name: Comment PR with IaC scan results
@@ -314,14 +320,13 @@ jobs:
           echo "  - HIGH: $HIGH_COUNT"
           
           # GitHub Actions annotations for visibility
+          # LENIENT POLICY FOR EXISTING CODE: Only warn, threshold check happens later
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
-            echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in Docker image"
-            echo "❌ Failing CI immediately due to CRITICAL Docker vulnerabilities"
-            exit 1
+            echo "::warning::Found $CRITICAL_COUNT CRITICAL vulnerabilities in existing codebase (Docker image)"
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
-            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in Docker image (entire codebase)"
+            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in existing codebase (Docker image)"
           fi
           
       - name: Comment PR with docker scan results
@@ -332,38 +337,36 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
       
-      # Combined threshold check: Fail if total HIGH vulnerabilities across all scans exceed 5
-      - name: Check combined HIGH vulnerability threshold
-        id: combined_threshold_check
+      # Threshold check for existing codebase vulnerabilities
+      # Only applies to Docker scan (entire codebase)
+      # Filesystem and IaC already failed if they had any HIGH/CRITICAL
+      - name: Check existing codebase vulnerability threshold
+        id: existing_code_threshold_check
         if: always()
         run: |
-          # Get HIGH counts from all scans (default to 0 if not set)
-          FS_HIGH=${{ steps.fs_critical_check.outputs.high_count || 0 }}
-          IAC_HIGH=${{ steps.iac_critical_check.outputs.high_count || 0 }}
+          # Get vulnerability counts from Docker scan (existing codebase)
+          DOCKER_CRITICAL=${{ steps.docker_critical_check.outputs.critical_count || 0 }}
           DOCKER_HIGH=${{ steps.docker_critical_check.outputs.high_count || 0 }}
+          DOCKER_TOTAL=$((DOCKER_CRITICAL + DOCKER_HIGH))
           
-          # Calculate total HIGH vulnerabilities
-          # Note: Filesystem & IaC count only changed files, Docker counts entire codebase
-          TOTAL_HIGH=$((FS_HIGH + IAC_HIGH + DOCKER_HIGH))
-          
-          echo "📊 Combined HIGH Vulnerability Summary:"
-          echo "  - Filesystem (changed files only): $FS_HIGH"
-          echo "  - IaC (changed files only): $IAC_HIGH"
-          echo "  - Docker (entire codebase): $DOCKER_HIGH"
-          echo "  - Total: $TOTAL_HIGH"
+          echo "📊 Existing Codebase Vulnerability Summary (Docker Scan):"
+          echo "  - CRITICAL: $DOCKER_CRITICAL"
+          echo "  - HIGH: $DOCKER_HIGH"
+          echo "  - Total: $DOCKER_TOTAL"
           echo ""
           
-          # Combined threshold: Fail if total HIGH exceeds 15
-          COMBINED_THRESHOLD=15
+          # Threshold for existing codebase: Fail if total exceeds 15
+          THRESHOLD=15
           
-          if [ "$TOTAL_HIGH" -gt "$COMBINED_THRESHOLD" ]; then
-            echo "::error::❌ Total HIGH vulnerabilities ($TOTAL_HIGH) from new changes exceeds threshold ($COMBINED_THRESHOLD)."
-            echo "::error::Please address HIGH vulnerabilities before merging. This prevents accumulation of security debt."
+          if [ "$DOCKER_TOTAL" -gt "$THRESHOLD" ]; then
+            echo "::error::❌ Existing codebase has $DOCKER_TOTAL vulnerabilities, exceeding threshold of $THRESHOLD."
+            echo "::error::Please address vulnerabilities in the existing codebase to improve security posture."
             exit 1
-          elif [ "$TOTAL_HIGH" -gt 0 ]; then
-            echo "::warning::⚠️ Found $TOTAL_HIGH HIGH vulnerabilities (threshold: $COMBINED_THRESHOLD)."
+          elif [ "$DOCKER_TOTAL" -gt 0 ]; then
+            echo "::warning::⚠️ Existing codebase has $DOCKER_TOTAL vulnerabilities (threshold: $THRESHOLD)."
+            echo "Consider addressing these vulnerabilities to improve security."
           else
-            echo "✅ HIGH vulnerability count is within acceptable limits."
+            echo "✅ Existing codebase is clean - no vulnerabilities found."
           fi
       
       # Final security gate: Fail CI only for CRITICAL vulnerabilities
