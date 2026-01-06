@@ -138,8 +138,9 @@ jobs:
         if: steps.trivy.outcome == 'success' && hashFiles('trivy-fs-report.md') != ''
         run: |
           # Check if report contains CRITICAL severity
-          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-fs-report.md | grep -c "CVE-" || true)
-          TOTAL_COUNT=$(grep -c "CVE-" trivy-fs-report.md || true)
+          # Table format: | Package | CVE-xxx | CRITICAL | Installed | Fixed | Title |
+          CRITICAL_COUNT=$(grep -E "\|.*CVE-.*\|.*CRITICAL.*\|" trivy-fs-report.md | wc -l || echo 0)
+          TOTAL_COUNT=$(grep -E "\|.*CVE-.*\|" trivy-fs-report.md | wc -l || echo 0)
           HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
           
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
@@ -155,6 +156,8 @@ jobs:
           # GitHub Actions annotations for visibility
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
             echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in filesystem scan"
+            echo "❌ Failing CI immediately due to CRITICAL vulnerabilities"
+            exit 1
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
@@ -215,8 +218,9 @@ jobs:
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'success' && hashFiles('trivy-iac-report.md') != '' }}
         run: |
           # Check if report contains CRITICAL severity
-          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-iac-report.md | grep -c "CVE-\|CKV-" || true)
-          TOTAL_COUNT=$(grep -c "CVE-\|CKV-" trivy-iac-report.md || true)
+          # Table format: | Package | CVE-xxx/CKV-xxx | CRITICAL | ... |
+          CRITICAL_COUNT=$(grep -E "\|.*(CVE-|CKV-).*\|.*CRITICAL.*\|" trivy-iac-report.md | wc -l || echo 0)
+          TOTAL_COUNT=$(grep -E "\|.*(CVE-|CKV-).*\|" trivy-iac-report.md | wc -l || echo 0)
           HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
           
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
@@ -232,6 +236,8 @@ jobs:
           # GitHub Actions annotations for visibility
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
             echo "::error::Found $CRITICAL_COUNT CRITICAL issues in IaC scan"
+            echo "❌ Failing CI immediately due to CRITICAL IaC issues"
+            exit 1
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
@@ -292,8 +298,9 @@ jobs:
         if: steps.trivy_docker.outcome == 'success' && hashFiles('trivy-docker-report.md') != ''
         run: |
           # Check if report contains CRITICAL severity
-          CRITICAL_COUNT=$(grep -i "CRITICAL" trivy-docker-report.md | grep -c "CVE-" || true)
-          TOTAL_COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
+          # Table format: | Package | CVE-xxx | CRITICAL | Installed | Fixed | Title |
+          CRITICAL_COUNT=$(grep -E "\|.*CVE-.*\|.*CRITICAL.*\|" trivy-docker-report.md | wc -l || echo 0)
+          TOTAL_COUNT=$(grep -E "\|.*CVE-.*\|" trivy-docker-report.md | wc -l || echo 0)
           HIGH_COUNT=$((TOTAL_COUNT - CRITICAL_COUNT))
           
           echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
@@ -309,6 +316,8 @@ jobs:
           # GitHub Actions annotations for visibility
           if [ "$CRITICAL_COUNT" -gt 0 ]; then
             echo "::error::Found $CRITICAL_COUNT CRITICAL vulnerabilities in Docker image"
+            echo "❌ Failing CI immediately due to CRITICAL Docker vulnerabilities"
+            exit 1
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
