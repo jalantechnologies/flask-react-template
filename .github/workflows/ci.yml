@@ -306,48 +306,23 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_result/results_github_failed_only.md
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349
-
-      - name: Check if Docker-related files changed
-        id: docker_file_changes
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          DOCKER_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep -E '(Dockerfile|requirements|package\.json|package-lock\.json|Pipfile|Pipfile\.lock)' || true)
-          if [ -z "$DOCKER_FILES" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No Dockerfile or dependency changes detected - skipping baseline Docker scan"
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📦 Docker-related files changed: $DOCKER_FILES"
-          fi
-
       - name: Build Docker image for scanning
-        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75
-        with:
-          context: .
-          push: false
-          load: true
-          tags: flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
       - name: Checkout base branch for baseline scan
-        if: steps.docker_file_changes.outputs.changed == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: baseline
 
       - name: Build baseline Docker image
-        if: steps.docker_file_changes.outputs.changed == 'true'
         run: |
           cd baseline
           docker build -t flask-react-app:baseline .
           cd ..
 
       - name: Run Trivy scan on baseline Docker image
-        if: steps.docker_file_changes.outputs.changed == 'true'
         id: trivy_docker_baseline
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
@@ -401,9 +376,6 @@ jobs:
           if [ -f trivy-docker-baseline.json ]; then
             BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-docker-baseline.json | xargs || echo 0)
             BASELINE_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-docker-baseline.json | xargs || echo 0)
-            echo "📊 Baseline: $BASELINE_CRITICAL CRITICAL, $BASELINE_HIGH HIGH"
-          else
-            echo "ℹ️ No baseline scan (Dockerfile unchanged) - treating all vulnerabilities as new"
           fi
           
           # Calculate new vulnerabilities
