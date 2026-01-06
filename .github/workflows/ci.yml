@@ -265,33 +265,19 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_result/results_github_failed_only.md
 
-      # Build Docker image with only changed files for scanning
-      - name: Build Docker image for scanning (changed files only)
+      # Build full Docker image for comprehensive scanning
+      - name: Build Docker image for scanning
         run: |
-          # Create a minimal Dockerfile that only includes changed files
-          cat > Dockerfile.scan <<EOF
-          FROM python:3.12-slim
-          WORKDIR /app
-          
-          # Copy only changed files for scanning
-          COPY changed_files/ /app/
-          
-          # Copy package files if they were changed
-          $([ -f "changed_files/package.json" ] && echo "COPY changed_files/package.json /app/package.json" || echo "")
-          $([ -f "changed_files/Pipfile" ] && echo "COPY changed_files/Pipfile /app/Pipfile" || echo "")
-          $([ -f "changed_files/Pipfile.lock" ] && echo "COPY changed_files/Pipfile.lock /app/Pipfile.lock" || echo "")
-          EOF
-          
-          docker build -f Dockerfile.scan -t flask-react-app-scan:${{ steps.extract_branch.outputs.branch_hash }} .
+          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
 
-      # Scan only changed files in Docker context (not entire image)
-      - name: Run Trivy scan on changed files in Docker context
+      # Scan entire Docker image (all dependencies + all code)
+      - name: Run Trivy scan on docker image
         id: trivy_docker
         uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
         continue-on-error: true
         with:
           scan-type: 'image'
-          image-ref: 'flask-react-app-scan:${{ steps.extract_branch.outputs.branch_hash }}'
+          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
           template: '@markdown-templates/docker-markdown.tpl'
           output: 'trivy-docker-report.md'
@@ -326,7 +312,7 @@ jobs:
           fi
           
           if [ "$HIGH_COUNT" -gt 0 ]; then
-            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in changed files (Docker context)"
+            echo "::warning::Found $HIGH_COUNT HIGH vulnerabilities in Docker image (entire codebase)"
           fi
           
       - name: Comment PR with docker scan results
@@ -347,27 +333,28 @@ jobs:
           IAC_HIGH=${{ steps.iac_critical_check.outputs.high_count || 0 }}
           DOCKER_HIGH=${{ steps.docker_critical_check.outputs.high_count || 0 }}
           
-          # Calculate total HIGH vulnerabilities from new changes
+          # Calculate total HIGH vulnerabilities
+          # Note: Filesystem & IaC count only changed files, Docker counts entire codebase
           TOTAL_HIGH=$((FS_HIGH + IAC_HIGH + DOCKER_HIGH))
           
-          echo "📊 Combined HIGH Vulnerability Summary (New Changes Only):"
-          echo "  - Filesystem: $FS_HIGH"
-          echo "  - IaC: $IAC_HIGH"
-          echo "  - Docker: $DOCKER_HIGH"
+          echo "📊 Combined HIGH Vulnerability Summary:"
+          echo "  - Filesystem (changed files only): $FS_HIGH"
+          echo "  - IaC (changed files only): $IAC_HIGH"
+          echo "  - Docker (entire codebase): $DOCKER_HIGH"
           echo "  - Total: $TOTAL_HIGH"
           echo ""
           
-          # Combined threshold: Fail if total HIGH exceeds 5
-          COMBINED_THRESHOLD=5
+          # Combined threshold: Fail if total HIGH exceeds 15
+          COMBINED_THRESHOLD=15
           
           if [ "$TOTAL_HIGH" -gt "$COMBINED_THRESHOLD" ]; then
             echo "::error::❌ Total HIGH vulnerabilities ($TOTAL_HIGH) from new changes exceeds threshold ($COMBINED_THRESHOLD)."
             echo "::error::Please address HIGH vulnerabilities before merging. This prevents accumulation of security debt."
             exit 1
           elif [ "$TOTAL_HIGH" -gt 0 ]; then
-            echo "::warning::⚠️ Found $TOTAL_HIGH HIGH vulnerabilities in new changes (threshold: $COMBINED_THRESHOLD)."
+            echo "::warning::⚠️ Found $TOTAL_HIGH HIGH vulnerabilities (threshold: $COMBINED_THRESHOLD)."
           else
-            echo "✅ No HIGH vulnerabilities found in new changes."
+            echo "✅ HIGH vulnerability count is within acceptable limits."
           fi
       
       # Final security gate: Fail CI only for CRITICAL vulnerabilities
