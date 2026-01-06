@@ -10,6 +10,11 @@ permissions:
   pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
   id-token: write       # Allow OIDC tokens for secure cloud authentication
 
+# Cancel in-progress CI runs when new commits are pushed to the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
