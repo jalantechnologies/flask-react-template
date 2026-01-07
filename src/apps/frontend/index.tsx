@@ -1,5 +1,6 @@
-import 'frontend/satoshi.css';
-import 'frontend/style.css';
+//import 'frontend/satoshi.css';
+//import 'frontend/style.css';
+import './basic.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
