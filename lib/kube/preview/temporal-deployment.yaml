@@ -204,7 +204,7 @@ spec:
         - name: python-worker
           image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
           imagePullPolicy: Always
-          workingDir: /opt/app/src/apps/backend
+          workingDir: /app
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
             allowPrivilegeEscalation: false
@@ -213,7 +213,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          command: ['pipenv', 'run', 'python', 'temporal_server.py']
+          command: ['pipenv', 'run', 'python', 'src/apps/backend/temporal_server.py']
           livenessProbe:
             exec:
               command: ["true"]
