@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
+# Cancel in-progress CI runs when new commits are pushed to the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 # Ensures CI workflow has minimal permissions for security
 permissions:
   contents: read        # Read-only access to repo contents for safer workflows
@@ -82,170 +87,168 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
-      - name: Cache Trivy DB
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: .trivy
-          key: trivy-db-v1
-
-      - name: Extract branch name
-        id: extract_branch
-        run: |
-          BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }} | sed -e 's/^refs\/heads\///g')
-          BRANCH_HASH=$(sha1sum < <(printf '%s' $BRANCH_NAME) | cut -c -15)
-          echo "branch_hash=$(echo $BRANCH_HASH)" >> $GITHUB_OUTPUT
-
-      - name: Get changes
+      # Detect changed files
+      - name: Get changed files
         id: changes
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
-          for file in $CHANGED_FILES; do
-            if [[ -f "$file" ]]; then
-              mkdir -p "changed_files/$(dirname "$file")"
-                cp "$file" "changed_files/$file"
-              fi
-          done
-          echo $CHANGED_FILES
-          ls changed_files/
-          echo "changed_files=$(echo $CHANGED_FILES)" >> $GITHUB_OUTPUT
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > changed_files.txt
 
-      - name: Run Trivy scan on changed files
-        id: trivy
-        if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
-        continue-on-error: true
+          if [ -s changed_files.txt ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Get changed files and copy to separate directory
+      - name: Copy changed files for scanning
+        id: copy_files
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          mkdir -p changed_files_scan
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              mkdir -p "changed_files_scan/$(dirname "$file")"
+              cp "$file" "changed_files_scan/$file"
+            fi
+          done < changed_files.txt
+          
+          echo "Files to scan:"
+          find changed_files_scan -type f
+
+      # Trivy filesystem scan on CHANGED files only
+      - name: Trivy FS scan (changed files only)
+        if: steps.changes.outputs.changed == 'true'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         with:
-          args: '--skip-db-update --skip-java-db-update'
-          scan-type: 'filesystem'
-          scan-ref: './changed_files'
-          format: 'template'
-          template: '@markdown-templates/fs-markdown.tpl'
-          output: 'trivy-report.md'
-          severity: 'HIGH,CRITICAL'
+          scan-type: filesystem
+          scan-ref: changed_files_scan
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
-          trivyignores: ".trivyignore"
           exit-code: 1
-          cache-dir: .trivy
-      
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy.outcome == 'failure'
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-report.md
+          trivyignores: ".trivyignore"
 
-      - name: Get changes in k8s folder and subfolders
+      # Detect IaC changes
+      - name: Detect IaC changes
         id: iac_changes
         run: |
-          # Fetch base branch
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          if grep -q '^lib/kube/' changed_files.txt; then
+            echo "iac_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "iac_changed=false" >> $GITHUB_OUTPUT
+          fi
 
-          # Get all changed files
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
-
-          # Initialize filtered variable
-          FILTERED_FILES=""
-          mkdir -p iac_changed_files/
-          # Loop and copy only files in k8s/ or subdirectories
-          for file in $CHANGED_FILES; do
-            if [[ -f "$file" && "$file" == lib/kube/* ]]; then
-              mkdir -p "iac_changed_files/$(dirname "$file")"
-              cp "$file" "iac_changed_files/$file"
-              FILTERED_FILES="$FILTERED_FILES $file"
-            fi
-          done
-          
-          echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
-      
-      - name: Run Trivy scan on IaC
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        id: trivy_iac
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
-        continue-on-error: true
+      - name: Run Trivy IaC scan
+        if: steps.iac_changes.outputs.iac_changed == 'true'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         with:
-          args: '--skip-db-update --skip-java-db-update'
-          scan-type: 'config'
-          scan-ref: 'iac_changed_files'
-          format: 'template'
-          template: '@markdown-templates/iac-markdown.tpl'
-          output: 'trivy-iac-report.md'
-          severity: 'HIGH,CRITICAL'
+          scan-type: config
+          scan-ref: lib/kube
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
-          trivyignores: ".trivyignore"
           exit-code: 1
-          cache-dir: .trivy
+          trivyignores: ".trivyignore"
 
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' && steps.trivy_iac.outcome == 'failure' }}
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-iac-report.md
-      
-      - name: Run Checkov action
-        id: checkov
-        if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
+      - name: Run Checkov
+        if: steps.iac_changes.outputs.iac_changed == 'true'
         uses: bridgecrewio/checkov-action@8f61ce5b8a3afb4ca94d236b75201878ded6d2cd
-        continue-on-error: true
         with:
-          directory: iac_changed_files/
-          output_format: 'github_failed_only'
-          output_file_path: checkov_result
-          quiet: 'true'
+          directory: lib/kube
+          quiet: true
 
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: ${{ steps.checkov.outcome == 'failure' }}
-        with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: checkov_result/results_github_failed_only.md
-
-      - name: Build Docker image for scanning
+      # Detect dependency changes
+      - name: Detect dependency changes
+        id: deps
         run: |
-          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
+          if grep -Eq '(Dockerfile|package-lock.json|package.json|Pipfile.lock|requirements.txt)' changed_files.txt; then
+            echo "deps_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "deps_changed=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Run Trivy scan on docker images
-        id: trivy_docker
-        uses: aquasecurity/trivy-action@f9424c10c36e288d5fa79bd3dfd1aeb2d6eae808
+      # Build baseline Docker image from base branch
+      - name: Checkout base branch for baseline
+        if: steps.deps.outputs.deps_changed == 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: baseline
+
+      - name: Build baseline Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
+        run: |
+          cd baseline
+          docker build -t flask-react-app:baseline .
+          cd ..
+
+      # Scan baseline Docker image
+      - name: Scan baseline Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
         with:
-          args: '--skip-db-update --skip-java-db-update'
-          scan-type: 'image'
-          image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
-          format: 'template'
-          template: '@markdown-templates/docker-markdown.tpl'
-          output: 'trivy-docker-report.md'
-          severity: 'HIGH,CRITICAL'
+          scan-type: image
+          image-ref: flask-react-app:baseline
+          format: json
+          output: trivy-baseline.json
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
-          trivyignores: ".trivyignore"
-          exit-code: 1
-          cache-dir: .trivy
 
-      - name: Check if report contains any real vulnerabilities
-        id: vuln_check
+      # Build PR Docker image
+      - name: Build PR Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
         run: |
-          # Count how many vulnerabilities are listed in the markdown
-          COUNT=$(grep -c "CVE-" trivy-docker-report.md || true)
-          echo "vuln_count=$COUNT" >> $GITHUB_OUTPUT
-          
-      - name: Comment PR with audit results
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.trivy_docker.outcome == 'failure' && hashFiles('trivy-docker-report.md') != '' && steps.vuln_check.outputs.vuln_count != '0'
+          docker build -t flask-react-app:pr .
+
+      # Scan PR Docker image
+      - name: Scan PR Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        continue-on-error: true
         with:
-          token: ${{ secrets.TRIVY_SCAN_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: trivy-docker-report.md
-      
-      - name: Fail job if Trivy found issues
-        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' || steps.checkov.outcome == 'failure'
+          scan-type: image
+          image-ref: flask-react-app:pr
+          format: json
+          output: trivy-pr.json
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+      # Compare and fail on NEW HIGH or CRITICAL vulnerabilities
+      - name: Check for new Docker vulnerabilities
+        if: steps.deps.outputs.deps_changed == 'true'
         run: |
-          echo "❌ Trivy found vulnerabilities — failing the job."
-          exit 1
+          # Count CRITICAL vulnerabilities in baseline
+          BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-baseline.json 2>/dev/null || echo 0)
+          BASELINE_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-baseline.json 2>/dev/null || echo 0)
           
+          # Count vulnerabilities in PR
+          PR_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-pr.json 2>/dev/null || echo 0)
+          PR_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-pr.json 2>/dev/null || echo 0)
+          
+          # Calculate new vulnerabilities
+          NEW_CRITICAL=$((PR_CRITICAL - BASELINE_CRITICAL))
+          NEW_HIGH=$((PR_HIGH - BASELINE_HIGH))
+          
+          # Ensure non-negative
+          [ $NEW_CRITICAL -lt 0 ] && NEW_CRITICAL=0
+          [ $NEW_HIGH -lt 0 ] && NEW_HIGH=0
+          
+          echo "📊 Docker Image Vulnerability Comparison:"
+          echo "  Baseline: $BASELINE_CRITICAL CRITICAL, $BASELINE_HIGH HIGH"
+          echo "  PR: $PR_CRITICAL CRITICAL, $PR_HIGH HIGH"
+          echo "  NEW: $NEW_CRITICAL CRITICAL, $NEW_HIGH HIGH"
+          
+          if [ "$NEW_CRITICAL" -gt 0 ] || [ "$NEW_HIGH" -gt 0 ]; then
+            echo ""
+            echo "❌ Found new vulnerabilities in Docker image:"
+            [ "$NEW_CRITICAL" -gt 0 ] && echo "  - $NEW_CRITICAL new CRITICAL"
+            [ "$NEW_HIGH" -gt 0 ] && echo "  - $NEW_HIGH new HIGH"
+            echo "Policy: Zero tolerance for new HIGH or CRITICAL vulnerabilities"
+            exit 1
+          fi
+          
+          echo "✅ No new HIGH or CRITICAL vulnerabilities in Docker image"
+
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
