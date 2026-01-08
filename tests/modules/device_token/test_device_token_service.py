@@ -1,11 +1,16 @@
-from datetime import datetime, timedelta
-
 from modules.device_token.device_token_service import DeviceTokenService
 from modules.device_token.errors import (
     DeviceTokenNotFoundError,
-    InvalidPlatformError
+    DeviceTokenConflictError,
 )
-from modules.device_token.types import DeviceTokenErrorCode, Platform
+from modules.device_token.types import (
+    Platform,
+    CreateDeviceTokenParams,
+    DeviceTokenErrorCode,
+    DeleteDeviceTokenParams,
+    GetDeviceTokensParams,
+    UpdateDeviceTokenParams
+)
 from tests.modules.device_token.base_test_device_token import BaseTestDeviceToken
 
 
@@ -14,474 +19,427 @@ class TestDeviceTokenService(BaseTestDeviceToken):
         super().setUp()
         self.account = self.create_test_account()
 
-    def test_register_device_token_success(self) -> None:
-        device_token = DeviceTokenService.register_device_token(
+    def test_create_device_token_success(self):
+        """Test successful device token creation"""
+        params = CreateDeviceTokenParams(
             account_id=self.account.id,
-            device_token="fcm_token_123",
-            platform="android",
-            device_info={"app_version": "1.0.0"},
+            device_token="token_1",
+            platform=Platform.ANDROID,
         )
 
-        assert device_token.account_id == self.account.id
-        assert device_token.device_token == "fcm_token_123"
-        assert device_token.platform == Platform.ANDROID
-        assert device_token.device_info == {"app_version": "1.0.0"}
-        assert device_token.active is True
-        assert device_token.id is not None
+        token = DeviceTokenService.create_device_token(params=params)
 
-    def test_register_device_token_without_device_info(self) -> None:
-        device_token = DeviceTokenService.register_device_token(
+        assert token.device_token == "token_1"
+        assert token.platform == Platform.ANDROID
+        assert token.active is True
+        assert token.account_id == self.account.id
+        assert token.id is not None
+        assert token.created_at is not None
+        assert token.updated_at is not None
+        assert token.last_used_at is not None
+
+    def test_create_device_token_with_device_info(self):
+        """Test creating device token with device_info"""
+        params = CreateDeviceTokenParams(
             account_id=self.account.id,
-            device_token="fcm_token_456",
-            platform="ios",
+            device_token="token_with_info",
+            platform=Platform.IOS,
+            device_info={"model": "iPhone 13", "os_version": "15.0"},
         )
 
-        assert device_token.account_id == self.account.id
-        assert device_token.device_token == "fcm_token_456"
-        assert device_token.platform == Platform.IOS
-        assert device_token.device_info is None
-        assert device_token.active is True
+        token = DeviceTokenService.create_device_token(params=params)
 
-    def test_register_device_token_all_platforms(self) -> None:
-        for platform in ["android", "ios"]:
-            device_token = DeviceTokenService.register_device_token(
-                account_id=self.account.id,
-                device_token=f"{platform}_token",
-                platform=platform,
-            )
-            assert device_token.platform == Platform(platform)
+        assert token.device_info is not None
+        assert token.device_info["model"] == "iPhone 13"
+        assert token.device_info["os_version"] == "15.0"
+        assert token.platform == Platform.IOS
 
-    def test_register_device_token_invalid_platform(self) -> None:
+    def test_create_device_token_without_device_info(self):
+        """Test creating device token without device_info"""
+        params = CreateDeviceTokenParams(
+            account_id=self.account.id,
+            device_token="token_no_info",
+            platform=Platform.ANDROID,
+            device_info=None,
+        )
+
+        token = DeviceTokenService.create_device_token(params=params)
+
+        assert token.device_info is None
+
+    def test_create_duplicate_token_conflict(self):
+        """Test creating duplicate token for same account raises conflict"""
+        params = CreateDeviceTokenParams(
+            account_id=self.account.id,
+            device_token="dup_token",
+            platform=Platform.ANDROID,
+        )
+
+        DeviceTokenService.create_device_token(params=params)
+
         try:
-            DeviceTokenService.register_device_token(
+            DeviceTokenService.create_device_token(params=params)
+            assert False, "Expected DeviceTokenConflictError"
+        except DeviceTokenConflictError as exc:
+            assert exc.code == DeviceTokenErrorCode.CONFLICT
+            assert "already registered" in exc.message
+
+    def test_create_duplicate_token_different_account_conflict(self):
+        """Test creating same token for different accounts raises conflict"""
+        other_account = self.create_test_account("other@example.com")
+
+        DeviceTokenService.create_device_token(
+            params=CreateDeviceTokenParams(
                 account_id=self.account.id,
-                device_token="token",
-                platform="windows_phone",
+                device_token="shared_token",
+                platform=Platform.ANDROID,
             )
-            assert False, "Expected InvalidPlatformError"
-        except InvalidPlatformError as exc:
-            assert exc.code == DeviceTokenErrorCode.INVALID_PLATFORM
+        )
 
-    def test_register_device_token_upsert_behavior(self) -> None:
-        token1 = DeviceTokenService.register_device_token(
+        try:
+            DeviceTokenService.create_device_token(
+                params=CreateDeviceTokenParams(
+                    account_id=other_account.id,
+                    device_token="shared_token",
+                    platform=Platform.ANDROID,
+                )
+            )
+            assert False, "Expected DeviceTokenConflictError"
+        except DeviceTokenConflictError as exc:
+            assert exc.code == DeviceTokenErrorCode.CONFLICT
+            assert "another account" in exc.message
+
+    def test_create_android_platform(self):
+        """Test creating token with Android platform"""
+        params = CreateDeviceTokenParams(
             account_id=self.account.id,
-            device_token="same_token",
-            platform="android",
-            device_info={"app_version": "1.0"},
+            device_token="android_token",
+            platform=Platform.ANDROID,
         )
 
-        token2 = DeviceTokenService.register_device_token(
+        token = DeviceTokenService.create_device_token(params=params)
+        assert token.platform == Platform.ANDROID
+
+    def test_create_ios_platform(self):
+        """Test creating token with iOS platform"""
+        params = CreateDeviceTokenParams(
             account_id=self.account.id,
-            device_token="same_token",
-            platform="android",
-            device_info={"app_version": "2.0"},
+            device_token="ios_token",
+            platform=Platform.IOS,
         )
 
-        assert token1.id == token2.id
-        assert token2.device_info == {"app_version": "2.0"}
+        token = DeviceTokenService.create_device_token(params=params)
+        assert token.platform == Platform.IOS
 
-    def test_get_device_tokens_for_account_empty(self) -> None:
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-        assert len(tokens) == 0
+    def test_get_device_tokens_for_account_empty(self):
+        """Test getting device tokens when none exist"""
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
+        assert tokens == []
 
-    def test_get_device_tokens_for_account_with_tokens(self) -> None:
-        created_tokens = self.create_multiple_test_tokens(account_id=self.account.id, count=3)
-
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-
-        token_ids = [t.id for t in tokens]
-        for created_token in created_tokens:
-            assert created_token.id in token_ids
-
-    def test_get_device_tokens_excludes_inactive(self) -> None:
-        active_token = self.create_test_device_token(
-            account_id=self.account.id, device_token="active_token"
-        )
-        inactive_token = self.create_test_device_token(
-            account_id=self.account.id, device_token="inactive_token"
-        )
-
-        DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=inactive_token.id
-        )
-
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-
+    def test_get_device_tokens_for_account_single(self):
+        """Test getting device tokens with single device"""
+        self.create_test_device_token(self.account.id, "token_1")
+        
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
         assert len(tokens) == 1
-        assert tokens[0].id == active_token.id
+        assert tokens[0].device_token == "token_1"
 
-    def test_unregister_device_token_success(self) -> None:
-        device_token = self.create_test_device_token(account_id=self.account.id)
+    def test_get_device_tokens_for_account_multiple(self):
+        """Test getting device tokens with multiple devices"""
+        self.create_test_device_token(self.account.id, "token_1")
+        self.create_test_device_token(self.account.id, "token_2")
+        self.create_test_device_token(self.account.id, "token_3")
+        
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
+        assert len(tokens) == 3
 
-        DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=device_token.id
+    def test_get_device_tokens_sorted_by_created_at(self):
+        """Test that device tokens are returned sorted by creation date (newest first)"""
+        token1 = self.create_test_device_token(self.account.id, "old_token")
+        token2 = self.create_test_device_token(self.account.id, "new_token")
+        
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
+        assert tokens[0].device_token == "new_token"
+        assert tokens[1].device_token == "old_token"
+
+    def test_get_device_tokens_only_active(self):
+        """Test that only active devices are returned"""
+        token = self.create_test_device_token(self.account.id, "active_token")
+        inactive_token = self.create_test_device_token(self.account.id, "inactive_token")
+        
+        DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=inactive_token.id,
+            )
+        )
+        
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
+        assert len(tokens) == 1
+        assert tokens[0].device_token == "active_token"
+
+    def test_get_device_tokens_different_accounts(self):
+        """Test that devices are scoped to the correct account"""
+        other_account = self.create_test_account("other@example.com")
+        
+        self.create_test_device_token(self.account.id, "account1_token")
+        self.create_test_device_token(other_account.id, "account2_token")
+        
+        params = GetDeviceTokensParams(account_id=self.account.id)
+        tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
+        
+        assert len(tokens) == 1
+        assert tokens[0].device_token == "account1_token"
+
+    def test_update_device_token_device_info_only(self):
+        """Test updating only device_info"""
+        token = self.create_test_device_token(self.account.id)
+
+        updated = DeviceTokenService.update_device_token(
+            params=UpdateDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+                device_info={"app_version": "2.0", "os": "Android 12"},
+            )
         )
 
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-        assert len(tokens) == 0
+        assert updated.device_info["app_version"] == "2.0"
+        assert updated.device_info["os"] == "Android 12"
+        assert updated.device_token == token.device_token
 
-    def test_unregister_device_token_not_found(self) -> None:
+    def test_update_device_token_token_only(self):
+        """Test updating only device_token"""
+        token = self.create_test_device_token(self.account.id, "old_token")
+
+        updated = DeviceTokenService.update_device_token(
+            params=UpdateDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+                device_token="new_token",
+            )
+        )
+
+        assert updated.device_token == "new_token"
+        assert updated.device_info == token.device_info
+
+    def test_update_device_token_both_fields(self):
+        """Test updating both device_token and device_info"""
+        token = self.create_test_device_token(self.account.id, "old_token")
+
+        updated = DeviceTokenService.update_device_token(
+            params=UpdateDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+                device_token="new_token",
+                device_info={"updated": True},
+            )
+        )
+
+        assert updated.device_token == "new_token"
+        assert updated.device_info["updated"] is True
+
+    def test_update_device_token_heartbeat(self):
+        """Test heartbeat update (no fields changed)"""
+        token = self.create_test_device_token(self.account.id)
+        original_last_used = token.last_used_at
+
+        updated = DeviceTokenService.update_device_token(
+            params=UpdateDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+            )
+        )
+
+        assert updated.last_used_at is not None
+        assert updated.last_used_at >= original_last_used
+        assert updated.device_token == token.device_token
+        assert updated.device_info == token.device_info
+
+    def test_update_device_token_not_found(self):
+        """Test updating non-existent device token"""
         try:
-            DeviceTokenService.unregister_device_token(
-                account_id=self.account.id, device_token_id="nonexistent_id"
+            DeviceTokenService.update_device_token(
+                params=UpdateDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id="507f1f77bcf86cd799439011",
+                )
             )
             assert False, "Expected DeviceTokenNotFoundError"
         except DeviceTokenNotFoundError as exc:
             assert exc.code == DeviceTokenErrorCode.NOT_FOUND
 
-    def test_unregister_device_token_wrong_account(self) -> None:
-        """Test that attempting to unregister a token from a different account succeeds silently.
-        
-        The service implements idempotent delete with account filtering:
-        - When unregistering with account_id that doesn't match the token's owner,
-          the service filters by account_id, finds nothing, and succeeds with no effect
-        - This is safe because authentication layer prevents unauthorized access
-        - The original token remains untouched
-        """
-        other_account = self.create_test_account(username="other@example.com")
-        device_token = self.create_test_device_token(account_id=other_account.id)
+    def test_update_device_token_wrong_account(self):
+        """Test updating device from different account"""
+        other_account = self.create_test_account("other@example.com")
+        token = self.create_test_device_token(other_account.id)
 
-        # Attempt to unregister using wrong account_id - succeeds silently
-        result = DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=device_token.id
-        )
-        
-        # Should succeed (idempotent behavior)
-        assert result.success is True
-        
-        # Verify the token still exists for the original owner
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=other_account.id)
-        assert len(tokens) == 1
-        assert tokens[0].id == device_token.id
-
-    def test_mark_token_as_invalid(self) -> None:
-        account2 = self.create_test_account(username="user2@example.com")
-        token_string = "invalid_fcm_token"
-
-        token1 = DeviceTokenService.register_device_token(
-            account_id=self.account.id,
-            device_token=token_string,
-            platform="android",
-        )
-        token2 = DeviceTokenService.register_device_token(
-            account_id=account2.id,
-            device_token=token_string,
-            platform="android",
-        )
-
-        DeviceTokenService.mark_token_as_invalid(token=token_string)
-
-        account1_tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-        account2_tokens = DeviceTokenService.get_device_tokens_for_account(account_id=account2.id)
-
-        assert len(account1_tokens) == 0
-        assert len(account2_tokens) == 0
-
-    def test_cleanup_inactive_tokens(self) -> None:
-        cutoff = datetime.now() - timedelta(days=30)
-
-        recent = self.insert_raw_device_token(
-            account_id=self.account.id,
-            device_token="recent",
-            platform="android",
-            last_used_at=datetime.now(),
-        )
-
-        old = self.insert_raw_device_token(
-            account_id=self.account.id,
-            device_token="old",
-            platform="ios",
-            last_used_at=cutoff - timedelta(days=1),
-        )
-
-        cleaned_count = DeviceTokenService.cleanup_inactive_tokens(days_old=30)
-
-        assert cleaned_count == 1
-
-        tokens = DeviceTokenService.get_device_tokens_for_account(
-            account_id=self.account.id
-        )
-
-        assert len(tokens) == 1
-        assert tokens[0].device_token == "recent"
-
-
-    def test_cross_account_isolation(self) -> None:
-        account2 = self.create_test_account(username="user2@example.com")
-
-        self.insert_raw_device_token(
-            account_id=self.account.id,
-            device_token="token_a",
-            platform="android",
-        )
-
-        self.insert_raw_device_token(
-            account_id=account2.id,
-            device_token="token_b",
-            platform="ios",
-        )
-
-        account1_tokens = DeviceTokenService.get_device_tokens_for_account(
-            account_id=self.account.id
-        )
-        account2_tokens = DeviceTokenService.get_device_tokens_for_account(
-            account_id=account2.id
-        )
-
-        assert len(account1_tokens) == 1
-        assert account1_tokens[0].device_token == "token_a"
-
-        assert len(account2_tokens) == 1
-        assert account2_tokens[0].device_token == "token_b"
-
-    def test_register_device_token_with_special_characters(self) -> None:
-        """Test device tokens with special characters"""
-        device_token = DeviceTokenService.register_device_token(
-            account_id=self.account.id,
-            device_token="token_with_special!@#$%^&*()",
-            platform="android",
-        )
-        
-        assert device_token.device_token == "token_with_special!@#$%^&*()"
-        assert device_token.active is True
-
-    def test_register_device_token_with_very_long_token(self) -> None:
-        """Test handling of extremely long device tokens"""
-        very_long_token = "x" * 1000
-        
-        device_token = DeviceTokenService.register_device_token(
-            account_id=self.account.id,
-            device_token=very_long_token,
-            platform="android",
-        )
-        
-        assert len(device_token.device_token) == 1000
-        assert device_token.active is True
-
-    def test_device_info_preserves_nested_objects(self) -> None:
-        """Test that complex device_info structures are preserved"""
-        complex_info = {
-            "app": {"version": "1.0", "build": 123},
-            "device": {"model": "Pixel", "os": "Android 14"},
-            "metadata": {"locale": "en_US", "timezone": "America/New_York"}
-        }
-        
-        device_token = DeviceTokenService.register_device_token(
-            account_id=self.account.id,
-            device_token="complex_token",
-            platform="android",
-            device_info=complex_info,
-        )
-        
-        assert device_token.device_info == complex_info
-
-    def test_cleanup_with_no_old_tokens(self) -> None:
-        """Test cleanup when there are no old tokens to clean"""
-        # Create only recent tokens
-        self.create_test_device_token(
-            account_id=self.account.id,
-            device_token="recent_token",
-        )
-        
-        cleaned_count = DeviceTokenService.cleanup_inactive_tokens(days_old=30)
-        
-        assert cleaned_count == 0
-        
-        # Verify token still exists
-        tokens = DeviceTokenService.get_device_tokens_for_account(
-            account_id=self.account.id
-        )
-        assert len(tokens) == 1
-
-    def test_get_device_tokens_with_many_devices(self) -> None:
-        """Test behavior when account has many devices"""
-        # Create 25 tokens
-        for i in range(25):
-            DeviceTokenService.register_device_token(
-                account_id=self.account.id,
-                device_token=f"token_{i}",
-                platform="android",
-            )
-        
-        tokens = DeviceTokenService.get_device_tokens_for_account(
-            account_id=self.account.id
-        )
-        
-        assert len(tokens) == 25
-
-    def test_register_device_token_with_explicit_none_device_info(self) -> None:
-        """Test explicit None vs missing device_info"""
-        device_token = DeviceTokenService.register_device_token(
-            account_id=self.account.id,
-            device_token="token_none",
-            platform="ios",
-            device_info=None,
-        )
-        
-        assert device_token.device_info is None
-
-    def test_unregister_device_token_idempotency(self) -> None:
-        """Test that unregistering twice succeeds (idempotent behavior).
-        
-        The service implements idempotent delete - attempting to delete a token
-        that's already deleted returns success with no error.
-        """
-        device_token = self.create_test_device_token(account_id=self.account.id)
-        
-        # First unregister - should succeed
-        result1 = DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=device_token.id
-        )
-        assert result1.success is True
-        
-        # Verify it's deleted
-        tokens = DeviceTokenService.get_device_tokens_for_account(account_id=self.account.id)
-        assert len(tokens) == 0
-        
-        # Second unregister - should also succeed (idempotent)
-        result2 = DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=device_token.id
-        )
-        assert result2.success is True
-
-    def test_get_device_tokens_includes_inactive_when_not_filtered(self) -> None:
-        """Test that inactive tokens are included when active_only=False"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        from modules.device_token.types import GetDeviceTokensParams
-        
-        # Create active and inactive tokens
-        active = self.create_test_device_token(
-            account_id=self.account.id, device_token="active"
-        )
-        inactive = self.create_test_device_token(
-            account_id=self.account.id, device_token="inactive"
-        )
-        
-        # Mark one as inactive
-        DeviceTokenService.unregister_device_token(
-            account_id=self.account.id, device_token_id=inactive.id
-        )
-        
-        # Get with active_only=False (should include inactive)
-        params = GetDeviceTokensParams(account_id=self.account.id, active_only=False)
-        all_tokens = DeviceTokenReader.get_device_tokens_by_account_id(params=params)
-        
-        assert len(all_tokens) == 2  # Both active and inactive
-        
-        # Get with active_only=True (default behavior)
-        params_active = GetDeviceTokensParams(account_id=self.account.id, active_only=True)
-        active_tokens = DeviceTokenReader.get_device_tokens_by_account_id(params=params_active)
-        
-        assert len(active_tokens) == 1  # Only active
-        assert active_tokens[0].device_token == "active"
-
-    def test_get_device_token_by_token_string(self) -> None:
-        """Test retrieving device token by its token string"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        
-        # Create a device token
-        created = self.create_test_device_token(
-            account_id=self.account.id,
-            device_token="unique_token_string_12345"
-        )
-        
-        # Find by token string
-        found = DeviceTokenReader.get_device_token_by_token(token="unique_token_string_12345")
-        
-        assert found is not None
-        assert found.id == created.id
-        assert found.device_token == "unique_token_string_12345"
-
-    def test_get_device_token_by_nonexistent_token_string(self) -> None:
-        """Test that getting by non-existent token returns None"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        
-        found = DeviceTokenReader.get_device_token_by_token(token="nonexistent_token_999")
-        
-        assert found is None
-
-    def test_get_device_token_by_inactive_token_string(self) -> None:
-        """Test that getting inactive token by string returns None"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        
-        # Create and then deactivate a token
-        created = self.create_test_device_token(
-            account_id=self.account.id,
-            device_token="will_be_inactive"
-        )
-        
-        DeviceTokenService.unregister_device_token(
-            account_id=self.account.id,
-            device_token_id=created.id
-        )
-        
-        # Try to find by token string - should return None since it's inactive
-        found = DeviceTokenReader.get_device_token_by_token(token="will_be_inactive")
-        
-        assert found is None
-
-    def test_get_device_token_by_id_with_params(self) -> None:
-        """Test getting device token by ID using params object"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        from modules.device_token.types import GetDeviceTokenParams
-        
-        # Create a token
-        created = self.create_test_device_token(account_id=self.account.id)
-        
-        # Get by ID using params
-        params = GetDeviceTokenParams(device_token_id=created.id)
-        found = DeviceTokenReader.get_device_token_by_id(params=params)
-        
-        assert found is not None
-        assert found.id == created.id
-        assert found.device_token == created.device_token
-
-    def test_get_device_token_by_id_inactive_not_found(self) -> None:
-        """Test that getting inactive token by ID raises error"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        from modules.device_token.types import GetDeviceTokenParams
-        
-        # Create and deactivate
-        created = self.create_test_device_token(account_id=self.account.id)
-        DeviceTokenService.unregister_device_token(
-            account_id=self.account.id,
-            device_token_id=created.id
-        )
-        
-        # Try to get inactive token by ID - should raise error
         try:
-            params = GetDeviceTokenParams(device_token_id=created.id)
-            DeviceTokenReader.get_device_token_by_id(params=params)
+            DeviceTokenService.update_device_token(
+                params=UpdateDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id=token.id,
+                    device_info={"hacked": True},
+                )
+            )
             assert False, "Expected DeviceTokenNotFoundError"
         except DeviceTokenNotFoundError:
-            pass  # Expected
+            pass
 
-    def test_device_tokens_sorted_by_created_at(self) -> None:
-        """Test that device tokens are returned sorted by created_at descending"""
-        from modules.device_token.internal.device_token_reader import DeviceTokenReader
-        from modules.device_token.types import GetDeviceTokensParams
-        import time
+    def test_update_device_token_inactive(self):
+        """Test updating inactive device token"""
+        token = self.create_test_device_token(self.account.id)
         
-        # Create tokens with slight time delays
-        token1 = self.create_test_device_token(
-            account_id=self.account.id, device_token="first"
+        DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+            )
         )
-        time.sleep(0.01)
-        
-        token2 = self.create_test_device_token(
-            account_id=self.account.id, device_token="second"
+
+        try:
+            DeviceTokenService.update_device_token(
+                params=UpdateDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id=token.id,
+                    device_info={"test": True},
+                )
+            )
+            assert False, "Expected DeviceTokenNotFoundError"
+        except DeviceTokenNotFoundError:
+            pass
+
+    def test_update_device_token_duplicate_conflict(self):
+        """Test updating to a device_token that already exists"""
+        token1 = self.create_test_device_token(self.account.id, "token_1")
+        token2 = self.create_test_device_token(self.account.id, "token_2")
+
+        try:
+            DeviceTokenService.update_device_token(
+                params=UpdateDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id=token2.id,
+                    device_token="token_1",
+                )
+            )
+            assert False, "Expected DeviceTokenConflictError"
+        except DeviceTokenConflictError as exc:
+            assert exc.code == DeviceTokenErrorCode.CONFLICT
+
+    def test_deactivate_device_token_success(self):
+        """Test successful device token deactivation"""
+        token = self.create_test_device_token(self.account.id)
+
+        result = DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+            )
         )
-        time.sleep(0.01)
+
+        assert result is None
+
+        tokens = DeviceTokenService.get_device_tokens_for_account(
+            params=GetDeviceTokensParams(account_id=self.account.id)
+        )
+        assert len(tokens) == 0
+
+    def test_deactivate_device_token_not_found(self):
+        """Test deactivating non-existent device token"""
+        try:
+            DeviceTokenService.deactivate_device_token(
+                params=DeleteDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id="507f1f77bcf86cd799439011",
+                )
+            )
+            assert False, "Expected DeviceTokenNotFoundError"
+        except DeviceTokenNotFoundError as exc:
+            assert exc.code == DeviceTokenErrorCode.NOT_FOUND
+
+    def test_deactivate_device_token_invalid_id(self):
+        """Test deactivating with invalid ObjectId format"""
+        try:
+            DeviceTokenService.deactivate_device_token(
+                params=DeleteDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id="not_an_object_id",
+                )
+            )
+            assert False, "Expected DeviceTokenNotFoundError"
+        except DeviceTokenNotFoundError:
+            pass
+
+    def test_deactivate_device_token_wrong_account(self):
+        """Test deactivating device from different account"""
+        other_account = self.create_test_account("other@example.com")
+        token = self.create_test_device_token(other_account.id)
+
+        try:
+            DeviceTokenService.deactivate_device_token(
+                params=DeleteDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id=token.id,
+                )
+            )
+            assert False, "Expected DeviceTokenNotFoundError"
+        except DeviceTokenNotFoundError:
+            pass
+
+    def test_deactivate_device_token_already_inactive(self):
+        """Test deactivating already inactive device"""
+        token = self.create_test_device_token(self.account.id)
         
-        token3 = self.create_test_device_token(
-            account_id=self.account.id, device_token="third"
+        DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token.id,
+            )
+        )
+
+        try:
+            DeviceTokenService.deactivate_device_token(
+                params=DeleteDeviceTokenParams(
+                    account_id=self.account.id,
+                    device_token_id=token.id,
+                )
+            )
+            assert False, "Expected DeviceTokenNotFoundError"
+        except DeviceTokenNotFoundError:
+            pass
+
+    def test_deactivate_multiple_devices(self):
+        """Test deactivating multiple devices"""
+        token1 = self.create_test_device_token(self.account.id, "token_1")
+        token2 = self.create_test_device_token(self.account.id, "token_2")
+        token3 = self.create_test_device_token(self.account.id, "token_3")
+
+        DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token1.id,
+            )
+        )
+        DeviceTokenService.deactivate_device_token(
+            params=DeleteDeviceTokenParams(
+                account_id=self.account.id,
+                device_token_id=token3.id,
+            )
+        )
+
+        tokens = DeviceTokenService.get_device_tokens_for_account(
+            params=GetDeviceTokensParams(account_id=self.account.id)
         )
         
-        # Get all tokens
-        params = GetDeviceTokensParams(account_id=self.account.id, active_only=True)
-        tokens = DeviceTokenReader.get_device_tokens_by_account_id(params=params)
-        
-        # Should be in reverse chronological order (newest first)
-        assert tokens[0].device_token == "third"
-        assert tokens[1].device_token == "second"
-        assert tokens[2].device_token == "first"
+        assert len(tokens) == 1
+        assert tokens[0].device_token == "token_2"

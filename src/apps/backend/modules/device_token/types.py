@@ -21,7 +21,6 @@ class DeviceToken:
     created_at: datetime
     updated_at: datetime
 
-
 @dataclass(frozen=True)
 class CreateDeviceTokenParams:
     account_id: str
@@ -30,13 +29,15 @@ class CreateDeviceTokenParams:
     device_info: Optional[Dict] = None
 
 @dataclass(frozen=True)
-class GetDeviceTokenParams:
-    device_token_id: str
-
-@dataclass(frozen=True)
 class GetDeviceTokensParams:
     account_id: str
-    active_only: bool = True
+
+@dataclass(frozen=True)
+class UpdateDeviceTokenParams:
+    account_id: str
+    device_token_id: str
+    device_token: Optional[str] = None
+    device_info: Optional[Dict] = None
 
 @dataclass(frozen=True)
 class DeleteDeviceTokenParams:
@@ -48,12 +49,7 @@ class DeviceTokenErrorCode:
     NOT_FOUND: str = "DEVICE_TOKEN_ERR_01"
     INVALID_PLATFORM: str = "DEVICE_TOKEN_ERR_02"
     BAD_REQUEST: str = "DEVICE_TOKEN_ERR_03"
-
-@dataclass(frozen=True)
-class DeviceTokenDeletionResult:
-    device_token_id: str
-    deleted_at: datetime
-    success: bool
+    CONFLICT:str = "DEVICE_TOKEN_ERR_04"
 
 @dataclass(frozen=True)
 class ValidationFailure:

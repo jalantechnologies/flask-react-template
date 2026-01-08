@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from modules.device_token.types import Platform
 
 @dataclass(frozen=True)
 class RegisterDeviceTokenResponse:
@@ -14,6 +13,14 @@ class RegisterDeviceTokenResponse:
 
 @dataclass(frozen=True)
 class DeviceTokenListItemResponse:
+    id: str
+    platform: str
+    device_info: Optional[dict]
+    active: bool
+    last_used_at: Optional[str]
+
+@dataclass(frozen=True)
+class UpdateDeviceTokenResponse:
     id: str
     platform: str
     device_info: Optional[dict]

@@ -5,362 +5,604 @@ from tests.modules.device_token.base_test_device_token import BaseTestDeviceToke
 
 class TestDeviceTokenApi(BaseTestDeviceToken):
 
-    def test_register_device_token_success(self) -> None:
+    def test_post_success(self):
+        """Test successful device token registration"""
         account, token = self.create_account_and_get_token()
-        payload = {
-            "device_token": "fcm_token_123",
-            "platform": "android",
-            "device_info": {"app_version": "1.0.0"},
-        }
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={
+                "device_token": "new_token_123",
+                "platform": "android",
+                "device_info": {"app_version": "1.0.0"}
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.get_json()
+        self.assertEqual(data["device_token"], "new_token_123")
+        self.assertEqual(data["platform"], "android")
+        self.assertTrue(data["active"])
 
-        response = self.make_authenticated_request("POST", account.id, token, data=payload)
-
-        assert response.status_code == 201
-        # Don't check account_id since your mapper might not include it
-        assert response.json.get("id") is not None
-        assert response.json.get("device_token") == "fcm_token_123"
-        assert response.json.get("platform") == "android"
-
-    def test_register_device_token_minimal_fields(self) -> None:
+    def test_post_ios_platform(self):
+        """Test registration with iOS platform"""
         account, token = self.create_account_and_get_token()
-        payload = {"device_token": "token_xyz", "platform": "ios"}
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "ios_token", "platform": "ios"},
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.get_json()
+        self.assertEqual(data["platform"], "ios")
 
-        response = self.make_authenticated_request("POST", account.id, token, data=payload)
-
-        assert response.status_code == 201
-        assert response.json.get("device_token") == "token_xyz"
-        assert response.json.get("platform") == "ios"
-        assert response.json.get("device_info") is None
-
-    def test_register_device_token_missing_device_token(self) -> None:
+    def test_post_empty_body(self):
+        """Test POST with empty request body"""
         account, token = self.create_account_and_get_token()
-        payload = {"platform": "android"}
-
-        response = self.make_authenticated_request("POST", account.id, token, data=payload)
-
-        self.assert_error_response(response, 400, DeviceTokenErrorCode.BAD_REQUEST)
-        assert "device_token is required" in response.json.get("message")
-
-    def test_register_device_token_missing_platform(self) -> None:
-        account, token = self.create_account_and_get_token()
-        payload = {"device_token": "token_123"}
-
-        response = self.make_authenticated_request("POST", account.id, token, data=payload)
-
-        self.assert_error_response(response, 400, DeviceTokenErrorCode.BAD_REQUEST)
-        assert "platform is required" in response.json.get("message")
-
-    def test_register_device_token_invalid_platform(self) -> None:
-        account, token = self.create_account_and_get_token()
-        payload = {"device_token": "token_123", "platform": "windows_phone"}
-
-        response = self.make_authenticated_request("POST", account.id, token, data=payload)
-
-        self.assert_error_response(response, 400, DeviceTokenErrorCode.INVALID_PLATFORM)
-
-    def test_register_device_token_empty_body(self) -> None:
-        account, token = self.create_account_and_get_token()
-
         response = self.make_authenticated_request("POST", account.id, token, data={})
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.BAD_REQUEST)
 
-        self.assert_error_response(response, 400, DeviceTokenErrorCode.BAD_REQUEST)
-
-    def test_register_device_token_no_auth(self) -> None:
-        account, _ = self.create_account_and_get_token()
-        payload = {"device_token": "token_123", "platform": "android"}
-
-        response = self.make_unauthenticated_request("POST", account_id=account.id, data=payload)
-
-        self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
-
-    def test_register_device_token_invalid_token(self) -> None:
-        account, _ = self.create_account_and_get_token()
-        payload = {"device_token": "token_123", "platform": "android"}
-
-        response = self.make_authenticated_request("POST", account.id, "invalid_jwt", data=payload)
-
-        self.assert_error_response(response, 401, AccessTokenErrorCode.ACCESS_TOKEN_INVALID)
-
-    def test_register_device_token_upsert_behavior(self) -> None:
+    def test_post_missing_device_token(self):
+        """Test POST without device_token field"""
         account, token = self.create_account_and_get_token()
-        payload1 = {
-            "device_token": "same_token",
-            "platform": "android",
-            "device_info": {"app_version": "1.0"},
-        }
-        payload2 = {
-            "device_token": "same_token",
-            "platform": "android",
-            "device_info": {"app_version": "2.0"},
-        }
-
-        response1 = self.make_authenticated_request("POST", account.id, token, data=payload1)
-        response2 = self.make_authenticated_request("POST", account.id, token, data=payload2)
-
-        assert response1.status_code == 201
-        assert response2.status_code == 201
-        assert response1.json.get("id") == response2.json.get("id")
-        assert response2.json.get("device_info") == {"app_version": "2.0"}
-
-    def test_get_device_tokens_empty(self) -> None:
-        account, token = self.create_account_and_get_token()
-
-        response = self.make_authenticated_request("GET", account.id, token)
-
-        assert response.status_code == 200
-        assert isinstance(response.json, dict)
-        assert "devices" in response.json
-        assert len(response.json["devices"]) == 0
-
-    def test_get_device_tokens_with_tokens(self) -> None:
-        account, token = self.create_account_and_get_token()
-        self.create_multiple_test_tokens(account_id=account.id, count=3)
-
-        response = self.make_authenticated_request("GET", account.id, token)
-
-        assert response.status_code == 200
-        assert isinstance(response.json, dict)
-        assert "devices" in response.json
-        assert len(response.json["devices"]) == 3
-
-    def test_get_device_tokens_excludes_inactive(self) -> None:
-        account, token = self.create_account_and_get_token()
-        active = self.create_test_device_token(account_id=account.id, device_token="active")
-        inactive = self.create_test_device_token(account_id=account.id, device_token="inactive")
-
-        self.make_authenticated_request("DELETE", account.id, token, device_id=inactive.id)
-
-        response = self.make_authenticated_request("GET", account.id, token)
-
-        assert response.status_code == 200
-        assert isinstance(response.json, dict)
-        assert "devices" in response.json
-        assert len(response.json["devices"]) == 1
-        assert response.json["devices"][0].get("id") == active.id
-
-    def test_get_device_tokens_no_auth(self) -> None:
-        account, _ = self.create_account_and_get_token()
-        response = self.make_unauthenticated_request("GET", account_id=account.id)
-
-        self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
-
-    def test_delete_device_token_success(self) -> None:
-        account, token = self.create_account_and_get_token()
-        device_token = self.create_test_device_token(account_id=account.id)
-
         response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_id=device_token.id
+            "POST",
+            account.id,
+            token,
+            data={"platform": "android"},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Device token is required", data["message"])
+
+    def test_post_empty_device_token(self):
+        """Test POST with empty device_token string"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "   ", "platform": "android"},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Device token is required", data["message"])
+
+    def test_post_missing_platform(self):
+        """Test POST without platform field"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token_123"},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Platform is required", data["message"])
+
+    def test_post_empty_platform(self):
+        """Test POST with empty platform string"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token_123", "platform": "  "},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Platform is required", data["message"])
+
+    def test_post_invalid_platform(self):
+        """Test POST with unsupported platform value"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token_123", "platform": "windows"},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.INVALID_PLATFORM)
+
+    def test_post_invalid_device_info(self):
+        """Test POST with non-dict device_info"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "x", "platform": "android", "device_info": "bad"},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Device info must be an object", data["message"])
+
+    def test_post_duplicate_token_same_account(self):
+        """Test registering same token twice for same account"""
+        account, token = self.create_account_and_get_token()
+        self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "dup_token", "platform": "android"},
+        )
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "dup_token", "platform": "android"},
+        )
+        self.assertEqual(response.status_code, 409)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.CONFLICT)
+
+    def test_post_duplicate_token_different_account(self):
+        """Test registering same token for different accounts"""
+        account1, token1 = self.create_account_and_get_token("user1@example.com")
+        account2, token2 = self.create_account_and_get_token("user2@example.com")
+        
+        self.make_authenticated_request(
+            "POST",
+            account1.id,
+            token1,
+            data={"device_token": "shared_token", "platform": "android"},
+        )
+        response = self.make_authenticated_request(
+            "POST",
+            account2.id,
+            token2,
+            data={"device_token": "shared_token", "platform": "android"},
+        )
+        self.assertEqual(response.status_code, 409)
+        data = response.get_json()
+        self.assertIn("already registered to another account", data["message"])
+
+    def test_post_no_auth(self):
+        """Test POST without authentication"""
+        account, _ = self.create_account_and_get_token()
+        response = self.make_unauthenticated_request(
+            "POST",
+            account.id,
+            data={"device_token": "token", "platform": "android"}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_post_platform_case_insensitive(self):
+        """Test that platform values are case-insensitive"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "case_token", "platform": "ANDROID"},
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.get_json()
+        self.assertEqual(data["platform"], "android")
+
+    def test_get_success(self):
+        """Test GET with devices registered"""
+        account, token = self.create_account_and_get_token()
+        self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token1", "platform": "android"},
+        )
+        self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token2", "platform": "ios"},
         )
 
-        assert response.status_code == 200
-        assert response.json.get("message") is not None
+        response = self.make_authenticated_request("GET", account.id, token)
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(len(data["devices"]), 2)
 
-        # Verify it's actually deleted
-        get_response = self.make_authenticated_request("GET", account.id, token)
-        assert len(get_response.json["devices"]) == 0
+    def test_get_empty_list(self):
+        """Test GET with no devices registered"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request("GET", account.id, token)
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data["devices"], [])
 
-    def test_delete_device_token_not_found(self) -> None:
+    def test_get_no_auth(self):
+        """Test GET without authentication"""
+        account, _ = self.create_account_and_get_token()
+        response = self.make_unauthenticated_request("GET", account.id)
+        self.assertEqual(response.status_code, 401)
+
+    def test_patch_update_device_token(self):
         account, token = self.create_account_and_get_token()
 
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "old_token", "platform": "android"},
+        )
+        device_id = created.get_json()["id"]
+
         response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_id="nonexistent_id"
+            "PATCH",
+            account.id,
+            token,
+            device_id=device_id,
+            data={"device_token": "new_token"},
         )
 
-        self.assert_error_response(response, 404, DeviceTokenErrorCode.NOT_FOUND)
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
 
-    def test_delete_device_token_no_auth(self) -> None:
-        account, _ = self.create_account_and_get_token()
-        device_token = self.create_test_device_token(account_id=account.id)
+        self.assertEqual(data["id"], device_id)
+        self.assertEqual(data["platform"], "android")
+        self.assertTrue(data["active"])
+        self.assertIsNotNone(data["last_used_at"])
+
+    def test_patch_update_device_info(self):
+        account, token = self.create_account_and_get_token()
+
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "patch_me", "platform": "android"},
+        )
+        device_id = created.get_json()["id"]
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=device_id,
+            data={"device_info": {"os": "android", "version": "14"}},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(data["id"], device_id)
+        self.assertEqual(data["platform"], "android")
+        self.assertEqual(data["device_info"]["os"], "android")
+        self.assertEqual(data["device_info"]["version"], "14")
+        self.assertTrue(data["active"])
+        self.assertIsNotNone(data["last_used_at"])
+
+    def test_patch_update_both_fields(self):
+        account, token = self.create_account_and_get_token()
+
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "old", "platform": "android"},
+        )
+        device_id = created.get_json()["id"]
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=device_id,
+            data={"device_token": "new", "device_info": {"updated": True}},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+
+        self.assertEqual(data["id"], device_id)
+        self.assertEqual(data["platform"], "android")
+        self.assertTrue(data["device_info"]["updated"])
+        self.assertTrue(data["active"])
+        self.assertIsNotNone(data["last_used_at"])
+
+    def test_patch_heartbeat(self):
+        """Test PATCH with empty body (heartbeat)"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "heartbeat", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+            data={},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIsNotNone(data["last_used_at"])
+
+    def test_patch_empty_device_token(self):
+        """Test PATCH with empty device_token string"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "valid_token", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+            data={"device_token": "   "},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Device token cannot be empty", data["message"])
+
+    def test_patch_invalid_device_info(self):
+        """Test PATCH with non-dict device_info"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+            data={"device_info": "not_a_dict"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Device info must be an object", data["message"])
+
+    def test_patch_invalid_field(self):
+        """Test PATCH with unsupported field"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "bad_patch", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+            data={"active": False},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Unsupported fields", data["message"])
+
+    def test_patch_multiple_invalid_fields(self):
+        """Test PATCH with multiple unsupported fields"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+            data={"active": False, "platform": "ios"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Unsupported fields", data["message"])
+
+    def test_patch_not_found(self):
+        """Test PATCH with non-existent device ID"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id="507f1f77bcf86cd799439011",
+            data={"device_info": {"x": 1}},
+        )
+        self.assertEqual(response.status_code, 404)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.NOT_FOUND)
+
+    def test_patch_wrong_account(self):
+        """Test PATCH with device belonging to different account"""
+        account1, token1 = self.create_account_and_get_token("user1@example.com")
+        account2, token2 = self.create_account_and_get_token("user2@example.com")
+        
+        created = self.make_authenticated_request(
+            "POST",
+            account1.id,
+            token1,
+            data={"device_token": "account1_token", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "PATCH",
+            account2.id,
+            token2,
+            device_id=created.get_json()["id"],
+            data={"device_info": {"hacked": True}},
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_patch_no_auth(self):
+        """Test PATCH without authentication"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token", "platform": "android"},
+        )
 
         response = self.make_unauthenticated_request(
-            "DELETE", account_id=account.id, device_id=device_token.id
+            "PATCH",
+            account.id,
+            device_id=created.get_json()["id"],
+            data={"device_info": {"x": 1}}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_patch_duplicate_device_token(self):
+        """Test PATCH to device_token that already exists"""
+        account, token = self.create_account_and_get_token()
+        self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "existing_token", "platform": "android"},
+        )
+        created2 = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "new_token", "platform": "ios"},
         )
 
-        self.assert_error_response(response, 401, AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND)
+        response = self.make_authenticated_request(
+            "PATCH",
+            account.id,
+            token,
+            device_id=created2.get_json()["id"],
+            data={"device_token": "existing_token"},
+        )
 
-    def test_delete_device_token_wrong_account(self) -> None:
-        """Test that attempting to delete a token from a different account succeeds silently.
-        
-        The service implements idempotent delete behavior with account isolation.
-        When account2 tries to delete account1's token, the service filters by
-        account2's account_id, finds nothing to delete, and returns success (200).
-        This is safe because:
-        1. Access control at the authentication layer prevents using wrong tokens
-        2. Account filtering ensures account2 can only affect their own tokens
-        3. The operation is idempotent (deleting non-existent token succeeds)
-        """
+        self.assertEqual(response.status_code, 409)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.CONFLICT)
+
+    def test_delete_success(self):
+        """Test successful device deletion"""
+        account, token = self.create_account_and_get_token()
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "delete_me", "platform": "android"},
+        )
+
+        response = self.make_authenticated_request(
+            "DELETE",
+            account.id,
+            token,
+            device_id=created.get_json()["id"],
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, b"")
+
+    def test_delete_not_found(self):
+        """Test DELETE with non-existent device ID"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "DELETE",
+            account.id,
+            token,
+            device_id="507f1f77bcf86cd799439011",
+        )
+        self.assertEqual(response.status_code, 404)
+        data = response.get_json()
+        self.assertEqual(data["code"], DeviceTokenErrorCode.NOT_FOUND)
+
+    def test_delete_invalid_object_id(self):
+        """Test DELETE with invalid ObjectId format"""
+        account, token = self.create_account_and_get_token()
+        response = self.make_authenticated_request(
+            "DELETE",
+            account.id,
+            token,
+            device_id="not_an_object_id",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_wrong_account(self):
+        """Test DELETE with device belonging to different account"""
         account1, token1 = self.create_account_and_get_token("user1@example.com")
         account2, token2 = self.create_account_and_get_token("user2@example.com")
-        device_token = self.create_test_device_token(account_id=account1.id)
+        
+        created = self.make_authenticated_request(
+            "POST",
+            account1.id,
+            token1,
+            data={"device_token": "account1_token", "platform": "android"},
+        )
 
-        # Try to delete account1's token using account2's credentials
-        # This succeeds silently (200) but has no effect on account1's token
         response = self.make_authenticated_request(
-            "DELETE", account2.id, token2, device_id=device_token.id
+            "DELETE",
+            account2.id,
+            token2,
+            device_id=created.get_json()["id"],
         )
 
-        assert response.status_code == 200
-        
-        # Verify account1's token still exists (wasn't affected)
-        account1_tokens_response = self.make_authenticated_request("GET", account1.id, token1)
-        assert len(account1_tokens_response.json["devices"]) == 1
+        self.assertEqual(response.status_code, 404)
 
-    def test_register_multiple_platforms(self) -> None:
+    def test_delete_already_deleted(self):
+        """Test DELETE on already deleted device"""
         account, token = self.create_account_and_get_token()
-
-        for platform in ["android", "ios"]:
-            payload = {"device_token": f"multi_platform_token_{platform}", "platform": platform}
-            response = self.make_authenticated_request("POST", account.id, token, data=payload)
-            assert response.status_code == 201
-
-        response = self.make_authenticated_request("GET", account.id, token)
-        assert isinstance(response.json, dict)
-        assert "devices" in response.json
-        assert len(response.json["devices"]) == 2
-        platforms = [t.get("platform") for t in response.json["devices"]]
-        assert set(platforms) == {"android", "ios"}
-
-    def test_account_isolation_via_api(self) -> None:
-        """Test that account tokens are isolated via API with idempotent delete behavior"""
-        account1, token1 = self.create_account_and_get_token("user1@example.com")
-        account2, token2 = self.create_account_and_get_token("user2@example.com")
-
-        payload = {"device_token": "account1_token", "platform": "android"}
-        create_response = self.make_authenticated_request("POST", account1.id, token1, data=payload)
-        token_id = create_response.json.get("id")
-
-        # Account 2 should not see account 1's tokens
-        get_response = self.make_authenticated_request("GET", account2.id, token2)
-        assert isinstance(get_response.json, dict)
-        assert "devices" in get_response.json
-        assert len(get_response.json["devices"]) == 0
-
-        # Account 2 delete attempt succeeds silently (idempotent) but has no effect on account1
-        delete_response = self.make_authenticated_request(
-            "DELETE", account2.id, token2, device_id=token_id
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "delete_twice", "platform": "android"},
         )
-        assert delete_response.status_code == 200
 
-        # Account 1's token should still exist (wasn't affected by account2's delete)
-        account1_tokens = self.make_authenticated_request("GET", account1.id, token1)
-        assert isinstance(account1_tokens.json, dict)
-        assert "devices" in account1_tokens.json
-        assert len(account1_tokens.json["devices"]) == 1
-
-    def test_register_device_token_with_special_characters(self) -> None:
-        """Test device tokens with special characters via API"""
-        account, token = self.create_account_and_get_token()
-        special_token = "token_with_special!@#$%^&*()"
+        device_id = created.get_json()["id"]
         
+        self.make_authenticated_request(
+            "DELETE",
+            account.id,
+            token,
+            device_id=device_id,
+        )
+
         response = self.make_authenticated_request(
-            "POST", account.id, token,
-            data={"device_token": special_token, "platform": "android"}
+            "DELETE",
+            account.id,
+            token,
+            device_id=device_id,
         )
-        
-        assert response.status_code == 201
-        assert response.json.get("device_token") == special_token
 
-    def test_register_device_token_with_very_long_token(self) -> None:
-        """Test handling of extremely long device tokens via API"""
-        account, token = self.create_account_and_get_token()
-        very_long_token = "x" * 1000
-        
-        response = self.make_authenticated_request(
-            "POST", account.id, token,
-            data={"device_token": very_long_token, "platform": "android"}
-        )
-        
-        assert response.status_code == 201
-        assert len(response.json.get("device_token")) == 1000
+        self.assertEqual(response.status_code, 404)
 
-    def test_register_device_token_with_null_device_info(self) -> None:
-        """Test explicit null device_info via API"""
+    def test_delete_no_auth(self):
+        """Test DELETE without authentication"""
         account, token = self.create_account_and_get_token()
-        
-        response = self.make_authenticated_request(
-            "POST", account.id, token,
-            data={"device_token": "token", "platform": "android", "device_info": None}
+        created = self.make_authenticated_request(
+            "POST",
+            account.id,
+            token,
+            data={"device_token": "token", "platform": "android"},
         )
-        
-        assert response.status_code == 201
-        assert response.json.get("device_info") is None
 
-    def test_register_device_token_with_complex_device_info(self) -> None:
-        """Test complex nested device_info via API"""
-        account, token = self.create_account_and_get_token()
-        complex_info = {
-            "app": {"version": "1.0", "build": 123},
-            "device": {"model": "Pixel", "os": "Android 14"},
-            "metadata": {"locale": "en_US", "timezone": "America/New_York"}
-        }
-        
-        response = self.make_authenticated_request(
-            "POST", account.id, token,
-            data={"device_token": "complex", "platform": "android", "device_info": complex_info}
+        response = self.make_unauthenticated_request(
+            "DELETE",
+            account.id,
+            device_id=created.get_json()["id"]
         )
-        
-        assert response.status_code == 201
-        assert response.json.get("device_info") == complex_info
-
-    def test_get_device_tokens_with_many_devices(self) -> None:
-        """Test retrieving many devices via API"""
-        account, token = self.create_account_and_get_token()
-        
-        # Create 25 tokens
-        for i in range(25):
-            self.create_test_device_token(
-                account_id=account.id, 
-                device_token=f"many_token_{i}"
-            )
-        
-        response = self.make_authenticated_request("GET", account.id, token)
-        
-        assert response.status_code == 200
-        assert len(response.json["devices"]) == 25
-
-    def test_delete_already_deleted_token(self) -> None:
-        """Test that deleting an already-deleted token succeeds (idempotent behavior).
-        
-        The service implements idempotent delete - attempting to delete a token
-        that's already deleted (or doesn't exist) returns 200 success.
-        """
-        account, token = self.create_account_and_get_token()
-        device_token = self.create_test_device_token(account_id=account.id)
-        
-        # Delete once
-        response1 = self.make_authenticated_request(
-            "DELETE", account.id, token, device_id=device_token.id
-        )
-        assert response1.status_code == 200
-        
-        # Delete again - should also succeed (idempotent)
-        response2 = self.make_authenticated_request(
-            "DELETE", account.id, token, device_id=device_token.id
-        )
-        assert response2.status_code == 200
-
-    def test_register_device_token_whitespace_handling(self) -> None:
-        """Test that whitespace in tokens is handled correctly"""
-        account, token = self.create_account_and_get_token()
-        
-        # Token with leading/trailing whitespace
-        response = self.make_authenticated_request(
-            "POST", account.id, token,
-            data={"device_token": "  whitespace_token  ", "platform": "android"}
-        )
-        
-        assert response.status_code == 201
-        # Should be trimmed by the service
-        assert response.json.get("device_token").strip() == "whitespace_token"
-
-    def test_get_device_token_by_invalid_object_id(self) -> None:
-        """Test that invalid ObjectId format in delete returns proper error"""
-        account, token = self.create_account_and_get_token()
-        
-        # Try to delete with invalid ObjectId format
-        response = self.make_authenticated_request(
-            "DELETE", account.id, token, device_id="invalid_object_id_format"
-        )
-        
-        # Should return 404 or 400 depending on implementation
-        assert response.status_code in [400, 404]
+        self.assertEqual(response.status_code, 401)

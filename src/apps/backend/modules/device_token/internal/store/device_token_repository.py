@@ -1,9 +1,9 @@
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.logger.logger import Logger
 from modules.application.repository import ApplicationRepository
 from modules.device_token.internal.store.device_token_model import DeviceTokenModel
-from modules.logger.logger import Logger
 
 DEVICE_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
