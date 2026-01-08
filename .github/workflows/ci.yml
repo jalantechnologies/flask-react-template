@@ -100,14 +100,29 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      # Trivy filesystem scan on changed files
-      - name: Run Trivy FS scan on changed files
+      # Get changed files and copy to separate directory
+      - name: Copy changed files for scanning
+        id: copy_files
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          mkdir -p changed_files_scan
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              mkdir -p "changed_files_scan/$(dirname "$file")"
+              cp "$file" "changed_files_scan/$file"
+            fi
+          done < changed_files.txt
+          
+          echo "Files to scan:"
+          find changed_files_scan -type f
+
+      # Trivy filesystem scan on CHANGED files only
+      - name: Trivy FS scan (changed files only)
         if: steps.changes.outputs.changed == 'true'
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
-        continue-on-error: true
         with:
           scan-type: filesystem
-          scan-ref: .
+          scan-ref: changed_files_scan
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: 1
@@ -126,7 +141,6 @@ jobs:
       - name: Run Trivy IaC scan
         if: steps.iac_changes.outputs.iac_changed == 'true'
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
-        continue-on-error: true
         with:
           scan-type: config
           scan-ref: lib/kube
@@ -138,7 +152,6 @@ jobs:
       - name: Run Checkov
         if: steps.iac_changes.outputs.iac_changed == 'true'
         uses: bridgecrewio/checkov-action@8f61ce5b8a3afb4ca94d236b75201878ded6d2cd
-        continue-on-error: true
         with:
           directory: lib/kube
           quiet: true
@@ -153,97 +166,82 @@ jobs:
             echo "deps_changed=false" >> $GITHUB_OUTPUT
           fi
 
-      # Extract new or upgraded dependencies
-      - name: Extract new or upgraded dependencies
-        id: dep_diff
+      # Build baseline Docker image from base branch
+      - name: Checkout base branch for baseline
+        if: steps.deps.outputs.deps_changed == 'true'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: baseline
+
+      - name: Build baseline Docker image
         if: steps.deps.outputs.deps_changed == 'true'
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          cd baseline
+          docker build -t flask-react-app:baseline .
+          cd ..
 
-          # Get base branch package-lock.json
-          git show origin/${{ github.event.pull_request.base.ref }}:package-lock.json > base-lock.json 2>/dev/null || echo '{"packages":{}}' > base-lock.json
-          cp package-lock.json pr-lock.json
-
-          # Extract package@version from both
-          jq -r '
-            .packages
-            | to_entries[]
-            | select(.key != "")
-            | "\(.value.name)@\(.value.version)"
-          ' base-lock.json | sort > base_deps.txt
-
-          jq -r '
-            .packages
-            | to_entries[]
-            | select(.key != "")
-            | "\(.value.name)@\(.value.version)"
-          ' pr-lock.json | sort > pr_deps.txt
-
-          # Find new or upgraded packages (in PR but not in base)
-          comm -13 base_deps.txt pr_deps.txt | cut -d@ -f1 | sort -u > changed_deps.txt
-
-          echo "📦 Changed dependencies:"
-          cat changed_deps.txt || echo "  (none)"
-
-          if [ -s changed_deps.txt ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Build Docker image only if dependencies actually changed
-      - name: Build Docker image
-        if: steps.dep_diff.outputs.has_changes == 'true'
-        run: |
-          docker build -t flask-react-app:${{ github.sha }} .
-
-      # Scan Docker image (JSON output for parsing)
-      - name: Trivy Docker scan
-        id: trivy_docker
-        if: steps.dep_diff.outputs.has_changes == 'true'
+      # Scan baseline Docker image
+      - name: Scan baseline Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: flask-react-app:${{ github.sha }}
+          image-ref: flask-react-app:baseline
           format: json
-          output: trivy-docker.json
+          output: trivy-baseline.json
           severity: CRITICAL
           ignore-unfixed: true
 
-      # Gate ONLY on CRITICAL vulnerabilities in NEW or UPGRADED packages
-      - name: Gate on new dependency vulnerabilities
-        if: steps.dep_diff.outputs.has_changes == 'true'
+      # Build PR Docker image
+      - name: Build PR Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
         run: |
-          # Extract packages with CRITICAL vulnerabilities
-          FOUND=$(jq -r '
-            .Results[]
-            | select(.Vulnerabilities != null)
-            | .Vulnerabilities[]
-            | select(.Severity == "CRITICAL")
-            | .PkgName
-          ' trivy-docker.json 2>/dev/null | sort -u || echo "")
+          docker build -t flask-react-app:pr .
 
-          if [ -z "$FOUND" ]; then
-            echo "✅ No CRITICAL vulnerabilities found in Docker image"
-            exit 0
-          fi
+      # Scan PR Docker image
+      - name: Scan PR Docker image
+        if: steps.deps.outputs.deps_changed == 'true'
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: flask-react-app:pr
+          format: json
+          output: trivy-pr.json
+          severity: CRITICAL
+          ignore-unfixed: true
 
-          # Check if any CRITICAL vulns are in NEW or UPGRADED packages
-          MATCH=$(comm -12 \
-            <(echo "$FOUND" | sort) \
-            <(sort changed_deps.txt) || echo "")
-
-          if [ -n "$MATCH" ]; then
-            echo "❌ CRITICAL vulnerabilities introduced in new or upgraded dependencies:"
-            echo "$MATCH"
+      # Compare and fail only on NEW CRITICAL vulnerabilities
+      - name: Check for new Docker vulnerabilities
+        if: steps.deps.outputs.deps_changed == 'true'
+        run: |
+          # Count CRITICAL vulnerabilities in baseline
+          BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-baseline.json 2>/dev/null || echo 0)
+          
+          # Count CRITICAL vulnerabilities in PR
+          PR_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-pr.json 2>/dev/null || echo 0)
+          
+          # Calculate new vulnerabilities
+          NEW_CRITICAL=$((PR_CRITICAL - BASELINE_CRITICAL))
+          
+          # Ensure non-negative
+          [ $NEW_CRITICAL -lt 0 ] && NEW_CRITICAL=0
+          
+          echo "📊 Docker Image Vulnerability Comparison:"
+          echo "  Baseline CRITICAL: $BASELINE_CRITICAL"
+          echo "  PR CRITICAL: $PR_CRITICAL"
+          echo "  NEW CRITICAL: $NEW_CRITICAL"
+          
+          if [ "$NEW_CRITICAL" -gt 0 ]; then
             echo ""
-            echo "Policy: Zero tolerance for CRITICAL vulnerabilities in new/upgraded packages"
+            echo "❌ Found $NEW_CRITICAL new CRITICAL vulnerabilities in Docker image"
+            echo "Policy: Zero tolerance for new CRITICAL vulnerabilities"
             exit 1
           fi
-
-          echo "✅ No CRITICAL vulnerabilities in new or upgraded dependencies"
-          echo "   (Existing vulnerabilities in unchanged packages are allowed)"
+          
+          echo "✅ No new CRITICAL vulnerabilities in Docker image"
 
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
