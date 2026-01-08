@@ -3,11 +3,11 @@ from modules.device_token.types import DeviceTokenErrorCode
 
 
 class DeviceTokenNotFoundError(AppError):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str | None = None) -> None:
         super().__init__(
             code=DeviceTokenErrorCode.NOT_FOUND,
             http_status_code=404,
-            message=message,
+            message=message or "Device token not found.",
         )
 
 

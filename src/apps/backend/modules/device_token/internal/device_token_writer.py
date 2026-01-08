@@ -72,7 +72,7 @@ class DeviceTokenWriter:
             raise DeviceTokenConflictError( "Device token already registered to another device.")
 
         if updated_bson is None:
-            raise DeviceTokenNotFoundError("Device token not found.")
+            raise DeviceTokenNotFoundError()
 
         return DeviceTokenUtil.convert_device_token_bson_to_device_token(updated_bson)
 
@@ -83,7 +83,7 @@ class DeviceTokenWriter:
         try:
             object_id = ObjectId(params.device_token_id)
         except InvalidId:
-            raise DeviceTokenNotFoundError("Device token not found.")
+            raise DeviceTokenNotFoundError()
 
         result = DeviceTokenRepository.collection().find_one_and_update(
             {
@@ -95,6 +95,6 @@ class DeviceTokenWriter:
         )
 
         if result is None:
-            raise DeviceTokenNotFoundError("Device token not found.")
+            raise DeviceTokenNotFoundError()
         
         return None
