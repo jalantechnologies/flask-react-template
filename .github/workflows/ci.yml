@@ -153,73 +153,13 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 0
 
-      # ============================================================
-      # BASELINE COMPARISON: Filesystem Vulnerabilities
-      # ============================================================
-      # This step compares vulnerabilities found in the current PR
-      # against the baseline (base branch) to identify NEW issues.
-      # Only NEW vulnerabilities will cause the build to fail.
-      # ============================================================
+      # Compare filesystem vulnerabilities against baseline
       - name: Check scan results and determine severity
         id: trivy_severity
         if: steps.changes.outputs.changed_files != ''
         run: |
-          # --- STEP 1: Validate scan report exists ---
-          if [ ! -f trivy-report.md ]; then
-            echo "Error: trivy-report.md not found!"
-            echo "critical_count=0" >> $GITHUB_OUTPUT
-            echo "high_count=0" >> $GITHUB_OUTPUT
-            echo "total_count=0" >> $GITHUB_OUTPUT
-            echo "new_critical=0" >> $GITHUB_OUTPUT
-            echo "new_high=0" >> $GITHUB_OUTPUT
-            echo "scan_failed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # --- STEP 2: Count vulnerabilities in CURRENT PR ---
-          # Parse markdown table to count CRITICAL and HIGH severity CVEs
-          CRITICAL_COUNT=$(grep -E "^\| .+ \| CVE-.+ \| CRITICAL \|" trivy-report.md | wc -l | xargs || echo 0)
-          HIGH_COUNT=$(grep -E "^\| .+ \| CVE-.+ \| HIGH \|" trivy-report.md | wc -l | xargs || echo 0)
-          TOTAL_COUNT=$(grep -c "CVE-" trivy-report.md | xargs || echo 0)
-          
-          # --- STEP 3: Count vulnerabilities in BASELINE (base branch) ---
-          # If baseline scan exists, extract counts from JSON
-          BASELINE_CRITICAL=0
-          BASELINE_HIGH=0
-          if [ -f trivy-baseline.json ]; then
-            BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-baseline.json | xargs || echo 0)
-            BASELINE_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-baseline.json | xargs || echo 0)
-          fi
-          
-          # --- STEP 4: Calculate NEW vulnerabilities (delta) ---
-          # NEW = Current - Baseline
-          # This is the key metric for zero-tolerance policy
-          NEW_CRITICAL=$((CRITICAL_COUNT - BASELINE_CRITICAL))
-          NEW_HIGH=$((HIGH_COUNT - BASELINE_HIGH))
-          
-          # --- STEP 5: Ensure counts are non-negative ---
-          # If we fixed vulnerabilities, delta would be negative
-          # Treat that as 0 new issues (which is good!)
-          [ $NEW_CRITICAL -lt 0 ] && NEW_CRITICAL=0
-          [ $NEW_HIGH -lt 0 ] && NEW_HIGH=0
-          
-          # --- STEP 6: Output results for next steps ---
-          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
-          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
-          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
-          echo "new_critical=$NEW_CRITICAL" >> $GITHUB_OUTPUT
-          echo "new_high=$NEW_HIGH" >> $GITHUB_OUTPUT
-          echo "scan_failed=false" >> $GITHUB_OUTPUT
-          
-          # --- STEP 7: Create GitHub Actions annotations ---
-          # These show up as errors/warnings in the GitHub UI
-          if [ "$NEW_CRITICAL" -gt 0 ]; then
-            echo "::error::Found $NEW_CRITICAL new CRITICAL vulnerabilities in changed files"
-          elif [ "$NEW_HIGH" -gt 0 ]; then
-            echo "::error::Found $NEW_HIGH new HIGH vulnerabilities in changed files"
-          elif [ "$TOTAL_COUNT" -gt 0 ]; then
-            echo "::warning::Found existing vulnerabilities in changed files - no new issues introduced"
-          fi
+          chmod +x .github/scripts/compare-trivy-results.sh
+          .github/scripts/compare-trivy-results.sh trivy-report.md trivy-baseline.json
 
       - name: Comment PR with scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -229,36 +169,15 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-report.md
 
-      # ============================================================
-      # ENFORCE POLICY: Fail if new filesystem vulnerabilities found
-      # ============================================================
+      # Fail if new filesystem vulnerabilities found
       - name: Fail if filesystem scan has issues
         if: steps.changes.outputs.changed_files != ''
         run: |
-          # --- Check 1: Verify scan completed successfully ---
-          if [ "${{ steps.trivy_severity.outputs.scan_failed }}" == "true" ]; then
-            echo "❌ Filesystem scan failed to generate report!"
-            exit 1
-          fi
-          
-          # --- Check 2: Apply zero-tolerance policy ---
-          # Get new vulnerability counts from previous step
-          NEW_CRITICAL="${{ steps.trivy_severity.outputs.new_critical }}"
-          NEW_HIGH="${{ steps.trivy_severity.outputs.new_high }}"
-          
-          # Default to 0 if values are empty
-          NEW_CRITICAL=${NEW_CRITICAL:-0}
-          NEW_HIGH=${NEW_HIGH:-0}
-          
-          # --- Fail if ANY new HIGH or CRITICAL vulnerabilities ---
-          if [ "$NEW_CRITICAL" -gt 0 ] || [ "$NEW_HIGH" -gt 0 ]; then
-            echo "❌ Found new vulnerabilities in changed files!"
-            [ "$NEW_CRITICAL" -gt 0 ] && echo "  - $NEW_CRITICAL new CRITICAL"
-            [ "$NEW_HIGH" -gt 0 ] && echo "  - $NEW_HIGH new HIGH"
-            echo "Policy: Zero tolerance for new vulnerabilities."
-            echo "Check the PR comment for details."
-            exit 1
-          fi
+          chmod +x .github/scripts/check-new-vulnerabilities.sh
+          .github/scripts/check-new-vulnerabilities.sh \
+            "${{ steps.trivy_severity.outputs.scan_failed }}" \
+            "${{ steps.trivy_severity.outputs.new_critical }}" \
+            "${{ steps.trivy_severity.outputs.new_high }}"
       
 
       - name: Get changes in k8s folder and subfolders
@@ -372,72 +291,12 @@ jobs:
           trivyignores: ".trivyignore"
           exit-code: 0
 
-      # ============================================================
-      # BASELINE COMPARISON: Docker Image Vulnerabilities
-      # ============================================================
-      # This step compares vulnerabilities in the Docker image
-      # against the baseline (base branch image) to identify NEW issues.
-      # Only NEW vulnerabilities will cause the build to fail.
-      # ============================================================
+      # Compare Docker image vulnerabilities against baseline
       - name: Check Docker scan results and determine severity
         id: trivy_docker_severity
         run: |
-          # --- STEP 1: Validate scan report exists ---
-          if [ ! -f trivy-docker-report.md ]; then
-            echo "Error: trivy-docker-report.md not found!"
-            echo "critical_count=0" >> $GITHUB_OUTPUT
-            echo "high_count=0" >> $GITHUB_OUTPUT
-            echo "total_count=0" >> $GITHUB_OUTPUT
-            echo "new_critical=0" >> $GITHUB_OUTPUT
-            echo "new_high=0" >> $GITHUB_OUTPUT
-            echo "scan_failed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # --- STEP 2: Count vulnerabilities in CURRENT Docker image ---
-          # Parse markdown table to count CRITICAL and HIGH severity CVEs
-          CRITICAL_COUNT=$(grep -E "^\| .+ \| CVE-.+ \| CRITICAL \|" trivy-docker-report.md | wc -l | xargs || echo 0)
-          HIGH_COUNT=$(grep -E "^\| .+ \| CVE-.+ \| HIGH \|" trivy-docker-report.md | wc -l | xargs || echo 0)
-          TOTAL_COUNT=$(grep -c "CVE-" trivy-docker-report.md | xargs || echo 0)
-          
-          # --- STEP 3: Count vulnerabilities in BASELINE Docker image ---
-          # If baseline scan exists, extract counts from JSON
-          BASELINE_CRITICAL=0
-          BASELINE_HIGH=0
-          if [ -f trivy-docker-baseline.json ]; then
-            BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-docker-baseline.json | xargs || echo 0)
-            BASELINE_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-docker-baseline.json | xargs || echo 0)
-          fi
-          
-          # --- STEP 4: Calculate NEW vulnerabilities (delta) ---
-          # NEW = Current - Baseline
-          # This is the key metric for zero-tolerance policy
-          NEW_CRITICAL=$((CRITICAL_COUNT - BASELINE_CRITICAL))
-          NEW_HIGH=$((HIGH_COUNT - BASELINE_HIGH))
-          
-          # --- STEP 5: Ensure counts are non-negative ---
-          # If we fixed vulnerabilities, delta would be negative
-          # Treat that as 0 new issues (which is good!)
-          [ $NEW_CRITICAL -lt 0 ] && NEW_CRITICAL=0
-          [ $NEW_HIGH -lt 0 ] && NEW_HIGH=0
-          
-          # --- STEP 6: Output results for next steps ---
-          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
-          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
-          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
-          echo "new_critical=$NEW_CRITICAL" >> $GITHUB_OUTPUT
-          echo "new_high=$NEW_HIGH" >> $GITHUB_OUTPUT
-          echo "scan_failed=false" >> $GITHUB_OUTPUT
-          
-          # --- STEP 7: Create GitHub Actions annotations ---
-          # These show up as errors/warnings in the GitHub UI
-          if [ "$NEW_CRITICAL" -gt 0 ]; then
-            echo "::error::Found $NEW_CRITICAL new CRITICAL vulnerabilities in Docker image"
-          elif [ "$NEW_HIGH" -gt 0 ]; then
-            echo "::error::Found $NEW_HIGH new HIGH vulnerabilities in Docker image"
-          elif [ "$TOTAL_COUNT" -gt 0 ]; then
-            echo "::warning::Found existing vulnerabilities in Docker image - no new issues introduced"
-          fi
+          chmod +x .github/scripts/compare-trivy-results.sh
+          .github/scripts/compare-trivy-results.sh trivy-docker-report.md trivy-docker-baseline.json
           
       - name: Comment PR with Docker scan results
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
@@ -447,37 +306,17 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: trivy-docker-report.md
 
-      # ============================================================
-      # ENFORCE POLICY: Fail if new Docker vulnerabilities or Checkov issues found
-      # ============================================================
+      # Fail if new Docker vulnerabilities or Checkov issues found
       - name: Fail if Docker scan or Checkov has issues
         run: |
-          # --- Check 1: Verify Docker scan completed successfully ---
-          if [ "${{ steps.trivy_docker_severity.outputs.scan_failed }}" == "true" ]; then
-            echo "❌ Docker scan failed to generate report!"
-            exit 1
-          fi
+          # Check Docker vulnerabilities
+          chmod +x .github/scripts/check-new-vulnerabilities.sh
+          .github/scripts/check-new-vulnerabilities.sh \
+            "${{ steps.trivy_docker_severity.outputs.scan_failed }}" \
+            "${{ steps.trivy_docker_severity.outputs.new_critical }}" \
+            "${{ steps.trivy_docker_severity.outputs.new_high }}"
           
-          # --- Check 2: Apply zero-tolerance policy for Docker vulnerabilities ---
-          # Get new vulnerability counts from previous step
-          NEW_CRITICAL="${{ steps.trivy_docker_severity.outputs.new_critical }}"
-          NEW_HIGH="${{ steps.trivy_docker_severity.outputs.new_high }}"
-          
-          # Default to 0 if values are empty
-          NEW_CRITICAL=${NEW_CRITICAL:-0}
-          NEW_HIGH=${NEW_HIGH:-0}
-          
-          # Fail if ANY new HIGH or CRITICAL vulnerabilities in Docker image
-          if [ "$NEW_CRITICAL" -gt 0 ] || [ "$NEW_HIGH" -gt 0 ]; then
-            echo "❌ Found new vulnerabilities in Docker image!"
-            [ "$NEW_CRITICAL" -gt 0 ] && echo "  - $NEW_CRITICAL new CRITICAL"
-            [ "$NEW_HIGH" -gt 0 ] && echo "  - $NEW_HIGH new HIGH"
-            echo "Policy: Zero tolerance for new vulnerabilities."
-            echo "Check the PR comment for details."
-            exit 1
-          fi
-          
-          # --- Check 3: Verify Checkov (IaC security) passed ---
+          # Check Checkov (IaC security scanner)
           if [ "${{ steps.checkov.outcome }}" == "failure" ]; then
             echo "❌ Checkov found security issues!"
             exit 1
