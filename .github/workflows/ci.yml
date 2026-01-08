@@ -191,7 +191,7 @@ jobs:
           image-ref: flask-react-app:baseline
           format: json
           output: trivy-baseline.json
-          severity: CRITICAL
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
 
       # Build PR Docker image
@@ -210,38 +210,44 @@ jobs:
           image-ref: flask-react-app:pr
           format: json
           output: trivy-pr.json
-          severity: CRITICAL
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
 
-      # Compare and fail only on NEW CRITICAL vulnerabilities
+      # Compare and fail on NEW HIGH or CRITICAL vulnerabilities
       - name: Check for new Docker vulnerabilities
         if: steps.deps.outputs.deps_changed == 'true'
         run: |
           # Count CRITICAL vulnerabilities in baseline
           BASELINE_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-baseline.json 2>/dev/null || echo 0)
+          BASELINE_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-baseline.json 2>/dev/null || echo 0)
           
-          # Count CRITICAL vulnerabilities in PR
+          # Count vulnerabilities in PR
           PR_CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-pr.json 2>/dev/null || echo 0)
+          PR_HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-pr.json 2>/dev/null || echo 0)
           
           # Calculate new vulnerabilities
           NEW_CRITICAL=$((PR_CRITICAL - BASELINE_CRITICAL))
+          NEW_HIGH=$((PR_HIGH - BASELINE_HIGH))
           
           # Ensure non-negative
           [ $NEW_CRITICAL -lt 0 ] && NEW_CRITICAL=0
+          [ $NEW_HIGH -lt 0 ] && NEW_HIGH=0
           
           echo "📊 Docker Image Vulnerability Comparison:"
-          echo "  Baseline CRITICAL: $BASELINE_CRITICAL"
-          echo "  PR CRITICAL: $PR_CRITICAL"
-          echo "  NEW CRITICAL: $NEW_CRITICAL"
+          echo "  Baseline: $BASELINE_CRITICAL CRITICAL, $BASELINE_HIGH HIGH"
+          echo "  PR: $PR_CRITICAL CRITICAL, $PR_HIGH HIGH"
+          echo "  NEW: $NEW_CRITICAL CRITICAL, $NEW_HIGH HIGH"
           
-          if [ "$NEW_CRITICAL" -gt 0 ]; then
+          if [ "$NEW_CRITICAL" -gt 0 ] || [ "$NEW_HIGH" -gt 0 ]; then
             echo ""
-            echo "❌ Found $NEW_CRITICAL new CRITICAL vulnerabilities in Docker image"
-            echo "Policy: Zero tolerance for new CRITICAL vulnerabilities"
+            echo "❌ Found new vulnerabilities in Docker image:"
+            [ "$NEW_CRITICAL" -gt 0 ] && echo "  - $NEW_CRITICAL new CRITICAL"
+            [ "$NEW_HIGH" -gt 0 ] && echo "  - $NEW_HIGH new HIGH"
+            echo "Policy: Zero tolerance for new HIGH or CRITICAL vulnerabilities"
             exit 1
           fi
           
-          echo "✅ No new CRITICAL vulnerabilities in Docker image"
+          echo "✅ No new HIGH or CRITICAL vulnerabilities in Docker image"
 
   test:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
