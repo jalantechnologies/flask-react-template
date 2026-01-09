@@ -50,8 +50,3 @@ class DeviceTokenErrorCode:
     INVALID_PLATFORM: str = "DEVICE_TOKEN_ERR_02"
     BAD_REQUEST: str = "DEVICE_TOKEN_ERR_03"
     CONFLICT:str = "DEVICE_TOKEN_ERR_04"
-
-@dataclass(frozen=True)
-class ValidationFailure:
-    field: str
-    message: str

@@ -1,8 +1,7 @@
 from modules.logger.logger import Logger
-from modules.device_token.errors import InvalidPlatformError
 from modules.device_token.internal.device_token_writer import DeviceTokenWriter
 from modules.device_token.internal.device_token_reader import DeviceTokenReader
-from modules.device_token.types import CreateDeviceTokenParams, DeviceToken, Platform, DeleteDeviceTokenParams, GetDeviceTokensParams, UpdateDeviceTokenParams
+from modules.device_token.types import CreateDeviceTokenParams, DeviceToken, DeleteDeviceTokenParams, GetDeviceTokensParams, UpdateDeviceTokenParams
 
 
 class DeviceTokenService:
