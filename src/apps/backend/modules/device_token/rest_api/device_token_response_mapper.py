@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 from typing import Optional
+from datetime import datetime, timezone
 
 from modules.device_token.types import DeviceToken
 from modules.device_token.rest_api.responses import RegisterDeviceTokenResponse, DeviceTokenListItemResponse, UpdateDeviceTokenResponse

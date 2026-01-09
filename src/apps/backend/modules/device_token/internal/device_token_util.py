@@ -1,8 +1,8 @@
 from typing import Any
 from datetime import datetime
 
-from modules.device_token.internal.store.device_token_model import DeviceTokenModel
 from modules.device_token.types import DeviceToken, Platform
+from modules.device_token.internal.store.device_token_model import DeviceTokenModel
 
 
 class DeviceTokenUtil:

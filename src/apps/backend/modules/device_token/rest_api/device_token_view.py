@@ -4,8 +4,8 @@ from flask import jsonify, request
 from flask.views import MethodView
 from flask.typing import ResponseReturnValue
 
-from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.device_token.device_token_service import DeviceTokenService
+from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.device_token.errors import DeviceTokenBadRequestError, InvalidPlatformError
 from modules.device_token.rest_api.device_token_response_mapper import DeviceTokenResponseMapper
 from modules.device_token.types import UpdateDeviceTokenParams, CreateDeviceTokenParams, GetDeviceTokensParams, DeleteDeviceTokenParams, Platform
