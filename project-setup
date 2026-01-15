@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import json
+import subprocess
+import glob
+import re
+import shutil
+
+DRY_RUN = False
+
+def run_command(cmd, check=True, silent=False):
+    """Run command with proper error handling"""
+    if DRY_RUN:
+        print(f"  [DRY RUN] Would run: {cmd}")
+        class MockResult:
+            returncode, stdout, stderr = 0, "", ""
+        return MockResult()
+    
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        if not silent:
+            print(f"✗ Error running: {cmd}")
+            if result.stderr:
+                print(f"  {result.stderr}")
+        sys.exit(1)
+    return result
+
+def replace_in_file(file_path, replacements):
+    """Replace text in file using Python (cross-platform)"""
+    if not os.path.exists(file_path):
+        return False
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        original = content
+        for old, new in replacements:
+            content = content.replace(old, new)
+        
+        if content != original:
+            if DRY_RUN:
+                print(f"  [DRY RUN] Would update {file_path}")
+                return True
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            return True
+        return False
+    except Exception as e:
+        print(f"✗ Error updating {file_path}: {e}")
+        return False
+
+def validate_project_name(project_name):
+    """Validate project name for GitHub compatibility"""
+    if not project_name:
+        return False, "Project name cannot be empty"
+    if len(project_name) > 100:
+        return False, "Project name too long (max 100 characters)"
+    if not re.match(r'^[a-zA-Z0-9._-]+$', project_name):
+        return False, "Project name contains invalid characters"
+    if project_name.startswith('.') or project_name.endswith('.') or '..' in project_name:
+        return False, "Project name cannot start/end with dot or contain consecutive dots"
+    return True, None
+
+def check_requirements():
+    """Check if required tools are available"""
+    tools = {'gh': 'GitHub CLI', 'npm': 'Node.js package manager'}
+    missing = [(t, info) for t, info in tools.items() 
+               if run_command(f"which {t}", check=False, silent=True).returncode != 0]
+    if missing:
+        print("✗ Missing required tools:")
+        for tool, info in missing:
+            print(f"  - {tool}: {info}")
+        sys.exit(1)
+
+def get_replacement_patterns(project_name):
+    """Generate all replacement patterns for project name"""
+    snake = project_name.replace('-', '_')
+    camel = ''.join(word.capitalize() for word in project_name.split('-'))
+    return [
+        ('flask-react-template', project_name.lower()),
+        ('Flask React Template', project_name),
+        ('FLASK-REACT-TEMPLATE', project_name.upper()),
+        ('flask_react_template', snake),
+        ('FlaskReactTemplate', camel),
+        ('flaskReactTemplate', camel[0].lower() + camel[1:] if camel else camel),
+    ]
+
+def update_package_json(project_name):
+    """Update package.json with new project name"""
+    print(f"📦 Updating package.json...")
+    try:
+        with open('package.json', 'r') as f:
+            data = json.load(f)
+        if DRY_RUN:
+            print(f"  [DRY RUN] Would update name: '{data.get('name')}' → '{project_name}'")
+            return True
+        data['name'] = project_name
+        data['description'] = f"Project: {project_name}"
+        with open('package.json', 'w') as f:
+            json.dump(data, f, indent=2)
+        print(f"  ✓ Updated package.json")
+        return True
+    except Exception as e:
+        print(f"  ⚠ Error updating package.json: {e}")
+        return False
+
+def update_project_files(project_name):
+    """Update all project files with new project name"""
+    print(f"📝 Updating project files...")
+    replacements = get_replacement_patterns(project_name)
+    files = [
+        'README.md', 'AGENTS.md', 'src/apps/frontend/index.html',
+        'sonar-project.properties', 'docs/secrets.md',
+        'docker-compose.dev.yml', 'docker-compose.test.yml',
+        'Dockerfile', 'Makefile',
+    ]
+    # Add config, workflow, test, and backend files if they exist
+    for pattern in ['config/*.yml', '.github/workflows/*.yml', 'tests/**/*.py', 'src/apps/backend/**/*.py']:
+        files.extend(glob.glob(pattern, recursive=True))
+    
+    updated = sum(1 for f in files if os.path.exists(f) and replace_in_file(f, replacements))
+    print(f"  ✓ Updated {updated} files")
+    return updated > 0
+
+def get_template_repo():
+    """Get template repository from git remote"""
+    result = run_command("git remote get-url origin", check=False)
+    if result.returncode == 0:
+        url = result.stdout.strip()
+        if 'github.com' in url:
+            parts = url.replace('https://github.com/', '').replace('git@github.com:', '').replace('.git', '').split('/')
+            if len(parts) >= 2:
+                return f"{parts[0]}/{parts[1]}"
+    print("  ✗ Could not detect template repository")
+    sys.exit(1)
+
+def create_and_clone_repo(project_name, org=None, private=False):
+    """Create GitHub repository from template and clone it"""
+    parent_dir = os.path.dirname(os.getcwd())
+    new_dir = os.path.join(parent_dir, project_name)
+    
+    if os.path.exists(new_dir):
+        print(f"✗ Directory '{new_dir}' already exists")
+        sys.exit(1)
+    
+    repo_name = f"{org}/{project_name}" if org else project_name
+    template_repo = get_template_repo()
+    visibility = "--private" if private else "--public"
+    
+    print(f"🐙 Creating repository from template...")
+    print(f"  Template: {template_repo}")
+    print(f"  New repo: {repo_name}")
+    print(f"  Visibility: {'Private' if private else 'Public'}")
+    
+    if DRY_RUN:
+        print(f"  [DRY RUN] Would create and clone repo")
+        return f"https://github.com/{repo_name}", new_dir
+    
+    # Create repo from template
+    cmd = f"gh repo create {repo_name} --template {template_repo} {visibility} --confirm --clone=false"
+    result = run_command(cmd, check=False)
+    if result.returncode != 0:
+        if "already exists" in result.stderr.lower():
+            print(f"  ✗ Repository {repo_name} already exists")
+        else:
+            print(f"  ✗ Failed: {result.stderr}")
+        sys.exit(1)
+    
+    # Get repo URL
+    url_result = run_command(f"gh repo view {repo_name} --json url -q .url", check=False)
+    repo_url = url_result.stdout.strip() if url_result.returncode == 0 else f"https://github.com/{repo_name}"
+    print(f"  ✓ Repository created: {repo_url}")
+    
+    # Clone repo
+    print(f"\n📥 Cloning repository...")
+    if run_command(f"git clone {repo_url} {new_dir}", check=False).returncode != 0:
+        print(f"  ✗ Failed to clone repository")
+        sys.exit(1)
+    
+    print(f"  ✓ Cloned to: {new_dir}")
+    return repo_url, new_dir
+
+def create_branch(branch_name):
+    """Create and switch to a new branch"""
+    if not os.path.exists('.git'):
+        return False
+    print(f"🌿 Creating branch: {branch_name}...")
+    if DRY_RUN:
+        print(f"  [DRY RUN] Would run: git checkout -b {branch_name}")
+        return True
+    result = run_command(f"git checkout -b {branch_name}", check=False)
+    if result.returncode == 0:
+        print(f"  ✓ Branch created")
+        return True
+    return False
+
+def commit_and_push(project_name, branch_name, repo_url):
+    """Commit changes and push branch"""
+    if not os.path.exists('.git'):
+        return False, False, None
+    
+    # Check git config
+    if not DRY_RUN:
+        if not run_command("git config user.name", check=False, silent=True).stdout.strip():
+            run_command("git config user.name 'Project Setup Bot'", check=False)
+        if not run_command("git config user.email", check=False, silent=True).stdout.strip():
+            run_command("git config user.email 'setup@company.com'", check=False)
+    
+    # Commit
+    print("💾 Committing changes...")
+    if run_command("git status --porcelain", check=False).stdout.strip():
+        if DRY_RUN:
+            print(f"  [DRY RUN] Would commit and push")
+            return True, True, None
+        run_command("git add .", check=False)
+        msg = f"Setup {project_name} from template"
+        if run_command(f'git commit --no-verify -m "{msg}"', check=False).returncode == 0:
+            print(f"  ✓ Committed: {msg}")
+        else:
+            print("  ✗ Commit failed")
+            return False, False, None
+    else:
+        print("  ℹ No changes to commit")
+        return False, False, None
+    
+    # Push
+    print(f"🚀 Pushing branch '{branch_name}'...")
+    if run_command(f"git push -u origin {branch_name}", check=False).returncode == 0:
+        print(f"  ✓ Branch pushed")
+    else:
+        return True, False, None
+    
+    # Create PR
+    print(f"📝 Creating pull request...")
+    base = "main" if run_command("git ls-remote --heads origin main", check=False).returncode == 0 else "master"
+    repo_name = repo_url.replace('https://github.com/', '').replace('.git', '')
+    title = f"Setup {project_name} from template"
+    body = f"""## Setup Project from Template
+
+This PR sets up **{project_name}** from flask-react-template.
+
+### Changes:
+- ✅ Updated project name throughout all files
+- ✅ Replaced template references
+- ✅ Updated package.json and config files
+
+**Template:** flask-react-template
+**New project:** {project_name}
+"""
+    cmd = f'gh pr create --title "{title}" --body "{body}" --base {base} --head {branch_name}'
+    result = run_command(cmd, check=False)
+    if result.returncode == 0:
+        pr_url = result.stdout.strip().split('\n')[-1]
+        print(f"  ✓ PR created: {pr_url}")
+        return True, True, pr_url
+    return True, True, None
+
+def main():
+    """Main execution function"""
+    global DRY_RUN
+    
+    if len(sys.argv) < 2:
+        print("Usage: ./project-setup <project_name> [org] [--private] [--dry-run]")
+        print("\nExample:")
+        print("  ./project-setup my-project")
+        print("  ./project-setup my-project my-org --private --dry-run")
+        sys.exit(1)
+    
+    args = sys.argv[1:]
+    if '--dry-run' in args:
+        DRY_RUN = True
+        args.remove('--dry-run')
+        print("="*60)
+        print("🔍 DRY RUN MODE - No changes will be made")
+        print("="*60 + "\n")
+    
+    private_repo = '--private' in args
+    if '--private' in args:
+        args.remove('--private')
+    
+    project_name = args[0]
+    org = args[1] if len(args) > 1 else None
+    original_dir = os.getcwd()
+    
+    # Validate
+    is_valid, error = validate_project_name(project_name)
+    if not is_valid:
+        print(f"✗ Invalid project name: {error}")
+        sys.exit(1)
+    
+    # Check requirements
+    print("🔍 Checking requirements...")
+    check_requirements()
+    print("  ✓ All requirements met\n")
+    
+    print(f"🚀 Setting up project: {project_name}\n")
+    
+    # Create repo from template and clone
+    repo_url, new_dir = create_and_clone_repo(project_name, org, private_repo)
+    os.chdir(new_dir)
+    
+    # Update files
+    update_package_json(project_name)
+    update_project_files(project_name)
+    
+    # Install dependencies
+    print(f"📥 Installing dependencies...")
+    if DRY_RUN:
+        print("  [DRY RUN] Would run: npm install")
+    elif os.path.exists('package.json'):
+        run_command("npm install", check=False)
+    
+    # Create branch, commit, push, and create PR
+    branch_name = "setup-project-from-template"
+    create_branch(branch_name)
+    committed, pushed, pr_url = commit_and_push(project_name, branch_name, repo_url)
+    
+    # Summary
+    if DRY_RUN:
+        print("\n" + "="*60)
+        print("🔍 DRY RUN COMPLETE - No changes were made")
+        print("="*60)
+        os.chdir(original_dir)
+    else:
+        print("\n" + "="*60)
+        print("✓ Setup complete!")
+        print("="*60)
+        print(f"\nProject: {project_name}")
+        print(f"Repository: {repo_url}")
+        if pr_url:
+            print(f"\n✅ Pull Request Created: {pr_url}")
+            print("⏳ Waiting for review and merge...")
+        print(f"\n📍 Project location: {new_dir}")
+        print(f"📍 Template location: {original_dir}\n")
+
+if __name__ == "__main__":
+    main()
