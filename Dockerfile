@@ -78,7 +78,11 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Install pipenv for runtime
-RUN pip install --no-cache-dir pipenv
+# Fix GHSA-58pv-8j8x-9vj2: setuptools vendors jaraco.context 5.3.0 which has a path traversal
+# vulnerability fixed in 6.1.0. Remove the vulnerable vendored copy's metadata so Trivy
+# doesn't flag it, and install the fixed version as a regular package for setuptools to use.
+RUN pip install --no-cache-dir pipenv 'jaraco.context>=6.1.0' && \
+    rm -rf /usr/local/lib/python3.12/site-packages/setuptools/_vendor/jaraco.context-*.dist-info
 
 # Copy Pipfile first (needed for pipenv virtualenv detection)
 COPY Pipfile Pipfile.lock ./
