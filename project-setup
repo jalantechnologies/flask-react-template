@@ -10,18 +10,27 @@ import shutil
 
 DRY_RUN = False
 
-def run_command(cmd, check=True, silent=False):
+def run_command(cmd, check=True, silent=False, use_shell=True):
     """Run command with proper error handling"""
     if DRY_RUN:
-        print(f"  [DRY RUN] Would run: {cmd}")
+        # Format command for display
+        cmd_str = ' '.join(cmd) if isinstance(cmd, list) else cmd
+        print(f"  [DRY RUN] Would run: {cmd_str}")
         class MockResult:
-            returncode, stdout, stderr = 0, "", ""
+            returncode = 0
+            stdout = ""
+            stderr = ""
         return MockResult()
     
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if use_shell:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    else:
+        # Use list format to prevent command injection
+        result = subprocess.run(cmd, capture_output=True, text=True)
     if check and result.returncode != 0:
         if not silent:
-            print(f"✗ Error running: {cmd}")
+            cmd_str = ' '.join(cmd) if isinstance(cmd, list) else cmd
+            print(f"✗ Error running: {cmd_str}")
             if result.stderr:
                 print(f"  {result.stderr}")
         sys.exit(1)
@@ -67,8 +76,12 @@ def validate_project_name(project_name):
 def check_requirements():
     """Check if required tools are available"""
     tools = {'gh': 'GitHub CLI', 'npm': 'Node.js package manager'}
-    missing = [(t, info) for t, info in tools.items() 
-               if run_command(f"which {t}", check=False, silent=True).returncode != 0]
+    missing = []
+    for tool, info in tools.items():
+        # Use 'where' on Windows, 'which' on Unix
+        check_cmd = ['where', tool] if sys.platform == 'win32' else ['which', tool]
+        if run_command(check_cmd, check=False, silent=True, use_shell=False).returncode != 0:
+            missing.append((tool, info))
     if missing:
         print("✗ Missing required tools:")
         for tool, info in missing:
@@ -85,7 +98,7 @@ def get_replacement_patterns(project_name):
         ('FLASK-REACT-TEMPLATE', project_name.upper()),
         ('flask_react_template', snake),
         ('FlaskReactTemplate', camel),
-        ('flaskReactTemplate', camel[0].lower() + camel[1:] if camel else camel),
+        ('flaskReactTemplate', camel[0].lower() + camel[1:]),
     ]
 
 def update_package_json(project_name):
@@ -101,6 +114,7 @@ def update_package_json(project_name):
         data['description'] = f"Project: {project_name}"
         with open('package.json', 'w') as f:
             json.dump(data, f, indent=2)
+            f.write('\n')
         print(f"  ✓ Updated package.json")
         return True
     except Exception as e:
@@ -127,7 +141,7 @@ def update_project_files(project_name):
 
 def get_template_repo():
     """Get template repository from git remote"""
-    result = run_command("git remote get-url origin", check=False)
+    result = run_command(['git', 'remote', 'get-url', 'origin'], check=False, use_shell=False)
     if result.returncode == 0:
         url = result.stdout.strip()
         if 'github.com' in url:
@@ -137,7 +151,7 @@ def get_template_repo():
     print("  ✗ Could not detect template repository")
     sys.exit(1)
 
-def create_and_clone_repo(project_name, org=None, private=False):
+def create_and_clone_repo(project_name, org=None):
     """Create GitHub repository from template and clone it"""
     parent_dir = os.path.dirname(os.getcwd())
     new_dir = os.path.join(parent_dir, project_name)
@@ -148,20 +162,18 @@ def create_and_clone_repo(project_name, org=None, private=False):
     
     repo_name = f"{org}/{project_name}" if org else project_name
     template_repo = get_template_repo()
-    visibility = "--private" if private else "--public"
     
     print(f"🐙 Creating repository from template...")
     print(f"  Template: {template_repo}")
     print(f"  New repo: {repo_name}")
-    print(f"  Visibility: {'Private' if private else 'Public'}")
     
     if DRY_RUN:
         print(f"  [DRY RUN] Would create and clone repo")
         return f"https://github.com/{repo_name}", new_dir
     
-    # Create repo from template
-    cmd = f"gh repo create {repo_name} --template {template_repo} {visibility} --confirm --clone=false"
-    result = run_command(cmd, check=False)
+    # Create repo from template (use list format to prevent injection)
+    cmd = ['gh', 'repo', 'create', repo_name, '--template', template_repo, '--public', '--confirm', '--clone=false']
+    result = run_command(cmd, check=False, use_shell=False)
     if result.returncode != 0:
         if "already exists" in result.stderr.lower():
             print(f"  ✗ Repository {repo_name} already exists")
@@ -170,13 +182,15 @@ def create_and_clone_repo(project_name, org=None, private=False):
         sys.exit(1)
     
     # Get repo URL
-    url_result = run_command(f"gh repo view {repo_name} --json url -q .url", check=False)
+    url_cmd = ['gh', 'repo', 'view', repo_name, '--json', 'url', '-q', '.url']
+    url_result = run_command(url_cmd, check=False, use_shell=False)
     repo_url = url_result.stdout.strip() if url_result.returncode == 0 else f"https://github.com/{repo_name}"
     print(f"  ✓ Repository created: {repo_url}")
     
-    # Clone repo
+    # Clone repo (use list format to prevent injection)
     print(f"\n📥 Cloning repository...")
-    if run_command(f"git clone {repo_url} {new_dir}", check=False).returncode != 0:
+    clone_cmd = ['git', 'clone', repo_url, new_dir]
+    if run_command(clone_cmd, check=False, use_shell=False).returncode != 0:
         print(f"  ✗ Failed to clone repository")
         sys.exit(1)
     
@@ -191,7 +205,14 @@ def create_branch(branch_name):
     if DRY_RUN:
         print(f"  [DRY RUN] Would run: git checkout -b {branch_name}")
         return True
-    result = run_command(f"git checkout -b {branch_name}", check=False)
+    # Set git config if not set
+    if not run_command(['git', 'config', 'user.name'], check=False, silent=True, use_shell=False).stdout.strip():
+        setup_name = os.environ.get('PROJECT_SETUP_GIT_NAME', 'Project Setup Bot')
+        run_command(['git', 'config', 'user.name', setup_name], check=False, use_shell=False)
+    if not run_command(['git', 'config', 'user.email'], check=False, silent=True, use_shell=False).stdout.strip():
+        setup_email = os.environ.get('PROJECT_SETUP_GIT_EMAIL', 'setup@company.com')
+        run_command(['git', 'config', 'user.email', setup_email], check=False, use_shell=False)
+    result = run_command(['git', 'checkout', '-b', branch_name], check=False, use_shell=False)
     if result.returncode == 0:
         print(f"  ✓ Branch created")
         return True
@@ -202,25 +223,19 @@ def commit_and_push(project_name, branch_name, repo_url):
     if not os.path.exists('.git'):
         return False, False, None
     
-    # Check git config
-    if not DRY_RUN:
-        if not run_command("git config user.name", check=False, silent=True).stdout.strip():
-            run_command("git config user.name 'Project Setup Bot'", check=False)
-        if not run_command("git config user.email", check=False, silent=True).stdout.strip():
-            run_command("git config user.email 'setup@company.com'", check=False)
-    
     # Commit
     print("💾 Committing changes...")
-    if run_command("git status --porcelain", check=False).stdout.strip():
+    status_result = run_command(['git', 'status', '--porcelain'], check=False, use_shell=False)
+    if status_result.stdout.strip():
         if DRY_RUN:
             print(f"  [DRY RUN] Would commit and push")
             return True, True, None
-        run_command("git add .", check=False)
+        run_command(['git', 'add', '.'], check=False, use_shell=False)
         msg = f"Setup {project_name} from template"
-        if run_command(f'git commit --no-verify -m "{msg}"', check=False).returncode == 0:
+        commit_result = run_command(['git', 'commit', '-m', msg], check=False, use_shell=False)
+        if commit_result.returncode == 0:
             print(f"  ✓ Committed: {msg}")
         else:
-            print("  ✗ Commit failed")
             return False, False, None
     else:
         print("  ℹ No changes to commit")
@@ -228,14 +243,16 @@ def commit_and_push(project_name, branch_name, repo_url):
     
     # Push
     print(f"🚀 Pushing branch '{branch_name}'...")
-    if run_command(f"git push -u origin {branch_name}", check=False).returncode == 0:
+    push_result = run_command(['git', 'push', '-u', 'origin', branch_name], check=False, use_shell=False)
+    if push_result.returncode == 0:
         print(f"  ✓ Branch pushed")
     else:
         return True, False, None
     
-    # Create PR
+    # Create PR (only check base branch when creating PR)
     print(f"📝 Creating pull request...")
-    base = "main" if run_command("git ls-remote --heads origin main", check=False).returncode == 0 else "master"
+    base_check = run_command(['git', 'ls-remote', '--heads', 'origin', 'main'], check=False, use_shell=False)
+    base = "main" if base_check.returncode == 0 else "master"
     repo_name = repo_url.replace('https://github.com/', '').replace('.git', '')
     title = f"Setup {project_name} from template"
     body = f"""## Setup Project from Template
@@ -250,8 +267,8 @@ This PR sets up **{project_name}** from flask-react-template.
 **Template:** flask-react-template
 **New project:** {project_name}
 """
-    cmd = f'gh pr create --title "{title}" --body "{body}" --base {base} --head {branch_name}'
-    result = run_command(cmd, check=False)
+    pr_cmd = ['gh', 'pr', 'create', '--title', title, '--body', body, '--base', base, '--head', branch_name]
+    result = run_command(pr_cmd, check=False, use_shell=False)
     if result.returncode == 0:
         pr_url = result.stdout.strip().split('\n')[-1]
         print(f"  ✓ PR created: {pr_url}")
@@ -263,10 +280,10 @@ def main():
     global DRY_RUN
     
     if len(sys.argv) < 2:
-        print("Usage: ./project-setup <project_name> [org] [--private] [--dry-run]")
+        print("Usage: ./project-setup <project_name> [org] [--dry-run]")
         print("\nExample:")
         print("  ./project-setup my-project")
-        print("  ./project-setup my-project my-org --private --dry-run")
+        print("  ./project-setup my-project my-org --dry-run")
         sys.exit(1)
     
     args = sys.argv[1:]
@@ -276,10 +293,6 @@ def main():
         print("="*60)
         print("🔍 DRY RUN MODE - No changes will be made")
         print("="*60 + "\n")
-    
-    private_repo = '--private' in args
-    if '--private' in args:
-        args.remove('--private')
     
     project_name = args[0]
     org = args[1] if len(args) > 1 else None
@@ -299,7 +312,7 @@ def main():
     print(f"🚀 Setting up project: {project_name}\n")
     
     # Create repo from template and clone
-    repo_url, new_dir = create_and_clone_repo(project_name, org, private_repo)
+    repo_url, new_dir = create_and_clone_repo(project_name, org)
     os.chdir(new_dir)
     
     # Update files
@@ -311,7 +324,9 @@ def main():
     if DRY_RUN:
         print("  [DRY RUN] Would run: npm install")
     elif os.path.exists('package.json'):
-        run_command("npm install", check=False)
+        result = run_command(['npm', 'install'], check=False, use_shell=False)
+        if result.returncode != 0:
+            print("  ⚠ Warning: npm install failed. You may need to run it manually.")
     
     # Create branch, commit, push, and create PR
     branch_name = "setup-project-from-template"
@@ -323,7 +338,11 @@ def main():
         print("\n" + "="*60)
         print("🔍 DRY RUN COMPLETE - No changes were made")
         print("="*60)
-        os.chdir(original_dir)
+        try:
+            if os.path.isdir(original_dir):
+                os.chdir(original_dir)
+        except OSError:
+            print(f"⚠️ Warning: Could not change back to original directory: {original_dir}")
     else:
         print("\n" + "="*60)
         print("✓ Setup complete!")
