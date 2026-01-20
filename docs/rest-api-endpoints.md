@@ -134,7 +134,8 @@ Authorization: Bearer <token>
 
 ### PATCH /api/accounts/:accountId/devices/:deviceId
 
-Update a specific device token. Unsupported fields are rejected. Sending an empty PATCH request is allowed and updates last_used_at without modifying any other fields.
+Update a specific device token. Unsupported fields are rejected. Sending an empty PATCH request is allowed and updates last_used_at without modifying any other fields (heartbeat).
+
 
 **Authentication:** Required
 
@@ -143,7 +144,7 @@ Update a specific device token. Unsupported fields are rejected. Sending an empt
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `accountId` | Yes | The authenticated user's account ID |
-| `deviceId` | Yes | The unique ID of the device token to deactivate |
+| `deviceId` | Yes | The unique ID of the device token to update |
 
 **Allowed Request Fields:**
 
@@ -185,7 +186,7 @@ Update a specific device token. Unsupported fields are rejected. Sending an empt
 |--------|------|-------------|
 | 400 | DEVICE_TOKEN_ERR_03 | Unsupported PATCH fields |
 | 400 | DEVICE_TOKEN_ERR_03 | Empty device token |
-| 400 | DEVICE_TOKEN_ERR_03 | device_info is not an object |
+| 400 | DEVICE_TOKEN_ERR_03 | Device info is not an object |
 | 404 | DEVICE_TOKEN_ERR_01 | Device token not found |
 | 409 | DEVICE_TOKEN_ERR_04 | Device token already registered |
 | 401 | ACCESS_TOKEN_ERR_03 | Authorization header is missing |
@@ -278,8 +279,9 @@ All errors follow a consistent format:
 **Indexes:**
 
 - Unique index on `device_token` (one token = one device)
-- Compound index on `(account_id, active)` for efficient querying
-- TTL index on `last_used_at` for auto-cleanup of stale tokens
+- Compound index on `(account_id, active, created_at desc)` for efficient querying
+- TTL index on `last_used_at` for automatic hard deletion of inactive tokens after 30 days of inactivity. Once expired, the device token record is permanently removed from the database and must be re-registered by the client.
+
 
 **Fields:**
 
