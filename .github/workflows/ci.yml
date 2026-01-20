@@ -269,10 +269,10 @@ jobs:
       - name: Validate coverage excludes test files
         run: |
           if [ -f output/coverage.xml ]; then
-            if grep -q 'filename="tests/' output/coverage.xml; then
+            if grep -qE 'filename="[^"]*/(tests/|test_[^"]*\.py|[^"]*_test\.py)' output/coverage.xml; then
               echo "ERROR: Coverage report includes test files. Check .coveragerc configuration."
               echo "Files found:"
-              grep -o 'filename="tests/[^"]*"' output/coverage.xml | head -20
+              grep -oE 'filename="[^"]*/(tests/|test_[^"]*\.py|[^"]*_test\.py)[^"]*"' output/coverage.xml | head -20
               exit 1
             fi
             echo "Coverage validation passed: no test files in coverage report"
