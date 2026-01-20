@@ -5,9 +5,11 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APP_ENV: 'docker-test'
+        APP_ENV: 'testing'
     environment:
-      APP_ENV: 'docker-test'
+      APP_ENV: 'testing'
+      MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-test'
+      TEMPORAL_SERVER_ADDRESS: 'temporal:7233'
     command: "npm run test:docker"
     depends_on:
       app-db:

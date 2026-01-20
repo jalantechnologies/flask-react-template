@@ -16,7 +16,7 @@ inspectlet:
 
 datadog:
   api_key: 'DATADOG_API_KEY'
-  site_name: 'DATADOG_SITE'
+  site_name: 'DATADOG_SITE_NAME'
   app_name: 'DATADOG_APP_NAME'
   log_level: 'DATADOG_LOG_LEVEL'
 
