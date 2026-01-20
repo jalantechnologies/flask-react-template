@@ -72,9 +72,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: APP_ENV
+              value: preview
             - name: WEB_APP_HOST
-              value: $KUBE_INGRESS_HOSTNAME
-
+              value: https://$KUBE_INGRESS_HOSTNAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
