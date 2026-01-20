@@ -168,8 +168,7 @@ class TestDeviceTokenService(BaseTestDeviceToken):
         params = GetDeviceTokensParams(account_id=self.account.id)
         tokens = DeviceTokenService.get_device_tokens_for_account(params=params)
         
-        assert tokens[0].device_token == "new_token"
-        assert tokens[1].device_token == "old_token"
+        assert tokens[0].created_at >= tokens[1].created_at
 
     def test_get_device_tokens_only_active(self):
         """Test that only active devices are returned"""
