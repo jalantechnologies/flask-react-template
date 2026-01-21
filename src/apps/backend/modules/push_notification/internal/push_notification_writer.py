@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
@@ -45,7 +45,7 @@ class PushNotificationWriter:
     def update_status(*, notification_id: str, status: NotificationStatus, error: Optional[str] = None) -> PushNotification:
         current_time = datetime.now()
 
-        update_fields = {
+        update_fields: dict[str, Any] = {
             "status": status.value,
             "updated_at": current_time
         }
@@ -81,6 +81,9 @@ class PushNotificationWriter:
     @staticmethod
     def increment_retry(*, notification_id: str) -> None:
         current_time = datetime.now()
+        retry_count_field = "$retry_count"
+        max_retries_field = "$max_retries"
+        cond_op = "$cond"
 
         try:
             object_id = ObjectId(notification_id)
@@ -90,15 +93,15 @@ class PushNotificationWriter:
         updated_notification = PushNotificationRepository.collection().find_one_and_update(
             {"_id": object_id},
             [
-                {"$set": {"retry_count": {"$add": ["$retry_count", 1]}}},
+                {"$set": {"retry_count": {"$add": [retry_count_field, 1]}}},
                 {"$set": {
-                    "status": {"$cond": [{"$gte": ["$retry_count", "$max_retries"]}, NotificationStatus.EXPIRED.value, NotificationStatus.FAILED.value]},
-                    "next_retry_at": {"$cond": [
-                        {"$gte": ["$retry_count", "$max_retries"]},
+                    "status": {cond_op: [{"$gte": [retry_count_field, max_retries_field]}, NotificationStatus.EXPIRED.value, NotificationStatus.FAILED.value]},
+                    "next_retry_at": {cond_op: [
+                        {"$gte": [retry_count_field, max_retries_field]},
                         None,
-                        {"$add": [current_time, {"$multiply": [{"$pow": [2, "$retry_count"]}, 60000]}]}
+                        {"$add": [current_time, {"$multiply": [{"$pow": [2, retry_count_field]}, 60000]}]}
                     ]},
-                    "error_message": {"$cond": [{"$gte": ["$retry_count", "$max_retries"]}, "Maximum retry attempts exceeded", "$error_message"]},
+                    "error_message": {cond_op: [{"$gte": [retry_count_field, max_retries_field]}, "Maximum retry attempts exceeded", "$error_message"]},
                     "updated_at": current_time
                 }}
             ],
