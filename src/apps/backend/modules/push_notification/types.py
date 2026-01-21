@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 
 
 class NotificationStatus(Enum):
@@ -46,6 +46,22 @@ class CreatePushNotificationParams:
     data: Optional[Dict] = None
     max_retries: Optional[int] = None
     expires_at: Optional[datetime] = None
+
+@dataclass(frozen=True)
+class GetPendingNotificationsParams:
+    limit: int = 100
+    skip: int = 0
+
+@dataclass(frozen=True)
+class GetRetryNotificationsParams:
+    limit: int = 100
+    skip: int = 0
+
+@dataclass(frozen=True)
+class GetNotificationsByAccountIdParams:
+    account_id: str
+    limit: int = 100
+    skip: int = 0
 
 @dataclass(frozen=True)
 class PushNotificationErrorCode:

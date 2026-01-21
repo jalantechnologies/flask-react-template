@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
+from pymongo import ReturnDocument
 
 from modules.push_notification.internal.push_notification_util import PushNotificationUtil
 from modules.push_notification.errors import PushNotificationNotFoundError
@@ -33,27 +34,33 @@ class PushNotificationWriter:
         }
 
         result = PushNotificationRepository.collection().insert_one(notification_data)
+        created_bson = PushNotificationRepository.collection().find_one({"_id": result.inserted_id})
 
-        created_bson = PushNotificationRepository.collection().find_one(
-            {"_id": result.inserted_id}
-        )
+        if created_bson is None:
+            raise PushNotificationNotFoundError()
 
         return PushNotificationUtil.convert_push_notification_bson_to_push_notification(created_bson)
 
     @staticmethod
-    def update_status(*, notification_id: str, status: NotificationStatus, error: Optional[str] = None) -> None:
+    def update_status(*, notification_id: str, status: NotificationStatus, error: Optional[str] = None) -> PushNotification:
+        current_time = datetime.now()
+
         update_fields = {
             "status": status.value,
-            "updated_at": datetime.now()
+            "updated_at": current_time
         }
 
         if error is not None:
             update_fields["error_message"] = error
+        elif status in {NotificationStatus.SENT, NotificationStatus.DELIVERED, NotificationStatus.PROCESSING}:
+            update_fields["error_message"] = None
 
         if status == NotificationStatus.SENT:
-            update_fields["sent_at"] = datetime.now()
+            update_fields["sent_at"] = current_time
+            update_fields["next_retry_at"] = None
         elif status == NotificationStatus.DELIVERED:
-            update_fields["delivered_at"] = datetime.now()
+            update_fields["delivered_at"] = current_time
+            update_fields["next_retry_at"] = None
 
         try:
             object_id = ObjectId(notification_id)
@@ -62,76 +69,41 @@ class PushNotificationWriter:
 
         result = PushNotificationRepository.collection().find_one_and_update(
             {"_id": object_id},
-            {"$set": update_fields}
+            {"$set": update_fields},
+            return_document=ReturnDocument.AFTER
         )
 
         if result is None:
             raise PushNotificationNotFoundError()
 
-        return None
+        return PushNotificationUtil.convert_push_notification_bson_to_push_notification(result)
 
     @staticmethod
     def increment_retry(*, notification_id: str) -> None:
+        current_time = datetime.now()
+
         try:
             object_id = ObjectId(notification_id)
         except InvalidId:
             raise PushNotificationNotFoundError()
 
-        notification_bson = PushNotificationRepository.collection().find_one({"_id": object_id})
-
-        if notification_bson is None:
-            raise PushNotificationNotFoundError()
-
-        new_retry_count = notification_bson.get("retry_count", 0) + 1
-        max_retries = notification_bson.get("max_retries", 4)
-
-        if new_retry_count >= max_retries:
-            PushNotificationRepository.collection().find_one_and_update(
-                {"_id": object_id},
-                {
-                    "$set": {
-                        "retry_count": new_retry_count,
-                        "status": NotificationStatus.EXPIRED.value,
-                        "updated_at": datetime.now(),
-                        "error_message": "Maximum retry attempts exceeded"
-                    }
-                }
-            )
-        else:
-            backoff_minutes = 2 ** new_retry_count
-            next_retry_at = datetime.now() + timedelta(minutes=backoff_minutes)
-            
-            PushNotificationRepository.collection().find_one_and_update(
-                {"_id": object_id},
-                {
-                    "$set": {
-                        "retry_count": new_retry_count,
-                        "next_retry_at": next_retry_at,
-                        "status": NotificationStatus.FAILED.value,
-                        "updated_at": datetime.now()
-                    }
-                }
-            )
-
-    @staticmethod
-    def mark_as_sent(*, notification_id: str) -> None:
-        try:
-            object_id = ObjectId(notification_id)
-        except InvalidId:
-            raise PushNotificationNotFoundError()
-
-        result = PushNotificationRepository.collection().find_one_and_update(
+        updated_notification = PushNotificationRepository.collection().find_one_and_update(
             {"_id": object_id},
-            {
-                "$set": {
-                    "status": NotificationStatus.SENT.value,
-                    "sent_at": datetime.now(),
-                    "updated_at": datetime.now()
-                }
-            }
+            [
+                {"$set": {"retry_count": {"$add": ["$retry_count", 1]}}},
+                {"$set": {
+                    "status": {"$cond": [{"$gte": ["$retry_count", "$max_retries"]}, NotificationStatus.EXPIRED.value, NotificationStatus.FAILED.value]},
+                    "next_retry_at": {"$cond": [
+                        {"$gte": ["$retry_count", "$max_retries"]},
+                        None,
+                        {"$add": [current_time, {"$multiply": [{"$pow": [2, "$retry_count"]}, 60000]}]}
+                    ]},
+                    "error_message": {"$cond": [{"$gte": ["$retry_count", "$max_retries"]}, "Maximum retry attempts exceeded", "$error_message"]},
+                    "updated_at": current_time
+                }}
+            ],
+            return_document=ReturnDocument.AFTER
         )
 
-        if result is None:
+        if updated_notification is None:
             raise PushNotificationNotFoundError()
-
-        return None
