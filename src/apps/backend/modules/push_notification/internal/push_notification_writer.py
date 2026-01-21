@@ -86,7 +86,7 @@ class PushNotificationWriter:
         max_retries = notification_bson.get("max_retries", 4)
 
         if new_retry_count >= max_retries:
-            result = PushNotificationRepository.collection().find_one_and_update(
+            PushNotificationRepository.collection().find_one_and_update(
                 {"_id": object_id},
                 {
                     "$set": {
@@ -101,7 +101,7 @@ class PushNotificationWriter:
             backoff_minutes = 2 ** new_retry_count
             next_retry_at = datetime.now() + timedelta(minutes=backoff_minutes)
             
-            result = PushNotificationRepository.collection().find_one_and_update(
+            PushNotificationRepository.collection().find_one_and_update(
                 {"_id": object_id},
                 {
                     "$set": {
