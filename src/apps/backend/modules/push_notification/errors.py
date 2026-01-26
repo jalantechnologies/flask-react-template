@@ -45,3 +45,30 @@ class MaxRetriesExceededError(AppError):
             http_status_code=400,
             message=message or "Maximum retry attempts exceeded for this notification.",
         )
+
+# FCM-specific errors
+class FCMError(AppError):
+    def __init__(self, message: str) -> None:
+        super().__init__(
+            code="FCM_ERR_01",
+            http_status_code=500,
+            message=message,
+        )
+
+class InvalidTokenError(FCMError):
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(
+            message=message or "Device token is invalid or unregistered.",
+        )
+
+class FCMQuotaExceededError(FCMError):
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(
+            message=message or "FCM quota exceeded. Please try again later.",
+        )
+
+class FCMAuthError(FCMError):
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(
+            message=message or "FCM authentication failed. Check your credentials.",
+        )

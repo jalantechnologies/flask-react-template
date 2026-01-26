@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict
@@ -11,6 +11,7 @@ class NotificationStatus(Enum):
     DELIVERED = "delivered"
     FAILED = "failed"
     EXPIRED = "expired"
+
 
 class Priority(Enum):
     IMMEDIATE = "immediate"
@@ -48,6 +49,14 @@ class CreatePushNotificationParams:
     expires_at: Optional[datetime] = None
 
 @dataclass(frozen=True)
+class SendPushNotificationParams:
+    title: str
+    body: str
+    data: Optional[Dict] = None
+    priority: str = "normal"
+    max_retries: Optional[int] = None
+
+@dataclass(frozen=True)
 class GetPendingNotificationsParams:
     limit: int = 100
     skip: int = 0
@@ -70,3 +79,23 @@ class PushNotificationErrorCode:
     INVALID_STATUS: str = "PUSH_NOTIFICATION_ERR_03"
     INVALID_PRIORITY: str = "PUSH_NOTIFICATION_ERR_04"
     MAX_RETRIES_EXCEEDED: str = "PUSH_NOTIFICATION_ERR_05"
+
+@dataclass(frozen=True)
+class FCMResponse:
+    success: bool
+    message_id: Optional[str] = None
+    error: Optional[str] = None
+    error_code: Optional[str] = None
+
+@dataclass(frozen=True)
+class FCMBatchResponse:
+    success_count: int
+    failure_count: int
+    responses: list[FCMResponse] = field(default_factory=list)
+
+@dataclass(frozen=True)
+class NotificationResult:
+    success: bool
+    message_id: Optional[str] = None
+    error: Optional[str] = None
+    invalid_tokens: list[str] = field(default_factory=list)
