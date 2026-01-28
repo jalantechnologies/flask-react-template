@@ -63,7 +63,9 @@ WORKDIR /app
 # Node.js is needed for npm commands
 # procps provides ps command needed by concurrently for process management
 # jq is needed by Makefile serve script to enumerate serve:* scripts
+# apt-get upgrade applies security patches for base image vulnerabilities (e.g., OpenSSL CVEs)
 RUN apt-get update -y && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
         make \
         curl \
