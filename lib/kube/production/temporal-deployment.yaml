@@ -76,6 +76,16 @@ spec:
         - name: temporal-server
           image: temporalio/auto-setup:1.27.2@sha256:b44cbfeb43dbeae42db113b44fb8414c3452f05643b3d6b1592f955277d73526
           imagePullPolicy: Always
+          # Wrapper script to parse POSTGRES_SEEDS (host:port) into separate host and DB_PORT
+          # Doppler provides POSTGRES_SEEDS=host:port but Temporal expects just hostname + DB_PORT
+          command: ['sh', '-c']
+          args:
+            - |
+              if echo "$POSTGRES_SEEDS" | grep -q ':'; then
+                export DB_PORT=$(echo "$POSTGRES_SEEDS" | cut -d: -f2)
+                export POSTGRES_SEEDS=$(echo "$POSTGRES_SEEDS" | cut -d: -f1)
+              fi
+              exec /etc/temporal/entrypoint.sh
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
             allowPrivilegeEscalation: false
