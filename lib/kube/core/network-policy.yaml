@@ -34,7 +34,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: $KUBE_APP
+      component: $KUBE_NS
   policyTypes:
     - Egress
   egress:
@@ -111,7 +111,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: $KUBE_APP
+              component: $KUBE_NS
       ports:
         - protocol: TCP
           port: 7233
