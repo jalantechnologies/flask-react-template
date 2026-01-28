@@ -142,7 +142,7 @@ spec:
     # Allow database connections
     - ports:
         - protocol: TCP
-          port: 25060  # DigitalOcean managed PostgreSQL
+          port: 25061  # DigitalOcean managed PostgreSQL
         - protocol: TCP
           port: 27017  # MongoDB
 
