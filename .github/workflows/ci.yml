@@ -266,6 +266,18 @@ jobs:
             docker compose -f docker-compose.test.yml cp app:/app/output/coverage.xml output/coverage.xml || echo "coverage.xml not found in app container"
           fi
 
+      - name: Validate coverage excludes test files
+        run: |
+          if [ -f output/coverage.xml ]; then
+            if grep -qE 'filename="[^"]*/(tests/|test_[^"]*\.py|[^"]*_test\.py)' output/coverage.xml; then
+              echo "ERROR: Coverage report includes test files. Check .coveragerc configuration."
+              echo "Files found:"
+              grep -oE 'filename="[^"]*/(tests/|test_[^"]*\.py|[^"]*_test\.py)[^"]*"' output/coverage.xml | head -20
+              exit 1
+            fi
+            echo "Coverage validation passed: no test files in coverage report"
+          fi
+
       - name: Tear down test stack
         if: always()
         run: docker compose -f docker-compose.test.yml down -v || true

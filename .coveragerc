@@ -1,0 +1,7 @@
+[run]
+source = src/apps/backend
+omit = 
+    tests/*
+    */tests/*
+    */test_*.py
+    */_test.py
