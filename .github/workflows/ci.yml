@@ -156,6 +156,13 @@ jobs:
               FILTERED_FILES="$FILTERED_FILES $file"
             fi
           done
+
+          # Copy core network-policy.yaml for Checkov to detect NetworkPolicy
+          # This fixes CKV2_K8S_6 false positives when only deployment files change
+          if [ -n "$FILTERED_FILES" ] && [ -f "lib/kube/core/network-policy.yaml" ]; then
+            mkdir -p "iac_changed_files/lib/kube/core/"
+            cp "lib/kube/core/network-policy.yaml" "iac_changed_files/lib/kube/core/"
+          fi
           
           echo "FILTERED_FILES=$FILTERED_FILES" >> $GITHUB_OUTPUT
       
