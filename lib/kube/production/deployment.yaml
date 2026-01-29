@@ -8,6 +8,7 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
+    # checkov:skip=CKV2_K8S_6:NetworkPolicy defined in network-policy.yaml but not visible to partial file scan
 spec:
   replicas: 1
   selector:
