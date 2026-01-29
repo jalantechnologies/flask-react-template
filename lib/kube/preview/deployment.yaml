@@ -74,7 +74,7 @@ spec:
           env:
             - name: WEB_APP_HOST
               value: $KUBE_INGRESS_HOSTNAME
-
+                # this is a test PR for iac scan false vulnerability
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
