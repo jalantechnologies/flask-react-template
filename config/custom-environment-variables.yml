@@ -16,7 +16,7 @@ inspectlet:
 
 datadog:
   api_key: 'DATADOG_API_KEY'
-  site_name: 'DATADOG_SITE'
+  site_name: 'DATADOG_SITE_NAME'
   app_name: 'DATADOG_APP_NAME'
   log_level: 'DATADOG_LOG_LEVEL'
 
@@ -37,7 +37,7 @@ public:
     service: 'DATADOG_SERVICE'
     sessionReplaySampleRate: 'DATADOG_SESSION_REPLAY_SAMPLE_RATE'
     sessionSampleRate: 'DATADOG_SESSION_SAMPLE_RATE'
-    site: 'DATADOG_SITE'
+    site: 'DATADOG_SITE_NAME'
   default_otp:
     enabled: 'DEFAULT_OTP_ENABLED'
     code: 'DEFAULT_OTP_CODE'

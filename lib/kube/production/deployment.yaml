@@ -8,6 +8,7 @@ metadata:
     version: $GITHUB_SHA
   annotations:
     secrets.doppler.com/reload: 'true'
+    checkov.io/skip1: CKV2_K8S_6=NetworkPolicy defined in network-policy.yaml but not visible to partial file scan
 spec:
   replicas: 1
   selector:
@@ -62,8 +63,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: APP_ENV
+              value: production
             - name: WEB_APP_HOST
-              value: $KUBE_INGRESS_HOSTNAME
+              value: https://$KUBE_INGRESS_HOSTNAME
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
