@@ -25,4 +25,13 @@ class TestConfig(BaseTestConfig):
             assert exc.code == ErrorCode.MISSING_KEY
 
         populated_env = os.environ.get("APP_ENV")
-        assert populated_env == "testing" or populated_env == "docker-test"
+        assert populated_env == "testing"
+
+    def test_app_env_values_are_valid(self) -> None:
+        valid_app_env_values = {"development", "testing", "preview", "production"}
+        populated_env = os.environ.get("APP_ENV")
+        assert populated_env in valid_app_env_values
+
+    def test_web_app_host_has_protocol(self) -> None:
+        web_app_host = ConfigService[str].get_value(key="web_app_host")
+        assert web_app_host.startswith("http://") or web_app_host.startswith("https://")

@@ -20,11 +20,11 @@ RUN pip install --no-cache-dir --upgrade pip setuptools pipenv
 COPY Pipfile Pipfile.lock ./
 
 # Install Python dependencies
-# For test environments (APP_ENV contains 'test'), install dev dependencies
-# For production, install only production dependencies
+# For testing environment, install dev dependencies
+# For production/preview/development, install only production dependencies
 # Use PIPENV_VENV_IN_PROJECT to store venv in project directory for easier copying
 ENV PIPENV_VENV_IN_PROJECT=1
-RUN if echo "$APP_ENV" | grep -q "test"; then \
+RUN if [ "$APP_ENV" = "testing" ]; then \
         pipenv install --deploy --ignore-pipfile --dev; \
     else \
         pipenv install --deploy --ignore-pipfile; \
@@ -104,10 +104,10 @@ ENV PIPENV_VENV_IN_PROJECT=1
 COPY --from=node-builder /build/package.json /build/package-lock.json ./
 
 # Install Node.js dependencies
-# For test environments (APP_ENV contains 'test'), install dev dependencies
-# For production, install only production dependencies
+# For testing environment, install dev dependencies
+# For production/preview/development, install only production dependencies
 # --ignore-scripts skips lifecycle scripts like husky prepare hook
-RUN if echo "$APP_ENV" | grep -q "test"; then \
+RUN if [ "$APP_ENV" = "testing" ]; then \
         npm ci --ignore-scripts && npm cache clean --force; \
     else \
         npm ci --omit=dev --ignore-scripts && npm cache clean --force; \
