@@ -55,9 +55,9 @@ spec:
               volumeMounts:
                 # Security: Use temporary volume for writable directory since root filesystem is read-only
                 - name: tmp
-                  mountPath: /opt/app/tmp
+                  mountPath: /app/tmp
                 - name: secret-ref
-                  mountPath: /opt/app/secrets
+                  mountPath: /app/secrets
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
