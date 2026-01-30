@@ -79,13 +79,13 @@ spec:
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
-              mountPath: /opt/app/tmp
+              mountPath: /app/tmp
             - name: logs
-              mountPath: /opt/app/logs
+              mountPath: /app/logs
             - name: system-tmp
               mountPath: /tmp
             - name: secret-ref
-              mountPath: /opt/app/secrets
+              mountPath: /app/secrets
           startupProbe:
             httpGet:
               path: /

@@ -214,7 +214,7 @@ spec:
         - name: python-worker
           image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
           imagePullPolicy: Always
-          workingDir: /opt/app/src/apps/backend
+          workingDir: /app/src/apps/backend
           # Security: Block privilege escalation, make filesystem read-only, drop all capabilities
           securityContext:
             allowPrivilegeEscalation: false
@@ -238,13 +238,13 @@ spec:
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
-              mountPath: /opt/app/tmp
+              mountPath: /app/tmp
             - name: logs
-              mountPath: /opt/app/logs
+              mountPath: /app/logs
             - name: system-tmp
               mountPath: /tmp
             - name: doppler-secrets
-              mountPath: /opt/app/secrets
+              mountPath: /app/secrets
           resources:
             requests:
               cpu: 50m
