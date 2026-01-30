@@ -231,6 +231,8 @@ spec:
               mountPath: /opt/app/tmp
             - name: logs
               mountPath: /opt/app/logs
+            - name: system-tmp
+              mountPath: /tmp
             - name: doppler-secrets
               mountPath: /opt/app/secrets
           livenessProbe: 
@@ -254,6 +256,8 @@ spec:
         - name: tmp
           emptyDir: {}
         - name: logs
+          emptyDir: {}
+        - name: system-tmp
           emptyDir: {}
         - name: temporal-config
           emptyDir: {}
