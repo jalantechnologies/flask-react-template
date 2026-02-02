@@ -1,13 +1,13 @@
 # Project Overview
 
-Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, Temporal powers background workflows, and both halves of the stack share a focus on layered, testable architecture.
+Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, and both halves of the stack share a focus on layered, testable architecture.
 
 **Stack:**
-- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic · Temporal
+- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic
 - **Frontend:** React 18 · TypeScript · Tailwind CSS · Axios
 - **Build Tooling:** Webpack 5 · Pipenv · npm scripts
 - **Testing:** Pytest + pytest-cov
-- **Deployment:** Docker · Kubernetes · Temporal Cloud/self-hosted workers
+- **Deployment:** Docker · Kubernetes
 
 **Key Directories:**
 - `/src/apps/backend` – Flask application and domain modules
@@ -19,7 +19,7 @@ Flask React Template is a full-stack application that pairs a modular Flask back
 ## Build and Test Commands
 
 ```bash
-# Launch backend and frontend together (Temporal services optional)
+# Launch backend and frontend together
 npm run serve
 
 # Run only the Flask API (Gunicorn with reload)
@@ -112,11 +112,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 - Keep business rules in the service layer.
 - Avoid embedding domain logic inside Flask views, CLI scripts, or Temporal workers—delegate to services.
 
-#### 12. Temporal & Background Workflows
-- Use Temporal clients/workflows for asynchronous processing.
-- Avoid ad-hoc threading, Celery, or CronJobs unless explicitly required.
-
-#### 13. Query Efficiency
+#### 12. Query Efficiency
 - Guard against N+1 queries by batching lookups or using aggregation pipelines.
 - Push filtering into Mongo queries instead of post-processing large in-memory lists.
 
@@ -124,20 +120,20 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Frontend-Specific Guidelines
 
-#### 14. Styling Practices
+#### 13. Styling Practices
 - **DON'T** use inline styles.
 - **DO** rely on Tailwind utility classes or shared CSS modules as needed.
 
-#### 15. Component Contracts & Variants
+#### 14. Component Contracts & Variants
 - Avoid per-page style overrides. Create component variants/props for different presentations.
 - Shared layout primitives should live under `src/apps/frontend/components` or `layouts` rather than page folders.
 
-#### 16. Data Fetching & State
+#### 15. Data Fetching & State
 - Fetch data through service modules under `services/` or `api/`.
 - Normalize API responses into typed models before storing them in state.
 - Avoid performing side-effectful data fetching inside render without hooks.
 
-#### 17. List Rendering Performance
+#### 16. List Rendering Performance
 - Batch API requests when rendering collections. Never fire N network calls for N items within a render loop.
 
 ---

@@ -10,17 +10,15 @@ services:
     environment:
       APP_ENV: 'development'
       MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-dev'
-      TEMPORAL_SERVER_ADDRESS: 'temporal:7233'
       PIPENV_VENV_IN_PROJECT: '1'
     # Ensure dependencies are installed before starting services
     # Check if node_modules has content, not just if directory exists
-    command: /bin/sh -c "([ -n \"$(ls -A node_modules 2>/dev/null)\" ] || npm install) && ([ -f .venv/bin/python ] || pipenv install --dev --python python3.12) && npm run serve -- --no-temporal"
+    command: /bin/sh -c "([ -n \"$(ls -A node_modules 2>/dev/null)\" ] || npm install) && ([ -f .venv/bin/python ] || pipenv install --dev --python python3.12) && npm run serve"
     # Override to root user for local development to avoid bind mount permission issues
     user: root
     depends_on:
       app-db:
         condition: service_started
-      # Temporal is optional when using --no-temporal flag, so we don't need to wait for it
     ports:
       - '3000:3000'
       - '8080:8080'
@@ -44,56 +42,4 @@ services:
       - './data/mongodb:/data/db'
       - './logs/mongodb:/var/log'
 
-  temporal:
-    image: temporalio/auto-setup:1.27.0
-    depends_on:
-      - temporal-db
-    environment:
-      DB: 'postgres12'
-      DB_PORT: '5432'
-      POSTGRES_USER: 'temporal'
-      POSTGRES_PWD: 'temporal'
-      POSTGRES_SEEDS: 'temporal-db'
-      DYNAMIC_CONFIG_FILE_PATH: 'config/temporal-sql.yaml'
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "tctl",
-          "--address",
-          "temporal:7233",
-          "workflow",
-          "list"
-        ]
-      interval: 1s
-      timeout: 5s
-      retries: 30
-    ports:
-      - '7233:7233'
-    volumes:
-      - './temporal-sql.yaml:/etc/temporal/config/temporal-sql.yaml'
 
-  temporal-db:
-    image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: 'temporal'
-      POSTGRES_USER: 'temporal'
-    command: >
-      postgres -c logging_collector=on
-               -c log_directory=/var/log
-               -c log_filename=postgresql.log
-    ports:
-      - '5432:5432'
-    volumes:
-      - './data/postgresql:/var/lib/postgresql/data'
-      - './logs/postgresql:/var/log/'
-
-  temporal-ui:
-    image: temporalio/ui:2.34.0
-    depends_on:
-      - temporal
-    environment:
-      TEMPORAL_ADDRESS: 'temporal:7233'
-      TEMPORAL_CORS_ORIGINS: 'http://localhost:3000'
-    ports:
-      - '8233:8080'
