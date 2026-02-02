@@ -1,6 +1,4 @@
 from celery import Celery
-from celery.schedules import crontab
-from redbeat import RedBeatSchedulerEntry
 
 from modules.config.config_service import ConfigService
 
@@ -55,7 +53,3 @@ app.autodiscover_tasks(
         "modules.application.workers",
     ]
 )
-
-# Initialize worker registry to register cron schedules
-from modules.application.worker_registry import WorkerRegistry
-WorkerRegistry.initialize()
