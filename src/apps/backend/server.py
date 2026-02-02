@@ -6,6 +6,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
+from modules.application.errors import AppError
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
