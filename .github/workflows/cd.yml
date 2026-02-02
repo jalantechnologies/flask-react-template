@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: 4083bbf5abc5a3e79d85a9f551c75919aaad6dfb
+          ref: aa773401016455990fa5e50a2c95f3a8fa08702c
 
       - name: Extract branch name
         id: extract_branch
