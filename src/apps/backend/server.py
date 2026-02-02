@@ -12,7 +12,6 @@ from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
-from modules.application.worker_registry import WorkerRegistry
 from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
@@ -25,9 +24,6 @@ LoggerManager.mount_logger()
 
 # Run bootstrap tasks
 BootstrapApp().run()
-
-# Initialize worker registry
-WorkerRegistry.initialize()
 
 
 # Apply ProxyFix to interpret `X-Forwarded` headers if enabled in configuration

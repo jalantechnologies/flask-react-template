@@ -21,7 +21,9 @@
 #
 # NAMING CONVENTIONS USED (matched as per repo’s expectations):
 #   - App Deployment            : "${KUBE_APP}-deployment"
+#   - Worker Deployment (opt)   : "${KUBE_APP}-worker-deployment"
 #   - Web Service               : "${KUBE_APP}-service"
+#   - Flower Service            : "${KUBE_APP}-flower"
 #
 # OUTPUT:
 #   - Files under ci_artifacts/:

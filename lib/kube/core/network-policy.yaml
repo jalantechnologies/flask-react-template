@@ -47,15 +47,6 @@ spec:
         - protocol: UDP
           port: 53
     
-    # Allow communication with Temporal service
-    - to:
-        - podSelector:
-            matchLabels:
-              app: temporal
-      ports:
-        - protocol: TCP
-          port: 7233
-    
     # Allow HTTPS calls to external APIs
     - ports:
         - protocol: TCP
@@ -93,63 +84,34 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: default
       ports:
+        # Main app HTTP port
         - protocol: TCP
           port: 8080
-        # Allow HTTP traffic for ACME challenges
+        # Flower dashboard port
         - protocol: TCP
-          port: 8080
+          port: 5555
 
 ---
-# Allow app to connect to Temporal
+# Allow app and worker pods to connect to Redis
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-ingress-to-temporal
+  name: allow-ingress-to-redis
   namespace: $KUBE_NS
 spec:
   podSelector:
     matchLabels:
-      app: temporal
+      redis: "true"
   policyTypes:
     - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app: $KUBE_APP
+              component: $KUBE_NS
       ports:
         - protocol: TCP
-          port: 7233
-
----
-# Allow Temporal to connect to databases
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-temporal-egress
-  namespace: $KUBE_NS
-spec:
-  podSelector:
-    matchLabels:
-      app: temporal
-  policyTypes:
-    - Egress
-  egress:
-    # Allow DNS lookups
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
-    
-    # Allow database connections
-    - ports:
-        - protocol: TCP
-          port: 25060  # DigitalOcean managed PostgreSQL
-        - protocol: TCP
-          port: 27017  # MongoDB
+          port: 6379
 
 ---
 # Allow ACME challenge solver pods for SSL certificate generation
@@ -183,26 +145,4 @@ spec:
       ports:
         - protocol: UDP
           port: 53
-
----
-# Allow app and worker pods to connect to Redis
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-ingress-to-redis
-  namespace: $KUBE_NS
-spec:
-  podSelector:
-    matchLabels:
-      redis: "true"
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              component: $KUBE_NS
-      ports:
-        - protocol: TCP
-          port: 6379
 
