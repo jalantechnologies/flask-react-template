@@ -41,7 +41,7 @@ spec:
               for file in /opt/app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
-              cd /opt/app/src/apps/backend
+              cd /app/src/apps/backend
               pipenv run celery -A celery_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
           env:
             - name: APP_ENV
@@ -78,7 +78,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - cd /opt/app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 10
@@ -87,7 +87,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - cd /opt/app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 15
             periodSeconds: 15
             timeoutSeconds: 10
@@ -103,7 +103,7 @@ spec:
               for file in /opt/app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
-              cd /opt/app/src/apps/backend
+              cd /app/src/apps/backend
               pipenv run celery -A celery_app beat --loglevel=info
           env:
             - name: APP_ENV
@@ -163,7 +163,7 @@ spec:
               for file in /opt/app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
-              cd /opt/app/src/apps/backend
+              cd /app/src/apps/backend
               pipenv run celery -A celery_app flower --port=5555
           env:
             - name: APP_ENV
