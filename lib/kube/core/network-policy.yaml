@@ -34,7 +34,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: $KUBE_APP
+      component: $KUBE_NS
   policyTypes:
     - Egress
   egress:
