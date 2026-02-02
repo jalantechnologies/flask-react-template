@@ -9,7 +9,7 @@ services:
     environment:
       APP_ENV: 'testing'
       MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-test'
-    command: "npm run test:docker"
+    command: "npm run test"
     depends_on:
       app-db:
         condition: service_started

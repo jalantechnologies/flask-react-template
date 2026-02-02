@@ -26,7 +26,6 @@
     "serve:frontend": "webpack serve --output-path dist/public --config src/apps/frontend/webpack.dev.js --hot --progress",
     "start": "npm run serve:backend",
     "test": "cross-env APP_ENV=testing make run-test",
-    "test:docker": "make run-test",
     "prepare": "husky"
   },
   "author": "jalantechnologies",

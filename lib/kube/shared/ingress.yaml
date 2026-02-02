@@ -13,7 +13,6 @@ spec:
   tls:
     - hosts:
         - $KUBE_INGRESS_HOSTNAME
-        - $KUBE_INGRESS_WORKER_HOSTNAME
       secretName: $KUBE_APP-cert-key
   rules:
     - host: $KUBE_INGRESS_HOSTNAME

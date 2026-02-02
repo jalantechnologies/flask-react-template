@@ -3,8 +3,7 @@
 # post-deploy.sh
 #
 # GOAL:
-#   1) Wait for the app deployment (and, if present, the temporal deployment)
-#      to roll out successfully.
+#   1) Wait for the app deployment to roll out successfully.
 #   2) Whether rollouts succeed or fail, collect a helpful bundle of diagnostics
 #      (events, resources, sanitized pod specs, key service snapshots, etc.)
 #      and write a simple human summary.
@@ -22,9 +21,7 @@
 #
 # NAMING CONVENTIONS USED (matched as per repo’s expectations):
 #   - App Deployment            : "${KUBE_APP}-deployment"
-#   - Temporal Deployment (opt) : "${KUBE_APP}-temporal-deployment"
 #   - Web Service               : "${KUBE_APP}-service"
-#   - Temporal Service          : "temporal-service"
 #
 # OUTPUT:
 #   - Files under ci_artifacts/:
@@ -53,7 +50,6 @@ set -euo pipefail
 
 # Standardized names derived from KUBE_APP (must match your manifests)
 APP_DEPLOY="${KUBE_APP}-deployment"
-TEMPORAL_DEPLOY=""
 ART_DIR="ci_artifacts"
 
 main() {
