@@ -6,6 +6,10 @@ mailer:
 mongodb:
   uri: 'MONGODB_URI'
 
+celery:
+  broker_url: 'CELERY_BROKER_URL'
+  result_backend: 'CELERY_RESULT_BACKEND'
+
 
 
 web_app_host: 'WEB_APP_HOST'

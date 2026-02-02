@@ -66,6 +66,11 @@ spec:
         - protocol: TCP
           port: 27017
 
+    # Allow Redis connections (for Celery broker and result backend)
+    - ports:
+        - protocol: TCP
+          port: 6379
+
 ---
 # Allow nginx ingress to reach our app
 apiVersion: networking.k8s.io/v1
@@ -178,4 +183,26 @@ spec:
       ports:
         - protocol: UDP
           port: 53
+
+---
+# Allow app and worker pods to connect to Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-redis
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      redis: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: $KUBE_NS
+      ports:
+        - protocol: TCP
+          port: 6379
 

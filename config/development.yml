@@ -4,6 +4,10 @@ logger:
 mongodb:
   uri: 'mongodb://localhost:27017/flask-react-template-dev'
 
+celery:
+  broker_url: 'redis://localhost:6379/0'
+  result_backend: 'redis://localhost:6379/0'
+
 
 
 sms:

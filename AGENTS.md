@@ -1,10 +1,11 @@
 # Project Overview
 
-Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, and both halves of the stack share a focus on layered, testable architecture.
+Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, Celery + Redis handle background jobs, and both halves of the stack share a focus on layered, testable architecture.
 
 **Stack:**
-- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic
+- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic · Celery
 - **Frontend:** React 18 · TypeScript · Tailwind CSS · Axios
+- **Infrastructure:** MongoDB · Redis
 - **Build Tooling:** Webpack 5 · Pipenv · npm scripts
 - **Testing:** Pytest + pytest-cov
 - **Deployment:** Docker · Kubernetes
@@ -19,11 +20,20 @@ Flask React Template is a full-stack application that pairs a modular Flask back
 ## Build and Test Commands
 
 ```bash
-# Launch backend and frontend together
+# Launch backend, frontend, and workers together
 npm run serve
 
 # Run only the Flask API (Gunicorn with reload)
 npm run serve:backend
+
+# Run only Celery workers
+npm run serve:worker
+
+# Run only Celery beat scheduler (cron jobs)
+npm run serve:beat
+
+# Start Flower dashboard (worker monitoring UI at `localhost:5555`)
+npm run serve:flower
 
 # Start the React dev server with hot reload
 npm run serve:frontend
@@ -110,9 +120,14 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 #### 11. Business Logic Placement
 - Keep business rules in the service layer.
-- Avoid embedding domain logic inside Flask views, CLI scripts, or Temporal workers—delegate to services.
+- Avoid embedding domain logic inside Flask views or CLI scripts—delegate to services.
 
-#### 12. Query Efficiency
+#### 12. Background Jobs
+- Use Celery workers for async job processing (document processing, entity extraction, etc.).
+- Define workers in `modules/application/workers/` inheriting from `Worker`.
+- Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`).
+
+#### 13. Query Efficiency
 - Guard against N+1 queries by batching lookups or using aggregation pipelines.
 - Push filtering into Mongo queries instead of post-processing large in-memory lists.
 

@@ -28,6 +28,18 @@ run-engine:
 		&& pipenv run python --version \
 		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
 
+run-worker:
+	cd src/apps/backend \
+		&& pipenv run celery -A celery_app worker --loglevel=info --concurrency=4 --queues=critical,default,low -E
+
+run-beat:
+	cd src/apps/backend \
+		&& pipenv run celery -A celery_app beat --loglevel=info
+
+run-flower:
+	cd src/apps/backend \
+		&& pipenv run celery -A celery_app flower --port=5555
+
 
 run-test:
 	PYTHONPATH=src/apps/backend pipenv run pytest --disable-warnings -s -x -v --cov=src/apps/backend --cov-report=xml:/app/output/coverage.xml tests

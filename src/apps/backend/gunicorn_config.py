@@ -8,6 +8,10 @@ workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = "gthread"
 threads = 2 * multiprocessing.cpu_count()
 
+# Preload app before forking workers
+# This ensures bootstrap tasks run once in the master process
+preload_app = True
+
 # Logging
 loglevel = "info"
 accesslog = "-"
