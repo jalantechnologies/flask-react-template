@@ -53,7 +53,7 @@ set -euo pipefail
 
 # Standardized names derived from KUBE_APP (must match your manifests)
 APP_DEPLOY="${KUBE_APP}-deployment"
-TEMPORAL_DEPLOY="${KUBE_APP}-temporal-deployment"
+TEMPORAL_DEPLOY=""
 ART_DIR="ci_artifacts"
 
 main() {
@@ -78,29 +78,14 @@ main() {
   APP_ROLLOUT_RC=$?
   set -e
 
-  # Temporal is optional; only wait if it exists.
-  if kubectl -n "$KUBE_NS" get deploy "$TEMPORAL_DEPLOY" >/dev/null 2>&1; then
-    echo "rollout :: waiting for $TEMPORAL_DEPLOY"
-    set +e
-    kubectl rollout status deploy/"$TEMPORAL_DEPLOY" -n "$KUBE_NS" --timeout=5m
-    TEMP_ROLLOUT_RC=$?
-    set -e
-  else
-    echo "rollout :: $TEMPORAL_DEPLOY not found, skipping wait"
-    TEMP_ROLLOUT_RC=0
-  fi
-
   # Tell CI clearly if a rollout failed. We do NOT exit yet (the trap will
   # still run after main finishes or exits).
   if [[ "$APP_ROLLOUT_RC" -ne 0 ]]; then
     echo "::error ::Rollout did not complete for ${APP_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
   fi
-  if [[ "$TEMP_ROLLOUT_RC" -ne 0 ]]; then
-    echo "::error ::Rollout did not complete for ${TEMPORAL_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
-  fi
 
-  # If either rollout failed, exit non-zero (this will trigger the trap first).
-  if [[ "$APP_ROLLOUT_RC" -ne 0 || "$TEMP_ROLLOUT_RC" -ne 0 ]]; then
+  # If rollout failed, exit non-zero (this will trigger the trap first).
+  if [[ "$APP_ROLLOUT_RC" -ne 0 ]]; then
     exit 1
   fi
 }
@@ -148,10 +133,9 @@ collect_diagnostics() {
 
   # 4) Save `kubectl describe` for our deployments (if present).
   save_deploy_describe_if_present "$KUBE_NS" "$APP_DEPLOY"
-  save_deploy_describe_if_present "$KUBE_NS" "$TEMPORAL_DEPLOY"
 
   # 5) Check critical Services exist and record their Endpoints.
-  for svc in "$KUBE_APP-service" temporal-service; do
+  for svc in "$KUBE_APP-service"; do
     save_service_and_endpoints_if_present "$KUBE_NS" "$svc"
   done
 

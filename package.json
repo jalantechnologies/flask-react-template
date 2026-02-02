@@ -23,8 +23,6 @@
     "serve": "bash -c 'make serve ARGS=\"$*\"' --",
     "serve:assets": "cpx \"src/assets/**/*.*\" dist/assets --watch",
     "serve:backend": "make run-engine",
-    "serve:temporal-server": "make run-temporal-server",
-    "serve:temporal": "make run-temporal",
     "serve:frontend": "webpack serve --output-path dist/public --config src/apps/frontend/webpack.dev.js --hot --progress",
     "start": "npm run serve:backend",
     "test": "cross-env APP_ENV=testing make run-test",

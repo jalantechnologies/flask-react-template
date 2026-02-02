@@ -6,9 +6,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
-from modules.application.application_service import ApplicationService
-from modules.application.errors import AppError, WorkerClientConnectionError
-from modules.application.workers.health_check_worker import HealthCheckWorker
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
@@ -26,17 +23,6 @@ LoggerManager.mount_logger()
 
 # Run bootstrap tasks
 BootstrapApp().run()
-
-# Connect to Temporal Server
-try:
-    ApplicationService.connect_temporal_server()
-
-    # Start the health check worker
-    # In production, it is optional to run this worker
-    ApplicationService.schedule_worker_as_cron(cls=HealthCheckWorker, cron_schedule="*/10 * * * *")
-
-except WorkerClientConnectionError as e:
-    Logger.critical(message=e.message)
 
 
 # Apply ProxyFix to interpret `X-Forwarded` headers if enabled in configuration

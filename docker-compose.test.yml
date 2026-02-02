@@ -9,13 +9,10 @@ services:
     environment:
       APP_ENV: 'testing'
       MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-test'
-      TEMPORAL_SERVER_ADDRESS: 'temporal:7233'
     command: "npm run test:docker"
     depends_on:
       app-db:
         condition: service_started
-      temporal:
-        condition: service_healthy
     # Use named volume to avoid permission issues with bind mounts
     volumes:
       - test_output:/app/output
@@ -26,42 +23,7 @@ services:
     ports:
       - '27017:27017'
 
-  temporal:
-    image: temporalio/auto-setup:1.27.0
-    depends_on:
-      - temporal-db
-    environment:
-      DB: 'postgres12'
-      DB_PORT: '5432'
-      POSTGRES_USER: 'temporal'
-      POSTGRES_PWD: 'temporal'
-      POSTGRES_SEEDS: 'temporal-db'
-      DYNAMIC_CONFIG_FILE_PATH: 'config/temporal-sql.yaml'
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "tctl",
-          "--address",
-          "temporal:7233",
-          "workflow",
-          "list"
-        ]
-      interval: 1s
-      timeout: 5s
-      retries: 30
-    ports:
-      - '7233:7233'
-    volumes:
-      - './temporal-sql.yaml:/etc/temporal/config/temporal-sql.yaml'
 
-  temporal-db:
-    image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: 'temporal'
-      POSTGRES_USER: 'temporal'
-    ports:
-      - '5432:5432'
 
 # Define named volume for test output
 volumes:

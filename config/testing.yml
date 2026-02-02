@@ -1,8 +1,7 @@
 mongodb:
   uri: 'mongodb://localhost:27017/flask-react-template-test'
 
-temporal:
-  server_address: 'localhost:7233'
+
 
 mailer:
   default_email: 'DEFAULT_EMAIL'

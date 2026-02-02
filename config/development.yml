@@ -4,8 +4,7 @@ logger:
 mongodb:
   uri: 'mongodb://localhost:27017/flask-react-template-dev'
 
-temporal:
-  server_address: 'localhost:7233'
+
 
 sms:
   enabled: false

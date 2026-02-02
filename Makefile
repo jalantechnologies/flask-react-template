@@ -28,12 +28,6 @@ run-engine:
 		&& pipenv run python --version \
 		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
 
-run-temporal-server:
-	cd src/apps/backend \
-		&& PYTHONPATH=./ pipenv run python temporal_server.py
-
-run-temporal:
-	temporal server start-dev
 
 run-test:
 	PYTHONPATH=src/apps/backend pipenv run pytest --disable-warnings -s -x -v --cov=src/apps/backend --cov-report=xml:/app/output/coverage.xml tests
@@ -51,10 +45,6 @@ run-script:
 serve:
 	@echo "Detected args: $(ARGS)"
 	@SERVE_SCRIPTS=$$(jq -r '.scripts | to_entries[] | select(.key | startswith("serve:")) | .key' package.json | grep -v '^serve:$$'); \
-	if echo "$(ARGS)" | grep -q -- --no-temporal; then \
-		echo "Running without Temporal..."; \
-		SERVE_SCRIPTS=$$(echo "$$SERVE_SCRIPTS" | grep -v '^serve:temporal$$'); \
-	fi; \
 	CMD_ARGS=$$(echo "$$SERVE_SCRIPTS" | xargs -I {} echo npm run {}); \
 	echo "Running: $$CMD_ARGS"; \
 	echo "$$CMD_ARGS" | xargs -I {} -P 0 sh -c "{}"

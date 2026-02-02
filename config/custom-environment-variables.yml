@@ -6,8 +6,7 @@ mailer:
 mongodb:
   uri: 'MONGODB_URI'
 
-temporal:
-  server_address: 'TEMPORAL_SERVER_ADDRESS'
+
 
 web_app_host: 'WEB_APP_HOST'
 

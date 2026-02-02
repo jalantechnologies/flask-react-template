@@ -12,18 +12,15 @@ This project has three deployment environments that everyone can access:
 - **Production**
   - The live app for end users.
   - Web App URL: [https://flask-react-template.platform.bettrhq.com](https://flask-react-template.platform.bettrhq.com)
-  - Temporal Workers Dashboard: [https://workers-dashboard.flask-react-template.platform.bettrhq.com/](https://workers-dashboard.flask-react-template.platform.bettrhq.com/)
 
 - **Preview (per PR)**
   - A temporary environment for testing the latest changes in each PR
   - A unique URL is generated for every pull request (e.g. `https://<github_sha>.preview.platform.bettrhq.com`).
-  - A dedicated temporal workers dashboard is also available at `https://<github_sha>.workers-dashboard.preview.platform.bettrhq.com/`
 
 - **Permanent Preview**
   - Always reflects the latest `main` branch.
   - Useful for ongoing testing of the integrated codebase.
   - URL: [https://preview.flask-react-template.platform.bettrhq.com](https://preview.flask-react-template.platform.bettrhq.com)
-  - Temporal Workers Dashboard: [https://preview.workers-dashboard.flask-react-template.platform.bettrhq.com](https://preview.workers-dashboard.flask-react-template.platform.bettrhq.com)
 
 ## Documentation Directory
 
@@ -36,7 +33,7 @@ This project has three deployment environments that everyone can access:
 - [Bootstrapping](docs/bootstrapping.md)
 - [Scripts](docs/scripts.md)
 - [Code Formatting](docs/code-formatting.md)
-- [Workers](docs/workers.md)
+
 - [CI/CD](docs/deployment.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)
 
