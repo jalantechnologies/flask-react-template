@@ -61,9 +61,10 @@ def initialize_workers() -> None:
     Initialize worker registry to register all Worker subclasses and their cron schedules.
     This must run in worker/beat processes, not just the Flask web server.
     """
-    from modules.application.worker_registry import WorkerRegistry
+    import importlib
 
-    WorkerRegistry.initialize()
+    worker_registry_module = importlib.import_module("modules.application.worker_registry")
+    worker_registry_module.WorkerRegistry.initialize()
 
 
 # Register workers when Celery worker starts

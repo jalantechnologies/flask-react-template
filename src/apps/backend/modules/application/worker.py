@@ -1,3 +1,4 @@
+import importlib
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
@@ -11,9 +12,8 @@ if TYPE_CHECKING:
 
 def _get_celery_app() -> "Celery":
     """Lazy import to avoid circular dependency with celery_app."""
-    from celery_app import app
-
-    return app
+    celery_module = importlib.import_module("celery_app")
+    return celery_module.app
 
 
 class Worker(ABC):
