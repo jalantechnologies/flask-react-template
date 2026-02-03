@@ -1,11 +1,19 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from celery import Task
 from celery.result import AsyncResult
 
-from celery_app import app
+if TYPE_CHECKING:
+    from celery import Celery
+
+
+def _get_celery_app() -> "Celery":
+    """Lazy import to avoid circular dependency with celery_app."""
+    from celery_app import app
+
+    return app
 
 
 class Worker(ABC):
@@ -44,13 +52,14 @@ class Worker(ABC):
     @classmethod
     def _get_celery_task(cls) -> Task:
         task_name = f"{cls.__module__}.{cls.__name__}"
+        celery_app = _get_celery_app()
 
         # Check if task is already registered
-        if task_name in app.tasks:
-            return app.tasks[task_name]
+        if task_name in celery_app.tasks:
+            return celery_app.tasks[task_name]
 
         # Create and register the task
-        @app.task(
+        @celery_app.task(
             name=task_name,
             bind=True,
             queue=cls.queue,
@@ -84,8 +93,9 @@ class Worker(ABC):
 
         schedule_name = f"{cls.__module__}.{cls.__name__}_cron"
         task = cls._get_celery_task()
+        celery_app = _get_celery_app()
 
-        app.conf.beat_schedule[schedule_name] = {
+        celery_app.conf.beat_schedule[schedule_name] = {
             "task": task.name,
             "schedule": crontab(
                 minute=minute,
