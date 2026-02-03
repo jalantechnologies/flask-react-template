@@ -135,20 +135,20 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Frontend-Specific Guidelines
 
-#### 13. Styling Practices
+#### 14. Styling Practices
 - **DON'T** use inline styles.
 - **DO** rely on Tailwind utility classes or shared CSS modules as needed.
 
-#### 14. Component Contracts & Variants
+#### 15. Component Contracts & Variants
 - Avoid per-page style overrides. Create component variants/props for different presentations.
 - Shared layout primitives should live under `src/apps/frontend/components` or `layouts` rather than page folders.
 
-#### 15. Data Fetching & State
+#### 16. Data Fetching & State
 - Fetch data through service modules under `services/` or `api/`.
 - Normalize API responses into typed models before storing them in state.
 - Avoid performing side-effectful data fetching inside render without hooks.
 
-#### 16. List Rendering Performance
+#### 17. List Rendering Performance
 - Batch API requests when rendering collections. Never fire N network calls for N items within a render loop.
 
 ---

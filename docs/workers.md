@@ -1,10 +1,24 @@
 # Workers
 
-This document describes the background job processing system using Celery workers.
+Flask-React-Template uses **Celery** with **Redis** for background job processing and scheduled tasks.
+
+---
 
 ## Overview
 
-The application uses Celery for background job processing with Redis as the message broker and result backend. Workers process async jobs independently from the main web application, enabling scalable background processing for tasks like data imports, document processing, and periodic maintenance.
+Workers run independently from the web server, allowing:
+
+- Async job processing (e.g., document parsing, data imports)
+- Scheduled/recurring tasks (e.g., health checks, data syncing)
+- Independent scaling (2 web pods, 20 worker pods)
+
+```
+┌──────────┐      ┌───────┐      ┌────────────┐
+│ Web App  │─────►│ Redis │─────►│   Worker   │
+│ (Flask)  │      │(Broker)│      │  (Celery)  │
+└──────────┘      └───────┘      └────────────┘
+   Queue job        Store job      Execute job
+```
 
 ## Architecture
 
@@ -178,6 +192,23 @@ The registry:
 2. Worker is automatically discovered on next server restart
 3. Test via Flower dashboard or direct API calls
 4. Monitor execution in Flower at http://localhost:5555
+
+### Bootstrap Behavior
+
+The backend application runs bootstrap tasks once at startup:
+
+- Database seeding (test users, initial data)
+- Worker registry initialization (discovers and registers all worker classes)
+
+**Gunicorn Configuration:**
+
+The application uses `preload_app = True` in `gunicorn_config.py`. This ensures:
+
+- Bootstrap tasks run **once** in the master process before forking workers
+- All workers inherit the fully initialized application state
+- No duplicate bootstrap execution across workers
+
+Without `preload_app`, each of the worker processes would run bootstrap tasks independently, causing duplicate database writes and initialization overhead.
 
 ### Monitoring and Debugging
 
@@ -481,6 +512,121 @@ class TestMyWorker:
             MyWorker.perform(test_data="invalid")
 ```
 
+## Testing Workers
+
+### In Tests
+
+Workers execute synchronously in tests (no Redis needed):
+
+```python
+from modules.application.workers.my_worker import MyWorker
+
+def test_worker_execution():
+    # Execute immediately in tests
+    MyWorker.perform(data="test_data")
+
+    # Verify results
+    assert expected_result
+```
+
+### Manual Testing
+
+```python
+# In a Python shell
+from modules.application.workers.health_check_worker import HealthCheckWorker
+
+# Run immediately
+HealthCheckWorker.perform()
+
+# Queue for async execution
+result = HealthCheckWorker.perform_async()
+
+# Check result
+print(result.id)           # Task ID
+print(result.status)       # 'PENDING', 'SUCCESS', 'FAILURE'
+print(result.result)       # Return value
+```
+
+---
+
+## Redis Configuration
+
+### Connection Settings
+
+Redis configuration is set in config files:
+
+```yaml
+# config/development.yml
+celery:
+  broker_url: 'redis://localhost:6379/0'
+  result_backend: 'redis://localhost:6379/0'
+
+# config/testing.yml
+celery:
+  broker_url: 'redis://localhost:6379/1'  # Different database
+  result_backend: 'redis://localhost:6379/1'
+```
+
+### Production Considerations
+
+For production, consider:
+
+- **Redis persistence**: Enable AOF (append-only file) for durability
+- **Memory limits**: Set `maxmemory` and `maxmemory-policy`
+- **Monitoring**: Track Redis memory usage, connection count
+- **Backups**: Regular Redis snapshots
+
+Already configured in `lib/kube/production/worker-deployment.yaml`.
+
+---
+
+## Advanced Usage
+
+### Custom Task Options
+
+```python
+from celery import Task
+
+class CustomWorker(Worker):
+    @classmethod
+    def perform(cls):
+        task = cls._get_celery_task()
+
+        # Access Celery task instance
+        print(task.request.id)        # Task ID
+        print(task.request.retries)   # Current retry count
+```
+
+### Task Chains
+
+```python
+from celery import chain
+
+# Execute tasks in sequence
+workflow = chain(
+    FirstWorker._get_celery_task().s(data="123"),
+    SecondWorker._get_celery_task().s(),
+    ThirdWorker._get_celery_task().s(),
+)
+workflow.apply_async()
+```
+
+### Task Groups
+
+```python
+from celery import group
+
+# Execute tasks in parallel
+job = group(
+    ProcessWorker._get_celery_task().s(item_id="1"),
+    ProcessWorker._get_celery_task().s(item_id="2"),
+    ProcessWorker._get_celery_task().s(item_id="3"),
+)
+result = job.apply_async()
+```
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
@@ -505,6 +651,20 @@ class TestMyWorker:
 - Break large jobs into smaller tasks
 - Use `perform_in()` for delayed processing
 
+**Cron Jobs Not Running:**
+1. Verify beat scheduler is running:
+   ```bash
+   celery -A celery_app inspect scheduled
+   ```
+2. Check worker logs for cron registration:
+   ```
+   Registered worker HealthCheckWorker with cron schedule: */10 * * * *
+   ```
+3. Ensure beat is running alongside worker:
+   ```bash
+   npm run serve:beat
+   ```
+
 ### Debugging Commands
 
 ```bash
@@ -514,9 +674,18 @@ kubectl get pods -l app=flask-react-template-worker
 # View worker logs
 kubectl logs -f deployment/flask-react-template-worker-deployment -c celery-worker
 
+# View beat scheduler logs
+kubectl logs -f deployment/flask-react-template-worker-deployment -c celery-beat
+
 # Connect to Redis
 kubectl exec -it deployment/flask-react-template-redis-deployment -- redis-cli
 
 # Scale workers
 kubectl scale deployment flask-react-template-worker-deployment --replicas=5
+
+# View active workers (CLI)
+celery -A celery_app inspect active
+
+# View registered tasks
+celery -A celery_app inspect registered
 ```
