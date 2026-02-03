@@ -1,10 +1,11 @@
 # Project Overview
 
-Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, and both halves of the stack share a focus on layered, testable architecture.
+Flask React Template is a full-stack application that pairs a modular Flask backend with a React + TypeScript frontend. MongoDB is the primary data store, Celery + Redis handle background jobs, and both halves of the stack share a focus on layered, testable architecture.
 
 **Stack:**
-- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic
+- **Backend:** Python 3.12 · Flask 3 · PyMongo · Pydantic · Celery
 - **Frontend:** React 18 · TypeScript · Tailwind CSS · Axios
+- **Infrastructure:** MongoDB · Redis
 - **Build Tooling:** Webpack 5 · Pipenv · npm scripts
 - **Testing:** Pytest + pytest-cov
 - **Deployment:** Docker · Kubernetes
@@ -19,11 +20,20 @@ Flask React Template is a full-stack application that pairs a modular Flask back
 ## Build and Test Commands
 
 ```bash
-# Launch backend and frontend together
+# Launch backend, frontend, and workers together
 npm run serve
 
 # Run only the Flask API (Gunicorn with reload)
 npm run serve:backend
+
+# Run only Celery workers
+npm run serve:worker
+
+# Run only Celery beat scheduler (cron jobs)
+npm run serve:beat
+
+# Start Flower dashboard (worker monitoring UI at `localhost:5555`)
+npm run serve:flower
 
 # Start the React dev server with hot reload
 npm run serve:frontend
@@ -110,9 +120,14 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 #### 11. Business Logic Placement
 - Keep business rules in the service layer.
-- Avoid embedding domain logic inside Flask views, CLI scripts, or Temporal workers—delegate to services.
+- Avoid embedding domain logic inside Flask views or CLI scripts—delegate to services.
 
-#### 12. Query Efficiency
+#### 12. Background Jobs
+- Use Celery workers for async job processing (document processing, entity extraction, etc.).
+- Define workers in `modules/application/workers/` inheriting from `Worker`.
+- Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`).
+
+#### 13. Query Efficiency
 - Guard against N+1 queries by batching lookups or using aggregation pipelines.
 - Push filtering into Mongo queries instead of post-processing large in-memory lists.
 
@@ -120,20 +135,20 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Frontend-Specific Guidelines
 
-#### 13. Styling Practices
+#### 14. Styling Practices
 - **DON'T** use inline styles.
 - **DO** rely on Tailwind utility classes or shared CSS modules as needed.
 
-#### 14. Component Contracts & Variants
+#### 15. Component Contracts & Variants
 - Avoid per-page style overrides. Create component variants/props for different presentations.
 - Shared layout primitives should live under `src/apps/frontend/components` or `layouts` rather than page folders.
 
-#### 15. Data Fetching & State
+#### 16. Data Fetching & State
 - Fetch data through service modules under `services/` or `api/`.
 - Normalize API responses into typed models before storing them in state.
 - Avoid performing side-effectful data fetching inside render without hooks.
 
-#### 16. List Rendering Performance
+#### 17. List Rendering Performance
 - Batch API requests when rendering collections. Never fire N network calls for N items within a render loop.
 
 ---

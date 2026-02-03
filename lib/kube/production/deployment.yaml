@@ -66,6 +66,10 @@ spec:
               value: production
             - name: WEB_APP_HOST
               value: https://$KUBE_INGRESS_HOSTNAME
+            - name: CELERY_BROKER_URL
+              value: "redis://$KUBE_APP-redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://$KUBE_APP-redis:6379/0"
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp

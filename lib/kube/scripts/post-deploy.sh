@@ -21,7 +21,9 @@
 #
 # NAMING CONVENTIONS USED (matched as per repo’s expectations):
 #   - App Deployment            : "${KUBE_APP}-deployment"
+#   - Worker Deployment (opt)   : "${KUBE_APP}-worker-deployment"
 #   - Web Service               : "${KUBE_APP}-service"
+#   - Flower Service            : "${KUBE_APP}-flower"
 #
 # OUTPUT:
 #   - Files under ci_artifacts/:
@@ -50,6 +52,7 @@ set -euo pipefail
 
 # Standardized names derived from KUBE_APP (must match your manifests)
 APP_DEPLOY="${KUBE_APP}-deployment"
+WORKER_DEPLOY="${KUBE_APP}-worker-deployment"
 ART_DIR="ci_artifacts"
 
 main() {
@@ -74,14 +77,29 @@ main() {
   APP_ROLLOUT_RC=$?
   set -e
 
+  # Worker deployment is optional; only wait if it exists.
+  if kubectl -n "$KUBE_NS" get deploy "$WORKER_DEPLOY" >/dev/null 2>&1; then
+    echo "rollout :: waiting for $WORKER_DEPLOY"
+    set +e
+    kubectl rollout status deploy/"$WORKER_DEPLOY" -n "$KUBE_NS" --timeout=5m
+    WORKER_ROLLOUT_RC=$?
+    set -e
+  else
+    echo "rollout :: $WORKER_DEPLOY not found, skipping wait"
+    WORKER_ROLLOUT_RC=0
+  fi
+
   # Tell CI clearly if a rollout failed. We do NOT exit yet (the trap will
   # still run after main finishes or exits).
   if [[ "$APP_ROLLOUT_RC" -ne 0 ]]; then
     echo "::error ::Rollout did not complete for ${APP_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
   fi
+  if [[ "$WORKER_ROLLOUT_RC" -ne 0 ]]; then
+    echo "::error ::Rollout did not complete for ${WORKER_DEPLOY} (ns=$KUBE_NS). See diagnostics above."
+  fi
 
-  # If rollout failed, exit non-zero (this will trigger the trap first).
-  if [[ "$APP_ROLLOUT_RC" -ne 0 ]]; then
+  # If either rollout failed, exit non-zero (this will trigger the trap first).
+  if [[ "$APP_ROLLOUT_RC" -ne 0 || "$WORKER_ROLLOUT_RC" -ne 0 ]]; then
     exit 1
   fi
 }
@@ -129,9 +147,10 @@ collect_diagnostics() {
 
   # 4) Save `kubectl describe` for our deployments (if present).
   save_deploy_describe_if_present "$KUBE_NS" "$APP_DEPLOY"
+  save_deploy_describe_if_present "$KUBE_NS" "$WORKER_DEPLOY"
 
   # 5) Check critical Services exist and record their Endpoints.
-  for svc in "$KUBE_APP-service"; do
+  for svc in "$KUBE_APP-service" "$KUBE_APP-flower"; do
     save_service_and_endpoints_if_present "$KUBE_NS" "$svc"
   done
 

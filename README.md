@@ -33,6 +33,7 @@ This project has three deployment environments that everyone can access:
 - [Bootstrapping](docs/bootstrapping.md)
 - [Scripts](docs/scripts.md)
 - [Code Formatting](docs/code-formatting.md)
+- [Workers](docs/workers.md)
 
 - [CI/CD](docs/deployment.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)

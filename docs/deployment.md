@@ -12,12 +12,29 @@ Each pull request triggers a temporary, isolated environment with:
   - React frontend
   - Flask backend (Python/Flask API)
 
-This ensures every PR runs independently for testing.
+- **Worker Pod** – Runs:
+  - Celery workers (background job processing)
+  - Celery beat scheduler (cron jobs)
+
+- **Redis Pod** – Runs:
+  - Redis server (message broker for workers)
+
+This ensures every PR runs independently with full async job processing capabilities.
 
 ### Database
 
 - A **MongoDB** database is used for all environments
+- A **Redis** instance is deployed per environment for worker job queuing
 - All credentials are securely managed via [Doppler](https://www.doppler.com/)
+
+### Environment Configuration
+
+The worker pods require the following environment variables to be set:
+
+- `CELERY_BROKER_URL` - Set automatically in deployment (points to `$KUBE_APP-redis:6379/0`)
+- `CELERY_RESULT_BACKEND` - Set automatically in deployment (points to `$KUBE_APP-redis:6379/0`)
+
+These are configured in the deployment YAML files and reference the Redis service deployed alongside the workers. No manual Doppler configuration is required for these variables.
 
 ---
 
@@ -33,19 +50,76 @@ This ensures every PR runs independently for testing.
          │       Kubernetes Namespace (pr-123)     │
          └────────────────────┬────────────────────┘
                               |
-                              │
-                              │
-   ┌────────────────────────────────────────────────┐
-   │                  Preview Pod                    │
-   │                                                │
-   │            ┌───────────────────────┐           │
-   │            │     WebApp Pod        │           │
-   │            │  - React Frontend     │           │
-   │            │  - Flask Backend      │           │
-   │            └───────────────────────┘           │
-   │                                                │
-   └────────────────────────────────────────────────┘
+   ┌──────────────────────────┼──────────────────────────┐
+   │                  Preview Pods                       │
+   │                          │                          │
+   │     ┌────────────────────┼────────────────┐         │
+   │     │       WebApp Pod   │                │         │
+   │     │  - React Frontend  │                │         │
+   │     │  - Flask Backend   │                │         │
+   │     └────────────────────┘                │         │
+   │                                           │         │
+   │     ┌────────────────────┐                │         │
+   │     │    Worker Pod      │                │         │
+   │     │  - Celery Worker   │◄───────────────┤         │
+   │     │  - Celery Beat     │   Job Queue    │         │
+   │     └────────────────────┘                │         │
+   │                                           │         │
+   │     ┌────────────────────┐                │         │
+   │     │    Redis Pod       │────────────────┘         │
+   │     │  - Message Broker  │                          │
+   │     └────────────────────┘                          │
+   │                                                     │
+   └─────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Worker Scaling
+
+Workers can be scaled independently from the web application, allowing you to handle high async workload without scaling the frontend/backend.
+
+### Preview Environment
+
+```yaml
+# Default: 1 worker replica with 8 concurrency
+replicas: 1
+concurrency: 8
+```
+
+### Production Environment
+
+```yaml
+# Default: 3 worker replicas with 8 concurrency each
+replicas: 3
+concurrency: 8
+```
+
+### Manual Scaling
+
+Scale workers independently:
+
+```bash
+# Scale preview workers
+kubectl scale deployment flask-react-template-preview-worker-deployment --replicas=5 -n flask-react-template-preview
+
+# Scale production workers
+kubectl scale deployment flask-react-template-production-worker-deployment --replicas=10 -n flask-react-template-production
+```
+
+### Resource Allocation
+
+**Preview:**
+
+- Worker: 200m CPU (request), 512Mi memory (request)
+- Beat: 50m CPU (request), 128Mi memory (request)
+- Redis: 50m CPU (request), 128Mi memory (request)
+
+**Production:**
+
+- Worker: 500m CPU (request), 1Gi memory (request)
+- Beat: 50m CPU (request), 128Mi memory (request)
+- Redis: 100m CPU (request), 256Mi memory (request)
 
 ---
 

@@ -10,6 +10,8 @@ services:
     environment:
       APP_ENV: 'development'
       MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-dev'
+      CELERY_BROKER_URL: 'redis://redis:6379/0'
+      CELERY_RESULT_BACKEND: 'redis://redis:6379/0'
       PIPENV_VENV_IN_PROJECT: '1'
     # Ensure dependencies are installed before starting services
     # Check if node_modules has content, not just if directory exists
@@ -19,9 +21,12 @@ services:
     depends_on:
       app-db:
         condition: service_started
+      redis:
+        condition: service_started
     ports:
       - '3000:3000'
       - '8080:8080'
+      - '5555:5555'
     volumes:
       # Mount local directory to /opt/app for hot reload
       - './:/opt/app:delegated'
@@ -41,5 +46,13 @@ services:
     volumes:
       - './data/mongodb:/data/db'
       - './logs/mongodb:/var/log'
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - './data/redis:/data'
+    command: redis-server --appendonly yes
 
 

@@ -1,0 +1,328 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $KUBE_APP-worker-deployment
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-worker
+    version: $GITHUB_SHA
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $KUBE_APP-worker
+  template:
+    metadata:
+      labels:
+        app: $KUBE_APP-worker
+        component: $KUBE_NS
+        version: $GITHUB_SHA
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        # Celery Worker - Processes async jobs
+        - name: celery-worker
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Load secrets from mounted volume as environment variables
+              for file in /app/secrets/*; do
+                [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
+              done
+              cd /app/src/apps/backend
+              pipenv run celery -A celery_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
+          env:
+            - name: APP_ENV
+              value: "preview"
+            - name: CELERY_BROKER_URL
+              value: "redis://$KUBE_APP-redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://$KUBE_APP-redis:6379/0"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: tmp
+              mountPath: /app/tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: system-tmp
+              mountPath: /tmp
+            - name: secret-ref
+              mountPath: /app/secrets
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 10
+        # Celery Beat - Runs cron jobs
+        - name: celery-beat
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Load secrets from mounted volume as environment variables
+              for file in /app/secrets/*; do
+                [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
+              done
+              cd /app/src/apps/backend
+              pipenv run celery -A celery_app beat --loglevel=info
+          env:
+            - name: APP_ENV
+              value: "preview"
+            - name: CELERY_BROKER_URL
+              value: "redis://$KUBE_APP-redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://$KUBE_APP-redis:6379/0"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /app/tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: system-tmp
+              mountPath: /tmp
+            - name: secret-ref
+              mountPath: /app/secrets
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ps aux | grep 'celery.*beat' | grep -v grep
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ps aux | grep 'celery.*beat' | grep -v grep
+            initialDelaySeconds: 15
+            periodSeconds: 15
+        # Flower - Monitoring Dashboard
+        - name: flower
+          image: $KUBE_DEPLOYMENT_IMAGE:$KUBE_DEPLOYMENT_TAG@$KUBE_DEPLOYMENT_DIGEST
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Load secrets from mounted volume as environment variables
+              for file in /app/secrets/*; do
+                [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
+              done
+              cd /app/src/apps/backend
+              pipenv run celery -A celery_app flower --port=5555
+          env:
+            - name: APP_ENV
+              value: "preview"
+            - name: CELERY_BROKER_URL
+              value: "redis://$KUBE_APP-redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://$KUBE_APP-redis:6379/0"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 5555
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /app/tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: system-tmp
+              mountPath: /tmp
+            - name: secret-ref
+              mountPath: /app/secrets
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 5555
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 5555
+            initialDelaySeconds: 15
+            periodSeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: system-tmp
+          emptyDir: {}
+        - name: secret-ref
+          secret:
+            secretName: $DOPPLER_MANAGED_SECRET_NAME
+---
+# Flower Service (Workers Dashboard)
+apiVersion: v1
+kind: Service
+metadata:
+  name: $KUBE_APP-flower
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-flower
+spec:
+  selector:
+    app: $KUBE_APP-worker
+  ports:
+    - port: 5555
+      targetPort: 5555
+      name: http
+  type: ClusterIP
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $KUBE_APP-redis-deployment
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $KUBE_APP-redis
+  template:
+    metadata:
+      labels:
+        app: $KUBE_APP-redis
+        redis: "true"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-tmp
+              mountPath: /tmp
+          command:
+            - redis-server
+            - --appendonly
+            - "yes"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: redis-data
+          emptyDir: {}
+        - name: redis-tmp
+          emptyDir: {}
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: $KUBE_APP-redis
+  namespace: $KUBE_NS
+spec:
+  selector:
+    app: $KUBE_APP-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
