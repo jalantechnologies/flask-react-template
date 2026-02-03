@@ -231,12 +231,12 @@ redis-cli
 KEYS *
 
 # Check queue lengths
-LLEN celery        # Default queue
+LLEN default       # Default queue
 LLEN critical      # Critical queue
-LLEN low          # Low priority queue
+LLEN low           # Low priority queue
 
 # Inspect job data
-LRANGE celery 0 -1  # View all jobs in default queue
+LRANGE default 0 -1  # View all jobs in default queue
 ```
 
 #### Logging
@@ -352,6 +352,7 @@ Monitors application health every 10 minutes:
 from typing import Any
 import requests
 from modules.application.worker import Worker
+from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 
 class HealthCheckWorker(Worker):
@@ -361,8 +362,14 @@ class HealthCheckWorker(Worker):
     
     @classmethod
     def perform(cls, *args: Any, **kwargs: Any) -> None:
+        # URL is configurable via HEALTH_CHECK_URL env var or config
+        health_check_url = ConfigService[str].get_value(
+            "worker.health_check_url",
+            default="http://localhost:8080/api/",
+        )
+        
         try:
-            res = requests.get("http://localhost:8080/api/", timeout=3)
+            res = requests.get(health_check_url, timeout=3)
             if res.status_code == 200:
                 Logger.info(message="Backend is healthy")
             else:

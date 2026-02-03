@@ -50,7 +50,7 @@ npm run serve
 * **Redis:**    `localhost:6379`
 * Disable the auto‑opening browser tab by exporting `WEBPACK_DEV_DISABLE_OPEN=true`.
 * **Windows users:** run inside WSL or Git Bash for best results.
-* **Note:** `npm run serve` starts frontend, backend, Celery worker, and Celery beat scheduler.
+* **Note:** `npm run serve` starts frontend, backend, Celery worker, Celery beat scheduler, and Flower dashboard.
 
 ---
 

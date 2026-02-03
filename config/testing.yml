@@ -5,6 +5,9 @@ celery:
   broker_url: 'redis://localhost:6379/1'
   result_backend: 'redis://localhost:6379/1'
 
+worker:
+  health_check_url: 'http://localhost:8080/api/'
+
 
 
 mailer:

@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: rehan/fix/worker-url
+          ref: fad88356620fd16b87d7aef8fe909917eeaf7f19
 
       - name: Extract branch name
         id: extract_branch

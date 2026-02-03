@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.signals import worker_ready, beat_init
 
 from modules.config.config_service import ConfigService
 
@@ -53,3 +54,25 @@ app.autodiscover_tasks(
         "modules.application.workers",
     ]
 )
+
+
+def initialize_workers() -> None:
+    """
+    Initialize worker registry to register all Worker subclasses and their cron schedules.
+    This must run in worker/beat processes, not just the Flask web server.
+    """
+    from modules.application.worker_registry import WorkerRegistry
+
+    WorkerRegistry.initialize()
+
+
+# Register workers when Celery worker starts
+@worker_ready.connect
+def on_worker_ready(sender: object = None, **kwargs: object) -> None:
+    initialize_workers()
+
+
+# Register workers when Celery beat starts
+@beat_init.connect
+def on_beat_init(sender: object = None, **kwargs: object) -> None:
+    initialize_workers()

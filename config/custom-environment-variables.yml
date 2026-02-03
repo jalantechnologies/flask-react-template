@@ -10,6 +10,9 @@ celery:
   broker_url: 'CELERY_BROKER_URL'
   result_backend: 'CELERY_RESULT_BACKEND'
 
+worker:
+  health_check_url: 'HEALTH_CHECK_URL'
+
 
 
 web_app_host: 'WEB_APP_HOST'

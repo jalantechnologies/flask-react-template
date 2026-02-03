@@ -8,6 +8,9 @@ celery:
   broker_url: 'redis://localhost:6379/0'
   result_backend: 'redis://localhost:6379/0'
 
+worker:
+  health_check_url: 'http://localhost:8080/api/'
+
 
 
 sms:
