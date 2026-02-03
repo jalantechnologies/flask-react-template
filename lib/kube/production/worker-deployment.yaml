@@ -38,7 +38,7 @@ spec:
             - -c
             - |
               # Load secrets from mounted volume as environment variables
-              for file in /opt/app/secrets/*; do
+              for file in /app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
@@ -66,13 +66,13 @@ spec:
               memory: 2Gi
           volumeMounts:
             - name: tmp
-              mountPath: /opt/app/tmp
+              mountPath: /app/tmp
             - name: logs
-              mountPath: /opt/app/logs
+              mountPath: /app/logs
             - name: system-tmp
               mountPath: /tmp
             - name: secret-ref
-              mountPath: /opt/app/secrets
+              mountPath: /app/secrets
           livenessProbe:
             exec:
               command:
@@ -100,7 +100,7 @@ spec:
             - -c
             - |
               # Load secrets from mounted volume as environment variables
-              for file in /opt/app/secrets/*; do
+              for file in /app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
@@ -128,13 +128,13 @@ spec:
               memory: 256Mi
           volumeMounts:
             - name: tmp
-              mountPath: /opt/app/tmp
+              mountPath: /app/tmp
             - name: logs
-              mountPath: /opt/app/logs
+              mountPath: /app/logs
             - name: system-tmp
               mountPath: /tmp
             - name: secret-ref
-              mountPath: /opt/app/secrets
+              mountPath: /app/secrets
           livenessProbe:
             exec:
               command:
@@ -160,7 +160,7 @@ spec:
             - -c
             - |
               # Load secrets from mounted volume as environment variables
-              for file in /opt/app/secrets/*; do
+              for file in /app/secrets/*; do
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
@@ -190,13 +190,13 @@ spec:
               memory: 512Mi
           volumeMounts:
             - name: tmp
-              mountPath: /opt/app/tmp
+              mountPath: /app/tmp
             - name: logs
-              mountPath: /opt/app/logs
+              mountPath: /app/logs
             - name: system-tmp
               mountPath: /tmp
             - name: secret-ref
-              mountPath: /opt/app/secrets
+              mountPath: /app/secrets
           livenessProbe:
             httpGet:
               path: /healthcheck

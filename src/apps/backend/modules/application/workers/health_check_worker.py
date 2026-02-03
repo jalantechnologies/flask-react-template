@@ -23,7 +23,3 @@ class HealthCheckWorker(Worker):
 
         except Exception as e:
             Logger.error(message=f"Backend is unhealthy: {e}")
-
-
-# Register cron schedule when module is imported during autodiscovery
-HealthCheckWorker.register_cron()
