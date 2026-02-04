@@ -17,10 +17,10 @@ accounts:
   token_expires_in_seconds: 3600
   create_test_user_account: false
   test_user:
-    first_name: "Test"
-    last_name: "User"
-    username: "test@example.com"
-    password: "testpassword"
+    first_name: 'Test'
+    last_name: 'User'
+    username: 'test@example.com'
+    password: 'testpassword'
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'

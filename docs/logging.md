@@ -24,15 +24,15 @@ Logger.error(message=f"Failed to process item {item_id}")
 
 ## Frontend Logging (JavaScript)
 
-| Tool           | Purpose                               | Docs                                                                              |
-|----------------|---------------------------------------|-----------------------------------------------------------------------------------|
+| Tool           | Purpose                               | Docs                                                                               |
+| -------------- | ------------------------------------- | ---------------------------------------------------------------------------------- |
 | Datadog Logger | Captures console & custom logs.       | [JS log collection ↗](https://docs.datadoghq.com/logs/log_collection/javascript/) |
 | Datadog RUM    | Real-user monitoring & custom events. | [Browser RUM ↗](https://docs.datadoghq.com/real_user_monitoring/browser/)         |
 
 ### Usage Notes
 
-* Both `console.*` and any custom logger integrations are forwarded to Datadog when logging is enabled.
-* RUM auto-collects page views, errors, and performance metrics. Emit custom events for business-specific insights.
+- Both `console.*` and any custom logger integrations are forwarded to Datadog when logging is enabled.
+- RUM auto-collects page views, errors, and performance metrics. Emit custom events for business-specific insights.
 
 ### Usage Example
 

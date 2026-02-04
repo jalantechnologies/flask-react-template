@@ -159,6 +159,7 @@ graph TB
 ```
 
 ### CI Workflow (Code Quality & Testing)
+
 All jobs run in parallel and independently:
 
 1. **ci/lint** (~30s) - ESLint and Markdown checks for code style and potential errors
@@ -167,6 +168,7 @@ All jobs run in parallel and independently:
 4. **ci/test** (~1 min) - Integration tests using docker-compose
 
 ### CD Workflow (Build & Deploy)
+
 Single job that builds Docker image and deploys:
 
 1. **cd/deploy** (~3-4 min) - Builds Docker image and deploys to `{pr-name}.preview.platform.bettrhq.com`
@@ -178,11 +180,13 @@ Single job that builds Docker image and deploys:
 ## Deployment Workflows
 
 ### CD Workflows
+
 - **cd** - Deploys preview environment for each PR (`cd/deploy`)
 - **cd_production** - Deploys to production when code is merged to `main` (`cd_production/deploy`)
 - **cd_permanent_preview** - Updates permanent preview when `main` changes (`cd_permanent_preview/deploy`)
 
 ### Cleanup Workflows
+
 - **cleanup_pr** - Automatically removes preview environment when PR is closed
 
 All credentials and secrets are securely managed via GitHub secrets and environment variables. Deployments use github-ci v3.2.5 reusable workflows for Docker image building and Kubernetes deployment.

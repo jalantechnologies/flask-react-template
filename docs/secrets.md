@@ -13,13 +13,13 @@ Secrets stored in Doppler are automatically injected into the app at runtime and
 2. **Select the _flask-react-template_ project**  
    The `flask-react-template` project centralizes secrets for the full stack (frontend + backend).
 
-3. **Choose an environment**  
-   - **preview** – Used by PR preview builds.  
+3. **Choose an environment**
+   - **preview** – Used by PR preview builds.
    - **production** – Live environment.
 
-4. **Add or edit secrets**  
-   - Click **“Secrets”** → **“Add Secret”**.  
-   - Enter the key exactly as referenced in `custom-environment-variables.yml`.  
+4. **Add or edit secrets**
+   - Click **“Secrets”** → **“Add Secret”**.
+   - Enter the key exactly as referenced in `custom-environment-variables.yml`.
    - Provide the value and save.
 
 5. **Deploy**  
@@ -44,18 +44,18 @@ demo:
 ```
 
 | Doppler Secret | Overrides Config Key    | Notes                                 |
-|----------------|-------------------------|---------------------------------------|
+| -------------- | ----------------------- | ------------------------------------- |
 | `MONGODB_URI`  | `mongodb.uri`           | String value                          |
 | `DEMO_HOST`    | `demo.host`             | String value                          |
 | `DEMO_PORT`    | `demo.port` (as number) | Cast to number via `__format: number` |
 
-*Empty or unset secrets are ignored and fallback to the value defined in the corresponding YAML config.*
+_Empty or unset secrets are ignored and fallback to the value defined in the corresponding YAML config._
 
 ---
 
 ## Best Practices
 
-- **Never** commit secrets to the repository.  
-- Use **preview** for testing; **production** secrets should be tightly controlled.  
-- Remove deprecated keys promptly to avoid confusion.  
+- **Never** commit secrets to the repository.
+- Use **preview** for testing; **production** secrets should be tightly controlled.
+- Remove deprecated keys promptly to avoid confusion.
 - If you add a new mapping in `custom-environment-variables.yml`, remember to create the matching secret in Doppler for every active environment.

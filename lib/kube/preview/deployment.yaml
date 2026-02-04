@@ -5,7 +5,7 @@ metadata:
   namespace: $KUBE_NS
 value: $KUBE_DEPLOY_ID
 globalDefault: false
-description: "This priority class is used for preview pods."
+description: 'This priority class is used for preview pods.'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -65,10 +65,10 @@ spec:
           resources:
             requests:
               cpu: 250m
-              memory: '400Mi'        
+              memory: '400Mi'
             limits:
               cpu: 500m
-              memory: '800Mi' 
+              memory: '800Mi'
           ports:
             - containerPort: 8080
           env:
@@ -77,9 +77,9 @@ spec:
             - name: WEB_APP_HOST
               value: https://$KUBE_INGRESS_HOSTNAME
             - name: CELERY_BROKER_URL
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
             - name: CELERY_RESULT_BACKEND
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
           volumeMounts:
             # Security: Use temporary volumes for writable directories since root filesystem is read-only
             - name: tmp
@@ -116,4 +116,3 @@ spec:
           emptyDir: {}
         - name: system-tmp
           emptyDir: {}
-

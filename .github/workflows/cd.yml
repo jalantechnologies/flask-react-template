@@ -2,13 +2,13 @@ name: cd
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened, ready_for_review ]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # Ensures preview deployment has minimal permissions for security
 permissions:
-  contents: read        # Read-only access to repo contents for safer workflows
-  pull-requests: write  # Allow workflow to comment on, label, and update pull request as part of automation
-  id-token: write       # Allow OIDC tokens for secure cloud authentication
+  contents: read # Read-only access to repo contents for safer workflows
+  pull-requests: write # Allow workflow to comment on, label, and update pull request as part of automation
+  id-token: write # Allow OIDC tokens for secure cloud authentication
 
 jobs:
   deploy:
@@ -69,4 +69,4 @@ jobs:
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
           pull_request_number: ${{  github.event.pull_request.number }}
-          deploy_annotate_pr: "true"
+          deploy_annotate_pr: 'true'

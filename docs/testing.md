@@ -37,7 +37,7 @@ This command bootstraps the testing environment and runs `pytest` under the hood
 ## Conventions & Guidelines
 
 | Topic              | Convention                                                                                          |
-|--------------------|-----------------------------------------------------------------------------------------------------|
+| ------------------ | --------------------------------------------------------------------------------------------------- |
 | **Test discovery** | Standard `pytest` discovery (`test_*.py` / `*_test.py`).                                            |
 | **Database**       | Each test spins up fresh test collections; no mocks for DB operations.                              |
 | **Naming**         | Test methods use `snake_case`; test classes inherit from sensible base fixtures (`base_test_*.py`). |

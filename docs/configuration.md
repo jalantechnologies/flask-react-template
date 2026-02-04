@@ -14,6 +14,7 @@ In the `config` directory, we maintain environment-specific YAML files to manage
 ## Environment Selection
 
 The configuration schema is loaded based on the `APP_ENV` value provided when starting the server:
+
 ```bash
 APP_ENV=<environment_name>
 ```
