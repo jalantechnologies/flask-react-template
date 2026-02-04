@@ -288,23 +288,107 @@ Workers run in separate Kubernetes deployments from the web application:
 
 ### Environment Configuration
 
-| Environment    | Worker Replicas | Concurrency | Resources           |
-| -------------- | --------------- | ----------- | ------------------- |
-| **Preview**    | 1               | 8           | 200m CPU, 512Mi RAM |
-| **Production** | 3               | 8           | 500m CPU, 1Gi RAM   |
+| Environment    | Worker Replicas | Concurrency | Resources           | Autoscaling |
+| -------------- | --------------- | ----------- | ------------------- | ----------- |
+| **Preview**    | 1               | 8           | 200m CPU, 512Mi RAM | No          |
+| **Production** | 1 (default)     | 8           | 500m CPU, 1Gi RAM   | HPA (1-5)   |
 
-### Scaling Workers
+### Autoscaling (HPA)
 
-Workers can be scaled independently from web pods:
+Production workers use **Horizontal Pod Autoscaler (HPA)** to automatically scale based on CPU utilization:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HPA Scaling Behavior                         │
+│                                                                 │
+│  Idle          Light Load      Medium Load      Heavy Load      │
+│  1 pod    →    1 pod      →    2-3 pods    →    4-5 pods       │
+│                                                                 │
+│  CPU < 70%     CPU < 70%       CPU > 70%        CPU > 70%      │
+│                                 (scale up)      (max reached)   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**HPA Configuration:**
+
+| Parameter          | Value | Description                              |
+| ------------------ | ----- | ---------------------------------------- |
+| `minReplicas`      | 1     | Cost saving during idle periods          |
+| `maxReplicas`      | 5     | Maximum pods for high load               |
+| `targetCPU`        | 70%   | Scale up when CPU exceeds this threshold |
+| `scaleUpWindow`    | 30s   | React quickly to load increases          |
+| `scaleDownWindow`  | 300s  | Wait 5 min before scaling down           |
+
+**How it works with DigitalOcean Cluster Autoscaler:**
+
+1. **Load increases** → HPA adds worker pods
+2. **Pods can't be scheduled** → DO Cluster Autoscaler adds nodes
+3. **Load decreases** → HPA removes worker pods (after 5 min)
+4. **Nodes underutilized** → DO Cluster Autoscaler removes nodes
+
+**Monitoring HPA:**
 
 ```bash
-# Preview environment
+# Watch HPA status in real-time
+kubectl get hpa -n flask-react-template-production -w
+
+# Check HPA events and scaling decisions
+kubectl describe hpa flask-react-template-production-worker-hpa \
+  -n flask-react-template-production
+
+# View current metrics
+kubectl top pods -n flask-react-template-production
+```
+
+**Expected scaling behavior:**
+
+| Scenario                      | Replicas | Trigger                    |
+| ----------------------------- | -------- | -------------------------- |
+| Idle (template default)       | 1        | Health check every 10 min  |
+| Light load (5-10 tasks/min)   | 1        | Single replica handles it  |
+| Medium load (20-30 concurrent)| 2-3      | CPU exceeds 70%            |
+| Heavy load (50+ concurrent)   | 4-5      | Scales to max              |
+| Load drops                    | Gradual  | Waits 5 min, -1 pod/min    |
+
+### Manual Scaling
+
+For testing or temporary overrides, workers can be scaled manually:
+
+```bash
+# Preview environment (no HPA)
 kubectl scale deployment flask-react-template-preview-worker-deployment \
   --replicas=5 -n flask-react-template-preview
 
-# Production environment
+# Production environment (overrides HPA temporarily)
 kubectl scale deployment flask-react-template-production-worker-deployment \
   --replicas=10 -n flask-react-template-production
+```
+
+> **Note:** Manual scaling in production is temporary. HPA will eventually adjust replicas back to match the target CPU utilization.
+
+### Tuning HPA for Production Applications
+
+When using this template for production applications, consider adjusting HPA settings:
+
+| App Type              | Recommended Changes                                |
+| --------------------- | -------------------------------------------------- |
+| **Low traffic API**   | Keep defaults (min:1, max:5, 70%)                  |
+| **E-commerce**        | Increase max to 10, lower target to 60%            |
+| **Data processing**   | Consider KEDA with queue-based scaling             |
+| **High traffic**      | Increase max, separate Beat to own deployment      |
+
+Edit `lib/kube/production/worker-hpa.yaml` to adjust settings:
+
+```yaml
+spec:
+  minReplicas: 2      # Higher minimum for availability
+  maxReplicas: 10     # Higher maximum for traffic spikes
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          averageUtilization: 60  # Lower threshold for faster scaling
 ```
 
 ### Resource Monitoring
