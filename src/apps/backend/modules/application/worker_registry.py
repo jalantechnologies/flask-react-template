@@ -24,11 +24,7 @@ class WorkerRegistry:
 
                 # Find all Worker subclasses in this module
                 for name, obj in inspect.getmembers(module, inspect.isclass):
-                    if (
-                        issubclass(obj, Worker)
-                        and obj is not Worker
-                        and obj.__module__ == modname
-                    ):
+                    if issubclass(obj, Worker) and obj is not Worker and obj.__module__ == modname:
                         workers.append(obj)
 
                         # Register cron schedule if defined

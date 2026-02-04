@@ -4,7 +4,7 @@ import jwt
 
 from modules.account.types import Account
 from modules.authentication.errors import AccessTokenExpiredError, AccessTokenInvalidError, OTPIncorrectError
-from modules.authentication.types import AccessToken, AccessTokenPayload, OTP, OTPStatus
+from modules.authentication.types import OTP, AccessToken, AccessTokenPayload, OTPStatus
 from modules.config.config_service import ConfigService
 
 

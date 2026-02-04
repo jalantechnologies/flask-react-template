@@ -1,5 +1,5 @@
 from celery import Celery
-from celery.signals import worker_ready, beat_init
+from celery.signals import beat_init, worker_ready
 
 from modules.config.config_service import ConfigService
 
@@ -26,18 +26,9 @@ app.conf.update(
     # Define task queues with priority levels
     # Workers will process higher priority queues first
     task_queues={
-        "critical": {
-            "exchange": "critical",
-            "routing_key": "critical",
-        },
-        "default": {
-            "exchange": "default",
-            "routing_key": "default",
-        },
-        "low": {
-            "exchange": "low",
-            "routing_key": "low",
-        },
+        "critical": {"exchange": "critical", "routing_key": "critical"},
+        "default": {"exchange": "default", "routing_key": "default"},
+        "low": {"exchange": "low", "routing_key": "low"},
     },
     task_default_queue="default",
     task_default_exchange="default",
@@ -49,11 +40,7 @@ app.conf.update(
 app.conf.beat_schedule = {}
 
 # Auto-discover tasks from all modules
-app.autodiscover_tasks(
-    [
-        "modules.application.workers",
-    ]
-)
+app.autodiscover_tasks(["modules.application.workers"])
 
 
 def initialize_workers() -> None:

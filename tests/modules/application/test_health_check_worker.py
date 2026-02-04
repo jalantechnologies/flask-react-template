@@ -13,14 +13,9 @@ class TestGivenBackendIsRunning:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.info")
         def test_then_logs_healthy_status(
-            self,
-            mock_logger_info: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_info: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_requests_get.return_value = mock_response
@@ -35,14 +30,9 @@ class TestGivenBackendIsRunning:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.error")
         def test_then_logs_unhealthy_status_with_code(
-            self,
-            mock_logger_error: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_response = MagicMock()
             mock_response.status_code = 500
             mock_requests_get.return_value = mock_response
@@ -57,14 +47,9 @@ class TestGivenBackendIsRunning:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.error")
         def test_then_logs_unhealthy_status_with_code(
-            self,
-            mock_logger_error: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_response = MagicMock()
             mock_response.status_code = 404
             mock_requests_get.return_value = mock_response
@@ -81,14 +66,9 @@ class TestGivenBackendIsUnreachable:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.error")
         def test_then_logs_timeout_error(
-            self,
-            mock_logger_error: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_requests_get.side_effect = requests.Timeout("Connection timed out")
 
             HealthCheckWorker.perform()
@@ -104,14 +84,9 @@ class TestGivenBackendIsUnreachable:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.error")
         def test_then_logs_connection_error(
-            self,
-            mock_logger_error: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_requests_get.side_effect = requests.ConnectionError("Connection refused")
 
             HealthCheckWorker.perform()
@@ -127,14 +102,9 @@ class TestGivenBackendIsUnreachable:
         @patch("modules.application.workers.health_check_worker.requests.get")
         @patch("modules.application.workers.health_check_worker.Logger.error")
         def test_then_logs_generic_error(
-            self,
-            mock_logger_error: MagicMock,
-            mock_requests_get: MagicMock,
-            mock_config_service: MagicMock,
+            self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = (
-                TEST_HEALTH_CHECK_URL
-            )
+            mock_config_service.__getitem__.return_value.get_value.return_value = TEST_HEALTH_CHECK_URL
             mock_requests_get.side_effect = Exception("Unexpected error")
 
             HealthCheckWorker.perform()

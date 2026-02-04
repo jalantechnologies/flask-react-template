@@ -41,6 +41,9 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Check code formatting
+        run: npm run fmt:check
+
   sonarqube:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
