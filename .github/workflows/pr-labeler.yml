@@ -1,0 +1,88 @@
+name: pr-labeler
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR based on title prefix
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const prNumber = context.payload.pull_request.number;
+
+            // Define label mappings based on PR title prefix
+            const labelMappings = [
+              { pattern: /^feat!:/i, typeLabel: 'type: feat', semverLabel: 'semver: major' },
+              { pattern: /^fix!:/i, typeLabel: 'type: fix', semverLabel: 'semver: major' },
+              { pattern: /^feat:/i, typeLabel: 'type: feat', semverLabel: 'semver: minor' },
+              { pattern: /^fix:/i, typeLabel: 'type: fix', semverLabel: 'semver: patch' },
+              { pattern: /^perf:/i, typeLabel: 'type: perf', semverLabel: 'semver: patch' },
+              { pattern: /^docs:/i, typeLabel: 'type: docs', semverLabel: null },
+              { pattern: /^style:/i, typeLabel: 'type: style', semverLabel: null },
+              { pattern: /^refactor:/i, typeLabel: 'type: refactor', semverLabel: null },
+              { pattern: /^test:/i, typeLabel: 'type: test', semverLabel: null },
+              { pattern: /^chore:/i, typeLabel: 'type: chore', semverLabel: null },
+              { pattern: /^ci:/i, typeLabel: 'type: ci', semverLabel: null },
+            ];
+
+            // Find matching prefix
+            const match = labelMappings.find(mapping => mapping.pattern.test(title));
+
+            if (!match) {
+              console.log('No matching prefix found in PR title');
+              return;
+            }
+
+            const labelsToAdd = [match.typeLabel];
+            if (match.semverLabel) {
+              labelsToAdd.push(match.semverLabel);
+            }
+
+            // Get existing labels on the PR
+            const { data: existingLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existingLabelNames = existingLabels.map(label => label.name);
+
+            // Remove old type and semver labels if they differ
+            const typeLabels = ['type: feat', 'type: fix', 'type: perf', 'type: docs', 'type: style', 'type: refactor', 'type: test', 'type: chore', 'type: ci'];
+            const semverLabels = ['semver: major', 'semver: minor', 'semver: patch'];
+
+            for (const label of existingLabelNames) {
+              if ((typeLabels.includes(label) && label !== match.typeLabel) ||
+                  (semverLabels.includes(label) && label !== match.semverLabel)) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label,
+                });
+                console.log(`Removed label: ${label}`);
+              }
+            }
+
+            // Add new labels
+            const labelsToApply = labelsToAdd.filter(label => !existingLabelNames.includes(label));
+            if (labelsToApply.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: labelsToApply,
+              });
+              console.log(`Added labels: ${labelsToApply.join(', ')}`);
+            }
+
+            console.log(`PR #${prNumber} labeled with: ${labelsToAdd.join(', ')}`);
