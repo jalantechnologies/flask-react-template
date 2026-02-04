@@ -15,8 +15,8 @@ run-format:
 
 run-format-check:
 	cd src/apps/backend \
-		&& pipenv run isort . --check-only --diff \
-		&& pipenv run black . --check --diff
+		&& pipenv run isort --check-only --diff . \
+		&& pipenv run black --check --diff .
 
 run-format-tests:
 	cd tests \
