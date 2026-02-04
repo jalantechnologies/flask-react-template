@@ -10,7 +10,6 @@ class CustomEnvConfig:
     FILENAME: str = "custom-environment-variables.yml"
     SECRETS_DIR: str = "/opt/app/secrets"
 
-
     @staticmethod
     def load() -> Config:
         custom_env_config = ConfigUtil.read_yml_from_config_dir(CustomEnvConfig.FILENAME)
@@ -32,7 +31,7 @@ class CustomEnvConfig:
                 result = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
                 if result is not None:
                     updated_data[key] = result
-                    
+
                 result = CustomEnvConfig._search_and_get_str_value_from_env(value)
                 if result is not None:
                     updated_data[key] = result

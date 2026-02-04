@@ -3,6 +3,7 @@
 > A **module** is a self-contained package of related functionality in our backend codebase. It encapsulates one domain concept (e.g., accounts, orders, payments) and exposes a clear interface for other parts of the system.
 
 This document covers:
+
 1. **Why** we structure code into modules and the benefits of our layout.
 2. **What** each folder and file in a module does.
 3. A **diagram** that shows how the layers interact at runtime.
@@ -93,9 +94,9 @@ account/
 
 ### 4.1 `account_service.py`
 
-- **Role**  
+- **Role**
   - Exposes module‐wide operations as static methods, e.g. `create_account_by_username_and_password`, `reset_account_password`, `get_account_by_id`, `update_account_profile`, plus wiring into **AuthenticationService** (for OTP/password) and **NotificationService** (for preferences).
-- **Imports**  
+- **Imports**
   ```python
   from modules.account.internal.account_reader import AccountReader
   from modules.account.internal.account_writer import AccountWriter
@@ -109,7 +110,7 @@ account/
   from modules.authentication.authentication_service import AuthenticationService
   from modules.notification.notification_service import NotificationService
   ```
-- **Example call**  
+- **Example call**
   ```python
   AccountService.create_account_by_username_and_password(
       params=CreateAccountByUsernameAndPasswordParams(username="alice", password="secret")
@@ -122,17 +123,17 @@ account/
 
 ### 5.1 `account_model.py`
 
-- A `@dataclass` extending `BaseModel`  
-- Defines all Mongo fields (e.g. `first_name`, `hashed_password`, `phone_number`, `username`, `active`, `created_at`, `updated_at`)  
-- `@staticmethod from_bson()` to validate & hydrate a model from raw BSON  
+- A `@dataclass` extending `BaseModel`
+- Defines all Mongo fields (e.g. `first_name`, `hashed_password`, `phone_number`, `username`, `active`, `created_at`, `updated_at`)
+- `@staticmethod from_bson()` to validate & hydrate a model from raw BSON
 - `@staticmethod get_collection_name()` returns `"accounts"`
 
 ### 5.2 `account_repository.py`
 
-- `class AccountRepository(ApplicationRepository)`  
+- `class AccountRepository(ApplicationRepository)`
 - Provides:
   - `collection()` — the Mongo `Collection` object
-  - `on_init_collection()` — sets up JSON-Schema validation (via `create_collection`) and any indexes  
+  - `on_init_collection()` — sets up JSON-Schema validation (via `create_collection`) and any indexes
 - Central place for low-level DB concerns
 
 ---
@@ -141,23 +142,23 @@ account/
 
 ### 6.1 `account_reader.py`
 
-- `class AccountReader:`  
-  - High-level **read** methods, e.g.  
-    - `get_account_by_id(params: AccountSearchByIdParams) -> Account`  
-    - `get_account_by_phone_number(phone_number: PhoneNumber) -> Account`  
-    - `get_account_by_username_and_password(params: AccountSearchParams) -> Account`  
+- `class AccountReader:`
+  - High-level **read** methods, e.g.
+    - `get_account_by_id(params: AccountSearchByIdParams) -> Account`
+    - `get_account_by_phone_number(phone_number: PhoneNumber) -> Account`
+    - `get_account_by_username_and_password(params: AccountSearchParams) -> Account`
   - Uses `AccountRepository.collection().find_one(...)`
   - Converts raw BSON → domain via `AccountUtil.convert_account_bson_to_account()`
   - Raises module-specific exceptions if not found or duplicates
 
 ### 6.2 `account_writer.py`
 
-- `class AccountWriter:`  
-  - High-level **write** methods, e.g.  
-    - `create_account_by_username_and_password(params: CreateAccountByUsernameAndPasswordParams) -> Account`  
-    - `create_or_update_account_notification_preferences(...) -> AccountNotificationPreferences`  
-    - `update_account_profile(account_id: str, params: UpdateAccountProfileParams) -> Account`  
-    - `reset_account_password(params: ResetPasswordParams) -> Account`  
+- `class AccountWriter:`
+  - High-level **write** methods, e.g.
+    - `create_account_by_username_and_password(params: CreateAccountByUsernameAndPasswordParams) -> Account`
+    - `create_or_update_account_notification_preferences(...) -> AccountNotificationPreferences`
+    - `update_account_profile(account_id: str, params: UpdateAccountProfileParams) -> Account`
+    - `reset_account_password(params: ResetPasswordParams) -> Account`
   - Handles:
     - Phone-number validation via `phonenumbers.parse` & `is_valid_number`
     - Password hashing via `AccountUtil.hash_password()`
@@ -166,9 +167,9 @@ account/
 
 ### 6.3 `account_util.py`
 
-- `class AccountUtil:`  
-  - `hash_password(password: str) -> str`  
-  - `compare_password(password: str, hashed_password: str) -> bool`  
+- `class AccountUtil:`
+  - `hash_password(password: str) -> str`
+  - `compare_password(password: str, hashed_password: str) -> bool`
   - `convert_account_bson_to_account(bson: dict) -> Account` (uses `AccountModel.from_bson`)
 
 ---
@@ -178,6 +179,7 @@ account/
 ### 7.1 `types.py`
 
 All of the data transfer objects (DTOs) are `@dataclass`es, for instance:
+
 ```python
 @dataclass(frozen=True)
 class CreateAccountByUsernameAndPasswordParams:
@@ -193,16 +195,19 @@ class Account:
     phone_number: PhoneNumber
     hashed_password: str
 ```
+
 Clients import these for type safety.
 
 ### 7.2 `errors.py`
 
 Custom `AppError` subclasses, e.g.:
+
 ```python
 class AccountWithUserNameExistsError(AppError): ...
 class AccountWithPhoneNumberNotFoundError(AppError): ...
 class AccountNotFoundError(AppError): ...
 ```
+
 Each carries its own HTTP status code and error code from `AccountErrorCode` in `types.py`.
 
 ---
@@ -212,6 +217,7 @@ Each carries its own HTTP status code and error code from `AccountErrorCode` in 
 ### 8.1 `account_rest_api_server.py`
 
 Bootstraps a Flask `Blueprint`:
+
 ```python
 def create() -> Blueprint:
     bp = Blueprint("account", __name__)
@@ -221,6 +227,7 @@ def create() -> Blueprint:
 ### 8.2 `account_router.py`
 
 Registers URL rules on the Blueprint:
+
 ```python
 blueprint.add_url_rule("/accounts", view_func=AccountView.as_view("accounts"))
 blueprint.add_url_rule("/accounts/<id>", view_func=AccountView.as_view("accounts_by_id"), methods=["GET", "PATCH"])
@@ -234,6 +241,7 @@ blueprint.add_url_rule(
 ### 8.3 `account_view.py`
 
 `class AccountView(MethodView):`
+
 - Uses `flask.request` to parse JSON
 - Marshals params into dataclasses (e.g. `CreateAccountByPhoneNumberParams(**request.json)`)
 - Calls `AccountService.*`

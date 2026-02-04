@@ -22,10 +22,7 @@ class HealthCheckWorker(Worker):
 
     @classmethod
     def perform(cls, *args: Any, **kwargs: Any) -> None:
-        health_check_url = ConfigService[str].get_value(
-            "worker.health_check_url",
-            default="http://localhost:8080/api/",
-        )
+        health_check_url = ConfigService[str].get_value("worker.health_check_url", default="http://localhost:8080/api/")
 
         try:
             res = requests.get(health_check_url, timeout=3)

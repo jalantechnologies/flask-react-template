@@ -43,15 +43,15 @@ Use the npm helper:
 npm run script --file=sample_script
 ```
 
-* This bootstraps the Flask context so application settings and database models are available.  
-* Omit the `.py` extension in `--file=`.  
+- This bootstraps the Flask context so application settings and database models are available.
+- Omit the `.py` extension in `--file=`.
 
 ---
 
 ## Typical Use-Cases
 
 | Use-Case              | Example                                         |
-|-----------------------|-------------------------------------------------|
+| --------------------- | ----------------------------------------------- |
 | Data backfill         | Re-compute a derived column for historical rows |
 | Maintenance / cleanup | Remove orphaned documents, trim log tables      |
 | Cron-style jobs       | Generate weekly reports, send summary emails    |

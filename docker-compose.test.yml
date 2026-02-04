@@ -11,7 +11,7 @@ services:
       MONGODB_URI: 'mongodb://app-db:27017/flask-react-template-test'
       CELERY_BROKER_URL: 'redis://redis:6379/1'
       CELERY_RESULT_BACKEND: 'redis://redis:6379/1'
-    command: "npm run test"
+    command: 'npm run test'
     depends_on:
       app-db:
         condition: service_started
@@ -32,8 +32,6 @@ services:
     ports:
       - '6379:6379'
     command: redis-server
-
-
 
 # Define named volume for test output
 volumes:

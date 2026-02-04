@@ -7,7 +7,7 @@ metadata:
   name: default-deny-ingress
   namespace: $KUBE_NS
 spec:
-  podSelector: {}  # Apply to all pods
+  podSelector: {} # Apply to all pods
   policyTypes:
     - Ingress
 
@@ -20,7 +20,7 @@ metadata:
   name: default-deny-egress
   namespace: $KUBE_NS
 spec:
-  podSelector: {}  # Apply to all pods
+  podSelector: {} # Apply to all pods
   policyTypes:
     - Egress
 
@@ -46,12 +46,12 @@ spec:
       ports:
         - protocol: UDP
           port: 53
-    
+
     # Allow HTTPS calls to external APIs
     - ports:
         - protocol: TCP
           port: 443
-    
+
     # Allow MongoDB database connections
     - ports:
         - protocol: TCP
@@ -101,7 +101,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      redis: "true"
+      redis: 'true'
   policyTypes:
     - Ingress
   ingress:
@@ -123,7 +123,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      acme.cert-manager.io/http01-solver: "true"
+      acme.cert-manager.io/http01-solver: 'true'
   policyTypes:
     - Ingress
     - Egress
@@ -145,4 +145,3 @@ spec:
       ports:
         - protocol: UDP
           port: 53
-

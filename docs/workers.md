@@ -25,7 +25,7 @@ Workers run independently from the web server, allowing:
 The worker system consists of several components:
 
 - **Celery Workers**: Process background jobs from Redis queues
-- **Celery Beat**: Scheduler for recurring tasks (cron jobs) 
+- **Celery Beat**: Scheduler for recurring tasks (cron jobs)
 - **Redis**: Message broker for job queues and result storage
 - **Flower**: Web-based monitoring dashboard for workers and tasks
 
@@ -54,12 +54,12 @@ class MyBackgroundWorker(Worker):
     retry_backoff = True                # Use exponential backoff
     retry_backoff_max = 600             # Max 10 minutes between retries
     cron_schedule = "0 2 * * *"         # Optional: run daily at 2 AM
-    
+
     @classmethod
     def perform(cls, user_id: int, data: dict) -> None:
         """
         Main job logic. This method is called when the job executes.
-        
+
         Args:
             user_id: ID of the user to process
             data: Additional data for processing
@@ -76,13 +76,13 @@ class MyBackgroundWorker(Worker):
 
 ### Worker Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `queue` | `str` | `"default"` | Queue name for job routing |
-| `max_retries` | `int` | `3` | Maximum retry attempts for failed jobs |
-| `retry_backoff` | `bool` | `True` | Use exponential backoff between retries |
-| `retry_backoff_max` | `int` | `600` | Maximum seconds between retries |
-| `cron_schedule` | `str` | `None` | Cron expression for recurring jobs |
+| Option              | Type   | Default     | Description                             |
+| ------------------- | ------ | ----------- | --------------------------------------- |
+| `queue`             | `str`  | `"default"` | Queue name for job routing              |
+| `max_retries`       | `int`  | `3`         | Maximum retry attempts for failed jobs  |
+| `retry_backoff`     | `bool` | `True`      | Use exponential backoff between retries |
+| `retry_backoff_max` | `int`  | `600`       | Maximum seconds between retries         |
+| `cron_schedule`     | `str`  | `None`      | Cron expression for recurring jobs      |
 
 ### Cron Schedule Format
 
@@ -123,7 +123,7 @@ result = MyBackgroundWorker.perform_at(run_time, user_id=123, data={"key": "valu
 # Schedule job with delay
 result = MyBackgroundWorker.perform_in(
     delay_seconds=300,  # 5 minutes
-    user_id=123, 
+    user_id=123,
     data={"key": "value"}
 )
 ```
@@ -159,6 +159,7 @@ WorkerRegistry.initialize()
 ```
 
 The registry:
+
 - Scans `modules.application.workers/` for Worker subclasses
 - Registers Celery tasks for each worker
 - Sets up cron schedules for workers with `cron_schedule` defined
@@ -169,11 +170,13 @@ The registry:
 ### Local Development Setup
 
 1. **Start Redis** (required for job queues):
+
    ```bash
    redis-server
    ```
 
 2. **Start all services** (recommended):
+
    ```bash
    npm run serve  # Starts backend, frontend, workers, beat, and flower
    ```
@@ -215,6 +218,7 @@ Without `preload_app`, each of the worker processes would run bootstrap tasks in
 #### Flower Dashboard
 
 Access at http://localhost:5555 for:
+
 - Active workers and their status
 - Job queue lengths and processing rates
 - Individual job details and results
@@ -284,10 +288,10 @@ Workers run in separate Kubernetes deployments from the web application:
 
 ### Environment Configuration
 
-| Environment | Worker Replicas | Concurrency | Resources |
-|-------------|----------------|-------------|-----------|
-| **Preview** | 1 | 8 | 200m CPU, 512Mi RAM |
-| **Production** | 3 | 8 | 500m CPU, 1Gi RAM |
+| Environment    | Worker Replicas | Concurrency | Resources           |
+| -------------- | --------------- | ----------- | ------------------- |
+| **Preview**    | 1               | 8           | 200m CPU, 512Mi RAM |
+| **Production** | 3               | 8           | 500m CPU, 1Gi RAM   |
 
 ### Scaling Workers
 
@@ -298,7 +302,7 @@ Workers can be scaled independently from web pods:
 kubectl scale deployment flask-react-template-preview-worker-deployment \
   --replicas=5 -n flask-react-template-preview
 
-# Production environment  
+# Production environment
 kubectl scale deployment flask-react-template-production-worker-deployment \
   --replicas=10 -n flask-react-template-production
 ```
@@ -324,9 +328,9 @@ kubectl exec -it deployment/flask-react-template-production-redis-deployment \
 
 ### Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `CELERY_BROKER_URL` | Redis connection for job queues | `redis://localhost:6379/0` |
+| Variable                | Description                      | Example                    |
+| ----------------------- | -------------------------------- | -------------------------- |
+| `CELERY_BROKER_URL`     | Redis connection for job queues  | `redis://localhost:6379/0` |
 | `CELERY_RESULT_BACKEND` | Redis connection for job results | `redis://localhost:6379/0` |
 
 ### Queue Configuration
@@ -336,7 +340,7 @@ Queues are automatically configured in `celery_app.py`:
 ```python
 task_queues = {
     "critical": {"exchange": "critical", "routing_key": "critical"},
-    "default": {"exchange": "default", "routing_key": "default"}, 
+    "default": {"exchange": "default", "routing_key": "default"},
     "low": {"exchange": "low", "routing_key": "low"},
 }
 ```
@@ -359,7 +363,7 @@ class HealthCheckWorker(Worker):
     queue = "default"
     max_retries = 1
     cron_schedule = "*/10 * * * *"  # Every 10 minutes
-    
+
     @classmethod
     def perform(cls, *args: Any, **kwargs: Any) -> None:
         # URL is configurable via HEALTH_CHECK_URL env var or config
@@ -367,7 +371,7 @@ class HealthCheckWorker(Worker):
             "worker.health_check_url",
             default="http://localhost:8080/api/",
         )
-        
+
         try:
             res = requests.get(health_check_url, timeout=3)
             if res.status_code == 200:
@@ -379,6 +383,7 @@ class HealthCheckWorker(Worker):
 ```
 
 Usage:
+
 ```python
 # Manual execution
 HealthCheckWorker.perform_async()
@@ -400,11 +405,11 @@ from modules.logger.logger import Logger
 class DataProcessingWorker(Worker):
     queue = "default"
     max_retries = 3
-    
+
     @classmethod
     def perform(cls, user_id: int, processing_options: Dict[str, Any]) -> Dict[str, Any]:
         Logger.info(message=f"Starting data processing for user {user_id}")
-        
+
         try:
             # Simulate data processing
             processed_data = {
@@ -413,16 +418,17 @@ class DataProcessingWorker(Worker):
                 "processed_at": "2024-01-01T00:00:00Z",
                 "options": processing_options
             }
-            
+
             Logger.info(message=f"Data processing completed for user {user_id}")
             return processed_data
-            
+
         except Exception as e:
             Logger.error(message=f"Data processing failed for user {user_id}: {e}")
             raise
 ```
 
 Usage:
+
 ```python
 # Queue processing job
 result = DataProcessingWorker.perform_async(
@@ -472,10 +478,10 @@ class IdempotentWorker(Worker):
         if is_already_processed(record_id):
             Logger.info(message=f"Record {record_id} already processed, skipping")
             return
-            
+
         # Process record
         process_record(record_id)
-        
+
         # Mark as processed
         mark_as_processed(record_id)
 ```
@@ -493,7 +499,7 @@ class ResourceAwareWorker(Worker):
         for i in range(0, len(large_dataset), chunk_size):
             chunk = large_dataset[i:i + chunk_size]
             process_chunk(chunk)
-            
+
             # Optional: yield control between chunks
             import time
             time.sleep(0.1)
@@ -512,7 +518,7 @@ class TestMyWorker:
         # Test successful execution
         result = MyWorker.perform(test_data="valid")
         assert result["status"] == "success"
-    
+
     def test_perform_failure(self):
         # Test error handling
         with pytest.raises(ValueError):
@@ -639,26 +645,31 @@ result = job.apply_async()
 ### Common Issues
 
 **Workers not starting:**
+
 - Check Redis connection
 - Verify `CELERY_BROKER_URL` environment variable
 - Check worker logs for import errors
 
 **Jobs not executing:**
+
 - Verify worker is consuming from correct queue
 - Check Flower dashboard for worker status
 - Inspect Redis queues for pending jobs
 
 **High memory usage:**
+
 - Reduce worker concurrency
 - Process data in smaller chunks
 - Check for memory leaks in job logic
 
 **Jobs timing out:**
+
 - Increase `task_time_limit` in celery_app.py
 - Break large jobs into smaller tasks
 - Use `perform_in()` for delayed processing
 
 **Cron Jobs Not Running:**
+
 1. Verify beat scheduler is running:
    ```bash
    celery -A celery_app inspect scheduled

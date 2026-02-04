@@ -8,8 +8,8 @@ metadata:
     app: $KUBE_APP-cronjob
     version: $GITHUB_SHA
 spec:
-  schedule: "10 * * * *"
-  concurrencyPolicy: "Replace"
+  schedule: '10 * * * *'
+  concurrencyPolicy: 'Replace'
   suspend: true
   jobTemplate:
     spec:
@@ -58,13 +58,6 @@ spec:
                   mountPath: /opt/app/tmp
                 - name: secret-ref
                   mountPath: /opt/app/secrets
-              securityContext:
-                allowPrivilegeEscalation: false
-                readOnlyRootFilesystem: true
-                runAsNonRoot: true
-                capabilities:
-                  drop:
-                    - ALL
           volumes:
             - name: tmp
               emptyDir: {}
@@ -72,5 +65,3 @@ spec:
               secret:
                 secretName: $DOPPLER_MANAGED_SECRET_NAME
           restartPolicy: OnFailure
-
-

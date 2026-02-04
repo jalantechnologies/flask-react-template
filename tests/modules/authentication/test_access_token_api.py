@@ -10,10 +10,10 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
 )
-from modules.notification.notification_service import NotificationService
-from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPErrorCode, VerifyOTPParams
+from modules.notification.notification_service import NotificationService
+from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 API_URL = "http://127.0.0.1:8080/api/access-tokens"

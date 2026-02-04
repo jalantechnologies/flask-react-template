@@ -7,8 +7,8 @@ on:
 
 # Ensures permanent preview deployment has minimal read-only permissions for security
 permissions:
-  contents: read   # Read-only access to repo contents for safer workflows
-  id-token: write  # Allow OIDC tokens for secure cloud authentication
+  contents: read # Read-only access to repo contents for safer workflows
+  id-token: write # Allow OIDC tokens for secure cloud authentication
 
 jobs:
   deploy:

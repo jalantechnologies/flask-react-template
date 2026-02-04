@@ -45,11 +45,11 @@ spec:
               pipenv run celery -A celery_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
           env:
             - name: APP_ENV
-              value: "production"
+              value: 'production'
             - name: CELERY_BROKER_URL
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
             - name: CELERY_RESULT_BACKEND
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -107,11 +107,11 @@ spec:
               pipenv run celery -A celery_app beat --loglevel=info
           env:
             - name: APP_ENV
-              value: "production"
+              value: 'production'
             - name: CELERY_BROKER_URL
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
             - name: CELERY_RESULT_BACKEND
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -167,11 +167,11 @@ spec:
               pipenv run celery -A celery_app flower --port=5555
           env:
             - name: APP_ENV
-              value: "production"
+              value: 'production'
             - name: CELERY_BROKER_URL
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
             - name: CELERY_RESULT_BACKEND
-              value: "redis://$KUBE_APP-redis:6379/0"
+              value: 'redis://$KUBE_APP-redis:6379/0'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -254,7 +254,7 @@ spec:
     metadata:
       labels:
         app: $KUBE_APP-redis
-        redis: "true"
+        redis: 'true'
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -292,11 +292,11 @@ spec:
           command:
             - redis-server
             - --appendonly
-            - "yes"
+            - 'yes'
             - --maxmemory
-            - "512mb"
+            - '512mb'
             - --maxmemory-policy
-            - "allkeys-lru"
+            - 'allkeys-lru'
           livenessProbe:
             exec:
               command:
