@@ -311,13 +311,13 @@ Production workers use **Horizontal Pod Autoscaler (HPA)** to automatically scal
 
 **HPA Configuration:**
 
-| Parameter          | Value | Description                              |
-| ------------------ | ----- | ---------------------------------------- |
-| `minReplicas`      | 1     | Cost saving during idle periods          |
-| `maxReplicas`      | 5     | Maximum pods for high load               |
-| `targetCPU`        | 70%   | Scale up when CPU exceeds this threshold |
-| `scaleUpWindow`    | 30s   | React quickly to load increases          |
-| `scaleDownWindow`  | 300s  | Wait 5 min before scaling down           |
+| Parameter         | Value | Description                              |
+| ----------------- | ----- | ---------------------------------------- |
+| `minReplicas`     | 1     | Cost saving during idle periods          |
+| `maxReplicas`     | 5     | Maximum pods for high load               |
+| `targetCPU`       | 70%   | Scale up when CPU exceeds this threshold |
+| `scaleUpWindow`   | 30s   | React quickly to load increases          |
+| `scaleDownWindow` | 300s  | Wait 5 min before scaling down           |
 
 **How it works with DigitalOcean Cluster Autoscaler:**
 
@@ -342,13 +342,13 @@ kubectl top pods -n flask-react-template-production
 
 **Expected scaling behavior:**
 
-| Scenario                      | Replicas | Trigger                    |
-| ----------------------------- | -------- | -------------------------- |
-| Idle (template default)       | 1        | Health check every 10 min  |
-| Light load (5-10 tasks/min)   | 1        | Single replica handles it  |
-| Medium load (20-30 concurrent)| 2-3      | CPU exceeds 70%            |
-| Heavy load (50+ concurrent)   | 4-5      | Scales to max              |
-| Load drops                    | Gradual  | Waits 5 min, -1 pod/min    |
+| Scenario                       | Replicas | Trigger                   |
+| ------------------------------ | -------- | ------------------------- |
+| Idle (template default)        | 1        | Health check every 10 min |
+| Light load (5-10 tasks/min)    | 1        | Single replica handles it |
+| Medium load (20-30 concurrent) | 2-3      | CPU exceeds 70%           |
+| Heavy load (50+ concurrent)    | 4-5      | Scales to max             |
+| Load drops                     | Gradual  | Waits 5 min, -1 pod/min   |
 
 ### Manual Scaling
 
@@ -370,25 +370,25 @@ kubectl scale deployment flask-react-template-production-worker-deployment \
 
 When using this template for production applications, consider adjusting HPA settings:
 
-| App Type              | Recommended Changes                                |
-| --------------------- | -------------------------------------------------- |
-| **Low traffic API**   | Keep defaults (min:1, max:5, 70%)                  |
-| **E-commerce**        | Increase max to 10, lower target to 60%            |
-| **Data processing**   | Consider KEDA with queue-based scaling             |
-| **High traffic**      | Increase max, separate Beat to own deployment      |
+| App Type            | Recommended Changes                           |
+| ------------------- | --------------------------------------------- |
+| **Low traffic API** | Keep defaults (min:1, max:5, 70%)             |
+| **E-commerce**      | Increase max to 10, lower target to 60%       |
+| **Data processing** | Consider KEDA with queue-based scaling        |
+| **High traffic**    | Increase max, separate Beat to own deployment |
 
 Edit `lib/kube/production/worker-hpa.yaml` to adjust settings:
 
 ```yaml
 spec:
-  minReplicas: 2      # Higher minimum for availability
-  maxReplicas: 10     # Higher maximum for traffic spikes
+  minReplicas: 2 # Higher minimum for availability
+  maxReplicas: 10 # Higher maximum for traffic spikes
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
-          averageUtilization: 60  # Lower threshold for faster scaling
+          averageUtilization: 60 # Lower threshold for faster scaling
 ```
 
 ### Resource Monitoring
