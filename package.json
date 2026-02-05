@@ -108,9 +108,10 @@
     "webpack-merge": "^5.8.0"
   },
   "overrides": {
+    "@isaacs/brace-expansion": "5.0.1",
+    "@remix-run/router": "1.23.2",
     "braces": "3.0.3",
     "minimist": "^1.2.8",
-    "nconf": "0.11.4",
-    "@remix-run/router": "1.23.2"
+    "nconf": "0.11.4"
   }
 }
