@@ -311,12 +311,12 @@ Production workers use **Horizontal Pod Autoscaler (HPA)** to automatically scal
 
 **HPA Configuration:**
 
-| Parameter         | Value | Description                              |
-| ----------------- | ----- | ---------------------------------------- |
-| `minReplicas`     | 1     | Cost saving during idle periods          |
-| `maxReplicas`     | 5     | Maximum pods for high load               |
-| `targetCPU`       | 80%   | Scale up when CPU exceeds this threshold |
-| `scaleUpWindow`   | 30s   | React quickly to load increases          |
+| Parameter         | Value | Description                                     |
+| ----------------- | ----- | ----------------------------------------------- |
+| `minReplicas`     | 1     | Cost saving during idle periods                 |
+| `maxReplicas`     | 5     | Maximum pods for high load                      |
+| `targetCPU`       | 80%   | Scale up when CPU exceeds this threshold        |
+| `scaleUpWindow`   | 30s   | React quickly to load increases                 |
 | `scaleDownWindow` | 180s  | Wait 3 min before scaling down (shared cluster) |
 
 **How it works with DigitalOcean Cluster Autoscaler:**
