@@ -304,7 +304,7 @@ Production workers use **Horizontal Pod Autoscaler (HPA)** to automatically scal
 │  Idle          Light Load      Medium Load      Heavy Load      │
 │  1 pod    →    1 pod      →    2-3 pods    →    4-5 pods       │
 │                                                                 │
-│  CPU < 70%     CPU < 70%       CPU > 70%        CPU > 70%      │
+│  CPU < 75%     CPU < 75%       CPU > 75%        CPU > 75%      │
 │                                 (scale up)      (max reached)   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -315,7 +315,7 @@ Production workers use **Horizontal Pod Autoscaler (HPA)** to automatically scal
 | ----------------- | ----- | ---------------------------------------- |
 | `minReplicas`     | 1     | Cost saving during idle periods          |
 | `maxReplicas`     | 5     | Maximum pods for high load               |
-| `targetCPU`       | 70%   | Scale up when CPU exceeds this threshold |
+| `targetCPU`       | 75%   | Scale up when CPU exceeds this threshold |
 | `scaleUpWindow`   | 30s   | React quickly to load increases          |
 | `scaleDownWindow` | 300s  | Wait 5 min before scaling down           |
 
@@ -346,7 +346,7 @@ kubectl top pods -n flask-react-template-production
 | ------------------------------ | -------- | ------------------------- |
 | Idle (template default)        | 1        | Health check every 10 min |
 | Light load (5-10 tasks/min)    | 1        | Single replica handles it |
-| Medium load (20-30 concurrent) | 2-3      | CPU exceeds 70%           |
+| Medium load (20-30 concurrent) | 2-3      | CPU exceeds 75%           |
 | Heavy load (50+ concurrent)    | 4-5      | Scales to max             |
 | Load drops                     | Gradual  | Waits 5 min, -1 pod/min   |
 
@@ -372,7 +372,7 @@ When using this template for production applications, consider adjusting HPA set
 
 | App Type            | Recommended Changes                           |
 | ------------------- | --------------------------------------------- |
-| **Low traffic API** | Keep defaults (min:1, max:5, 70%)             |
+| **Low traffic API** | Keep defaults (min:1, max:5, 75%)             |
 | **E-commerce**      | Increase max to 10, lower target to 60%       |
 | **Data processing** | Consider KEDA with queue-based scaling        |
 | **High traffic**    | Increase max, separate Beat to own deployment |
