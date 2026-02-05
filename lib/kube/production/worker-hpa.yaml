@@ -1,8 +1,8 @@
 # Horizontal Pod Autoscaler for Celery Workers
 #
 # Automatically scales worker pods based on CPU utilization:
-# - Scales up when CPU > 75% (reacts in 30s)
-# - Scales down when CPU < 75% for 5 minutes
+# - Scales up when CPU > 80% (reacts in 30s)
+# - Scales down when CPU < 80% for 3 minutes (faster for shared cluster)
 # - Min 1 replica (cost saving during idle)
 # - Max 5 replicas (handles production load)
 #
@@ -33,7 +33,7 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 75
+          averageUtilization: 80
   behavior:
     # Scale up quickly to handle traffic spikes
     scaleUp:
@@ -42,9 +42,9 @@ spec:
         - type: Pods
           value: 1
           periodSeconds: 30
-    # Scale down slowly to avoid thrashing
+    # Scale down faster to free shared cluster resources
     scaleDown:
-      stabilizationWindowSeconds: 300
+      stabilizationWindowSeconds: 180
       policies:
         - type: Pods
           value: 1
