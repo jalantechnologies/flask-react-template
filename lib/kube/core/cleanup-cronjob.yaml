@@ -40,44 +40,32 @@ spec:
                 capabilities:
                   drop:
                     - ALL
+              # NOTE: This script avoids $VAR references for runtime variables
+              # because the deploy pipeline runs envsubst on all YAML files,
+              # which replaces undefined $VAR patterns with empty strings.
+              # Only $(subshell) syntax is safe from envsubst.
               command:
                 - /bin/bash
                 - -c
                 - |
                   set -e
 
-                  echo "Starting ReplicaSet cleanup for namespace: $NAMESPACE"
+                  echo "Starting ReplicaSet cleanup for namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
+                  echo "Deleting ReplicaSets with 0 replicas older than 7 days"
 
-                  # Calculate cutoff timestamp (7 days ago in seconds since epoch)
-                  NOW=$(date +%s)
-                  SEVEN_DAYS_AGO=$((NOW - 604800))  # 7 days = 604800 seconds
+                  kubectl get replicaset \
+                    -n "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)" \
+                    -o json | \
+                    jq -r '.items[]
+                      | select(.spec.replicas == 0 and .status.replicas == 0)
+                      | select((.metadata.creationTimestamp | fromdateiso8601) < (now - 604800))
+                      | .metadata.name' | \
+                    xargs -r -t -n1 \
+                      kubectl delete replicaset \
+                        --ignore-not-found=true \
+                        -n "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
 
-                  echo "Deleting ReplicaSets older than 7 days (cutoff: $(date -u -d @$SEVEN_DAYS_AGO '+%Y-%m-%d %H:%M:%S'))"
-
-                  # Find and delete old replica sets
-                  DELETED=0
-                  while IFS= read -r rs_name rs_created; do
-                    if [ -n "$rs_name" ]; then
-                      # Convert ISO timestamp to epoch seconds for comparison
-                      rs_timestamp=$(date -d "$rs_created" +%s 2>/dev/null || echo "0")
-
-                      if [ "$rs_timestamp" -lt "$SEVEN_DAYS_AGO" ]; then
-                        echo "Deleting ReplicaSet: $rs_name (created: $rs_created)"
-                        kubectl delete replicaset "$rs_name" -n "$NAMESPACE" --ignore-not-found=true
-                        DELETED=$((DELETED + 1))
-                      fi
-                    fi
-                  done < <(kubectl get replicaset -n "$NAMESPACE" -o json | \
-                    jq -r '.items[] |
-                    select(.spec.replicas == 0 and .status.replicas == 0) |
-                    "\(.metadata.name) \(.metadata.creationTimestamp)"')
-
-                  echo "Cleanup complete. Deleted $DELETED old ReplicaSets."
-              env:
-                - name: NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.namespace
+                  echo "Cleanup complete."
               volumeMounts:
                 - name: sa-token
                   mountPath: /var/run/secrets/kubernetes.io/serviceaccount
