@@ -1,0 +1,51 @@
+# Horizontal Pod Autoscaler for Celery Workers
+#
+# Automatically scales worker pods based on CPU utilization:
+# - Scales up when CPU > 80% (reacts in 30s)
+# - Scales down when CPU < 80% for 3 minutes (faster for shared cluster)
+# - Min 1 replica (cost saving during idle)
+# - Max 5 replicas (handles production load)
+#
+# Works with DigitalOcean Cluster Autoscaler:
+# - HPA scales pods → fewer pods → underutilized nodes
+# - Cluster autoscaler removes underutilized nodes
+# - Result: Cost savings during low traffic periods
+#
+# To monitor: kubectl get hpa -n $KUBE_NS -w
+# To check events: kubectl describe hpa $KUBE_APP-worker-hpa -n $KUBE_NS
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: $KUBE_APP-worker-hpa
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: $KUBE_APP-worker-deployment
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    # Scale up quickly to handle traffic spikes
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30
+    # Scale down faster to free shared cluster resources
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
