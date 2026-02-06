@@ -145,3 +145,31 @@ spec:
       ports:
         - protocol: UDP
           port: 53
+
+---
+# Allow cleanup CronJob to reach the Kubernetes API server
+# The cleanup pod needs to list and delete ReplicaSets via kubectl
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cleanup-egress
+  namespace: $KUBE_NS
+spec:
+  podSelector:
+    matchLabels:
+      app: replicaset-cleanup
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS lookups (needed for kubernetes.default.svc resolution)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow HTTPS to Kubernetes API server
+    - ports:
+        - protocol: TCP
+          port: 443

@@ -1,0 +1,133 @@
+---
+# Cleanup old ReplicaSets to reduce clutter and etcd storage
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: replicaset-cleanup
+  namespace: $KUBE_NS
+spec:
+  # Run every day at 3 AM UTC
+  schedule: '0 3 * * *'
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400 # Delete job after 24 hours
+      template:
+        metadata:
+          labels:
+            app: replicaset-cleanup
+        spec:
+          serviceAccountName: replicaset-cleanup
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: cleanup
+              image: alpine/k8s:1.32.1@sha256:1892fdf41c09ec2b08a334daf352b3a24e79c1138690d035c804f21c8ec7aac6
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
+              # NOTE: This script avoids $VAR references for runtime variables
+              # because the deploy pipeline runs envsubst on all YAML files,
+              # which replaces undefined $VAR patterns with empty strings.
+              # Only $(subshell) syntax is safe from envsubst.
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+
+                  echo "Starting ReplicaSet cleanup for namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
+                  echo "Deleting ReplicaSets with 0 replicas older than 7 days"
+
+                  kubectl get replicaset \
+                    -n "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)" \
+                    -o json | \
+                    jq -r '.items[]
+                      | select(.spec.replicas == 0 and .status.replicas == 0)
+                      | select((.metadata.creationTimestamp | fromdateiso8601) < (now - 604800))
+                      | .metadata.name' | \
+                    xargs -r -t -n1 \
+                      kubectl delete replicaset \
+                        --ignore-not-found=true \
+                        -n "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
+
+                  echo "Cleanup complete."
+              volumeMounts:
+                - name: sa-token
+                  mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+          volumes:
+            - name: sa-token
+              projected:
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      expirationSeconds: 3600
+                  - configMap:
+                      name: kube-root-ca.crt
+                      items:
+                        - key: ca.crt
+                          path: ca.crt
+                  - downwardAPI:
+                      items:
+                        - path: namespace
+                          fieldRef:
+                            fieldPath: metadata.namespace
+
+---
+# ServiceAccount for cleanup job
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: replicaset-cleanup
+  namespace: $KUBE_NS
+automountServiceAccountToken: false
+
+---
+# Role to allow deleting replica sets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: replicaset-cleanup
+  namespace: $KUBE_NS
+rules:
+  - apiGroups: ['apps']
+    resources: ['replicasets']
+    verbs: ['get', 'list', 'delete']
+
+---
+# Bind role to service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: replicaset-cleanup
+  namespace: $KUBE_NS
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: replicaset-cleanup
+subjects:
+  - kind: ServiceAccount
+    name: replicaset-cleanup
+    namespace: $KUBE_NS
