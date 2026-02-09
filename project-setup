@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-import json
-import subprocess
 import glob
+import json
+import os
 import re
-import shutil
+import subprocess
+import sys
+import time
 
 DRY_RUN = False
 
-def run_command(cmd, check=True, silent=False, use_shell=True):
+def run_command(cmd, check=True, silent=False, use_shell=False):
     """Run command with proper error handling"""
     if DRY_RUN:
         # Format command for display
@@ -74,8 +74,8 @@ def validate_project_name(project_name):
     return True, None
 
 def check_requirements():
-    """Check if required tools are available"""
-    tools = {'gh': 'GitHub CLI', 'npm': 'Node.js package manager'}
+    """Check if required tools are available and gh is authenticated"""
+    tools = {'git': 'Git version control', 'gh': 'GitHub CLI', 'npm': 'Node.js package manager'}
     missing = []
     for tool, info in tools.items():
         # Use 'where' on Windows, 'which' on Unix
@@ -86,6 +86,11 @@ def check_requirements():
         print("✗ Missing required tools:")
         for tool, info in missing:
             print(f"  - {tool}: {info}")
+        sys.exit(1)
+    # Verify GitHub CLI is authenticated
+    auth_result = run_command(['gh', 'auth', 'status'], check=False, silent=True, use_shell=False)
+    if auth_result.returncode != 0:
+        print("✗ GitHub CLI is not authenticated. Run 'gh auth login' to authenticate.")
         sys.exit(1)
 
 def get_replacement_patterns(project_name):
@@ -126,10 +131,10 @@ def update_project_files(project_name):
     print(f"📝 Updating project files...")
     replacements = get_replacement_patterns(project_name)
     files = [
-        'README.md', 'AGENTS.md', 'src/apps/frontend/index.html',
-        'sonar-project.properties', 'docs/secrets.md',
+        'AGENTS.md', 'Dockerfile', 'Makefile', 'README.md',
         'docker-compose.dev.yml', 'docker-compose.test.yml',
-        'Dockerfile', 'Makefile',
+        'docs/secrets.md', 'package-lock.json',
+        'sonar-project.properties', 'src/apps/frontend/index.html',
     ]
     # Add config, workflow, test, and backend files if they exist
     for pattern in ['config/*.yml', '.github/workflows/*.yml', 'tests/**/*.py', 'src/apps/backend/**/*.py']:
@@ -151,7 +156,7 @@ def get_template_repo():
     print("  ✗ Could not detect template repository")
     sys.exit(1)
 
-def create_and_clone_repo(project_name, org=None):
+def create_and_clone_repo(project_name, org=None, is_public=False):
     """Create GitHub repository from template and clone it"""
     parent_dir = os.path.dirname(os.getcwd())
     new_dir = os.path.join(parent_dir, project_name)
@@ -162,8 +167,9 @@ def create_and_clone_repo(project_name, org=None):
     
     repo_name = f"{org}/{project_name}" if org else project_name
     template_repo = get_template_repo()
+    visibility = 'public' if is_public else 'private'
     
-    print(f"🐙 Creating repository from template...")
+    print(f"🐙 Creating {visibility} repository from template...")
     print(f"  Template: {template_repo}")
     print(f"  New repo: {repo_name}")
     
@@ -172,7 +178,8 @@ def create_and_clone_repo(project_name, org=None):
         return f"https://github.com/{repo_name}", new_dir
     
     # Create repo from template (use list format to prevent injection)
-    cmd = ['gh', 'repo', 'create', repo_name, '--template', template_repo, '--public', '--confirm', '--clone=false']
+    visibility_flag = '--public' if is_public else '--private'
+    cmd = ['gh', 'repo', 'create', repo_name, '--template', template_repo, visibility_flag, '--confirm', '--clone=false']
     result = run_command(cmd, check=False, use_shell=False)
     if result.returncode != 0:
         if "already exists" in result.stderr.lower():
@@ -187,12 +194,22 @@ def create_and_clone_repo(project_name, org=None):
     repo_url = url_result.stdout.strip() if url_result.returncode == 0 else f"https://github.com/{repo_name}"
     print(f"  ✓ Repository created: {repo_url}")
     
-    # Clone repo (use list format to prevent injection)
+    # Clone repo with retry (GitHub template generation is async)
     print(f"\n📥 Cloning repository...")
     clone_cmd = ['git', 'clone', repo_url, new_dir]
-    if run_command(clone_cmd, check=False, use_shell=False).returncode != 0:
-        print(f"  ✗ Failed to clone repository")
-        sys.exit(1)
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        clone_result = run_command(clone_cmd, check=False, silent=True, use_shell=False)
+        if clone_result.returncode == 0:
+            break
+        if attempt < max_retries:
+            print(f"  ⏳ Waiting for template generation (attempt {attempt}/{max_retries})...")
+            time.sleep(5)
+        else:
+            print(f"  ✗ Failed to clone repository after {max_retries} attempts")
+            if clone_result.stderr:
+                print(f"  {clone_result.stderr}")
+            sys.exit(1)
     
     print(f"  ✓ Cloned to: {new_dir}")
     return repo_url, new_dir
@@ -205,13 +222,19 @@ def create_branch(branch_name):
     if DRY_RUN:
         print(f"  [DRY RUN] Would run: git checkout -b {branch_name}")
         return True
-    # Set git config if not set
+    # Set git config if not set (only auto-configure in CI to avoid overriding user settings)
     if not run_command(['git', 'config', 'user.name'], check=False, silent=True, use_shell=False).stdout.strip():
-        setup_name = os.environ.get('PROJECT_SETUP_GIT_NAME', 'Project Setup Bot')
-        run_command(['git', 'config', 'user.name', setup_name], check=False, use_shell=False)
+        setup_name = os.environ.get('PROJECT_SETUP_GIT_NAME')
+        if setup_name:
+            run_command(['git', 'config', 'user.name', setup_name], check=False, use_shell=False)
+        else:
+            print("  ⚠ Git user.name is not configured. Set PROJECT_SETUP_GIT_NAME env var or run 'git config user.name' manually.")
     if not run_command(['git', 'config', 'user.email'], check=False, silent=True, use_shell=False).stdout.strip():
-        setup_email = os.environ.get('PROJECT_SETUP_GIT_EMAIL', 'setup@company.com')
-        run_command(['git', 'config', 'user.email', setup_email], check=False, use_shell=False)
+        setup_email = os.environ.get('PROJECT_SETUP_GIT_EMAIL')
+        if setup_email:
+            run_command(['git', 'config', 'user.email', setup_email], check=False, use_shell=False)
+        else:
+            print("  ⚠ Git user.email is not configured. Set PROJECT_SETUP_GIT_EMAIL env var or run 'git config user.email' manually.")
     result = run_command(['git', 'checkout', '-b', branch_name], check=False, use_shell=False)
     if result.returncode == 0:
         print(f"  ✓ Branch created")
@@ -251,9 +274,8 @@ def commit_and_push(project_name, branch_name, repo_url):
     
     # Create PR (only check base branch when creating PR)
     print(f"📝 Creating pull request...")
-    base_check = run_command(['git', 'ls-remote', '--heads', 'origin', 'main'], check=False, use_shell=False)
-    base = "main" if base_check.returncode == 0 else "master"
-    repo_name = repo_url.replace('https://github.com/', '').replace('.git', '')
+    base_check = run_command(['git', 'ls-remote', '--heads', 'origin', 'main'], check=False, silent=True, use_shell=False)
+    base = "main" if base_check.stdout.strip() else "master"
     title = f"Setup {project_name} from template"
     body = f"""## Setup Project from Template
 
@@ -280,10 +302,15 @@ def main():
     global DRY_RUN
     
     if len(sys.argv) < 2:
-        print("Usage: ./project-setup <project_name> [org] [--dry-run]")
-        print("\nExample:")
+        print("Usage: ./project-setup <project_name> [organization] [--public] [--dry-run]")
+        print("\nParameters:")
+        print("  <project_name>   Name of the new project and GitHub repository")
+        print("  [organization]   GitHub organization (default: jalantechnologies)")
+        print("  --public         Create the repository as public (default: private)")
+        print("  --dry-run        Show actions without making any changes")
+        print("\nExamples:")
         print("  ./project-setup my-project")
-        print("  ./project-setup my-project my-org --dry-run")
+        print("  ./project-setup my-project jalantechnologies --public --dry-run")
         sys.exit(1)
     
     args = sys.argv[1:]
@@ -294,8 +321,12 @@ def main():
         print("🔍 DRY RUN MODE - No changes will be made")
         print("="*60 + "\n")
     
+    is_public = '--public' in args
+    if is_public:
+        args.remove('--public')
+    
     project_name = args[0]
-    org = args[1] if len(args) > 1 else None
+    org = args[1] if len(args) > 1 else 'jalantechnologies'
     original_dir = os.getcwd()
     
     # Validate
@@ -312,8 +343,15 @@ def main():
     print(f"🚀 Setting up project: {project_name}\n")
     
     # Create repo from template and clone
-    repo_url, new_dir = create_and_clone_repo(project_name, org)
-    os.chdir(new_dir)
+    repo_url, new_dir = create_and_clone_repo(project_name, org, is_public)
+    if DRY_RUN:
+        print(f"  [DRY RUN] Would change directory to: {new_dir}")
+    else:
+        try:
+            os.chdir(new_dir)
+        except OSError as e:
+            print(f"✗ Failed to change directory to {new_dir}: {e}")
+            sys.exit(1)
     
     # Update files
     update_package_json(project_name)
@@ -330,8 +368,12 @@ def main():
     
     # Create branch, commit, push, and create PR
     branch_name = "setup-project-from-template"
-    create_branch(branch_name)
-    committed, pushed, pr_url = commit_and_push(project_name, branch_name, repo_url)
+    pr_url = None
+    branch_created = create_branch(branch_name)
+    if branch_created:
+        committed, pushed, pr_url = commit_and_push(project_name, branch_name, repo_url)
+    else:
+        print(f"  ✗ Failed to create branch '{branch_name}'. Skipping commit and push.")
     
     # Summary
     if DRY_RUN:
