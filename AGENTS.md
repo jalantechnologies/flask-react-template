@@ -257,17 +257,17 @@ This ensures consistency across commits, PRs, and changelogs. The title prefix a
 
 PRs are automatically labeled based on title prefix via the `pr-labeler` workflow:
 
-| PR Title Prefix | Type Label | Semver Label |
-|-----------------|------------|--------------|
-| `feat:` | `type: feat` | `semver: minor` |
-| `fix:` | `type: fix` | `semver: patch` |
-| `perf:` | `type: perf` | `semver: patch` |
-| `docs:` | `type: docs` | — |
-| `style:` | `type: style` | — |
-| `refactor:` | `type: refactor` | — |
-| `test:` | `type: test` | — |
-| `chore:` | `type: chore` | — |
-| `ci:` | `type: ci` | — |
+| PR Title Prefix              | Type Label                 | Semver Label    |
+| ---------------------------- | -------------------------- | --------------- |
+| `feat:`                      | `type: feat`               | `semver: minor` |
+| `fix:`                       | `type: fix`                | `semver: patch` |
+| `perf:`                      | `type: perf`               | `semver: patch` |
+| `docs:`                      | `type: docs`               | —               |
+| `style:`                     | `type: style`              | —               |
+| `refactor:`                  | `type: refactor`           | —               |
+| `test:`                      | `type: test`               | —               |
+| `chore:`                     | `type: chore`              | —               |
+| `ci:`                        | `type: ci`                 | —               |
 | Breaking (`feat!:`, `fix!:`) | `type: feat` / `type: fix` | `semver: major` |
 
 Choose your type carefully — it determines the label and semver impact.
