@@ -139,6 +139,7 @@ graph TB
 
     Start --> CI[CI Workflow<br/>Code Quality & Testing]
     Start --> CD[CD Workflow<br/>Build & Deploy]
+    Start --> Label[PR Labeler<br/>Auto-label]
 
     CI --> Lint[ci/lint<br/>~30s]
     CI --> Sonar[ci/sonarqube<br/>~60s]
@@ -147,7 +148,8 @@ graph TB
 
     CD --> Deploy[cd/deploy<br/>~3-4 min<br/>builds + deploys]
 
-    Lint --> End([Complete])
+    Label --> End([Complete])
+    Lint --> End
     Sonar --> End
     Review --> End
     Test --> End
@@ -156,7 +158,14 @@ graph TB
     style CI fill:#e1f5ff
     style CD fill:#fff4e1
     style Deploy fill:#d4edda
+    style Label fill:#f0e6ff
 ```
+
+### PR Labeler Workflow
+
+Runs on every PR open, edit, or synchronize event:
+
+1. **pr-labeler** - Auto-labels PRs based on semantic title prefix (e.g., `feat:` -> `type: feat` + `semver: minor`). See [AGENTS.md](/AGENTS.md#auto-labeling) for the full label mapping table.
 
 ### CI Workflow (Code Quality & Testing)
 
@@ -184,6 +193,10 @@ Single job that builds Docker image and deploys:
 - **cd** - Deploys preview environment for each PR (`cd/deploy`)
 - **cd_production** - Deploys to production when code is merged to `main` (`cd_production/deploy`)
 - **cd_permanent_preview** - Updates permanent preview when `main` changes (`cd_permanent_preview/deploy`)
+
+### PR Automation Workflows
+
+- **pr-labeler** - Auto-labels PRs based on semantic title prefix (`feat:`, `fix:`, `docs:`, etc.)
 
 ### Cleanup Workflows
 
