@@ -19,26 +19,26 @@ jobs:
             const title = context.payload.pull_request.title;
             const prNumber = context.payload.pull_request.number;
 
-            // Define label mappings based on PR title prefix
+            // Define label mappings based on PR title prefix (with optional scope)
             const labelMappings = [
-              { pattern: /^feat!:/i, typeLabel: 'type: feat', semverLabel: 'semver: major' },
-              { pattern: /^fix!:/i, typeLabel: 'type: fix', semverLabel: 'semver: major' },
-              { pattern: /^feat:/i, typeLabel: 'type: feat', semverLabel: 'semver: minor' },
-              { pattern: /^fix:/i, typeLabel: 'type: fix', semverLabel: 'semver: patch' },
-              { pattern: /^perf:/i, typeLabel: 'type: perf', semverLabel: 'semver: patch' },
-              { pattern: /^docs:/i, typeLabel: 'type: docs', semverLabel: null },
-              { pattern: /^style:/i, typeLabel: 'type: style', semverLabel: null },
-              { pattern: /^refactor:/i, typeLabel: 'type: refactor', semverLabel: null },
-              { pattern: /^test:/i, typeLabel: 'type: test', semverLabel: null },
-              { pattern: /^chore:/i, typeLabel: 'type: chore', semverLabel: null },
-              { pattern: /^ci:/i, typeLabel: 'type: ci', semverLabel: null },
+              { pattern: /^feat!(\(.+?\))?:/i, typeLabel: 'type: feat', semverLabel: 'semver: major' },
+              { pattern: /^fix!(\(.+?\))?:/i, typeLabel: 'type: fix', semverLabel: 'semver: major' },
+              { pattern: /^feat(\(.+?\))?:/i, typeLabel: 'type: feat', semverLabel: 'semver: minor' },
+              { pattern: /^fix(\(.+?\))?:/i, typeLabel: 'type: fix', semverLabel: 'semver: patch' },
+              { pattern: /^perf(\(.+?\))?:/i, typeLabel: 'type: perf', semverLabel: 'semver: patch' },
+              { pattern: /^docs(\(.+?\))?:/i, typeLabel: 'type: docs', semverLabel: null },
+              { pattern: /^style(\(.+?\))?:/i, typeLabel: 'type: style', semverLabel: null },
+              { pattern: /^refactor(\(.+?\))?:/i, typeLabel: 'type: refactor', semverLabel: null },
+              { pattern: /^test(\(.+?\))?:/i, typeLabel: 'type: test', semverLabel: null },
+              { pattern: /^chore(\(.+?\))?:/i, typeLabel: 'type: chore', semverLabel: null },
+              { pattern: /^ci(\(.+?\))?:/i, typeLabel: 'type: ci', semverLabel: null },
             ];
 
             // Find matching prefix
             const match = labelMappings.find(mapping => mapping.pattern.test(title));
 
             if (!match) {
-              console.log('No matching prefix found in PR title');
+              core.setFailed(`❌ PR title does not follow conventional commit format. Expected format: type(scope): description\nValid types: feat, fix, perf, docs, style, refactor, test, chore, ci\nExample: feat(api): add new endpoint`);
               return;
             }
 
