@@ -192,13 +192,89 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Commit Messages
 
-- Use Conventional Commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`.
-- Write messages that communicate the why/purpose.
-- Example: `fix: enforce unique index on account email`.
+Format:
+
+```
+<type>(<scope>): <subject>
+```
+
+Where `<scope>` is optional.
+
+```
+feat(claims): add confidence bounds validation
+^--^ ^----^   ^-----------------------------^
+|    |        |
+|    |        +-> Summary in present tense, imperative mood
+|    +-> Scope: component or module affected
++-> Type
+```
+
+Types:
+
+- `feat` — new feature for users
+- `fix` — bug fix for users
+- `docs` — documentation only
+- `style` — formatting, no logic change
+- `refactor` — code restructuring, no behavior change
+- `test` — adding or updating tests
+- `chore` — maintenance tasks
+- `build` — build system or dependencies
+- `ci` — CI configuration
+- `perf` — performance improvements
+- `revert` — reverts a previous commit
+
+Breaking changes: add `!` after type:
+
+```
+feat(api)!: remove deprecated endpoint
+```
+
+Rules:
+
+- 50 characters max for subject line
+- Use present tense, imperative mood ("add" not "added")
+- No period at end
+- Write messages that communicate the why/purpose
+
+Examples:
+
+- `feat(account): add email verification flow`
+- `fix(auth): preserve session on token refresh`
+- `refactor(store): extract append-only writer`
+- `docs: update deployment architecture guide`
+
+### PR Title Format
+
+PR titles follow the same semantic format as commit messages:
+
+```
+<type>(<scope>): <subject>
+```
+
+This ensures consistency across commits, PRs, and changelogs. The title prefix also drives automatic labeling (see below).
+
+### Auto-Labeling
+
+PRs are automatically labeled based on title prefix via the `pr-labeler` workflow:
+
+| PR Title Prefix              | Type Label                 | Semver Label    |
+| ---------------------------- | -------------------------- | --------------- |
+| `feat:`                      | `type: feat`               | `semver: minor` |
+| `fix:`                       | `type: fix`                | `semver: patch` |
+| `perf:`                      | `type: perf`               | `semver: patch` |
+| `docs:`                      | `type: docs`               | —               |
+| `style:`                     | `type: style`              | —               |
+| `refactor:`                  | `type: refactor`           | —               |
+| `test:`                      | `type: test`               | —               |
+| `chore:`                     | `type: chore`              | —               |
+| `ci:`                        | `type: ci`                 | —               |
+| Breaking (`feat!:`, `fix!:`) | `type: feat` / `type: fix` | `semver: major` |
+
+Choose your type carefully — it determines the label and semver impact.
 
 ### Pull Request Requirements
 
-- PR titles must summarize the change.
+- PR titles must follow the semantic format above.
 - Include a rationale and testing evidence in the PR body.
 - Keep diffs focused on a single concern.
 - All linting, type checks, and tests must pass (Python + TypeScript).
