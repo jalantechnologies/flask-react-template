@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.event.head_commit.author.name != 'github-actions[bot]'
     runs-on: ubuntu-latest
     concurrency:
       group: cd-permanent-preview
