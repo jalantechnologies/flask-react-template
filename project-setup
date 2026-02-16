@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 import shlex
@@ -18,6 +17,7 @@ from typing import Sequence
 DEFAULT_BRANCH_NAME = "setup-project-from-template"
 DEFAULT_ORG = "jalantechnologies"
 REPO_NAME_MAX_LEN = 100
+TEMPLATE_REPO_FULL_NAME = "jalantechnologies/flask-react-template"
 
 PROJECT_FILE_GLOBS = (
     ".github/workflows/*.yml", "AGENTS.md", "Dockerfile", "Makefile", "README.md",
@@ -32,51 +32,35 @@ class SetupError(RuntimeError):
     pass
 
 
-class CommandRunner:
-    def __init__(self, *, dry_run: bool) -> None:
-        self._dry_run = dry_run
+def run(
+    args: Sequence[str],
+    *,
+    check: bool = True,
+    cwd: Path | None = None,
+    quiet: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    if not args:
+        raise ValueError("Command args cannot be empty.")
 
-    def run(
-        self,
-        args: Sequence[str],
-        *,
-        allow_in_dry_run: bool = False,
-        check: bool = True,
-        silent: bool = False,
-        cwd: Path | None = None,
-    ) -> subprocess.CompletedProcess[str]:
-        if not args:
-            raise ValueError("Command args cannot be empty.")
-
-        display = shlex.join(list(args))
-        if self._dry_run and not allow_in_dry_run:
-            if not silent:
-                print(f"[dry-run] {display}")
-            return subprocess.CompletedProcess(args=list(args), returncode=0, stdout="", stderr="")
-        if self._dry_run and allow_in_dry_run and not silent:
-            print(f"[check] {display}")
-
-        result = subprocess.run(
-            list(args),
-            capture_output=True,
-            check=False,
-            cwd=str(cwd) if cwd else None,
-            text=True,
-        )
-
-        if check and result.returncode != 0:
-            stderr = (result.stderr or "").strip()
-            stdout = (result.stdout or "").strip()
-            details = stderr or stdout or f"Command failed with exit code {result.returncode}."
-            if silent:
-                raise SetupError(f"Command failed: {display}\n{details}")
-            raise SetupError(f"Failed to run: {display}\n{details}")
-
-        return result
+    display = shlex.join(list(args))
+    result = subprocess.run(
+        list(args),
+        capture_output=True,
+        check=False,
+        cwd=str(cwd) if cwd else None,
+        text=True,
+    )
+    if check and result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        stdout = (result.stdout or "").strip()
+        details = stderr or stdout or f"exit code {result.returncode}"
+        if quiet:
+            raise SetupError(details)
+        raise SetupError(f"Failed to run: {display}\n{details}")
+    return result
 
 def replace_in_file(
     *,
-    dry_run: bool,
     file_path: Path,
     replacements: Sequence[tuple[str, str]],
 ) -> bool:
@@ -94,10 +78,6 @@ def replace_in_file(
 
     if updated == content:
         return False
-
-    if dry_run:
-        print(f"[dry-run] update {file_path.as_posix()}")
-        return True
 
     try:
         file_path.write_text(updated, encoding="utf-8")
@@ -117,16 +97,14 @@ def validate_project_name(project_name: str) -> None:
             "Project name contains invalid characters. Allowed: letters, numbers, '.', '_', '-'."
         )
 
-def ensure_requirements(runner: CommandRunner, *, skip_npm_install: bool) -> None:
-    required_tools = ["gh", "git"]
-    if not skip_npm_install:
-        required_tools.append("npm")
+def ensure_requirements() -> None:
+    required_tools = ["gh", "git", "npm"]
 
     missing = [tool for tool in required_tools if shutil.which(tool) is None]
     if missing:
         raise SetupError(f"Missing required tools: {', '.join(missing)}. Install them and try again.")
 
-    auth = runner.run(["gh", "auth", "status"], allow_in_dry_run=True, check=False, silent=True)
+    auth = run(["gh", "auth", "status"], check=False, quiet=True)
     if auth.returncode != 0:
         raise SetupError("GitHub CLI is not authenticated. Run `gh auth login` and try again.")
 
@@ -145,59 +123,29 @@ def get_replacement_patterns(project_name: str) -> list[tuple[str, str]]:
         ("flask_react_template", snake),
     ]
 
-def update_package_json(*, dry_run: bool, project_name: str, repo_dir: Path) -> None:
+def update_package_json(*, project_name: str, repo_dir: Path) -> None:
     package_json_path = repo_dir / "package.json"
     if not package_json_path.exists():
         return
 
     data = json.loads(package_json_path.read_text(encoding="utf-8"))
-    before_name = str(data.get("name", ""))
     data["description"] = f"Project: {project_name}"
     data["name"] = project_name
 
-    if dry_run:
-        print(f"[dry-run] package.json name: '{before_name}' -> '{project_name}'")
-        return
-
     package_json_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
-def update_project_files(*, dry_run: bool, project_name: str, repo_dir: Path) -> int:
+def update_project_files(*, project_name: str, repo_dir: Path) -> int:
     replacements = get_replacement_patterns(project_name)
     updated_count = 0
     for pattern in PROJECT_FILE_GLOBS:
         for path in repo_dir.glob(pattern):
-            if path.is_file() and replace_in_file(dry_run=dry_run, file_path=path, replacements=replacements):
+            if path.is_file() and replace_in_file(file_path=path, replacements=replacements):
                 updated_count += 1
     return updated_count
 
-def get_template_repo_full_name(runner: CommandRunner, *, template_dir: Path) -> str:
-    remote = runner.run(
-        ["git", "remote", "get-url", "origin"],
-        allow_in_dry_run=True,
-        check=False,
-        silent=True,
-        cwd=template_dir,
-    )
-    url = (remote.stdout or "").strip()
-    if "github.com" in url:
-        normalized = (
-            url.replace("https://github.com/", "")
-            .replace("http://github.com/", "")
-            .replace("git@github.com:", "")
-            .removesuffix(".git")
-            .strip("/")
-        )
-        parts = normalized.split("/")
-        if len(parts) >= 2 and parts[0] and parts[1]:
-            return f"{parts[0]}/{parts[1]}"
-    raise SetupError(
-        "Could not detect the template repository from `git remote origin`.\n"
-        "Run this script from inside the template repo (this repository) and try again."
-    )
-
-def clone_repo_with_retry(runner: CommandRunner, *, clone_dir: Path, repo_url: str) -> None:
+def clone_repo_with_retry(*, clone_dir: Path, repo_url: str) -> None:
     for attempt in range(1, 4):
-        result = runner.run(["git", "clone", repo_url, clone_dir.as_posix()], check=False, silent=False)
+        result = run(["git", "clone", repo_url, clone_dir.as_posix()], check=False)
         if result.returncode == 0:
             return
         if attempt < 3:
@@ -206,37 +154,34 @@ def clone_repo_with_retry(runner: CommandRunner, *, clone_dir: Path, repo_url: s
             continue
         raise SetupError(f"Failed to clone after 3 attempts. Try again or run: `git clone {repo_url}`")
 
-def ensure_git_identity_configured(runner: CommandRunner, *, repo_dir: Path) -> None:
-    for key, env_key in [("user.name", "PROJECT_SETUP_GIT_NAME"), ("user.email", "PROJECT_SETUP_GIT_EMAIL")]:
-        current = runner.run(["git", "config", key], check=False, silent=True, cwd=repo_dir).stdout.strip()
-        if not current:
-            env_val = (os.environ.get(env_key) or "").strip()
-            if env_val:
-                runner.run(["git", "config", key, env_val], check=False, silent=True, cwd=repo_dir)
+def ensure_git_identity_configured(*, repo_dir: Path) -> None:
+    name = run(["git", "config", "user.name"], check=False, cwd=repo_dir, quiet=True).stdout.strip()
+    email = run(["git", "config", "user.email"], check=False, cwd=repo_dir, quiet=True).stdout.strip()
+    if name and email:
+        return
+    raise SetupError(
+        "Git author identity is not configured.\n"
+        "Run:\n"
+        "  git config --global user.name \"Your Name\"\n"
+        "  git config --global user.email \"you@example.com\""
+    )
 
-    name = runner.run(["git", "config", "user.name"], check=False, silent=True, cwd=repo_dir).stdout.strip()
-    email = runner.run(["git", "config", "user.email"], check=False, silent=True, cwd=repo_dir).stdout.strip()
-    if not name or not email:
-        print("Warning: git author identity missing. Configure git user.name/user.email (or env vars) before running.")
 
-
-def has_uncommitted_changes(runner: CommandRunner, *, repo_dir: Path) -> bool:
-    status = runner.run(["git", "status", "--porcelain"], check=True, silent=True, cwd=repo_dir)
+def has_uncommitted_changes(*, repo_dir: Path) -> bool:
+    status = run(["git", "status", "--porcelain"], check=True, cwd=repo_dir, quiet=True)
     return bool(status.stdout.strip())
 
 
 def create_pr(
-    runner: CommandRunner,
     *,
     base_branch: str,
     branch_name: str,
     project_name: str,
     repo_dir: Path,
-    template_full_name: str,
 ) -> str | None:
     title = f"Setup {project_name} from template"
-    body = f"Sets up **{project_name}** from **{template_full_name}** (phase 1: template + PR)."
-    result = runner.run(
+    body = f"Sets up **{project_name}** from **{TEMPLATE_REPO_FULL_NAME}** (phase 1: template + PR)."
+    result = run(
         [
             "gh",
             "pr",
@@ -258,41 +203,25 @@ def create_pr(
     return result.stdout.strip().splitlines()[-1].strip() if result.stdout.strip() else None
 
 
-def npm_install(runner: CommandRunner, *, repo_dir: Path) -> None:
+def npm_install(*, repo_dir: Path) -> None:
     if not (repo_dir / "package.json").exists():
         return
-    result = runner.run(["npm", "install"], check=False, cwd=repo_dir)
+    result = run(["npm", "install"], check=False, cwd=repo_dir)
     if result.returncode != 0:
-        print("Warning: `npm install` failed. You may need to run it manually.")
+        raise SetupError("`npm install` failed. Fix the error and rerun the script.")
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="project-setup",
-        description="Create a new GitHub project from this template and open a PR.",
+        description=f"Create a private repo under {DEFAULT_ORG} from this template and open a PR.",
     )
     parser.add_argument("project_name", help="New GitHub repository name (e.g. my-project)")
-    parser.add_argument(
-        "organization",
-        nargs="?",
-        default=DEFAULT_ORG,
-        help=f"GitHub organization (default: {DEFAULT_ORG})",
-    )
-    parser.add_argument("--dry-run", action="store_true", help="Print actions without making changes")
-    parser.add_argument("--public", action="store_true", help="Create the repository as public")
-    parser.add_argument(
-        "--skip-npm-install",
-        action="store_true",
-        help="Skip running `npm install` in the new repo",
-    )
     return parser.parse_args(list(argv))
 
 
 def create_repo_from_template(
-    runner: CommandRunner,
     *,
-    is_public: bool,
-    org: str,
     project_name: str,
     template_dir: Path,
 ) -> tuple[Path, str, str]:
@@ -300,24 +229,22 @@ def create_repo_from_template(
     if clone_dir.exists():
         raise SetupError(f"Directory already exists: {clone_dir.as_posix()}\nChoose a different name.")
 
-    template_full_name = get_template_repo_full_name(runner, template_dir=template_dir)
-    repo_full_name = f"{org}/{project_name}"
-    visibility_flag = "--public" if is_public else "--private"
+    repo_full_name = f"{DEFAULT_ORG}/{project_name}"
+    repo_url = f"https://github.com/{repo_full_name}"
 
-    result = runner.run(
+    result = run(
         [
             "gh",
             "repo",
             "create",
             repo_full_name,
             "--template",
-            template_full_name,
-            visibility_flag,
+            TEMPLATE_REPO_FULL_NAME,
+            "--private",
             "--confirm",
             "--clone=false",
         ],
         check=False,
-        silent=False,
     )
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
@@ -325,80 +252,51 @@ def create_repo_from_template(
             raise SetupError(f"Repository already exists: {repo_full_name}\nPick a new project name.")
         raise SetupError(f"Failed to create repo from template.\n{stderr or 'Unknown error.'}")
 
-    repo_url = runner.run(
-        ["gh", "repo", "view", repo_full_name, "--json", "url", "-q", ".url"],
+    base_branch = run(
+        ["gh", "repo", "view", repo_full_name, "--json", "defaultBranchRef", "-q", ".defaultBranchRef.name"],
         check=False,
-        silent=True,
-    ).stdout.strip() or f"https://github.com/{repo_full_name}"
+        cwd=template_dir,
+        quiet=True,
+    ).stdout.strip() or "main"
 
-    clone_repo_with_retry(runner, repo_url=repo_url, clone_dir=clone_dir)
-    return clone_dir, repo_url, template_full_name
+    clone_repo_with_retry(repo_url=repo_url, clone_dir=clone_dir)
+    return clone_dir, repo_url, base_branch
 
 
 def run_setup(args: argparse.Namespace) -> tuple[str, str | None, Path]:
     project_name = str(args.project_name)
-    org = str(args.organization)
-    dry_run = bool(args.dry_run)
-    is_public = bool(args.public)
-    skip_npm_install = bool(args.skip_npm_install)
 
     validate_project_name(project_name)
 
     template_dir = Path.cwd()
-    runner = CommandRunner(dry_run=dry_run)
 
-    ensure_requirements(runner, skip_npm_install=skip_npm_install)
-    if dry_run:
-        print("Dry-run mode enabled. No changes will be made.\nPlanned actions:")
-    else:
-        print("Creating repository from template...")
+    ensure_requirements()
+    print(f"Creating private repository under {DEFAULT_ORG}...")
 
-    clone_dir, repo_url, template_full_name = create_repo_from_template(
-        runner,
-        is_public=is_public,
-        org=org,
-        project_name=project_name,
-        template_dir=template_dir,
-    )
-    repo_dir = template_dir if dry_run else clone_dir
+    clone_dir, repo_url, base_branch = create_repo_from_template(project_name=project_name, template_dir=template_dir)
 
-    update_package_json(dry_run=dry_run, project_name=project_name, repo_dir=repo_dir)
-    updated_files = update_project_files(dry_run=dry_run, project_name=project_name, repo_dir=repo_dir)
+    update_package_json(project_name=project_name, repo_dir=clone_dir)
+    updated_files = update_project_files(project_name=project_name, repo_dir=clone_dir)
     print(f"Updated {updated_files} file(s).")
 
-    if not skip_npm_install:
-        print("Installing npm dependencies...")
-        npm_install(runner, repo_dir=repo_dir)
+    print("Installing npm dependencies...")
+    npm_install(repo_dir=clone_dir)
 
-    runner.run(["git", "checkout", "-b", DEFAULT_BRANCH_NAME], check=not dry_run, cwd=repo_dir)
+    ensure_git_identity_configured(repo_dir=clone_dir)
+    run(["git", "checkout", "-b", DEFAULT_BRANCH_NAME], check=True, cwd=clone_dir)
 
-    if dry_run:
-        return repo_url, None, clone_dir
+    if not has_uncommitted_changes(repo_dir=clone_dir):
+        raise SetupError("No changes detected after template update. Nothing to PR.")
 
-    ensure_git_identity_configured(runner, repo_dir=repo_dir)
+    run(["git", "add", "."], check=True, cwd=clone_dir)
+    run(["git", "commit", "-m", f"Setup {project_name} from template"], check=True, cwd=clone_dir)
+    run(["git", "push", "-u", "origin", DEFAULT_BRANCH_NAME], check=True, cwd=clone_dir)
 
-    if not has_uncommitted_changes(runner, repo_dir=repo_dir):
-        print("No changes to commit. Skipping push and PR.")
-        return repo_url, None, clone_dir
-
-    runner.run(["git", "add", "."], check=True, cwd=repo_dir)
-    runner.run(["git", "commit", "-m", f"Setup {project_name} from template"], check=True, cwd=repo_dir)
-    runner.run(["git", "push", "-u", "origin", DEFAULT_BRANCH_NAME], check=True, cwd=repo_dir)
-
-    main = runner.run(
-        ["git", "ls-remote", "--heads", "origin", "main"],
-        check=False,
-        silent=True,
-        cwd=repo_dir,
-    )
-    base_branch = "main" if main.stdout.strip() else "master"
     pr_url = create_pr(
-        runner,
         base_branch=base_branch,
         branch_name=DEFAULT_BRANCH_NAME,
         project_name=project_name,
-        repo_dir=repo_dir,
-        template_full_name=template_full_name,
+        repo_dir=clone_dir,
     )
     return repo_url, pr_url, clone_dir
 
