@@ -23,27 +23,33 @@ class DatadogHandler(StreamHandler):
             return "error"
 
     def emit(self, record: LogRecord) -> None:
-        msg = self.format(record)
-        datadog_api_key = ConfigService[str].get_value(key="datadog.api_key")
-        datadog_host = ConfigService[str].get_value(key="datadog.site_name")
-        data_app_name = ConfigService[str].get_value(key="datadog.app_name")
-        config = Configuration()
-        config.api_key["apiKeyAuth"] = datadog_api_key
-        config.server_variables["site"] = datadog_host
-        config.debug = True
-        with ApiClient(config) as api_client:
-            api_instance = LogsApi(api_client)
-            body = HTTPLog(
-                [
-                    HTTPLogItem(
-                        ddsource=self.ddsource,
-                        ddtags=f"env : {os.environ.get('APP_NAME')}",
-                        hostname="",
-                        message=msg,
-                        service=data_app_name,
-                        status=self.__get_status(record=record),
-                    )
-                ]
-            )
+        try:
+            msg = self.format(record)
+            datadog_api_key = ConfigService[str].get_value(key="datadog.api_key")
+            datadog_host = ConfigService[str].get_value(key="datadog.site_name")
+            datadog_app_name = ConfigService[str].get_value(key="datadog.app_name")
+            config = Configuration()
+            config.api_key["apiKeyAuth"] = datadog_api_key
+            config.server_variables["site"] = datadog_host
+            config.debug = False
 
-            api_instance.submit_log(body)
+            env = os.environ.get("APP_ENV", "unknown")
+
+            with ApiClient(config) as api_client:
+                api_instance = LogsApi(api_client)
+                body = HTTPLog(
+                    [
+                        HTTPLogItem(
+                            ddsource=self.ddsource,
+                            ddtags=f"env:{env}",
+                            hostname="",
+                            message=msg,
+                            service=datadog_app_name,
+                            status=self.__get_status(record=record),
+                        )
+                    ]
+                )
+                api_instance.submit_log(body)
+        except Exception as e:
+            print(f"Datadog logging failed: {e}")
+            self.handleError(record)
