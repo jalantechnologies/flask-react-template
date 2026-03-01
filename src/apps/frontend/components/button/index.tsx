@@ -18,18 +18,22 @@ const ButtonClasses: Record<ButtonKind, string> = {
   [ButtonKind.SECONDARY]: 'inset-y-0 flex items-center',
   [ButtonKind.TERTIARY]:
     'bg-transparent text-center text-lg text-primary active:bg-transparent',
+  [ButtonKind.DANGER]:
+    'flex w-full items-center justify-center rounded-lg border bg-danger p-4 font-medium text-white transition active:bg-danger/80',
 };
 
 const DisabledClasses: Record<ButtonKind, string> = {
   [ButtonKind.PRIMARY]: 'cursor-not-allowed bg-primary/80',
   [ButtonKind.SECONDARY]: 'cursor-not-allowed',
   [ButtonKind.TERTIARY]: 'cursor-not-allowed text-slate-500',
+  [ButtonKind.DANGER]: 'cursor-not-allowed bg-danger/80',
 };
 
 const EnabledClasses: Record<ButtonKind, string> = {
   [ButtonKind.PRIMARY]: 'cursor-pointer hover:bg-primary/90',
   [ButtonKind.SECONDARY]: '',
   [ButtonKind.TERTIARY]: 'cursor-pointer',
+  [ButtonKind.DANGER]: 'cursor-pointer hover:bg-danger/90',
 };
 
 const Button: React.FC<PropsWithChildren<ButtonProps>> = ({

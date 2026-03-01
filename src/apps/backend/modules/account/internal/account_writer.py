@@ -2,7 +2,6 @@ from dataclasses import asdict
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from phonenumbers import is_valid_number, parse
 from pymongo import ReturnDocument
 
 from modules.account.errors import AccountWithIdNotFoundError
