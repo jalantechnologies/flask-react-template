@@ -13,4 +13,5 @@ class TaskUtil:
             description=validated_task_data.description,
             id=str(validated_task_data.id),
             title=validated_task_data.title,
+            created_at=validated_task_data.created_at,
         )

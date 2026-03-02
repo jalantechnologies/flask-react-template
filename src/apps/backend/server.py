@@ -16,13 +16,25 @@ from scripts.bootstrap_app import BootstrapApp
 
 load_dotenv()
 
+from datetime import datetime
+from flask.json.provider import DefaultJSONProvider
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
 app = Flask(__name__)
+app.json = CustomJSONProvider(app)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Mount deps
 LoggerManager.mount_logger()
 
 # Run bootstrap tasks
+with open("final_url_map.txt", "w") as f:
+    f.write(str(app.url_map))
 BootstrapApp().run()
 
 # Initialize worker registry
@@ -38,15 +50,20 @@ if ConfigService.has_value("is_server_running_behind_proxy") and ConfigService[b
 
 # Register authentication apis
 authentication_blueprint = AuthenticationRestApiServer.create()
-api_blueprint.register_blueprint(authentication_blueprint)
+app.register_blueprint(authentication_blueprint, url_prefix="/api")
 
 # Register accounts apis
 account_blueprint = AccountRestApiServer.create()
-api_blueprint.register_blueprint(account_blueprint)
+app.register_blueprint(account_blueprint, url_prefix="/api")
 
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
-api_blueprint.register_blueprint(task_blueprint)
+app.register_blueprint(task_blueprint, url_prefix="/api")
+
+# Register comment apis
+from modules.comment.rest_api.comment_rest_api_server import CommentRestApiServer
+comment_blueprint = CommentRestApiServer.create()
+app.register_blueprint(comment_blueprint, url_prefix="/api")
 
 app.register_blueprint(api_blueprint)
 
@@ -58,3 +75,8 @@ app.register_blueprint(react_blueprint)
 @app.errorhandler(AppError)
 def handle_error(exc: AppError) -> ResponseReturnValue:
     return jsonify({"message": exc.message, "code": exc.code}), exc.http_code or 500
+
+@app.errorhandler(404)
+def handle_404(e):
+    from bin.blueprints import serve_react_home
+    return serve_react_home("")

@@ -3,7 +3,7 @@ const { merge } = require('webpack-merge');
 const baseConfig = require('./webpack.base');
 
 const devServerOpen = process.env.WEBPACK_DEV_DISABLE_OPEN !== 'true';
-const devServerPort = 3000;
+const devServerPort = process.env.PORT || 3000;
 const devServerAPIProxyPort = 8080;
 
 const config = {
@@ -23,8 +23,8 @@ const config = {
     port: devServerPort,
     proxy: {
       secure: false,
-      '/api': `http://localhost:${devServerAPIProxyPort}`,
-      '/assets': `http://localhost:${devServerAPIProxyPort}`,
+      '/api': `http://127.0.0.1:${devServerAPIProxyPort}`,
+      '/assets': `http://127.0.0.1:${devServerAPIProxyPort}`,
     },
   },
 };
