@@ -116,7 +116,7 @@ jobs:
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478
         continue-on-error: true
         with:
           args: '--skip-db-update --skip-java-db-update'
@@ -172,7 +172,7 @@ jobs:
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478
         continue-on-error: true
         with:
           args: '--skip-db-update --skip-java-db-update'
@@ -198,7 +198,7 @@ jobs:
       - name: Run Checkov action
         id: checkov
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        uses: bridgecrewio/checkov-action@f34885219720066007f948b843e747bb136aa223
+        uses: bridgecrewio/checkov-action@f99709f8ccc3496220c987b7d8729653237c23dc
         continue-on-error: true
         with:
           directory: iac_changed_files/
@@ -220,7 +220,7 @@ jobs:
 
       - name: Run Trivy scan on docker images
         id: trivy_docker
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@97e0b3872f55f89b95b2f65b3dbab56962816478
         continue-on-error: true
         with:
           args: '--skip-db-update --skip-java-db-update'
