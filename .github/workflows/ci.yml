@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: '22.13.1'
           cache: 'npm'
@@ -116,7 +116,7 @@ jobs:
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         continue-on-error: true
         with:
           version: 'v0.69.2'
@@ -173,7 +173,7 @@ jobs:
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         continue-on-error: true
         with:
           version: 'v0.69.2'
@@ -200,7 +200,7 @@ jobs:
       - name: Run Checkov action
         id: checkov
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        uses: bridgecrewio/checkov-action@f34885219720066007f948b843e747bb136aa223
+        uses: bridgecrewio/checkov-action@f9b0a2206b0401cad02ac0a66be2a7934a5be838
         continue-on-error: true
         with:
           directory: iac_changed_files/
@@ -222,7 +222,7 @@ jobs:
 
       - name: Run Trivy scan on docker images
         id: trivy_docker
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         continue-on-error: true
         with:
           version: 'v0.69.2'
