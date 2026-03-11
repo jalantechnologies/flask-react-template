@@ -119,6 +119,7 @@ jobs:
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
         with:
+          version: 'v0.69.2'
           args: '--skip-db-update --skip-java-db-update'
           scan-type: 'filesystem'
           scan-ref: './changed_files'
@@ -175,6 +176,7 @@ jobs:
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
         with:
+          version: 'v0.69.2'
           args: '--skip-db-update --skip-java-db-update'
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
@@ -223,6 +225,7 @@ jobs:
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         continue-on-error: true
         with:
+          version: 'v0.69.2'
           args: '--skip-db-update --skip-java-db-update'
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
