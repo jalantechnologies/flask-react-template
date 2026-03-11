@@ -35,6 +35,9 @@ FROM node:22-alpine AS node-builder
 
 WORKDIR /build
 
+# Upgrade npm to fix bundled dependency vulnerabilities (glob, minimatch, tar CVEs)
+RUN npm install -g npm@11.11.0
+
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
 
@@ -74,6 +77,7 @@ RUN apt-get update -y && \
         jq \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
+    npm install -g npm@11.11.0 && \
     apt-get remove -y curl && \
     apt-get autoremove -y && \
     apt-get clean && \

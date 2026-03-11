@@ -1,0 +1,18 @@
+# This file lists CVEs to ignore in Trivy scans
+# Only add CVEs here when they cannot be fixed and have been reviewed for risk
+
+# minimatch@10.2.2 in npm's bundled dependencies
+# - npm@11.11.0 (latest) bundles minimatch@10.2.2, fix requires 10.2.3+
+# - npm@10.9.5 has minimatch@9.0.9 (patched) but has unpatched tar@6.2.1
+# - No npm version currently has all dependencies patched
+# - These are DoS vulnerabilities via crafted glob patterns, low risk for CI
+# Reviewed: 2026-03-04
+CVE-2026-27903
+CVE-2026-27904
+
+# tar@7.5.9 in npm's bundled dependencies
+# - npm@11.11.0 bundles tar@^7.5.9; fixes require 7.5.10+
+# - No newer npm release currently available in this setup with patched tar
+# Reviewed: 2026-03-11
+CVE-2026-29786
+CVE-2026-31802
