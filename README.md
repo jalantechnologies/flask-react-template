@@ -37,6 +37,7 @@ This project has three deployment environments that everyone can access:
 - [Workers](docs/workers.md)
 
 - [CI/CD](docs/deployment.md)
+- [DNS Setup](docs/dns-setup.md)
 - [Running Scripts in Production](docs/running-scripts-in-production.md)
 
 ## Best Practices
