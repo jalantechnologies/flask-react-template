@@ -8,35 +8,36 @@ When you deploy to a Kubernetes cluster, cert-manager needs to verify domain own
 
 ## Required DNS Records
 
-For a deployment at `<domain>` (e.g., `operate-demo.bettrsw.com`), create the following A records pointing to your **nginx ingress LoadBalancer IP**:
+For an application named `<app>` deployed at domain `<domain>` (e.g., app `operate-demo` at domain `bettrsw.com`), create the following A records pointing to your **nginx ingress LoadBalancer IP**:
 
-| Record Name | Type | Purpose |
-|-------------|------|---------|
-| `<app>` | A | Main application URL |
-| `workers-dashboard.<app>` | A | Workers dashboard (Temporal/Celery UI) |
-| `preview.<app>` | A | Permanent preview environment |
-| `*.preview.<app>` | A | Per-PR preview environments |
-| `preview.<app>.workers-dashboard` | A | Preview workers dashboard |
-| `*.preview.<app>.workers-dashboard` | A | Per-PR workers dashboards |
+| Record Name                                  | Type | Purpose                                |
+| -------------------------------------------- | ---- | -------------------------------------- |
+| `<app>.<domain>`                             | A    | Main application URL                   |
+| `workers-dashboard.<app>.<domain>`           | A    | Workers dashboard (Temporal/Celery UI) |
+| `preview.<app>.<domain>`                     | A    | Permanent preview environment          |
+| `*.preview.<app>.<domain>`                   | A    | Per-PR preview environments            |
+| `workers-dashboard.preview.<app>.<domain>`   | A    | Preview workers dashboard              |
+| `*.workers-dashboard.preview.<app>.<domain>` | A    | Per-PR workers dashboards              |
 
-> **Important:** Wildcard records (`*.preview.<app>`) do NOT cover the apex name (`preview.<app>`). You must add both explicitly.
+> **Important:** Wildcard records (`*.preview.<app>.<domain>`) do NOT cover the apex name (`preview.<app>.<domain>`). You must add both explicitly.
 
 ## Example
 
-For domain `operate-demo.bettrsw.com` with LoadBalancer IP `203.0.113.50`:
+For app `operate-demo` at domain `bettrsw.com` with LoadBalancer IP `203.0.113.50`:
 
 ```
-operate-demo.bettrsw.com                              A  203.0.113.50
-workers-dashboard.operate-demo.bettrsw.com            A  203.0.113.50
-preview.operate-demo.bettrsw.com                      A  203.0.113.50
-*.preview.operate-demo.bettrsw.com                    A  203.0.113.50
-preview.operate-demo.bettrsw.com.workers-dashboard    A  203.0.113.50
-*.preview.operate-demo.bettrsw.com.workers-dashboard  A  203.0.113.50
+operate-demo.bettrsw.com                                    A  203.0.113.50
+workers-dashboard.operate-demo.bettrsw.com                  A  203.0.113.50
+preview.operate-demo.bettrsw.com                            A  203.0.113.50
+*.preview.operate-demo.bettrsw.com                          A  203.0.113.50
+workers-dashboard.preview.operate-demo.bettrsw.com          A  203.0.113.50
+*.workers-dashboard.preview.operate-demo.bettrsw.com        A  203.0.113.50
 ```
 
 ## How to Find Your LoadBalancer IP
 
 ### Option 1: kubectl get service
+
 ```bash
 kubectl get svc -n ingress-nginx
 ```
@@ -44,6 +45,7 @@ kubectl get svc -n ingress-nginx
 Look for the `EXTERNAL-IP` of the `ingress-nginx-controller` service.
 
 ### Option 2: kubectl get ingress
+
 ```bash
 kubectl get ingress -A
 ```
@@ -51,6 +53,7 @@ kubectl get ingress -A
 Check the `ADDRESS` column for any ingress resource.
 
 ### Option 3: DigitalOcean Console
+
 1. Go to **Networking → Load Balancers**
 2. Find the load balancer created by your cluster
 3. Copy the IP address
@@ -94,6 +97,7 @@ Certificates should move from `Pending` to `Ready` within a few minutes.
 ### Certificates Stuck in Pending
 
 **Symptoms:**
+
 - `kubectl get certificate` shows `Ready: False`
 - Browser shows `NET::ERR_CERT_AUTHORITY_INVALID`
 - nginx serves self-signed fallback certificate
@@ -101,18 +105,22 @@ Certificates should move from `Pending` to `Ready` within a few minutes.
 **Solutions:**
 
 1. **Verify DNS records are correct:**
+
    ```bash
    dig +short <your-domain>
    ```
+
    Should return your LoadBalancer IP.
 
 2. **Check ACME challenges:**
+
    ```bash
    kubectl get challenges -A
    kubectl describe challenge <challenge-name> -n <namespace>
    ```
 
 3. **Restart CoreDNS (if DNS was just added):**
+
    ```bash
    kubectl rollout restart deployment coredns -n kube-system
    ```
@@ -135,6 +143,7 @@ If you recreated your cluster or ingress controller, the LoadBalancer IP may hav
 ## When to Set Up DNS
 
 DNS records should be configured:
+
 1. **Before first deployment** - to avoid certificate errors
 2. **After cluster creation** - once the ingress LoadBalancer is provisioned
 3. **After cluster recreation** - if LoadBalancer IP changes
