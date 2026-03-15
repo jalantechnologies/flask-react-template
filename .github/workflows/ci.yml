@@ -254,7 +254,7 @@ jobs:
           body-path: trivy-docker-report.md
 
       - name: Fail job if Trivy found issues
-        if: steps.trivy.outcome == 'failure' || (steps.trivy_docker.outcome == 'failure' && steps.vuln_check.outputs.vuln_count != '0') || steps.checkov.outcome == 'failure'
+        if: steps.trivy.outcome == 'failure' || steps.trivy_docker.outcome == 'failure' || steps.checkov.outcome == 'failure'
         run: |
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
