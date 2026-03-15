@@ -29,7 +29,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: fad88356620fd16b87d7aef8fe909917eeaf7f19
+          ref: rehan/fix/nodeaffinity
 
       - name: Build Docker image
         id: build
@@ -61,3 +61,4 @@ jobs:
           do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
           do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
           doppler_token: ${{ secrets.DOPPLER_PREVIEW_TOKEN }}
+          node_pool: ${{ vars.NODE_POOL_PREVIEW }}
