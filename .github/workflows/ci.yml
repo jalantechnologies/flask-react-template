@@ -120,7 +120,7 @@ jobs:
         continue-on-error: true
         with:
           version: 'v0.69.2'
-          args: '--skip-db-update --skip-java-db-update'
+          trivy-config: trivy.yaml
           scan-type: 'filesystem'
           scan-ref: './changed_files'
           format: 'template'
@@ -177,7 +177,7 @@ jobs:
         continue-on-error: true
         with:
           version: 'v0.69.2'
-          args: '--skip-db-update --skip-java-db-update'
+          trivy-config: trivy.yaml
           scan-type: 'config'
           scan-ref: 'iac_changed_files'
           format: 'template'
@@ -226,7 +226,7 @@ jobs:
         continue-on-error: true
         with:
           version: 'v0.69.2'
-          args: '--skip-db-update --skip-java-db-update'
+          trivy-config: trivy.yaml
           scan-type: 'image'
           image-ref: 'flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}'
           format: 'template'
