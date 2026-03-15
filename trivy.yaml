@@ -1,0 +1,5 @@
+db:
+  skip-java-db-update: true
+scan:
+  scanners:
+    - vuln
