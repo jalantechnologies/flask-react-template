@@ -8,6 +8,11 @@ mongodb:
 
 web_app_host: 'http://localhost:3000'
 
+datadog:
+  app_name: 'flask-react-app'
+  site_name: 'datadoghq.com'
+  log_level: 'info'
+
 logger:
   transports: ['console']
 
@@ -29,7 +34,5 @@ accounts:
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
-  datadog:
-    enabled: 'false'
 
 BOOTSTRAP_APP: false
