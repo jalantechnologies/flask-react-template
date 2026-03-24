@@ -19,7 +19,7 @@ access_log_format = "app - request - %(h)s - %(s)s - %(m)s - %(M)sms - %(U)s - %
 errorlog = "-"
 
 
-def post_fork(server, worker):
+def post_fork(server, worker):  # type: ignore
     """Hook to configure Gunicorn access logger to use Datadog handler after worker fork"""
     import logging
     from modules.logger.internal.datadog_handler import DatadogHandler
