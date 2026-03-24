@@ -4,6 +4,22 @@ This document outlines the logging strategy for both backend and frontend applic
 
 To view the logs, navigate to the [Datadog Logs Explorer](https://us5.datadoghq.com/logs).
 
+## Configuration
+
+### Backend Logging
+
+Backend Datadog logging is controlled by the `logger.transports` configuration. When `'datadog'` is included in the transports list, logs are forwarded to Datadog.
+
+**Required Doppler secrets:** See [Backend Datadog Logging](secrets.md#backend-datadog-logging) in the secrets documentation.
+
+### Frontend Logging
+
+Frontend Datadog RUM and browser logs are controlled by the `public.datadog.enabled` configuration flag. When set to `'true'`, the frontend initializes Datadog's browser SDK.
+
+**Required Doppler secrets:** See [Frontend Datadog RUM & Browser Logs](secrets.md#frontend-datadog-rum--browser-logs) in the secrets documentation.
+
+**Important:** Frontend Datadog configuration is injected at build time. Changes to Doppler secrets require a rebuild and redeployment to take effect.
+
 ## Backend Logging (Python)
 
 Import the unified wrapper and log at the desired level:

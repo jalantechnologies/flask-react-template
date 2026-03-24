@@ -11,6 +11,11 @@ web_app_host: 'http://localhost:3000'
 logger:
   transports: ['console']
 
+datadog:
+  app_name: 'flask-react-template'
+  site_name: 'datadoghq.com'
+  log_level: 'info'
+
 accounts:
   token_signing_key: 'JWT_TOKEN'
   token_expiry_days: 1
