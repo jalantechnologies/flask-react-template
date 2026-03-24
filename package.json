@@ -1,6 +1,6 @@
 {
   "name": "flask-react-template",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "Boilerplate project for React & Flask",
   "engines": {
     "npm": "10.9.2",
