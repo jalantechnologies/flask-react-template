@@ -14,17 +14,27 @@ preload_app = True
 
 # Logging
 loglevel = "info"
-logconfig_dict = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler", "stream": "ext://sys.stdout"}},
-    "loggers": {
-        "gunicorn.access": {"handlers": ["console"], "level": "INFO", "propagate": True},
-        "gunicorn.error": {"handlers": ["console"], "level": "INFO", "propagate": True},
-    },
-}
+accesslog = "-"
 access_log_format = "app - request - %(h)s - %(s)s - %(m)s - %(M)sms - %(U)s - %({user-agent}i)s"
 errorlog = "-"
+
+
+def post_fork(server, worker):
+    """Hook to configure Gunicorn access logger to use Datadog handler after worker fork"""
+    import logging
+    from modules.logger.internal.datadog_handler import DatadogHandler
+    from modules.logger.internal.datadog_handler_level import LogLevel
+
+    # Get Gunicorn's access logger
+    gunicorn_logger = logging.getLogger("gunicorn.access")
+    
+    # Add Datadog handler to Gunicorn's access logger
+    datadog_handler = DatadogHandler("flask")
+    datadog_handler.setLevel(LogLevel.get_level())
+    formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
+    datadog_handler.setFormatter(formatter)
+    gunicorn_logger.addHandler(datadog_handler)
+
 
 # Timeout
 timeout = 30
