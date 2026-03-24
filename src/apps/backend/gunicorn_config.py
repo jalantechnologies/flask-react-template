@@ -1,4 +1,9 @@
 import multiprocessing
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gunicorn.arbiter import Arbiter
+    from gunicorn.workers.base import Worker
 
 # Server Socket
 bind = "0.0.0.0:8080"
