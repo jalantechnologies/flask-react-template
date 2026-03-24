@@ -59,3 +59,35 @@ _Empty or unset secrets are ignored and fallback to the value defined in the cor
 - Use **preview** for testing; **production** secrets should be tightly controlled.
 - Remove deprecated keys promptly to avoid confusion.
 - If you add a new mapping in `custom-environment-variables.yml`, remember to create the matching secret in Doppler for every active environment.
+
+---
+
+## Required Secrets by Category
+
+### Backend Datadog Logging
+
+Required for backend log forwarding to Datadog (when `logger.transports` includes `'datadog'`):
+
+| Doppler Secret      | Config Key          | Description                          |
+| ------------------- | ------------------- | ------------------------------------ |
+| `DATADOG_API_KEY`   | `datadog.api_key`   | Datadog API key for backend logging  |
+| `DATADOG_SITE_NAME` | `datadog.site_name` | Datadog site (e.g., `datadoghq.com`) |
+| `DATADOG_APP_NAME`  | `datadog.app_name`  | Application name in Datadog          |
+| `DATADOG_LOG_LEVEL` | `datadog.log_level` | Log level (e.g., `info`, `debug`)    |
+
+### Frontend Datadog RUM & Browser Logs
+
+Required for frontend Real User Monitoring and browser log collection (when `public.datadog.enabled: 'true'`):
+
+| Doppler Secret                       | Config Key                               | Description                                |
+| ------------------------------------ | ---------------------------------------- | ------------------------------------------ |
+| `DATADOG_CLIENT_TOKEN`               | `public.datadog.clientToken`             | Datadog client token for browser SDK       |
+| `DATADOG_APPLICATION_ID`             | `public.datadog.applicationId`           | RUM application ID                         |
+| `DATADOG_ENABLED`                    | `public.datadog.enabled`                 | Enable/disable frontend Datadog (`'true'`) |
+| `DATADOG_ENV`                        | `public.datadog.env`                     | Environment name (e.g., `production`)      |
+| `DATADOG_SERVICE`                    | `public.datadog.service`                 | Service name for frontend                  |
+| `DATADOG_SESSION_SAMPLE_RATE`        | `public.datadog.sessionSampleRate`       | Session sampling rate (0-100)              |
+| `DATADOG_SESSION_REPLAY_SAMPLE_RATE` | `public.datadog.sessionReplaySampleRate` | Session replay sampling rate (0-100)       |
+| `DATADOG_SITE_NAME`                  | `public.datadog.site`                    | Datadog site (e.g., `us5.datadoghq.com`)   |
+
+**Note:** Frontend public config is exposed at **runtime** via `/config.js` (see `serve_config` in `bin/blueprints.py`). Redeploy or restart the backend after changing these secrets so browsers receive the updated values.

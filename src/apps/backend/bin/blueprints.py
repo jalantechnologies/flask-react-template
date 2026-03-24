@@ -14,6 +14,15 @@ react_blueprint = Blueprint("react", __name__, static_folder=react_public_dir, u
 MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable to resolve react root path"
 
 
+@react_blueprint.route("/config.js")
+def serve_config() -> Response:
+    from modules.config.config_service import ConfigService
+
+    public_config: dict = ConfigService.get_value("public") if ConfigService.has_value("public") else {}
+    config_js = f"window.Config = {json.dumps(public_config)};"
+    return Response(config_js, mimetype="application/javascript")
+
+
 @react_blueprint.route("/", defaults={"path": ""})
 @react_blueprint.route("/<path:path>")
 def serve_react_home(path: Union[os.PathLike, str]) -> Response:
