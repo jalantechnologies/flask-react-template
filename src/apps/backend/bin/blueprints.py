@@ -18,9 +18,7 @@ MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable to resolve react root path"
 def serve_config() -> Response:
     from modules.config.config_service import ConfigService
 
-    public_config: dict = (
-        ConfigService.get_value("public") if ConfigService.has_value("public") else {}
-    )
+    public_config: dict = ConfigService.get_value("public") if ConfigService.has_value("public") else {}
     config_js = f"window.Config = {json.dumps(public_config)};"
     return Response(config_js, mimetype="application/javascript")
 
