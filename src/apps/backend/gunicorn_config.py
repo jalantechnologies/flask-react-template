@@ -27,6 +27,7 @@ errorlog = "-"
 def post_fork(_server: "Arbiter", _worker: "Worker") -> None:
     """Hook to configure Gunicorn access logger to use Datadog handler after worker fork"""
     import logging
+
     from modules.logger.internal.datadog_handler import DatadogHandler
     from modules.logger.internal.datadog_handler_level import LogLevel
 
