@@ -34,6 +34,7 @@ class DatadogHandler(StreamHandler):
             config.debug = False
 
             env = os.environ.get("APP_ENV", "unknown")
+            service_name = f"{datadog_app_name}-{env}"
 
             with ApiClient(config) as api_client:
                 api_instance = LogsApi(api_client)
@@ -44,7 +45,7 @@ class DatadogHandler(StreamHandler):
                             ddtags=f"env:{env}",
                             hostname="",
                             message=msg,
-                            service=datadog_app_name,
+                            service=service_name,
                             status=self.__get_status(record=record),
                         )
                     ]
