@@ -18,7 +18,7 @@ Frontend Datadog RUM and browser logs are controlled by the `public.datadog.enab
 
 **Required Doppler secrets:** See [Frontend Datadog RUM & Browser Logs](secrets.md#frontend-datadog-rum--browser-logs) in the secrets documentation.
 
-**Important:** Frontend Datadog configuration is injected at build time. Changes to Doppler secrets require a rebuild and redeployment to take effect.
+**Important:** Frontend public configuration (including Datadog RUM settings) is served at runtime from `/config.js` by the Flask app. After changing Doppler or environment values, redeploy the backend (or restart the process) so clients load the updated script; a separate frontend image rebuild is not required for `public` config changes.
 
 ## Backend Logging (Python)
 

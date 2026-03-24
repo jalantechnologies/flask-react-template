@@ -90,4 +90,4 @@ Required for frontend Real User Monitoring and browser log collection (when `pub
 | `DATADOG_SESSION_REPLAY_SAMPLE_RATE` | `public.datadog.sessionReplaySampleRate` | Session replay sampling rate (0-100)       |
 | `DATADOG_SITE_NAME`                  | `public.datadog.site`                    | Datadog site (e.g., `us5.datadoghq.com`)   |
 
-**Note:** Frontend secrets are injected at **build time** via webpack's `DefinePlugin`. Changes require a rebuild and redeployment to take effect.
+**Note:** Frontend public config is exposed at **runtime** via `/config.js` (see `serve_config` in `bin/blueprints.py`). Redeploy or restart the backend after changing these secrets so browsers receive the updated values.
