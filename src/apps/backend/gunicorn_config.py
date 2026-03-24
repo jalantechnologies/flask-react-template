@@ -17,23 +17,10 @@ loglevel = "info"
 logconfig_dict = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",
-        },
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler", "stream": "ext://sys.stdout"}},
     "loggers": {
-        "gunicorn.access": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": True,
-        },
-        "gunicorn.error": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": True,
-        },
+        "gunicorn.access": {"handlers": ["console"], "level": "INFO", "propagate": True},
+        "gunicorn.error": {"handlers": ["console"], "level": "INFO", "propagate": True},
     },
 }
 access_log_format = "app - request - %(h)s - %(s)s - %(m)s - %(M)sms - %(U)s - %({user-agent}i)s"
