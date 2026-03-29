@@ -318,7 +318,8 @@ spec:
             periodSeconds: 5
       volumes:
         - name: redis-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: $KUBE_APP-redis-pvc
         - name: redis-tmp
           emptyDir: {}
 ---

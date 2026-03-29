@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: $KUBE_APP-redis-pvc
+  namespace: $KUBE_NS
+  labels:
+    app: $KUBE_APP-redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 3Gi
