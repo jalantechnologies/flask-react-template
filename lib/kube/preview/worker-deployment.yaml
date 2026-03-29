@@ -256,6 +256,8 @@ metadata:
     app: $KUBE_APP-redis
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: $KUBE_APP-redis
@@ -318,7 +320,8 @@ spec:
             periodSeconds: 5
       volumes:
         - name: redis-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: $KUBE_APP-redis-pvc
         - name: redis-tmp
           emptyDir: {}
 ---
