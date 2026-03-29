@@ -256,6 +256,8 @@ metadata:
     app: $KUBE_APP-redis
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: $KUBE_APP-redis
