@@ -29,7 +29,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: b5dcf50e8e3e8b8e8e8e8e8e8e8e8e8e8e8e8e8e
+          ref: b5dcf50e8305493ed10bb479dfeb10e492046e9d
 
       - name: Build Docker image
         id: build
