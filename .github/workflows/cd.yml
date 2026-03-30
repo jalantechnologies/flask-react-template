@@ -28,7 +28,7 @@ jobs:
         with:
           repository: jalantechnologies/github-ci
           path: platform
-          ref: rehan/fix/nodeaffinity
+          ref: b5dcf50e8e3e8b8e8e8e8e8e8e8e8e8e8e8e8e8e
 
       - name: Extract branch name
         id: extract_branch
