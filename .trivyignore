@@ -10,6 +10,14 @@
 CVE-2026-27903
 CVE-2026-27904
 
+# picomatch@2.3.1 / picomatch@4.0.3 — transitive via tailwindcss (prod) and eslint tooling (dev)
+# - CVE is a ReDoS via crafted extglob patterns in glob matching
+# - No version of picomatch satisfies all requiring packages simultaneously without
+#   a conflicting override (tailwindcss requires ^2.x, tinyglobby requires ^4.0.3)
+# - Risk is low: picomatch is used for CSS class detection, not for processing user input
+# Reviewed: 2026-04-01
+CVE-2026-33671
+
 # tar@7.5.9 in npm's bundled dependencies
 # - npm@11.11.0 bundles tar@^7.5.9; fixes require 7.5.10+
 # - No newer npm release currently available in this setup with patched tar
