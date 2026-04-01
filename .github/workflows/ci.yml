@@ -46,6 +46,7 @@ jobs:
 
   sonarqube:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -69,14 +70,39 @@ jobs:
           path: platform
           ref: ${{ steps.ci_version.outputs.version }}
 
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: output/
+        continue-on-error: true
+
       - name: Run SonarQube analysis
+        id: sonar_analysis
         uses: ./platform/.github/actions/analyze
+        continue-on-error: true
         with:
           sonar_host_url: ${{ vars.SONAR_HOST_URL }}
           sonar_token: ${{ secrets.SONAR_TOKEN }}
           branch: ${{ github.head_ref }}
           branch_base: main
           pull_request_number: ${{ github.event.number }}
+
+      - name: Fetch SonarQube quality gate details
+        if: steps.sonar_analysis.outcome == 'failure'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: |
+          PROJECT_KEY=$(grep 'sonar.projectKey' sonar-project.properties | cut -d'=' -f2 | tr -d ' ')
+          echo "Quality gate status:"
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}" | python3 -m json.tool || true
+          echo "New issues:"
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?projectKeys=${PROJECT_KEY}&resolved=false&sinceLeakPeriod=true&ps=10" | python3 -m json.tool || true
+
+      - name: Fail if SonarQube analysis failed
+        if: steps.sonar_analysis.outcome == 'failure'
+        run: exit 1
 
   scan:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -294,6 +320,18 @@ jobs:
       - name: Tear down test stack
         if: always()
         run: docker compose -f docker-compose.test.yml down -v || true
+
+      - name: Fix coverage paths for SonarQube
+        run: |
+          sed -i 's|/app/||g' output/coverage.xml || true
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: output/coverage.xml
+          retention-days: 1
+        continue-on-error: true
 
       - name: Coverage report
         continue-on-error: true
