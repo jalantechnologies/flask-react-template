@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   clean:
-    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@fad88356620fd16b87d7aef8fe909917eeaf7f19
+    uses: jalantechnologies/github-ci/.github/workflows/clean.yml@rehan/fix/clean-workflow
     concurrency:
       group: ci-preview-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
