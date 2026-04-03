@@ -24,3 +24,11 @@ CVE-2026-33671
 # Reviewed: 2026-03-11
 CVE-2026-29786
 CVE-2026-31802
+
+# lodash@4.17.21 / lodash-es@4.17.21
+# - CVE is arbitrary code execution via untrusted input in template imports
+# - Fix requires lodash@4.18.0 which is not yet released
+# - Risk is low: lodash templates are not used with untrusted user input
+# - TODO: Remove this ignore and upgrade to lodash@4.18.0 after PR #645 is merged
+# Reviewed: 2026-04-03
+CVE-2026-4800
