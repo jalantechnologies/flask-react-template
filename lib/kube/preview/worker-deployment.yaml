@@ -51,7 +51,7 @@ spec:
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
-              pipenv run celery -A celery_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
+              pipenv run celery -A celery_app worker --loglevel=info --concurrency=2 --queues=critical,default,low -E
           env:
             - name: APP_ENV
               value: 'preview'
@@ -68,11 +68,11 @@ spec:
                 - ALL
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: tmp
               mountPath: /app/tmp
