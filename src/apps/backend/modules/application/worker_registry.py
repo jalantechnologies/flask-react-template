@@ -26,7 +26,10 @@ class WorkerRegistry:
         workers: list[Type[Worker]] = []
         try:
             pkg = importlib.import_module(pkg_name)
-        except ImportError:
+        except ImportError as e:
+            if pkg_name in WorkerRegistry._WORKER_PACKAGES:
+                raise
+            Logger.error(message=f"Failed to import worker package {pkg_name}: {e}")
             return workers
 
         for _importer, modname, _ispkg in pkgutil.walk_packages(path=pkg.__path__, prefix=pkg.__name__ + "."):
