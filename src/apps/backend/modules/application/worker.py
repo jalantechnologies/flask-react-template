@@ -31,6 +31,11 @@ class Worker(ABC):
     retry_backoff_max: ClassVar[int] = 600  # 10 minutes
     cron_schedule: ClassVar[Optional[str]] = None  # Cron expression (e.g., '*/10 * * * *')
 
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        if not getattr(cls, "__abstractmethods__", None):
+            cls._get_celery_task()
+
     @classmethod
     @abstractmethod
     def perform(cls, *args: Any, **kwargs: Any) -> Any:
