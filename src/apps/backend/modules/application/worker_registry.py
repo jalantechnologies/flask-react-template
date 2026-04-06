@@ -15,9 +15,7 @@ class WorkerRegistry:
         modules_pkg = importlib.import_module("modules")
         packages = list(WorkerRegistry._WORKER_PACKAGES)
         for _importer, modname, ispkg in pkgutil.walk_packages(
-            path=modules_pkg.__path__,
-            prefix=modules_pkg.__name__ + ".",
-            onerror=lambda _: None,
+            path=modules_pkg.__path__, prefix=modules_pkg.__name__ + ".", onerror=lambda _: None
         ):
             if ispkg and modname.endswith(".internals.workers"):
                 packages.append(modname)
@@ -33,9 +31,7 @@ class WorkerRegistry:
             except ImportError:
                 continue
 
-            for _importer, modname, _ispkg in pkgutil.walk_packages(
-                path=pkg.__path__, prefix=pkg.__name__ + "."
-            ):
+            for _importer, modname, _ispkg in pkgutil.walk_packages(path=pkg.__path__, prefix=pkg.__name__ + "."):
                 try:
                     module = importlib.import_module(modname)
 
