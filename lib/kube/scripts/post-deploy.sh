@@ -73,7 +73,7 @@ main() {
   # We temporarily turn off "exit on error" to catch the rollout exit code
   # ourselves and continue the script (so the trap still fires later).
   set +e
-  kubectl rollout status deploy/"$APP_DEPLOY" -n "$KUBE_NS" --timeout=5m
+  kubectl rollout status deploy/"$APP_DEPLOY" -n "$KUBE_NS" --timeout=10m
   APP_ROLLOUT_RC=$?
   set -e
 
@@ -81,7 +81,7 @@ main() {
   if kubectl -n "$KUBE_NS" get deploy "$WORKER_DEPLOY" >/dev/null 2>&1; then
     echo "rollout :: waiting for $WORKER_DEPLOY"
     set +e
-    kubectl rollout status deploy/"$WORKER_DEPLOY" -n "$KUBE_NS" --timeout=5m
+    kubectl rollout status deploy/"$WORKER_DEPLOY" -n "$KUBE_NS" --timeout=10m
     WORKER_ROLLOUT_RC=$?
     set -e
   else
