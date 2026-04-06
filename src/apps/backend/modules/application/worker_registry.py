@@ -22,6 +22,14 @@ class WorkerRegistry:
         return packages
 
     @staticmethod
+    def _register_worker(obj: Type[Worker]) -> None:
+        if obj.cron_schedule:
+            obj.register_cron()
+            Logger.info(message=f"Registered worker {obj.__name__} with cron schedule: {obj.cron_schedule}")
+        else:
+            Logger.info(message=f"Registered worker {obj.__name__}")
+
+    @staticmethod
     def _register_workers_from_package(pkg_name: str) -> list[Type[Worker]]:
         workers: list[Type[Worker]] = []
         try:
@@ -38,13 +46,7 @@ class WorkerRegistry:
                 for _name, obj in inspect.getmembers(module, inspect.isclass):
                     if issubclass(obj, Worker) and obj is not Worker and obj.__module__ == modname:
                         workers.append(obj)
-                        if obj.cron_schedule:
-                            obj.register_cron()
-                            Logger.info(
-                                message=f"Registered worker {obj.__name__} with cron schedule: {obj.cron_schedule}"
-                            )
-                        else:
-                            Logger.info(message=f"Registered worker {obj.__name__}")
+                        WorkerRegistry._register_worker(obj)
             except Exception as e:
                 Logger.error(message=f"Failed to import worker module {modname}: {e}")
 
