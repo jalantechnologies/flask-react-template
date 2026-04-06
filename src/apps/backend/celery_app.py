@@ -33,14 +33,9 @@ app.conf.update(
     task_default_queue="default",
     task_default_exchange="default",
     task_default_routing_key="default",
+    # Disable distributed lock — single beat process per deployment, no need to coordinate
+    redbeat_lock_key=None,
 )
-
-# Beat schedule for cron jobs
-# Workers can also register themselves here
-app.conf.beat_schedule = {}
-
-# Auto-discover tasks from all modules
-app.autodiscover_tasks(["modules.application.workers"])
 
 
 def initialize_workers() -> None:
