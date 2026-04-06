@@ -36,8 +36,13 @@ app.conf.update(
     task_default_queue="default",
     task_default_exchange="default",
     task_default_routing_key="default",
-    # Disable distributed lock — single beat process per deployment, no need to coordinate
-    redbeat_lock_key=None,
+    # Beat is colocated with the worker pod, which is HPA-scaled up to 5 replicas.
+    # The RedBeat lock ensures only one beat instance dispatches tasks at a time.
+    # We reduce lock_timeout from the default 1500s (25 min) to 60s so that a stale
+    # lock left by a crashed/restarted pod clears within 60s rather than 25 minutes.
+    # beat_max_loop_interval is set to 30s so the lock is refreshed well within that window.
+    beat_max_loop_interval=30,
+    redbeat_lock_timeout=60,
 )
 
 # Import all worker modules now, before the prefork pool is created.
