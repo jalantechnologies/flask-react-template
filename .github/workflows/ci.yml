@@ -95,10 +95,10 @@ jobs:
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         run: |
           PROJECT_KEY=$(grep 'sonar.projectKey' sonar-project.properties | cut -d'=' -f2 | tr -d ' ')
-          echo "Quality gate status (PR-specific):"
-          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}&pullRequest=${{ github.event.number }}" | python3 -m json.tool || true
-          echo "New issues on this PR:"
-          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?componentKeys=${PROJECT_KEY}&pullRequest=${{ github.event.number }}&resolved=false&ps=20" | python3 -c "import sys,json;d=json.load(sys.stdin);print('total:',d.get('total'));[print(i.get('rule'),i.get('severity'),i.get('status'),i.get('component'),'line:',i.get('line'),'|',i.get('message')) for i in d.get('issues',[])]" || true
+          echo "Quality gate status:"
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}" | python3 -m json.tool || true
+          echo "New issues:"
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?projectKeys=${PROJECT_KEY}&resolved=false&sinceLeakPeriod=true&ps=10" | python3 -m json.tool || true
 
       - name: Fail if SonarQube analysis failed
         if: steps.sonar_analysis.outcome == 'failure'
@@ -322,21 +322,16 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v || true
 
       - name: Fix coverage paths for SonarQube
-        if: always()
         run: |
-          if [ -f output/coverage.xml ]; then
-            sed -i 's|/app/||g' output/coverage.xml
-            echo "Coverage paths fixed for SonarQube"
-          fi
+          sed -i 's|/app/||g' output/coverage.xml || true
 
       - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: output/coverage.xml
-          if-no-files-found: ignore
           retention-days: 1
+        continue-on-error: true
 
       - name: Coverage report
         continue-on-error: true
