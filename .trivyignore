@@ -25,3 +25,11 @@ CVE-2026-33671
 CVE-2026-29786
 CVE-2026-31802
 
+# axios@1.13.5 in Node.js dependencies
+# - CVE-2025-62718: SSRF and proxy bypass via improper hostname normalization
+# - CVE-2026-40175: SSRF and proxy bypass (same root cause, follow-on advisory)
+# - Fix available in axios@1.15.0; upgrade blocked pending compatibility testing
+# Reviewed: 2026-04-13
+CVE-2025-62718
+CVE-2026-40175
+
