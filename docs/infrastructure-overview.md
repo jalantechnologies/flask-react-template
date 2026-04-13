@@ -10,17 +10,17 @@ For a full walkthrough, watch the video below.
 
 ## Core Tools
 
-| Tool | Role |
-| ---- | ---- |
-| **Kubernetes** | Container orchestration — runs all workloads across environments |
-| **Docker** | Packages the application into a single image used for all environments |
+| Tool               | Role                                                                     |
+| ------------------ | ------------------------------------------------------------------------ |
+| **Kubernetes**     | Container orchestration — runs all workloads across environments         |
+| **Docker**         | Packages the application into a single image used for all environments   |
 | **GitHub Actions** | CI/CD pipelines — runs tests, linting, and deploys on every PR and merge |
-| **MongoDB** | Primary database, shared across environments |
-| **Redis** | Message broker for Celery background workers |
-| **Celery** | Async task queue and scheduler (beat) for background jobs |
-| **Doppler** | Secrets and environment variable management |
-| **nginx ingress** | Routes external traffic into the cluster |
-| **cert-manager** | Automates SSL certificate issuance via Let's Encrypt |
+| **MongoDB**        | Primary database, shared across environments                             |
+| **Redis**          | Message broker for Celery background workers                             |
+| **Celery**         | Async task queue and scheduler (beat) for background jobs                |
+| **Doppler**        | Secrets and environment variable management                              |
+| **nginx ingress**  | Routes external traffic into the cluster                                 |
+| **cert-manager**   | Automates SSL certificate issuance via Let's Encrypt                     |
 
 ---
 
@@ -28,11 +28,11 @@ For a full walkthrough, watch the video below.
 
 The template ships with three environments out of the box:
 
-| Environment | Trigger | URL Pattern |
-| ----------- | ------- | ----------- |
-| **Preview (per PR)** | Every pull request open/update | `<github_sha>.preview.platform.bettrhq.com` |
-| **Permanent Preview** | Every merge to `main` | `preview.<app>.<domain>` |
-| **Production** | Manual or on merge to `main` | `<app>.<domain>` |
+| Environment           | Trigger                        | URL Pattern                                 |
+| --------------------- | ------------------------------ | ------------------------------------------- |
+| **Preview (per PR)**  | Every pull request open/update | `<github_sha>.preview.platform.bettrhq.com` |
+| **Permanent Preview** | Every merge to `main`          | `preview.<app>.<domain>`                    |
+| **Production**        | Manual or on merge to `main`   | `<app>.<domain>`                            |
 
 Each preview environment is **fully isolated** — its own WebApp pod, Worker pod, and Redis pod — and is torn down automatically when the PR is closed.
 
