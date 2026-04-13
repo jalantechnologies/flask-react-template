@@ -12,4 +12,4 @@ The following video walks through the key infrastructure tools used in this temp
 
 The following video demonstrates how to bootstrap a new project using this template from start to finish.
 
-[Watch: Creating a New Project from flask-react-template](<VIDEO_2_LINK>)
+[Watch: Creating a New Project from flask-react-template](https://www.loom.com/share/82771b5c1f2144039a737b61c9a81c45)
