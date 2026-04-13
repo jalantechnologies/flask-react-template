@@ -28,6 +28,7 @@ This project has three deployment environments that everyone can access:
 - [Getting Started](docs/getting-started.md)
 - [Backend Architecture](docs/backend-architecture.md)
 - [Frontend Architecture](docs/frontend-architecture.md)
+- [Infrastructure Overview](docs/infrastructure-overview.md)
 - [Logging](docs/logging.md)
 - [Configuration](docs/configuration.md)
 - [Secrets](docs/secrets.md)
