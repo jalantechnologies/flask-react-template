@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from celery import Task
 from celery.result import AsyncResult
+from celery.schedules import crontab
+from redbeat import RedBeatSchedulerEntry
 
 if TYPE_CHECKING:
     from celery import Celery
@@ -28,6 +30,11 @@ class Worker(ABC):
     retry_backoff: ClassVar[bool] = True
     retry_backoff_max: ClassVar[int] = 600  # 10 minutes
     cron_schedule: ClassVar[Optional[str]] = None  # Cron expression (e.g., '*/10 * * * *')
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        if not getattr(cls, "__abstractmethods__", None):
+            cls._get_celery_task()
 
     @classmethod
     @abstractmethod
@@ -79,8 +86,6 @@ class Worker(ABC):
         if not cls.cron_schedule:
             return
 
-        from celery.schedules import crontab
-
         # Parse cron expression (format: minute hour day month day_of_week)
         parts = cls.cron_schedule.split()
         if len(parts) != 5:
@@ -95,13 +100,16 @@ class Worker(ABC):
         task = cls._get_celery_task()
         celery_app = _get_celery_app()
 
-        celery_app.conf.beat_schedule[schedule_name] = {
-            "task": task.name,
-            "schedule": crontab(
+        entry = RedBeatSchedulerEntry(
+            name=schedule_name,
+            task=task.name,
+            schedule=crontab(
                 minute=minute,
                 hour=hour,
                 day_of_month=day_of_month,
                 month_of_year=month_of_year,
                 day_of_week=day_of_week,
             ),
-        }
+            app=celery_app,
+        )
+        entry.save()
