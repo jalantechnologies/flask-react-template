@@ -1,3 +1,6 @@
+import importlib
+import pkgutil
+
 from celery import Celery
 from celery.signals import beat_init, worker_ready
 
@@ -33,14 +36,20 @@ app.conf.update(
     task_default_queue="default",
     task_default_exchange="default",
     task_default_routing_key="default",
+    # Disable distributed lock — single beat process per deployment, no need to coordinate
+    redbeat_lock_key=None,
 )
 
-# Beat schedule for cron jobs
-# Workers can also register themselves here
-app.conf.beat_schedule = {}
+# Import all worker modules now, before the prefork pool is created.
+# In Celery's prefork model, child worker processes are forked before worker_ready fires,
+# so tasks registered in that signal are only visible to the main process. Importing here
+# ensures every forked child inherits a fully-populated task registry.
+import modules.application.workers as _workers_pkg
 
-# Auto-discover tasks from all modules
-app.autodiscover_tasks(["modules.application.workers"])
+for _importer, _modname, _ispkg in pkgutil.walk_packages(
+    path=_workers_pkg.__path__, prefix=_workers_pkg.__name__ + "."
+):
+    importlib.import_module(_modname)
 
 
 def initialize_workers() -> None:
@@ -48,8 +57,6 @@ def initialize_workers() -> None:
     Initialize worker registry to register all Worker subclasses and their cron schedules.
     This must run in worker/beat processes, not just the Flask web server.
     """
-    import importlib
-
     worker_registry_module = importlib.import_module("modules.application.worker_registry")
     worker_registry_module.WorkerRegistry.initialize()
 
