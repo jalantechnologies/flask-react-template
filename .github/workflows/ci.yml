@@ -242,6 +242,14 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: checkov_result/results_github_failed_only.md
 
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift /usr/local/share/boost /usr/local/share/powershell
+          sudo apt-get clean
+          docker image prune -af
+          df -h
+
       - name: Build Docker image for scanning
         run: |
           docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
