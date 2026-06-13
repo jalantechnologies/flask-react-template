@@ -1,0 +1,5 @@
+# Set the default behavior to auto-detect text files
+* text=auto
+
+# Force LF (Unix) line endings for all shell scripts
+*.sh text eol=lf
