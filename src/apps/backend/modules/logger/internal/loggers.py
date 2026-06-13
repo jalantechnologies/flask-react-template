@@ -11,6 +11,8 @@ class Loggers:
 
     @staticmethod
     def initialize_loggers() -> None:
+        if Loggers._LOGGERS:
+            return
         logger_transports = ConfigService[list[str]].get_value(key="logger.transports")
         for logger_transport in logger_transports:
             if logger_transport == LoggerTransports.CONSOLE:
