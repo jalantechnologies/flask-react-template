@@ -1,4 +1,11 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 
 import useAsync from 'frontend/contexts/async.hook';
 import { AuthService } from 'frontend/services';
@@ -70,7 +77,7 @@ const loginFn = async (
 
 const logoutFn = (): void => removeAccessTokenFromStorage();
 
-const isUserAuthenticated = () => !!getAccessTokenFromStorage();
+const isTokenInStorage = (): boolean => !!getAccessTokenFromStorage();
 
 const sendOTPFn = async (
   phoneNumber: PhoneNumber,
@@ -88,6 +95,13 @@ const verifyOTPFn = async (
 };
 
 export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  // Authentication is React state, not a bare storage read, so the router and
+  // any consumer re-render the moment a session begins or ends. It is seeded
+  // from storage on mount to keep an existing session across reloads.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    isTokenInStorage,
+  );
+
   const {
     asyncCallback: signup,
     error: signupError,
@@ -98,7 +112,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     isLoading: isLoginLoading,
     error: loginError,
     result: loginResult,
-    asyncCallback: login,
+    asyncCallback: loginCallback,
   } = useAsync(loginFn);
 
   const {
@@ -111,31 +125,83 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     isLoading: isVerifyOTPLoading,
     error: verifyOTPError,
     result: verifyOTPResult,
-    asyncCallback: verifyOTP,
+    asyncCallback: verifyOTPCallback,
   } = useAsync(verifyOTPFn);
 
+  // loginFn / verifyOTPFn persist the token; flip the reactive flag once the
+  // token is in storage so protected routes become reachable immediately.
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const result = await loginCallback(username, password);
+      if (result) {
+        setIsAuthenticated(true);
+      }
+      return result;
+    },
+    [loginCallback],
+  );
+
+  const verifyOTP = useCallback(
+    async (phoneNumber: PhoneNumber, otp: string) => {
+      const result = await verifyOTPCallback(phoneNumber, otp);
+      if (result) {
+        setIsAuthenticated(true);
+      }
+      return result;
+    },
+    [verifyOTPCallback],
+  );
+
+  const logout = useCallback(() => {
+    logoutFn();
+    setIsAuthenticated(false);
+  }, []);
+
+  const isUserAuthenticated = useCallback(
+    () => isAuthenticated,
+    [isAuthenticated],
+  );
+
+  const value = useMemo(
+    () => ({
+      isLoginLoading,
+      isSendOTPLoading,
+      isSignupLoading,
+      isUserAuthenticated,
+      isVerifyOTPLoading,
+      login,
+      loginError,
+      loginResult,
+      logout,
+      sendOTP,
+      sendOTPError,
+      signup,
+      signupError,
+      verifyOTP,
+      verifyOTPError,
+      verifyOTPResult,
+    }),
+    [
+      isLoginLoading,
+      isSendOTPLoading,
+      isSignupLoading,
+      isUserAuthenticated,
+      isVerifyOTPLoading,
+      login,
+      loginError,
+      loginResult,
+      logout,
+      sendOTP,
+      sendOTPError,
+      signup,
+      signupError,
+      verifyOTP,
+      verifyOTPError,
+      verifyOTPResult,
+    ],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        isLoginLoading,
-        isSendOTPLoading,
-        isSignupLoading,
-        isUserAuthenticated,
-        isVerifyOTPLoading,
-        login,
-        loginError,
-        loginResult,
-        logout: logoutFn,
-        sendOTP,
-        sendOTPError,
-        signup,
-        signupError,
-        verifyOTP,
-        verifyOTPError,
-        verifyOTPResult,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };
