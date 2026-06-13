@@ -46,3 +46,9 @@ This project has three deployment environments that everyone can access:
 Once you have familiarized yourself with the documentation, head over to the [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md) to learn about the best practices we follow at Better Software.
 
 PS: Before you start working on the application, these [three git settings](https://spin.atomicobject.com/git-configurations-default/) are a must-have!
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). You are free to fork, modify, and use it, including commercially.
+
+It is built and maintained by **Better** ([Jalan Technology Consulting Pvt. Ltd.](https://bettrhq.com/)). The MIT license requires that the copyright and permission notice be retained in all copies. If you build on this template, we ask that you keep that attribution and, where practical, credit Better with a link back to [bettrhq.com](https://bettrhq.com/).
