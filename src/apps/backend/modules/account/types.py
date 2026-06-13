@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Union
 
+from modules.application.common.types import QueryParams
+
 
 @dataclass(frozen=True)
 class AccountSearchParams:
@@ -53,6 +55,15 @@ class Account:
     hashed_password: str
     phone_number: Optional[PhoneNumber]
     username: str
+
+
+@dataclass(frozen=True)
+class AccountQuery(QueryParams):
+    id: Optional[str] = None
+    username: Optional[str] = None
+    phone_number: Optional[PhoneNumber] = None
+    # Accounts are soft-deleted via `active`; reads default to active records only.
+    active: Optional[bool] = True
 
 
 @dataclass(frozen=True)

@@ -282,7 +282,9 @@ class TestAccountApi(BaseTestAccount):
                 f"{ACCOUNT_URL}/{invalid_account_id}", headers=HEADERS, data=json.dumps(update_params)
             )
 
-            assert response.status_code == 500
+            # A malformed id now resolves to "no such account" (404) instead of surfacing a raw
+            # ObjectId error (500): the repository treats an unparseable id as no match.
+            assert response.status_code == 404
 
     def test_delete_account_success(self) -> None:
         account = AccountService.create_account_by_username_and_password(
@@ -440,4 +442,6 @@ class TestAccountApi(BaseTestAccount):
                 headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
             )
 
-            assert response.status_code == 500
+            # A malformed id now resolves to "no such account" (404) instead of surfacing a raw
+            # ObjectId error (500): the repository treats an unparseable id as no match.
+            assert response.status_code == 404

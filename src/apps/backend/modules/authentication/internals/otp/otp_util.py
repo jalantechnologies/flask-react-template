@@ -1,9 +1,6 @@
 import secrets
 import string
-from typing import Any
 
-from modules.authentication.internals.otp.store.otp_model import OTPModel
-from modules.authentication.types import OTP
 from modules.config.config_service import ConfigService
 
 
@@ -15,16 +12,6 @@ class OTPUtil:
             default_otp = ConfigService[str].get_value(key="public.default_otp.code")
             return default_otp
         return "".join(secrets.choice(string.digits) for _ in range(length))
-
-    @staticmethod
-    def convert_otp_bson_to_otp(otp_bson: dict[str, Any]) -> OTP:
-        validated_otp_data = OTPModel.from_bson(otp_bson)
-        return OTP(
-            id=str(validated_otp_data.id),
-            otp_code=validated_otp_data.otp_code,
-            phone_number=validated_otp_data.phone_number,
-            status=validated_otp_data.status,
-        )
 
     @staticmethod
     def should_use_default_otp_for_phone_number(phone_number: str) -> bool:

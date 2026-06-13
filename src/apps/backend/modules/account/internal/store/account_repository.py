@@ -2,7 +2,8 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 from modules.account.internal.store.account_model import AccountModel
-from modules.application.repository import ApplicationRepository
+from modules.account.types import Account, AccountQuery
+from modules.application.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 
 ACCOUNT_VALIDATION_SCHEMA = {
@@ -28,7 +29,7 @@ ACCOUNT_VALIDATION_SCHEMA = {
 }
 
 
-class AccountRepository(ApplicationRepository):
+class AccountRepository(ApplicationRepository[Account, AccountQuery]):
     collection_name = AccountModel.get_collection_name()
 
     @classmethod
@@ -51,3 +52,46 @@ class AccountRepository(ApplicationRepository):
             else:
                 Logger.error(message=f"OperationFailure occurred for collection accounts: {e.details}")
         return True
+
+    @classmethod
+    def from_doc(cls, doc: StoredDocument) -> Account:
+        model = AccountModel.from_bson(doc)
+        return Account(
+            id=str(model.id),
+            first_name=model.first_name,
+            last_name=model.last_name,
+            hashed_password=model.hashed_password,
+            phone_number=model.phone_number,
+            username=model.username,
+        )
+
+    @classmethod
+    def to_doc(cls, entity: Account) -> StoredDocument:
+        # The stored document carries fields the domain Account does not (active, timestamps); AccountModel
+        # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
+        return AccountModel(
+            first_name=entity.first_name,
+            hashed_password=entity.hashed_password,
+            id=None,
+            last_name=entity.last_name,
+            phone_number=entity.phone_number,
+            username=entity.username,
+        ).to_bson()
+
+    @classmethod
+    def _to_filter(cls, params: AccountQuery) -> StoreFilter:
+        store_filter: StoreFilter = {}
+        if params.id is not None:
+            object_id = cls._to_object_id(params.id)
+            # A malformed id matches nothing; force an empty result rather than raising.
+            store_filter["_id"] = object_id if object_id is not None else {"$in": []}
+        if params.username is not None:
+            store_filter["username"] = params.username
+        if params.phone_number is not None:
+            store_filter["phone_number"] = {
+                "country_code": params.phone_number.country_code,
+                "phone_number": params.phone_number.phone_number,
+            }
+        if params.active is not None:
+            store_filter["active"] = params.active
+        return store_filter

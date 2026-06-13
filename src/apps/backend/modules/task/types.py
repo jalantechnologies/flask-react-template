@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from modules.application.common.types import PaginationParams, SortParams
+from modules.application.common.types import PaginationParams, QueryParams, SortParams
 
 
 @dataclass(frozen=True)
@@ -11,6 +11,14 @@ class Task:
     account_id: str
     description: str
     title: str
+
+
+@dataclass(frozen=True)
+class TaskQuery(QueryParams):
+    id: Optional[str] = None
+    account_id: Optional[str] = None
+    # Tasks are soft-deleted via `active`; reads default to active records only.
+    active: Optional[bool] = True
 
 
 @dataclass(frozen=True)

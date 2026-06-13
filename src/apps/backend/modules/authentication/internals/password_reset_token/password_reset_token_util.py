@@ -1,14 +1,9 @@
 import hashlib
 import os
 from datetime import datetime, timedelta
-from typing import Any
 
 import bcrypt
 
-from modules.authentication.internals.password_reset_token.store.password_reset_token_model import (
-    PasswordResetTokenModel,
-)
-from modules.authentication.types import PasswordResetToken
 from modules.config.config_service import ConfigService
 
 
@@ -38,17 +33,3 @@ class PasswordResetTokenUtil:
     @staticmethod
     def is_token_expired(expires_at: datetime) -> bool:
         return datetime.now() > expires_at
-
-    @staticmethod
-    def convert_password_reset_token_bson_to_password_reset_token(
-        password_reset_token_bson: dict[str, Any]
-    ) -> PasswordResetToken:
-        validated_password_reset_token_data = PasswordResetTokenModel.from_bson(password_reset_token_bson)
-        return PasswordResetToken(
-            account=str(validated_password_reset_token_data.account),
-            id=str(validated_password_reset_token_data.id),
-            is_used=validated_password_reset_token_data.is_used,
-            is_expired=PasswordResetTokenUtil.is_token_expired(validated_password_reset_token_data.expires_at),
-            expires_at=str(validated_password_reset_token_data.expires_at),
-            token=validated_password_reset_token_data.token,
-        )

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Union
+from typing import Optional, Union
 
 from modules.account.types import PhoneNumber
+from modules.application.common.types import QueryParams
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,11 @@ class PasswordResetToken:
 
 
 @dataclass(frozen=True)
+class PasswordResetTokenQuery(QueryParams):
+    account_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class CreatePasswordResetTokenParams:
     username: str
 
@@ -77,6 +83,16 @@ class OTP:
     otp_code: str
     phone_number: PhoneNumber
     status: str
+    # An OTP is active until it is consumed (verified) or superseded by a newer one; verification reads
+    # this to tell a correct-but-expired code from an incorrect one.
+    active: bool = True
+
+
+@dataclass(frozen=True)
+class OTPQuery(QueryParams):
+    otp_code: Optional[str] = None
+    phone_number: Optional[PhoneNumber] = None
+    active: Optional[bool] = None
 
 
 @dataclass(frozen=True)

@@ -130,11 +130,99 @@ account/
 
 ### 5.2 `account_repository.py`
 
-- `class AccountRepository(ApplicationRepository)`
-- Provides:
-  - `collection()` — the Mongo `Collection` object
+- `class AccountRepository(ApplicationRepository[Account, AccountQuery])`
+- A repository is **pure storage**. It **inherits** the generic CRUD surface from `ApplicationRepository`
+  and only declares what is specific to this collection:
+  - `collection_name` — the Mongo collection name
   - `on_init_collection()` — sets up JSON-Schema validation (via `create_collection`) and any indexes
-- Central place for low-level DB concerns
+  - `from_doc(doc) -> Account` — hydrates a stored document into the `Account` domain dataclass (required)
+  - `to_doc(entity) -> StoredDocument` — serializes an `Account` into a document; override only when the
+    default (which uses `to_bson()` / a dataclass) is not enough — e.g. when a separate `*Model` supplies
+    stored-only fields like `active`/timestamps
+  - `_to_filter(params) -> StoreFilter` — maps the module's typed `AccountQuery` to a store filter (only
+    if the repository supports `query()`)
+
+#### The generic `ApplicationRepository[Entity, Query]`
+
+`ApplicationRepository` (in `modules/application/repository.py`) is generic over the entity it stores **and**
+the typed query object it accepts. It owns the shape of "talk to the database" once, so a concrete
+repository is mostly declaration:
+
+```python
+@dataclass(frozen=True)
+class AccountQuery(QueryParams):
+    id: Optional[str] = None
+    username: Optional[str] = None
+    phone_number: Optional[PhoneNumber] = None
+    active: Optional[bool] = True  # accounts are soft-deleted; reads default to active records
+
+class AccountRepository(ApplicationRepository[Account, AccountQuery]):
+    collection_name = "accounts"
+
+    @classmethod
+    def from_doc(cls, doc: StoredDocument) -> Account:
+        model = AccountModel.from_bson(doc)
+        return Account(id=str(model.id), username=model.username, ...)
+
+    @classmethod
+    def _to_filter(cls, params: AccountQuery) -> StoreFilter:
+        f: StoreFilter = {}
+        if params.username is not None:
+            f["username"] = params.username
+        if params.active is not None:
+            f["active"] = params.active
+        return f
+```
+
+The public surface is the CRUD verbs, each speaking the domain (ids, entities, typed query objects) and
+returning domain entities — never raw BSON:
+
+| Verb                                  | Input                       | Returns               |
+| ------------------------------------- | --------------------------- | --------------------- |
+| `create(entity)`                      | a domain entity             | the stored entity     |
+| `find(id)`                            | a primary id                | the entity or `None`  |
+| `find_many(ids)`                      | several primary ids         | a list of entities    |
+| `query(params)`                       | a typed query object        | a list of entities    |
+| `query_one(params)`                   | a typed query object        | the entity or `None`  |
+| `query_paginated(params, pagination)` | a typed query + page params | a `PaginationResult`  |
+| `count(params)`                       | a typed query object        | the number of matches |
+| `update(id, fields)`                  | id + fields to patch        | the refreshed entity  |
+| `update_fields(id, fields)`           | id + fields to patch        | `True` if it matched  |
+| `delete(id)`                          | a primary id                | `True` if it existed  |
+
+`query_paginated` is the one place pagination math (count + skip + limit + total pages) lives, so no
+repository re-derives it. `update` reads the row back and returns the refreshed entity; `update_fields` is
+the same `$set` without the read-back (returns only whether a row matched), for writers that patch and
+discard the result, so they pay one round-trip instead of two. A malformed id is treated as "no such
+document" (the verb returns `None`/`False`), not an error — so a path param can be passed straight through.
+
+**No MongoDB crosses the public surface.** Callers never write a `{"field": ...}` filter, an `ObjectId`,
+or a `$set`. A field-combination read is a typed object — `query(AccountQuery(username=x))`, the analogue
+of `/accounts?username=x` — and `_to_filter` is the single place where domain fields become store syntax.
+The `ObjectId`/`$set`/`count_documents` specifics live inside the base, in each repository's
+`from_doc`/`to_doc`, and in `_to_filter`. Replacing MongoDB with another store is a change to those hooks,
+not to any consumer.
+
+The only deliberately untyped values in the layer are the storage-boundary aliases declared in the base —
+`StoredDocument`, `StoreFilter`, `FieldUpdates`, `SortSpec` — which name the genuinely heterogeneous maps
+at the database edge so the `dict[str, Any]` blur is confined there and visible.
+
+> The generic base uses Python 3.12 type-parameter syntax (`class ApplicationRepository[Entity, Query]:`,
+> `type StoredDocument = ...`). The backend runs and is checked on Python 3.12.
+
+**A repository is pure storage; domain reads/writes live on the reader/writer.** A thin domain method —
+"find the account with this username", "expire previous OTPs", "mark this token used" — is NOT a repository
+method; it lives on the module's reader (reads) or writer (writes), which calls the verbs:
+`AccountReader.get_account_by_username` is `AccountRepository.query_one(AccountQuery(username=...))`. This
+keeps the layer you would rewrite for a new store down to the genuinely store-specific code.
+
+What genuinely stays on the repository (no CRUD verb expresses it, so a store swap rewrites it): an upsert
+or update by a natural key (`AccountNotificationPreferencesRepository.update_by_account_id`), a create that
+keys store-shaped fields the domain entity does not carry (`PasswordResetTokenRepository.create_for_account`
+keys `account` as an `ObjectId` and `expires_at` as a date), an atomic `$inc`/`$push`, an aggregation, a
+`distinct`. Each is a named method the writer/reader calls, so callers stay storage-agnostic even though
+the method itself is not. A query-less repository (a singleton store, a write-only log) declares `NoQuery`
+as its query type: `ApplicationRepository[Entity, NoQuery]`.
 
 ---
 
@@ -147,8 +235,9 @@ account/
     - `get_account_by_id(params: AccountSearchByIdParams) -> Account`
     - `get_account_by_phone_number(phone_number: PhoneNumber) -> Account`
     - `get_account_by_username_and_password(params: AccountSearchParams) -> Account`
-  - Uses `AccountRepository.collection().find_one(...)`
-  - Converts raw BSON → domain via `AccountUtil.convert_account_bson_to_account()`
+  - Calls the repository verbs with typed query objects, e.g.
+    `AccountRepository.query_one(AccountQuery(username=username))` — never a raw filter
+  - The repository's `from_doc` already returns a domain `Account`, so the reader does no BSON conversion
   - Raises module-specific exceptions if not found or duplicates
 
 ### 6.2 `account_writer.py`
@@ -156,13 +245,13 @@ account/
 - `class AccountWriter:`
   - High-level **write** methods, e.g.
     - `create_account_by_username_and_password(params: CreateAccountByUsernameAndPasswordParams) -> Account`
-    - `create_or_update_account_notification_preferences(...) -> AccountNotificationPreferences`
     - `update_account_profile(account_id: str, params: UpdateAccountProfileParams) -> Account`
     - `reset_account_password(params: ResetPasswordParams) -> Account`
   - Handles:
     - Phone-number validation via `phonenumbers.parse` & `is_valid_number`
     - Password hashing via `AccountUtil.hash_password()`
-    - Mongo `insert_one` / `find_one_and_update`
+    - Persistence via the repository verbs — `AccountRepository.create(account)`,
+      `AccountRepository.update(id, fields)` / `update_fields(id, fields)` — never raw `insert_one` / `$set`
     - Not-found errors (`AccountWithIdNotFoundError`)
 
 ### 6.3 `account_util.py`
@@ -170,7 +259,7 @@ account/
 - `class AccountUtil:`
   - `hash_password(password: str) -> str`
   - `compare_password(password: str, hashed_password: str) -> bool`
-  - `convert_account_bson_to_account(bson: dict) -> Account` (uses `AccountModel.from_bson`)
+  - (BSON → domain conversion now lives in `AccountRepository.from_doc`, not here.)
 
 ---
 

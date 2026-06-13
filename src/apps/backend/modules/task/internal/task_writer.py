@@ -1,13 +1,7 @@
 from datetime import datetime
 
-from bson.objectid import ObjectId
-from pymongo import ReturnDocument
-
-from modules.task.errors import TaskNotFoundError
-from modules.task.internal.store.task_model import TaskModel
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_reader import TaskReader
-from modules.task.internal.task_util import TaskUtil
 from modules.task.types import (
     CreateTaskParams,
     DeleteTaskParams,
@@ -21,40 +15,26 @@ from modules.task.types import (
 class TaskWriter:
     @staticmethod
     def create_task(*, params: CreateTaskParams) -> Task:
-        task_bson = TaskModel(
-            account_id=params.account_id, description=params.description, title=params.title
-        ).to_bson()
-
-        query = TaskRepository.collection().insert_one(task_bson)
-        created_task_bson = TaskRepository.collection().find_one({"_id": query.inserted_id})
-
-        return TaskUtil.convert_task_bson_to_task(created_task_bson)
+        task = Task(id="", account_id=params.account_id, description=params.description, title=params.title)
+        return TaskRepository.create(task)
 
     @staticmethod
     def update_task(*, params: UpdateTaskParams) -> Task:
-        updated_task_bson = TaskRepository.collection().find_one_and_update(
-            {"_id": ObjectId(params.task_id), "account_id": params.account_id, "active": True},
-            {"$set": {"description": params.description, "title": params.title, "updated_at": datetime.now()}},
-            return_document=ReturnDocument.AFTER,
+        # Confirm the task exists for this account (raises if not), keeping the update account-scoped.
+        TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
+
+        TaskRepository.update_fields(
+            params.task_id, {"description": params.description, "title": params.title, "updated_at": datetime.now()}
         )
 
-        if updated_task_bson is None:
-            raise TaskNotFoundError(task_id=params.task_id)
-
-        return TaskUtil.convert_task_bson_to_task(updated_task_bson)
+        return TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
     @staticmethod
     def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
+        # Confirm the task exists for this account (raises if not) before soft-deleting it.
         task = TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
         deletion_time = datetime.now()
-        updated_task_bson = TaskRepository.collection().find_one_and_update(
-            {"_id": ObjectId(task.id)},
-            {"$set": {"active": False, "updated_at": deletion_time}},
-            return_document=ReturnDocument.AFTER,
-        )
-
-        if updated_task_bson is None:
-            raise TaskNotFoundError(task_id=params.task_id)
+        TaskRepository.update_fields(task.id, {"active": False, "updated_at": deletion_time})
 
         return TaskDeletionResult(task_id=params.task_id, deleted_at=deletion_time, success=True)
