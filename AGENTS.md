@@ -181,6 +181,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 - Validate and sanitize all incoming data; prefer Pydantic models for request bodies and query params.
 - Use parameterized Mongo queries. Avoid building raw query strings with user input.
 - Keep secrets in environment variables or Doppler; never commit credentials.
+- Use TLS on the MongoDB connection outside local development. Startup warns when `MONGODB_URI` lacks TLS — see [MongoDB Security](docs/mongodb-security.md).
 
 ## Testing Requirements
 
@@ -287,5 +288,6 @@ Choose your type carefully — it determines the label and semver impact.
 - [Backend Architecture](docs/backend-architecture.md)
 - [Frontend Architecture](docs/frontend-architecture.md)
 - [Configuration Guide](docs/configuration.md)
+- [MongoDB Security](docs/mongodb-security.md)
 - [Testing Guide](docs/testing.md)
 - [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md)
