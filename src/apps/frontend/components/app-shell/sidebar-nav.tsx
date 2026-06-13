@@ -12,6 +12,8 @@ import { Spacing } from 'frontend/types/design-system';
 interface SidebarNavProps {
   items: NavItemSpec[];
   brand: string;
+  // Optional brand logo shown before the wordmark in the sidebar header.
+  logoSrc?: string;
   // Drawer state for the mobile breakpoint. On desktop the sidebar is always
   // visible; below `lg` it slides in as an overlay drawer.
   open: boolean;
@@ -27,6 +29,7 @@ interface SidebarNavProps {
 const SidebarNav: React.FC<SidebarNavProps> = ({
   brand,
   items,
+  logoSrc,
   onClose,
   open,
   testId,
@@ -49,7 +52,10 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
     >
       <Stack gap={Spacing.Lg} flex>
         <Inline justify="between" align="center" padding={Spacing.Md}>
-          <Heading level={1}>{brand}</Heading>
+          <Inline gap={Spacing.Sm} align="center">
+            {logoSrc && <img src={logoSrc} alt="" className="h-7 w-auto" />}
+            <Heading level={1}>{brand}</Heading>
+          </Inline>
           <span className="lg:hidden">
             <IconButton
               label="Close navigation"

@@ -6,6 +6,8 @@ import TopBar from 'frontend/components/app-shell/top-bar';
 
 interface AppShellProps {
   brand: string;
+  // Optional brand logo shown in the sidebar header alongside the wordmark.
+  logoSrc?: string;
   navItems: NavItemSpec[];
   userName: string;
   userEmail: string;
@@ -21,6 +23,7 @@ interface AppShellProps {
 const AppShell: React.FC<PropsWithChildren<AppShellProps>> = ({
   brand,
   children,
+  logoSrc,
   navItems,
   onSignOut,
   testId,
@@ -36,6 +39,7 @@ const AppShell: React.FC<PropsWithChildren<AppShellProps>> = ({
     >
       <SidebarNav
         brand={brand}
+        logoSrc={logoSrc}
         items={navItems}
         open={isNavOpen}
         onClose={() => setIsNavOpen(false)}

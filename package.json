@@ -1,7 +1,15 @@
 {
   "name": "flask-react-template",
   "version": "0.6.1",
-  "description": "Boilerplate project for React & Flask",
+  "description": "Full-stack starter for building React and Flask applications, maintained by Better.",
+  "homepage": "https://bettrhq.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jalantechnologies/flask-react-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jalantechnologies/flask-react-template/issues"
+  },
   "engines": {
     "npm": "10.9.2",
     "node": "22.13.1"
@@ -34,7 +42,7 @@
     "test": "cross-env APP_ENV=testing make run-test",
     "prepare": "husky"
   },
-  "author": "jalantechnologies",
+  "author": "Jalan Technology Consulting Pvt. Ltd. <developer@bettrhq.com> (https://bettrhq.com/)",
   "license": "MIT",
   "dependencies": {
     "@babel/traverse": "^7.28.5",

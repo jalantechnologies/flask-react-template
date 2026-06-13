@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { AppShell, NavItemSpec } from 'frontend/components';
 import DashboardIcon from 'frontend/components/icons/dashboard-icon';
-import TasksIcon from 'frontend/components/icons/tasks-icon';
 import routes from 'frontend/constants/routes';
 import { useAccountContext, useAuthContext } from 'frontend/contexts';
 
@@ -12,11 +11,6 @@ const NAV_ITEMS: NavItemSpec[] = [
     icon: <DashboardIcon />,
     label: 'Dashboard',
     path: routes.DASHBOARD,
-  },
-  {
-    icon: <TasksIcon />,
-    label: 'Tasks',
-    path: routes.TASKS,
   },
 ];
 
@@ -32,7 +26,8 @@ export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <AppShell
-      brand="Flask React"
+      brand="Better"
+      logoSrc="/assets/img/better-logo.png"
       navItems={NAV_ITEMS}
       userName={accountDetails.displayName()}
       userEmail={accountDetails.username}
