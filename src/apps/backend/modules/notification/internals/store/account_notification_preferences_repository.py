@@ -1,11 +1,15 @@
+from datetime import datetime
+
+from pymongo import ReturnDocument
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.repository import ApplicationRepository
+from modules.application.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 from modules.notification.internals.store.account_notification_preferences_model import (
     AccountNotificationPreferencesModel,
 )
+from modules.notification.types import AccountNotificationPreferences, AccountNotificationPreferencesQuery
 
 ACCOUNT_NOTIFICATION_PREFERENCES_VALIDATION_SCHEMA = {
     "$jsonSchema": {
@@ -32,7 +36,9 @@ ACCOUNT_NOTIFICATION_PREFERENCES_VALIDATION_SCHEMA = {
 }
 
 
-class AccountNotificationPreferencesRepository(ApplicationRepository):
+class AccountNotificationPreferencesRepository(
+    ApplicationRepository[AccountNotificationPreferences, AccountNotificationPreferencesQuery]
+):
     collection_name = AccountNotificationPreferencesModel.get_collection_name()
 
     @classmethod
@@ -64,3 +70,45 @@ class AccountNotificationPreferencesRepository(ApplicationRepository):
                     message=f"OperationFailure occurred for collection account_notification_preferences: {e.details}"
                 )
         return True
+
+    @classmethod
+    def from_doc(cls, doc: StoredDocument) -> AccountNotificationPreferences:
+        model = AccountNotificationPreferencesModel.from_bson(doc)
+        return AccountNotificationPreferences(
+            account_id=model.account_id,
+            email_enabled=model.email_enabled,
+            push_enabled=model.push_enabled,
+            sms_enabled=model.sms_enabled,
+        )
+
+    @classmethod
+    def to_doc(cls, entity: AccountNotificationPreferences) -> StoredDocument:
+        # The stored document carries fields the domain entity does not (active, timestamps); the model
+        # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
+        return AccountNotificationPreferencesModel(
+            account_id=entity.account_id,
+            id=None,
+            email_enabled=entity.email_enabled,
+            push_enabled=entity.push_enabled,
+            sms_enabled=entity.sms_enabled,
+        ).to_bson()
+
+    @classmethod
+    def _to_filter(cls, params: AccountNotificationPreferencesQuery) -> StoreFilter:
+        store_filter: StoreFilter = {}
+        if params.account_id is not None:
+            store_filter["account_id"] = params.account_id
+        if params.active is not None:
+            store_filter["active"] = params.active
+        return store_filter
+
+    @classmethod
+    def update_by_account_id(cls, account_id: str, fields: FieldUpdates) -> AccountNotificationPreferences:
+        # The active preferences row is identified by its natural key (account_id), not its ObjectId, so
+        # this $set has no generic-verb equivalent and stays on the repository (see backend-architecture.md).
+        updated = cls.collection().find_one_and_update(
+            {"account_id": account_id, "active": True},
+            {"$set": {**fields, "updated_at": datetime.now()}},
+            return_document=ReturnDocument.AFTER,
+        )
+        return cls.from_doc(updated)

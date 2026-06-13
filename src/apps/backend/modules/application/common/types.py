@@ -6,6 +6,20 @@ T = TypeVar("T")
 
 
 @dataclass(frozen=True)
+class QueryParams:
+    """Base for a repository's typed query object; subclasses declare optional domain fields that
+    `_to_filter` maps to a store filter. A query object is the code equivalent of a query string
+    (`AccountQuery(username=x)` is the analogue of `/accounts?username=x`), so reads stay in domain
+    language and the store specifics live inside the repository."""
+
+
+@dataclass(frozen=True)
+class NoQuery(QueryParams):
+    """Marker for repositories that expose no `query()` — a singleton store or a write-only log that
+    is only ever read by id. Declared as the query type: `ApplicationRepository[Entity, NoQuery]`."""
+
+
+@dataclass(frozen=True)
 class PaginationParams:
     page: int
     size: int

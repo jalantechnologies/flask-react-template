@@ -1,9 +1,12 @@
+from typing import Optional
+
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.repository import ApplicationRepository
+from modules.application.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 from modules.task.internal.store.task_model import TaskModel
+from modules.task.types import Task, TaskQuery
 
 TASK_VALIDATION_SCHEMA = {
     "$jsonSchema": {
@@ -21,7 +24,7 @@ TASK_VALIDATION_SCHEMA = {
 }
 
 
-class TaskRepository(ApplicationRepository):
+class TaskRepository(ApplicationRepository[Task, TaskQuery]):
     collection_name = TaskModel.get_collection_name()
 
     @classmethod
@@ -44,3 +47,32 @@ class TaskRepository(ApplicationRepository):
             else:
                 Logger.error(message=f"OperationFailure occurred for collection tasks: {e.details}")
         return True
+
+    @classmethod
+    def from_doc(cls, doc: StoredDocument) -> Task:
+        model = TaskModel.from_bson(doc)
+        return Task(id=str(model.id), account_id=model.account_id, description=model.description, title=model.title)
+
+    @classmethod
+    def to_doc(cls, entity: Task) -> StoredDocument:
+        # The stored document carries fields the domain Task does not (active, timestamps); TaskModel
+        # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
+        return TaskModel(account_id=entity.account_id, description=entity.description, title=entity.title).to_bson()
+
+    @classmethod
+    def _to_filter(cls, params: TaskQuery) -> StoreFilter:
+        store_filter: StoreFilter = {}
+        if params.id is not None:
+            object_id = cls._to_object_id(params.id)
+            # A malformed id matches nothing; force an empty result rather than raising.
+            store_filter["_id"] = object_id if object_id is not None else {"$in": []}
+        if params.account_id is not None:
+            store_filter["account_id"] = params.account_id
+        if params.active is not None:
+            store_filter["active"] = params.active
+        return store_filter
+
+    @classmethod
+    def _to_sort(cls, params: TaskQuery) -> Optional[SortSpec]:
+        # Default ordering for task listings: newest first, with _id as a stable tiebreaker.
+        return [("created_at", -1), ("_id", -1)]

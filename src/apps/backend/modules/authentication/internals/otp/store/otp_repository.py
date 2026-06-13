@@ -1,8 +1,9 @@
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.repository import ApplicationRepository
+from modules.application.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.authentication.internals.otp.store.otp_model import OTPModel
+from modules.authentication.types import OTP, OTPQuery
 from modules.logger.logger import Logger
 
 OTP_VALIDATION_SCHEMA = {
@@ -30,7 +31,7 @@ OTP_VALIDATION_SCHEMA = {
 }
 
 
-class OTPRepository(ApplicationRepository):
+class OTPRepository(ApplicationRepository[OTP, OTPQuery]):
     collection_name = OTPModel.get_collection_name()
 
     @classmethod
@@ -50,3 +51,40 @@ class OTPRepository(ApplicationRepository):
             else:
                 Logger.error(message=f"OperationFailure occurred for collection otp: {e.details}")
         return True
+
+    @classmethod
+    def from_doc(cls, doc: StoredDocument) -> OTP:
+        model = OTPModel.from_bson(doc)
+        return OTP(
+            id=str(model.id),
+            otp_code=model.otp_code,
+            phone_number=model.phone_number,
+            status=model.status,
+            active=model.active,
+        )
+
+    @classmethod
+    def to_doc(cls, entity: OTP) -> StoredDocument:
+        # OTPModel adds the stored timestamps the domain OTP omits. create() strips id/_id so MongoDB
+        # assigns a fresh ObjectId.
+        return OTPModel(
+            active=entity.active,
+            id=None,
+            otp_code=entity.otp_code,
+            phone_number=entity.phone_number,
+            status=entity.status,
+        ).to_bson()
+
+    @classmethod
+    def _to_filter(cls, params: OTPQuery) -> StoreFilter:
+        store_filter: StoreFilter = {}
+        if params.otp_code is not None:
+            store_filter["otp_code"] = params.otp_code
+        if params.phone_number is not None:
+            store_filter["phone_number"] = {
+                "country_code": params.phone_number.country_code,
+                "phone_number": params.phone_number.phone_number,
+            }
+        if params.active is not None:
+            store_filter["active"] = params.active
+        return store_filter

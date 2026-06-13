@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
+from modules.application.common.types import QueryParams
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,13 @@ class AccountNotificationPreferences:
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True
+
+
+@dataclass(frozen=True)
+class AccountNotificationPreferencesQuery(QueryParams):
+    account_id: Optional[str] = None
+    # Preferences are soft-deleted via `active`; reads default to active records only.
+    active: Optional[bool] = True
 
 
 @dataclass(frozen=True)
