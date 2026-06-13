@@ -31,14 +31,16 @@ jobs:
               { pattern: /^refactor(\(.+?\))?:/i, typeLabel: 'type: refactor', semverLabel: null },
               { pattern: /^test(\(.+?\))?:/i, typeLabel: 'type: test', semverLabel: null },
               { pattern: /^chore(\(.+?\))?:/i, typeLabel: 'type: chore', semverLabel: null },
+              { pattern: /^build(\(.+?\))?:/i, typeLabel: 'type: build', semverLabel: null },
               { pattern: /^ci(\(.+?\))?:/i, typeLabel: 'type: ci', semverLabel: null },
+              { pattern: /^revert(\(.+?\))?:/i, typeLabel: 'type: revert', semverLabel: null },
             ];
 
             // Find matching prefix
             const match = labelMappings.find(mapping => mapping.pattern.test(title));
 
             if (!match) {
-              core.setFailed(`❌ PR title does not follow conventional commit format. Expected format: type(scope): description\nValid types: feat, fix, perf, docs, style, refactor, test, chore, ci\nExample: feat(api): add new endpoint`);
+              core.setFailed(`❌ PR title does not follow conventional commit format. Expected format: type(scope): description\nValid types: feat, fix, perf, docs, style, refactor, test, chore, build, ci, revert\nExample: feat(api): add new endpoint`);
               return;
             }
 
@@ -57,7 +59,7 @@ jobs:
             const existingLabelNames = existingLabels.map(label => label.name);
 
             // Remove old type and semver labels if they differ
-            const typeLabels = ['type: feat', 'type: fix', 'type: perf', 'type: docs', 'type: style', 'type: refactor', 'type: test', 'type: chore', 'type: ci'];
+            const typeLabels = ['type: feat', 'type: fix', 'type: perf', 'type: docs', 'type: style', 'type: refactor', 'type: test', 'type: chore', 'type: build', 'type: ci', 'type: revert'];
             const semverLabels = ['semver: major', 'semver: minor', 'semver: patch'];
 
             for (const label of existingLabelNames) {
