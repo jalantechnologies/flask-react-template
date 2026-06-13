@@ -2,7 +2,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { H2, VerticalStackLayout } from 'frontend/components';
+import { Heading, Spacing, Stack } from 'frontend/components';
 import routes from 'frontend/constants/routes';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
 import AuthenticationPageLayout from 'frontend/pages/authentication/authentication-page-layout';
@@ -25,10 +25,10 @@ export const Signup: React.FC = () => {
   return (
     <AuthenticationPageLayout>
       <AuthenticationFormLayout>
-        <VerticalStackLayout>
-          <H2>Sign Up</H2>
+        <Stack gap={Spacing.Lg}>
+          <Heading level={1}>Sign Up</Heading>
           <SignupForm onSuccess={onSuccess} onError={onError} />
-        </VerticalStackLayout>
+        </Stack>
       </AuthenticationFormLayout>
     </AuthenticationPageLayout>
   );

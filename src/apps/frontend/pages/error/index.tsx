@@ -1,7 +1,15 @@
 import React from 'react';
 
-import { Button, H2, ParagraphMedium } from 'frontend/components';
-import { ButtonKind } from 'frontend/types/button';
+import {
+  Button,
+  Center,
+  Heading,
+  Screen,
+  Spacing,
+  Stack,
+  Text,
+  Variant,
+} from 'frontend/components';
 
 type ErrorFallbackProps = {
   error: Error;
@@ -9,25 +17,15 @@ type ErrorFallbackProps = {
 };
 
 export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ resetError }) => (
-  <>
-    <div className="relative z-1 flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
-      <div className="mx-auto w-full max-w-[242px] text-center sm:max-w-[472px]">
-        <H2>ERROR</H2>
-
-        <img
-          src="/assets/img/icon/500-error-icon.svg"
-          alt="500"
-          className="dark:hidden"
-        />
-
-        <ParagraphMedium>
-          We're sorry, but an unexpected error has occurred.
-        </ParagraphMedium>
-
-        <Button kind={ButtonKind.PRIMARY} onClick={() => resetError()}>
+  <Screen maxWidth="sm" testId="errorFallback">
+    <Center>
+      <Stack gap={Spacing.Md} align="center">
+        <Heading level={1}>Something went wrong</Heading>
+        <Text>We&apos;re sorry, but an unexpected error has occurred.</Text>
+        <Button variant={Variant.Primary} onClick={() => resetError()}>
           Retry
         </Button>
-      </div>
-    </div>
-  </>
+      </Stack>
+    </Center>
+  </Screen>
 );

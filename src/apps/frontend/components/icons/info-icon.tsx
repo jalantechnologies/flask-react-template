@@ -1,15 +1,17 @@
-// src/components/icons/InfoIcon.tsx
 import * as React from 'react';
 
-const InfoIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 20 20"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-  </svg>
+import IconBase, { IconProps } from 'frontend/components/icons/icon-base';
+
+const InfoIcon: React.FC<IconProps> = (props) => (
+  <IconBase viewBox="0 0 16 16" {...props}>
+    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.25" />
+    <path
+      d="M8 7v4M8 5.5v.5"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeWidth="1.25"
+    />
+  </IconBase>
 );
 
 export default InfoIcon;

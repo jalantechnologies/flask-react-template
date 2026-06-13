@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import LoginForm from './login-form';
 
-import { VerticalStackLayout, H2 } from 'frontend/components';
+import { Heading, Stack, Spacing } from 'frontend/components';
 import routes from 'frontend/constants/routes';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
 import AuthenticationPageLayout from 'frontend/pages/authentication/authentication-page-layout';
@@ -23,10 +23,10 @@ export const Login: React.FC = () => {
   return (
     <AuthenticationPageLayout>
       <AuthenticationFormLayout>
-        <VerticalStackLayout>
-          <H2>Log In</H2>
+        <Stack gap={Spacing.Lg}>
+          <Heading level={1}>Log In</Heading>
           <LoginForm onSuccess={onSuccess} onError={onError} />
-        </VerticalStackLayout>
+        </Stack>
       </AuthenticationFormLayout>
     </AuthenticationPageLayout>
   );

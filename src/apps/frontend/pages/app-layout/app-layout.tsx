@@ -1,32 +1,40 @@
 import React, { PropsWithChildren } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Header } from 'frontend/components';
-import Sidebar from 'frontend/components/sidebar';
+import { AppShell, NavItemSpec } from 'frontend/components';
+import DashboardIcon from 'frontend/components/icons/dashboard-icon';
+import routes from 'frontend/constants/routes';
+import { useAccountContext, useAuthContext } from 'frontend/contexts';
+
+const NAV_ITEMS: NavItemSpec[] = [
+  {
+    icon: <DashboardIcon />,
+    label: 'Dashboard',
+    path: routes.DASHBOARD,
+  },
+];
 
 export const AppLayout: React.FC<PropsWithChildren> = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuthContext();
+  const { accountDetails } = useAccountContext();
+
+  const handleSignOut = () => {
+    logout();
+    navigate(routes.LOGIN);
+  };
 
   return (
-    <div className="dark:bg-boxdark-2 dark:text-bodydark">
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
-        />
-
-        <div className="relative flex flex-1 flex-col">
-          {/* Header */}
-          <Header
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          />
-
-          {/* Main Content */}
-          <main>{children}</main>
-        </div>
-      </div>
-    </div>
+    <AppShell
+      brand="Better"
+      logoSrc="/assets/img/better-logo.png"
+      navItems={NAV_ITEMS}
+      userName={accountDetails.displayName()}
+      userEmail={accountDetails.username}
+      onSignOut={handleSignOut}
+    >
+      {children}
+    </AppShell>
   );
 };
 

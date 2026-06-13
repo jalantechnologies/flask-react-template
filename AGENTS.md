@@ -152,15 +152,21 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Frontend-Specific Guidelines
 
-#### 14. Styling Practices
+#### 14. Styling Practices (Design System)
 
-- **DON'T** use inline styles.
-- **DO** rely on Tailwind utility classes or shared CSS modules as needed.
+The frontend uses a token-driven design system. The full contract is in [Frontend Design System](docs/frontend-design-system.md). In review:
+
+- **DON'T** pass `className` to raw DOM elements in `src/apps/frontend/pages/**`, and never use inline `style`. This is lint-enforced.
+- **DON'T** reach for raw Tailwind spacing or color on a page. Use layout primitives (`Stack`, `Inline`, `Grid`) with `Spacing` gap tokens, and the semantic theme colors in `tailwind.config.js`.
+- **DO** assemble pages from design-system components imported from `frontend/components`.
 
 #### 15. Component Contracts & Variants
 
-- Avoid per-page style overrides. Create component variants/props for different presentations.
-- Shared layout primitives should live under `src/apps/frontend/components` or `layouts` rather than page folders.
+- Presentation is selected through tokens — `variant`, `size`, `gap` — not class strings. A look an existing component does not offer is a missing variant: add it to the component, do not inline it on the page.
+- Interfaces are idiomatic, not consumer-shaped. Follow shadcn / Radix / Bootstrap / MUI: `variant` for status colour (the `Status` token), native events on form `onChange`, `checked` / `onCheckedChange` for `Switch` and `Checkbox`, `src` / `fallback` for `Avatar`, `DataTable` for the data grid.
+- Never declare a `children` field in a Props interface or type. Type the component as `React.FC<PropsWithChildren<XProps>>`; for non-JSX content (a markdown string) use a named prop like `content`. Lint-enforced.
+- A component's public props must not accept a `className` escape hatch. className and Tailwind classes live inside components only.
+- Shared components and layout primitives live under `src/apps/frontend/components`, never in page folders.
 
 #### 16. Data Fetching & State
 

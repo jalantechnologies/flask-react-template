@@ -1,102 +1,97 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { AsyncError } from 'frontend//types';
 import {
-  VerticalStackLayout,
-  FormControl,
-  PasswordInput,
-  Flex,
   Button,
-  Input,
+  Checkbox,
+  Inline,
+  Spacing,
+  Stack,
+  Status,
+  Text,
+  TextField,
+  Variant,
 } from 'frontend/components';
-import { CustomLayout } from 'frontend/components/layouts/custom-layout.component';
-import { LayoutType } from 'frontend/components/layouts/layout-config';
 import routes from 'frontend/constants/routes';
-import LoginFormCheckbox from 'frontend/pages/login/login-form-checkbox';
 import useLoginForm from 'frontend/pages/login/login-form.hook';
-import { ButtonType, ButtonKind } from 'frontend/types/button';
+import { ButtonType } from 'frontend/types/button';
 
 type LoginFields = 'username' | 'password';
 
 interface LoginFormProps {
   onSuccess: () => void;
   onError: (error: AsyncError) => void;
-  layoutType?: LayoutType;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({
-  onError,
-  onSuccess,
-  layoutType = LayoutType.Default,
-}) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onError, onSuccess }) => {
   const { formik, isLoginLoading } = useLoginForm({ onSuccess, onError });
+  const [rememberMe, setRememberMe] = useState(false);
 
   const getFormikError = (field: LoginFields) =>
     formik.touched[field] ? formik.errors[field] : '';
 
   return (
-    <CustomLayout layoutType={layoutType}>
-      <form onSubmit={formik.handleSubmit}>
-        <VerticalStackLayout gap={5}>
-          <FormControl label="Email" error={getFormikError('username')}>
-            <Input
-              data-testid="username"
-              disabled={isLoginLoading}
-              endEnhancer={
-                <img
-                  className="fill-current opacity-50"
-                  src="/assets/img/icon/email.svg"
-                  alt="email icon"
-                />
-              }
-              error={getFormikError('username')}
-              name="username"
-              onBlur={formik.handleBlur}
-              onChange={formik.handleChange}
-              placeholder="Enter your email"
-              value={formik.values.username}
-            />
-          </FormControl>
-          <FormControl label="Password" error={getFormikError('password')}>
-            <PasswordInput
-              error={getFormikError('password')}
-              name="password"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="Enter your password"
-              value={formik.values.password}
-            />
-          </FormControl>
-          <Flex alignItems="center" justifyContent="between">
-            <label htmlFor="formCheckbox" className="flex cursor-pointer">
-              <LoginFormCheckbox />
-              <p>Remember me</p>
-            </label>
-
-            <Link
-              to={routes.FORGOT_PASSWORD}
-              className="text-sm text-primary hover:underline"
-            >
+    <form onSubmit={formik.handleSubmit}>
+      <Stack gap={Spacing.Md}>
+        <TextField
+          testId="username"
+          label="Email"
+          type="email"
+          name="username"
+          autoComplete="email"
+          disabled={isLoginLoading}
+          value={formik.values.username}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={getFormikError('username')}
+          placeholder="Enter your email"
+        />
+        <TextField
+          testId="password"
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          disabled={isLoginLoading}
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={getFormikError('password')}
+          placeholder="Enter your password"
+        />
+        <Inline justify="between" align="center">
+          <Checkbox
+            checked={rememberMe}
+            onCheckedChange={setRememberMe}
+            label="Remember me"
+          />
+          <Link to={routes.FORGOT_PASSWORD}>
+            <Text as="span" size="sm" variant={Status.Primary}>
               Forgot password?
-            </Link>
-          </Flex>
-          <Button
-            type={ButtonType.SUBMIT}
-            kind={ButtonKind.PRIMARY}
-            isLoading={isLoginLoading}
-          >
-            Log In
-          </Button>
-          <p className="self-center font-medium">
-            Don’t have an account?{' '}
-            <Link to={routes.SIGNUP} className="text-primary">
+            </Text>
+          </Link>
+        </Inline>
+        <Button
+          type={ButtonType.SUBMIT}
+          variant={Variant.Primary}
+          fullWidth
+          isLoading={isLoginLoading}
+        >
+          Log In
+        </Button>
+        <Inline gap={Spacing.Xs} justify="center">
+          <Text as="span" size="sm" weight="medium">
+            Don&apos;t have an account?
+          </Text>
+          <Link to={routes.SIGNUP}>
+            <Text as="span" size="sm" weight="medium" variant={Status.Primary}>
               Sign Up
-            </Link>
-          </p>
-        </VerticalStackLayout>
-      </form>
-    </CustomLayout>
+            </Text>
+          </Link>
+        </Inline>
+      </Stack>
+    </form>
   );
 };
 

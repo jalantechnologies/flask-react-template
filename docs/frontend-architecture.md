@@ -131,15 +131,19 @@ Pages are orchestration layers. They decide which components to render, when to 
 
 ---
 
-## 8) Components
+## 8) Components — the design system
 
-Components are the building blocks of our UI. They are designed to be reusable, stateless, and presentation-focused, so they can be shared across multiple pages and features.
+Components are the building blocks of our UI. They are reusable, presentation-focused, and **token-driven**. Building a page is assembling these like Lego: identify the generic components a screen needs, lay them out with layout primitives, and select presentation through tokens. Pages do not write CSS.
 
-- **Primitives**: `button/`, `input/`, `form-control/`, `flex/`
-- **Layouts**: `layouts/` (`custom-layout`, `horizontal-stack-layout`)
-- **Chrome**: `header/`, `sidebar/`
-- **Feedback**: `toast/`, `dialog/`, `loader/`
-- **Typography**: `typography/h2.tsx`, `paragraph-medium.tsx`
+The complete contract — the catalogue, the tokens, the rules enforced in review and lint — is in **[Frontend Design System](frontend-design-system.md)**. In short:
+
+- **Layout primitives** (`components/layout/`): `Page`, `PageBody`, `Toolbar`, `Stack`, `Inline`, `Grid`, `Center`, `Divider`. Spacing comes from the `Spacing` scale (`Xs`…`Xxl`), not raw `gap-*`.
+- **Controls**: `Button`, `IconButton`, `TextField`, `Textarea`, `Select`, `Field`. Presentation via `variant` / `size` tokens.
+- **Surfaces and feedback**: `Card`, `Badge`, `StatusDot`, `Alert`, `Modal`, `ConfirmDialog`, `DataTable`, `EmptyState`, `Loading`, `PaginationControls`. Status via `variant` tokens.
+- **Typography**: `Heading` (`level` 1–4), `Text` (`size` / `emphasis`).
+- **Theme**: semantic colors (`primary`, `surface`, `line`, `content`, `danger`, …) defined once in `tailwind.config.js`.
+
+Import everything from the barrel: `import { Page, Stack, Button, Variant, Spacing } from 'frontend/components'`. Pages must not pass `className` to raw DOM elements or use inline `style` — this is lint-enforced.
 
 ---
 

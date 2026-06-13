@@ -2,8 +2,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { H2, VerticalStackLayout } from 'frontend/components';
-import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
+import { Heading, Spacing, Stack, Text } from 'frontend/components';
 import routes from 'frontend/constants/routes';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
 import AuthenticationPageLayout from 'frontend/pages/authentication/authentication-page-layout';
@@ -27,11 +26,11 @@ export const ResetPassword: React.FC = () => {
   return (
     <AuthenticationPageLayout>
       <AuthenticationFormLayout>
-        <VerticalStackLayout gap={6}>
-          <H2>Reset Password</H2>
-          <ParagraphMedium>Setup your new password here</ParagraphMedium>
+        <Stack gap={Spacing.Md}>
+          <Heading level={1}>Reset Password</Heading>
+          <Text>Setup your new password here</Text>
           <ResetPasswordForm onSuccess={onSuccess} onError={onError} />
-        </VerticalStackLayout>
+        </Stack>
       </AuthenticationFormLayout>
     </AuthenticationPageLayout>
   );

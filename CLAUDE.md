@@ -84,3 +84,39 @@ objects default `active=True`, so reads see only live records and the soft-delet
 - Tests run against MongoDB; `npm run test` (or `make run-test`) runs the backend suite.
 - `make run-lint` runs `mypy` (strict) and a `pylint` cyclic-import check; `make run-format` /
   `make run-format-check` run autoflake + isort + black (line length 120). Keep all green before pushing.
+
+## Frontend file naming
+
+All frontend files (TypeScript, TSX) use kebab-case names, for example `panel-header.tsx`, `chat-bubble-icon.tsx`. Never PascalCase or camelCase for file names. TypeScript interfaces and types use camelCase fields. No snake_case properties on frontend types.
+
+## Frontend: ES6
+
+Use `async/await` for all async work, not `.then()/.catch()` chains.
+
+## Frontend: design system
+
+Building a page is assembling Lego, not writing CSS. A page identifies the generic components it needs, lays them out with layout primitives, and selects presentation through tokens. The full contract is in `docs/frontend-design-system.md`; the rules below are enforced in review.
+
+**No custom CSS on pages.** A file under `src/apps/frontend/pages` must not pass `className` to a raw DOM element (`div`, `button`, `span`, `input`, …) and must never use inline `style`. Compose the page from design-system components (`frontend/components`) and layout primitives instead. This is lint-enforced.
+
+**Select presentation through tokens, not classes.** Components expose `variant`, `size`, and `gap` props (`Variant.Primary`, `Size.Sm`, `Status.Danger`, `Spacing.Md`). Pick a token, do not hand-write Tailwind. If you want a look the component does not offer, the component is missing a variant. Add the variant to the component under `frontend/components`; do not inline it on the page. A component's public API must not accept a `className` escape hatch.
+
+**Idiomatic component interfaces.** Generic components follow ecosystem conventions (shadcn / Radix / Bootstrap / MUI), not consumer-specific shaping: `variant` for status colour (the `Status` token), native change events on form `onChange` (`onChange={(e) => setX(e.target.value)}`), Radix `checked` / `onCheckedChange` for `Switch` and `Checkbox`, `src` / `fallback` for `Avatar`. The data grid is `DataTable`.
+
+**Children via `PropsWithChildren`.** Never declare a `children` field in a Props interface or type. Type the component as `React.FC<PropsWithChildren<XProps>>`. If the content is data rather than JSX (e.g. a markdown string), make it a named prop like `content`. This is lint-enforced.
+
+**Lay out with primitives, space with gap tokens.** Vertical and horizontal arrangement comes from `Stack` and `Inline`; page chrome from `Page`, `PageBody`, `Toolbar`, `Grid`. Gaps come from the `Spacing` scale (`Xs`, `Sm`, `Md`, `Lg`, `Xl`, `Xxl`), never a raw `gap-*` or `space-y-*` class.
+
+**Theme tokens, not raw palette.** Colors come from the semantic theme in `tailwind.config.js` (`primary`, `surface`, `line`, `content`, `danger`, `success`, …). Components reference these names; never `gray-900` or a hex value.
+
+**Every component takes a `testId` and forwards it.** A generic component declares an optional `testId?: string` prop and renders it as `data-testid={testId}` on its root element (icons and decorative primitives included). Tests and automation address the UI through stable `data-testid` hooks, never brittle text or class selectors. A new component without `testId` is incomplete; review rejects it.
+
+**Every component is accessible.** Accessibility is part of the interface, not an afterthought:
+
+- An icon or shape that conveys meaning on its own exposes an accessible name (`ariaLabel` / `label`) and drops `aria-hidden`; a purely decorative glyph stays `aria-hidden`. Icons default to decorative — make them meaningful explicitly when they carry information.
+- An interactive element is a real semantic element (`button`, `a`, `input`) or carries the correct `role` plus keyboard handling. An icon-only control requires a `label` that becomes its accessible name.
+- A form control associates its label and its error/description (`htmlFor` / `aria-describedby` / `aria-invalid`), and signals busy/expanded/selected state with the right `aria-*` attribute.
+
+A component whose meaning or interactivity is not reachable by a screen reader or keyboard is incomplete; review rejects it.
+
+Reuse a catalogue component before writing new markup. If the component you need does not exist, build it under `frontend/components`, drive it with tokens, and export it from the barrel. Split a TSX file that holds several independently reusable components into kebab-case files (`add-user-modal.tsx`, `reset-password-modal.tsx`). Break long components and deeply nested JSX into smaller, named pieces.

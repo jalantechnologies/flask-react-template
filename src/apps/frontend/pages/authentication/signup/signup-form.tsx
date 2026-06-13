@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 
 import {
   Button,
-  Flex,
-  FormControl,
-  Input,
-  PasswordInput,
-  VerticalStackLayout,
+  Inline,
+  Spacing,
+  Stack,
+  Status,
+  Text,
+  TextField,
+  Variant,
 } from 'frontend/components';
-import { CustomLayout } from 'frontend/components/layouts/custom-layout.component';
-import { LayoutType } from 'frontend/components/layouts/layout-config';
 import routes from 'frontend/constants/routes';
 import useSignupForm from 'frontend/pages/authentication/signup/signup-form.hook';
 import { AsyncError } from 'frontend/types';
-import { ButtonKind, ButtonType } from 'frontend/types/button';
+import { ButtonType } from 'frontend/types/button';
 
 type SignupFields =
   | 'firstName'
@@ -26,114 +26,102 @@ type SignupFields =
 interface SignupFormProps {
   onError: (error: AsyncError) => void;
   onSuccess: () => void;
-  layoutType?: LayoutType;
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({
-  onError,
-  onSuccess,
-  layoutType = LayoutType.Default,
-}) => {
+const SignupForm: React.FC<SignupFormProps> = ({ onError, onSuccess }) => {
   const { formik, isSignupLoading } = useSignupForm({ onSuccess, onError });
 
   const getFormikError = (field: SignupFields) =>
     formik.touched[field] ? formik.errors[field] : '';
 
   return (
-    <CustomLayout layoutType={layoutType}>
-      <form onSubmit={formik.handleSubmit}>
-        <VerticalStackLayout gap={5}>
-          <Flex gap={6}>
-            <div className="w-full">
-              <FormControl
-                label="First name"
-                error={getFormikError('firstName')}
-              >
-                <Input
-                  error={getFormikError('firstName')}
-                  data-testid="firstName"
-                  disabled={isSignupLoading}
-                  name="firstName"
-                  onBlur={formik.handleBlur}
-                  onChange={formik.handleChange}
-                  placeholder="Enter your first name"
-                  value={formik.values.firstName}
-                />
-              </FormControl>
-            </div>
-            <div className="w-full">
-              <FormControl label="Last name" error={getFormikError('lastName')}>
-                <Input
-                  error={getFormikError('lastName')}
-                  data-testid="lastName"
-                  disabled={isSignupLoading}
-                  name="lastName"
-                  onBlur={formik.handleBlur}
-                  onChange={formik.handleChange}
-                  placeholder="Enter your last name"
-                  value={formik.values.lastName}
-                />
-              </FormControl>
-            </div>
-          </Flex>
-          <FormControl label="Email" error={getFormikError('username')}>
-            <Input
-              data-testid="username"
+    <form onSubmit={formik.handleSubmit}>
+      <Stack gap={Spacing.Md}>
+        <Inline gap={Spacing.Md} align="start">
+          <Stack flex>
+            <TextField
+              testId="firstName"
+              label="First name"
+              name="firstName"
               disabled={isSignupLoading}
-              endEnhancer={
-                <img
-                  alt="email icon"
-                  className="fill-current opacity-50"
-                  src="/assets/img/icon/email.svg"
-                />
-              }
-              error={getFormikError('username')}
-              name="username"
-              onBlur={formik.handleBlur}
+              value={formik.values.firstName}
               onChange={formik.handleChange}
-              placeholder="Enter your email"
-              value={formik.values.username}
-            />
-          </FormControl>
-          <FormControl label="Password" error={getFormikError('password')}>
-            <PasswordInput
-              error={getFormikError('password')}
-              name="password"
               onBlur={formik.handleBlur}
-              onChange={formik.handleChange}
-              placeholder="Enter your password"
-              value={formik.values.password}
+              error={getFormikError('firstName')}
+              placeholder="Enter your first name"
             />
-          </FormControl>
-          <FormControl
-            label="Re-type Password"
-            error={getFormikError('retypePassword')}
-          >
-            <PasswordInput
-              error={getFormikError('retypePassword')}
-              name="retypePassword"
+          </Stack>
+          <Stack flex>
+            <TextField
+              testId="lastName"
+              label="Last name"
+              name="lastName"
+              disabled={isSignupLoading}
+              value={formik.values.lastName}
+              onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              onChange={formik.handleChange}
-              placeholder="Re-enter the password"
-              value={formik.values.retypePassword}
+              error={getFormikError('lastName')}
+              placeholder="Enter your last name"
             />
-          </FormControl>
-          <Button
-            type={ButtonType.SUBMIT}
-            kind={ButtonKind.PRIMARY}
-            isLoading={isSignupLoading}
-          >
-            Sign Up
-          </Button>
-          <p className="self-center font-medium">
-            Already have an account?{' '}
-            <Link to={routes.LOGIN} className="text-primary">
+          </Stack>
+        </Inline>
+        <TextField
+          testId="username"
+          label="Email"
+          type="email"
+          name="username"
+          autoComplete="email"
+          disabled={isSignupLoading}
+          value={formik.values.username}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={getFormikError('username')}
+          placeholder="Enter your email"
+        />
+        <TextField
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="new-password"
+          disabled={isSignupLoading}
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={getFormikError('password')}
+          placeholder="Enter your password"
+        />
+        <TextField
+          label="Re-type Password"
+          type="password"
+          name="retypePassword"
+          autoComplete="new-password"
+          disabled={isSignupLoading}
+          value={formik.values.retypePassword}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={getFormikError('retypePassword')}
+          placeholder="Re-enter the password"
+        />
+        <Button
+          type={ButtonType.SUBMIT}
+          variant={Variant.Primary}
+          fullWidth
+          isLoading={isSignupLoading}
+        >
+          Sign Up
+        </Button>
+        <Inline gap={Spacing.Xs} justify="center">
+          <Text as="span" size="sm" weight="medium">
+            Already have an account?
+          </Text>
+          <Link to={routes.LOGIN}>
+            <Text as="span" size="sm" weight="medium" variant={Status.Primary}>
               Log in
-            </Link>
-          </p>
-        </VerticalStackLayout>
-      </form>
-    </CustomLayout>
+            </Text>
+          </Link>
+        </Inline>
+      </Stack>
+    </form>
   );
 };
 

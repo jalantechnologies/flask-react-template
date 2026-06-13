@@ -116,6 +116,17 @@
             "ignoreStatic": true
           }
         ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "TSInterfaceDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props interface. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          },
+          {
+            "selector": "TSTypeAliasDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props type. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          }
+        ],
         "eslint-comments/disable-enable-pair": "off",
         "import/no-extraneous-dependencies": [
           "error",
@@ -143,13 +154,58 @@
         ],
         "import/prefer-default-export": "off",
         "max-classes-per-file": "off",
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "no-void": ["error", { "allowAsStatement": true }]
       }
     },
     {
       "files": "src/apps/frontend/**",
       "parserOptions": {
         "project": "./src/apps/frontend/tsconfig.json"
+      }
+    },
+    {
+      "files": ["src/apps/frontend/components/**/*.tsx"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "JSXAttribute[name.name='style']",
+            "message": "Inline style is not allowed. Use theme tokens (tailwind.config.js) and the className surface this component already owns. See docs/frontend-design-system.md."
+          },
+          {
+            "selector": "TSInterfaceDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props interface. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          },
+          {
+            "selector": "TSTypeAliasDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props type. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/apps/frontend/pages/**/*.tsx"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "JSXOpeningElement[name.name=/^[a-z]/] > JSXAttribute[name.name='className']",
+            "message": "Pages must not style raw DOM elements with className. Compose the page from design-system components (frontend/components) and layout primitives (Stack, Inline, Grid, Page) and select presentation via variant/size/status/gap tokens. If a primitive is missing, add it under frontend/components, not inline classes. See docs/frontend-design-system.md."
+          },
+          {
+            "selector": "JSXAttribute[name.name='style']",
+            "message": "Inline style is not allowed. Use design-system components and theme tokens (tailwind.config.js). See docs/frontend-design-system.md."
+          },
+          {
+            "selector": "TSInterfaceDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props interface. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          },
+          {
+            "selector": "TSTypeAliasDeclaration[id.name=/Props$/] TSPropertySignature[key.name='children']",
+            "message": "Do not declare `children` in a Props type. Type the component as React.FC<PropsWithChildren<XProps>> so children come from PropsWithChildren."
+          }
+        ]
       }
     }
   ]

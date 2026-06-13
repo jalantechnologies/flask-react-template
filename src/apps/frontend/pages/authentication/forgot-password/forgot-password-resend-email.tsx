@@ -1,7 +1,14 @@
 import React from 'react';
 
-import { Button, Flex, VerticalStackLayout } from 'frontend/components';
-import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
+import {
+  Button,
+  Emphasis,
+  Inline,
+  Spacing,
+  Stack,
+  Text,
+  Variant,
+} from 'frontend/components';
 import { useResetPasswordContext } from 'frontend/contexts';
 import { AsyncError } from 'frontend/types';
 import { ButtonType } from 'frontend/types/button';
@@ -36,26 +43,30 @@ const ForgotPasswordResendEmail: React.FC<ForgotPasswordResendEmailProps> = ({
   };
 
   return (
-    <VerticalStackLayout gap={4}>
-      <ParagraphMedium>
+    <Stack gap={Spacing.Md}>
+      <Text>
         A password reset link has been sent to {username}. Please check your
         inbox and follow the instructions.
-      </ParagraphMedium>
+      </Text>
       {!isResendEnabled && (
-        <Flex justifyContent="end">
-          <p>Resend email in 00: {timerRemainingSeconds}</p>
-        </Flex>
+        <Inline justify="end">
+          <Text emphasis={Emphasis.Muted}>
+            Resend email in 00: {timerRemainingSeconds}
+          </Text>
+        </Inline>
       )}
       <form onSubmit={handleResendPasswordResetEmail}>
         <Button
           disabled={!isResendEnabled}
           isLoading={isSendForgotPasswordEmailLoading}
+          variant={Variant.Primary}
+          fullWidth
           type={ButtonType.SUBMIT}
         >
           Resend Link
         </Button>
       </form>
-    </VerticalStackLayout>
+    </Stack>
   );
 };
 

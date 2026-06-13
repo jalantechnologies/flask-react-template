@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, H2, VerticalStackLayout } from 'frontend/components';
+import {
+  Button,
+  Heading,
+  Inline,
+  Spacing,
+  Stack,
+  Variant,
+} from 'frontend/components';
 import routes from 'frontend/constants/routes';
 import AuthenticationPageLayout from 'frontend/pages/authentication//authentication-page-layout';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
 import ForgotPasswordForm from 'frontend/pages/authentication/forgot-password/forgot-password-form';
 import ForgotPasswordResendEmail from 'frontend/pages/authentication/forgot-password/forgot-password-resend-email';
 import { AsyncError } from 'frontend/types';
-import { ButtonKind } from 'frontend/types/button';
 import useTimer from 'frontend/utils/use-timer.hook';
 
 export const ForgotPassword: React.FC = () => {
@@ -52,11 +58,13 @@ export const ForgotPassword: React.FC = () => {
   return (
     <AuthenticationPageLayout>
       <AuthenticationFormLayout>
-        <VerticalStackLayout gap={6}>
-          <Button kind={ButtonKind.SECONDARY} onClick={handleBackButtonClick}>
-            Back
-          </Button>
-          <H2>Forgot Password?</H2>
+        <Stack gap={Spacing.Lg}>
+          <Inline>
+            <Button variant={Variant.Secondary} onClick={handleBackButtonClick}>
+              Back
+            </Button>
+          </Inline>
+          <Heading level={1}>Forgot Password?</Heading>
           {isResendEmailPage ? (
             <ForgotPasswordResendEmail
               isResendEnabled={isResendEnabled}
@@ -71,7 +79,7 @@ export const ForgotPassword: React.FC = () => {
               onError={onError}
             />
           )}
-        </VerticalStackLayout>
+        </Stack>
       </AuthenticationFormLayout>
     </AuthenticationPageLayout>
   );

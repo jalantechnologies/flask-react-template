@@ -1,24 +1,16 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
-import { CustomLayout } from 'frontend/components/layouts/custom-layout.component';
-import { LayoutType } from 'frontend/components/layouts/layout-config';
+import { Card, Spacing } from 'frontend/components';
 
-interface AuthenticationFormLayoutProps {
-  children: React.ReactNode;
-  layoutType?: LayoutType;
-}
-
-const AuthenticationFormLayout: React.FC<AuthenticationFormLayoutProps> = ({
+/**
+ * Card surface that holds an authentication form inside the auth screen.
+ */
+const AuthenticationFormLayout: React.FC<PropsWithChildren> = ({
   children,
-  layoutType = LayoutType.FullForm,
 }) => (
-  <CustomLayout layoutType={layoutType}>
-    <div className="flex items-center justify-center p-4">
-      <div className="w-full max-w-[550px] rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-strokedark dark:bg-boxdark sm:p-4">
-        {children}
-      </div>
-    </div>
-  </CustomLayout>
+  <Card variant="outlined" padding={Spacing.Lg}>
+    {children}
+  </Card>
 );
 
 export default AuthenticationFormLayout;

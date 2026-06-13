@@ -3,9 +3,3 @@ export enum ButtonType {
   RESET = 'reset',
   SUBMIT = 'submit',
 }
-
-export enum ButtonKind {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
-  TERTIARY = 'tertiary',
-}
