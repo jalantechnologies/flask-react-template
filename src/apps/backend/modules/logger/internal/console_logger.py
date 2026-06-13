@@ -8,12 +8,11 @@ class ConsoleLogger(BaseLogger):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
-        # Create a console handler and set the level to INFO
         console_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         console_handler.setFormatter(formatter)
 
-        self.logger.addHandler(console_handler)
+        self._attach_handler(self.logger, console_handler)
 
     def critical(self, *, message: str) -> None:
         self.logger.critical(msg=message)

@@ -15,7 +15,7 @@ class DatadogLogger(BaseLogger):
         self.handler = DatadogHandler("flask")
         self.handler.setLevel(LogLevel.get_level())
         self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
+        self._attach_handler(self.logger, self.handler)
 
     def critical(self, *, message: str) -> None:
         self.logger.critical(message)
