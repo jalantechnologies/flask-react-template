@@ -98,9 +98,8 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   // Authentication is React state, not a bare storage read, so the router and
   // any consumer re-render the moment a session begins or ends. It is seeded
   // from storage on mount to keep an existing session across reloads.
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    isTokenInStorage,
-  );
+  const [isAuthenticated, setIsAuthenticated] =
+    useState<boolean>(isTokenInStorage);
 
   const {
     asyncCallback: signup,
@@ -201,7 +200,5 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     ],
   );
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
