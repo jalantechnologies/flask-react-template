@@ -268,7 +268,9 @@ PRs are automatically labeled based on title prefix via the `pr-labeler` workflo
 | `refactor:`                  | `type: refactor`           | —               |
 | `test:`                      | `type: test`               | —               |
 | `chore:`                     | `type: chore`              | —               |
+| `build:`                     | `type: build`              | —               |
 | `ci:`                        | `type: ci`                 | —               |
+| `revert:`                    | `type: revert`             | —               |
 | Breaking (`feat!:`, `fix!:`) | `type: feat` / `type: fix` | `semver: major` |
 
 Choose your type carefully — it determines the label and semver impact.
