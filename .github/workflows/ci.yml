@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: '22.13.1'
           cache: 'npm'
@@ -98,7 +98,7 @@ jobs:
 
       - name: Checkout code
         if: steps.preflight.outputs.enabled == 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           # Need the base commit so the agent can diff base...head and scope to the change.
           fetch-depth: 0
@@ -111,7 +111,7 @@ jobs:
       # the accounting step reads as a zero starting total.
       - name: Restore PR review cost total
         if: steps.preflight.outputs.enabled == 'true'
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .codereview-cost
           key: codereview-cost-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -184,7 +184,7 @@ jobs:
         # Pinned to the v1.0.140 commit, not the floating @v1 tag: @v1 moves between runs, so the
         # action build could change under us and behave differently run to run. A pinned SHA fixes
         # the build and makes upgrades deliberate.
-        uses: anthropics/claude-code-action@fbda2eb1bdc90d319b8d853f5deb53bca199a7c1 # v1.0.140
+        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1.0.148
         with:
           # anthropic_api_key (not the OIDC/federation path) so inline-comment classification
           # runs and findings post on the exact changed lines.
@@ -371,7 +371,7 @@ jobs:
       # gives a rolling total that the next commit's review picks up.
       - name: Save PR review cost total
         if: always() && steps.preflight.outputs.enabled == 'true' && steps.review.outputs.execution_file != ''
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .codereview-cost
           key: codereview-cost-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -481,7 +481,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
 
@@ -495,14 +495,14 @@ jobs:
           echo "version=$(echo $tag)" >> $GITHUB_OUTPUT
 
       - name: Checkout github-ci
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           repository: jalantechnologies/github-ci
           path: platform
           ref: ${{ steps.ci_version.outputs.version }}
 
       - name: Download coverage report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage-report
           path: output/
@@ -540,10 +540,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Cache Trivy DB
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: .trivy
           key: trivy-db-v1
@@ -573,7 +573,7 @@ jobs:
       - name: Run Trivy scan on changed files
         id: trivy
         if: steps.changes.outputs.changed_files != ''
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
         with:
           version: 'v0.69.2'
@@ -630,7 +630,7 @@ jobs:
       - name: Run Trivy scan on IaC
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
         id: trivy_iac
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
         with:
           version: 'v0.69.2'
@@ -657,7 +657,7 @@ jobs:
       - name: Run Checkov action
         id: checkov
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        uses: bridgecrewio/checkov-action@f34885219720066007f948b843e747bb136aa223
+        uses: bridgecrewio/checkov-action@fa9edf8f0a491c59a924ea6accd5bdcf07752cff
         continue-on-error: true
         with:
           directory: iac_changed_files/
@@ -687,7 +687,7 @@ jobs:
 
       - name: Run Trivy scan on docker images
         id: trivy_docker
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         continue-on-error: true
         with:
           version: 'v0.69.2'
@@ -729,7 +729,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Prepare coverage directory
         run: mkdir -p output
@@ -765,7 +765,7 @@ jobs:
           sed -i 's|/app/src/apps/backend/||g' output/coverage.xml || true
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: output/coverage.xml
@@ -788,7 +788,7 @@ jobs:
 
       - name: Add coverage PR comment
         continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0
         with:
           recreate: true
           path: code-coverage-results.md
