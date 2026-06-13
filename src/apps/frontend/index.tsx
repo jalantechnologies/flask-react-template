@@ -1,4 +1,3 @@
-import 'frontend/satoshi.css';
 import 'frontend/style.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';

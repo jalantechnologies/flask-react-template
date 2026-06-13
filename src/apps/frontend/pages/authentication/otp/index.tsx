@@ -2,14 +2,20 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, H2, VerticalStackLayout } from 'frontend/components';
+import {
+  Button,
+  Heading,
+  Inline,
+  Spacing,
+  Stack,
+  Variant,
+} from 'frontend/components';
 import constant from 'frontend/constants';
 import routes from 'frontend/constants/routes';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
 import AuthenticationPageLayout from 'frontend/pages/authentication/authentication-page-layout';
 import OTPForm from 'frontend/pages/authentication/otp/otp-form';
 import { AsyncError } from 'frontend/types';
-import { ButtonKind } from 'frontend/types/button';
 import useTimer from 'frontend/utils/use-timer.hook';
 
 export const OTPVerificationPage: React.FC = () => {
@@ -41,11 +47,13 @@ export const OTPVerificationPage: React.FC = () => {
   return (
     <AuthenticationPageLayout>
       <AuthenticationFormLayout>
-        <VerticalStackLayout gap={8}>
-          <Button kind={ButtonKind.SECONDARY} onClick={handleBackButtonClick}>
-            Back
-          </Button>
-          <H2>Verify Your Account</H2>
+        <Stack gap={Spacing.Lg}>
+          <Inline>
+            <Button variant={Variant.Secondary} onClick={handleBackButtonClick}>
+              Back
+            </Button>
+          </Inline>
+          <Heading level={1}>Verify Your Account</Heading>
           <OTPForm
             isResendEnabled={isResendEnabled}
             onError={onError}
@@ -53,7 +61,7 @@ export const OTPVerificationPage: React.FC = () => {
             onVerifyOTPSuccess={onVerifyOTPSuccess}
             timerRemainingSeconds={remaininingSecondsStr}
           />
-        </VerticalStackLayout>
+        </Stack>
       </AuthenticationFormLayout>
     </AuthenticationPageLayout>
   );

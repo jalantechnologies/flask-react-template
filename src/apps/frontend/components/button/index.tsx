@@ -2,54 +2,80 @@ import clsx from 'clsx';
 import React, { PropsWithChildren } from 'react';
 
 import Spinner from 'frontend/components/spinner/spinner';
-import { ButtonKind, ButtonType } from 'frontend/types/button';
+import { ButtonType } from 'frontend/types/button';
+import { Size, Variant } from 'frontend/types/design-system';
 
 interface ButtonProps {
+  variant?: Variant;
+  size?: Size;
+  type?: ButtonType;
   disabled?: boolean;
   isLoading?: boolean;
+  fullWidth?: boolean;
+  startIcon?: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  type?: ButtonType;
-  kind?: ButtonKind;
+  title?: string;
+  testId?: string;
 }
 
-const ButtonClasses: Record<ButtonKind, string> = {
-  [ButtonKind.PRIMARY]:
-    'flex w-full items-center justify-center rounded-lg border bg-primary p-4 font-medium text-white transition active:bg-primary/80',
-  [ButtonKind.SECONDARY]: 'inset-y-0 flex items-center',
-  [ButtonKind.TERTIARY]:
-    'bg-transparent text-center text-lg text-primary active:bg-transparent',
+const BASE =
+  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+
+const VARIANT_CLASS: Record<Variant, string> = {
+  [Variant.Primary]: 'bg-primary text-content-inverted hover:bg-primary-hover',
+  [Variant.Secondary]:
+    'border border-line-strong bg-surface text-content hover:bg-surface-subtle',
+  [Variant.Tertiary]: 'bg-transparent text-primary hover:text-primary-muted',
+  [Variant.Danger]: 'bg-danger text-content-inverted hover:bg-danger-hover',
+  [Variant.Ghost]:
+    'bg-transparent text-content-subtle hover:bg-surface-muted hover:text-content',
 };
 
-const DisabledClasses: Record<ButtonKind, string> = {
-  [ButtonKind.PRIMARY]: 'cursor-not-allowed bg-primary/80',
-  [ButtonKind.SECONDARY]: 'cursor-not-allowed',
-  [ButtonKind.TERTIARY]: 'cursor-not-allowed text-slate-500',
+const SIZE_CLASS: Record<Size, string> = {
+  [Size.Sm]: 'px-3 py-1.5 text-xs',
+  [Size.Md]: 'px-4 py-2 text-sm',
+  [Size.Lg]: 'px-5 py-2.5 text-base',
 };
 
-const EnabledClasses: Record<ButtonKind, string> = {
-  [ButtonKind.PRIMARY]: 'cursor-pointer hover:bg-primary/90',
-  [ButtonKind.SECONDARY]: '',
-  [ButtonKind.TERTIARY]: 'cursor-pointer',
-};
-
+/**
+ * The single button primitive. Presentation comes from `variant` and `size`
+ * tokens; pages never style a `<button>` by hand or pass raw classes.
+ */
 const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
   children,
-  disabled,
-  isLoading,
+  disabled = false,
+  fullWidth = false,
+  isLoading = false,
   onClick,
+  size = Size.Md,
+  startIcon,
+  testId,
+  title,
   type = ButtonType.BUTTON,
-  kind = ButtonKind.PRIMARY,
+  variant = Variant.Primary,
 }) => (
   <button
     className={clsx(
-      ButtonClasses[kind],
-      disabled || isLoading ? DisabledClasses[kind] : EnabledClasses[kind],
+      BASE,
+      VARIANT_CLASS[variant],
+      SIZE_CLASS[size],
+      fullWidth && 'w-full',
     )}
     disabled={disabled || isLoading}
+    aria-busy={isLoading || undefined}
+    title={title}
     type={type}
+    data-testid={testId}
     onClick={onClick}
   >
-    {isLoading ? <Spinner /> : children}
+    {isLoading ? (
+      <Spinner decorative />
+    ) : (
+      <>
+        {startIcon}
+        {children}
+      </>
+    )}
   </button>
 );
 

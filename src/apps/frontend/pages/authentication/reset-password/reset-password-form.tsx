@@ -2,9 +2,10 @@ import React from 'react';
 
 import {
   Button,
-  FormControl,
-  PasswordInput,
-  VerticalStackLayout,
+  Spacing,
+  Stack,
+  TextField,
+  Variant,
 } from 'frontend/components';
 import useResetPasswordForm from 'frontend/pages/authentication/reset-password/reset-password-form.hook';
 import { AsyncError } from 'frontend/types';
@@ -26,49 +27,44 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
   return (
     <form onSubmit={formik.handleSubmit}>
-      <VerticalStackLayout gap={5}>
-        <FormControl
+      <Stack gap={Spacing.Md}>
+        <TextField
+          testId="password"
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="new-password"
+          disabled={isResetPasswordLoading}
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           error={formik.touched.password ? formik.errors.password : ''}
-          label={'Password'}
-        >
-          <PasswordInput
-            data-testid="password"
-            disabled={isResetPasswordLoading}
-            error={formik.touched.password ? formik.errors.password : ''}
-            name="password"
-            onBlur={formik.handleBlur}
-            onChange={formik.handleChange}
-            value={formik.values.password}
-            placeholder="Enter your new password"
-          />
-        </FormControl>
-
-        <FormControl
+          placeholder="Enter your new password"
+        />
+        <TextField
+          testId="confirmPassword"
+          label="Re-type Password"
+          type="password"
+          name="confirmPassword"
+          autoComplete="new-password"
+          disabled={isResetPasswordLoading}
+          value={formik.values.confirmPassword}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           error={
             formik.touched.confirmPassword ? formik.errors.confirmPassword : ''
           }
-          label={'Re-type Password'}
+          placeholder="Re-enter the password"
+        />
+        <Button
+          isLoading={isResetPasswordLoading}
+          variant={Variant.Primary}
+          fullWidth
+          type={ButtonType.SUBMIT}
         >
-          <PasswordInput
-            data-testid="confirmPassword"
-            disabled={isResetPasswordLoading}
-            error={
-              formik.touched.confirmPassword
-                ? formik.errors.confirmPassword
-                : ''
-            }
-            name="confirmPassword"
-            onBlur={formik.handleBlur}
-            onChange={formik.handleChange}
-            value={formik.values.confirmPassword}
-            placeholder="Re-enter the password"
-          />
-        </FormControl>
-
-        <Button isLoading={isResetPasswordLoading} type={ButtonType.SUBMIT}>
           Reset Password
         </Button>
-      </VerticalStackLayout>
+      </Stack>
     </form>
   );
 };

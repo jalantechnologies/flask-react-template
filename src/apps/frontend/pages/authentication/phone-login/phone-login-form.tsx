@@ -2,16 +2,17 @@ import React from 'react';
 
 import {
   Button,
-  Flex,
-  FormControl,
-  Input,
+  Inline,
   Select,
-  VerticalStackLayout,
+  Spacing,
+  Stack,
+  TextField,
+  Variant,
 } from 'frontend/components';
 import COUNTRY_SELECT_OPTIONS from 'frontend/constants/countries';
 import usePhoneLoginForm from 'frontend/pages/authentication/phone-login/phone-login-form.hook';
 import { AsyncError } from 'frontend/types';
-import { ButtonKind, ButtonType } from 'frontend/types/button';
+import { ButtonType } from 'frontend/types/button';
 
 interface PhoneLoginFormProps {
   onSendOTPSuccess: () => void;
@@ -55,51 +56,43 @@ const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
 
   return (
     <form onSubmit={formik.handleSubmit}>
-      <VerticalStackLayout gap={5}>
-        <Flex gap={4}>
-          <FormControl
-            label={'Phone'}
+      <Stack gap={Spacing.Md}>
+        <Inline gap={Spacing.Sm} align="start">
+          <Select
+            label="Country"
+            options={COUNTRY_SELECT_OPTIONS}
+            disabled={isSendOTPLoading}
+            value={`${formik.values.countryCode}, ${formik.values.country}`}
+            onChange={handleChangeSelect}
             error={formik.touched.countryCode ? formik.errors.countryCode : ''}
-          >
-            <Select
-              handleChange={handleChangeSelect}
-              isLoading={isSendOTPLoading}
-              options={COUNTRY_SELECT_OPTIONS}
-              value={`${formik.values.countryCode}, ${formik.values.country}`}
-            />
-          </FormControl>
-          <div className="w-full">
-            <FormControl
-              label={''}
+          />
+          <Stack flex>
+            <TextField
+              testId="phoneNumber"
+              label="Phone number"
+              type="number"
+              name="phoneNumber"
+              inputMode="numeric"
+              disabled={isSendOTPLoading}
+              value={formik.values.phoneNumber}
+              onChange={handleChangePhone}
+              onBlur={formik.handleBlur}
               error={
                 formik.touched.phoneNumber ? formik.errors.phoneNumber : ''
               }
-            >
-              <Input
-                data-testid="phoneNumber"
-                disabled={isSendOTPLoading}
-                error={
-                  formik.touched.phoneNumber ? formik.errors.phoneNumber : ''
-                }
-                name="phoneNumber"
-                onChange={handleChangePhone}
-                onBlur={formik.handleBlur}
-                placeholder="Enter your phone number"
-                type="number"
-                value={formik.values.phoneNumber}
-              />
-            </FormControl>
-          </div>
-        </Flex>
-
+              placeholder="Enter your phone number"
+            />
+          </Stack>
+        </Inline>
         <Button
           type={ButtonType.SUBMIT}
           isLoading={isSendOTPLoading}
-          kind={ButtonKind.PRIMARY}
+          variant={Variant.Primary}
+          fullWidth
         >
           Get OTP
         </Button>
-      </VerticalStackLayout>
+      </Stack>
     </form>
   );
 };

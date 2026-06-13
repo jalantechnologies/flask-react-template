@@ -2,11 +2,12 @@ import React from 'react';
 
 import {
   Button,
-  FormControl,
-  Input,
-  VerticalStackLayout,
+  Spacing,
+  Stack,
+  Text,
+  TextField,
+  Variant,
 } from 'frontend/components';
-import ParagraphMedium from 'frontend/components/typography/paragraph-medium';
 import useForgotPasswordForm from 'frontend/pages/authentication/forgot-password/forgot-password-form.hook';
 import { AsyncError } from 'frontend/types';
 import { ButtonType } from 'frontend/types/button';
@@ -26,44 +27,34 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   });
 
   return (
-    <VerticalStackLayout gap={5}>
-      <ParagraphMedium>
-        Enter your details to receive a reset link
-      </ParagraphMedium>
+    <Stack gap={Spacing.Md}>
+      <Text>Enter your details to receive a reset link</Text>
       <form onSubmit={formik.handleSubmit}>
-        <VerticalStackLayout gap={5}>
-          <FormControl
+        <Stack gap={Spacing.Md}>
+          <TextField
+            testId="username"
+            label="Email"
+            type="email"
+            name="username"
+            autoComplete="email"
+            disabled={isSendForgotPasswordEmailLoading}
+            value={formik.values.username}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             error={formik.touched.username ? formik.errors.username : ''}
-            label={'Email'}
-          >
-            <Input
-              data-testid="username"
-              disabled={isSendForgotPasswordEmailLoading}
-              error={formik.touched.username ? formik.errors.username : ''}
-              endEnhancer={
-                <img
-                  alt="email icon"
-                  className="fill-current opacity-50"
-                  src="assets/img/icon/email.svg"
-                />
-              }
-              onBlur={formik.handleBlur}
-              onChange={formik.handleChange}
-              name="username"
-              value={formik.values.username}
-              placeholder="Enter your email"
-            />
-          </FormControl>
-
+            placeholder="Enter your email"
+          />
           <Button
-            isLoading={isSendForgotPasswordEmailLoading}
             type={ButtonType.SUBMIT}
+            variant={Variant.Primary}
+            fullWidth
+            isLoading={isSendForgotPasswordEmailLoading}
           >
             Receive Reset Link
           </Button>
-        </VerticalStackLayout>
+        </Stack>
       </form>
-    </VerticalStackLayout>
+    </Stack>
   );
 };
 
