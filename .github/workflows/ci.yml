@@ -44,6 +44,437 @@ jobs:
       - name: Check code formatting
         run: npm run fmt:check
 
+  codereview:
+    # AI code review by Claude Code, billed against the repo's own ANTHROPIC_API_KEY (token-based,
+    # not per-seat). Runs as an agentic CLI: it reads the PR diff and pulls surrounding files
+    # on demand, so there is no full-repo indexing cost per commit. A blocking gate — if the
+    # review posts any inline finding, the job fails (red ci/codereview check) so the PR
+    # cannot merge until the findings are addressed and a re-review on the new commit is clean.
+    #
+    # Fork-safe: the gate is only active when an ANTHROPIC_API_KEY secret is configured. This is a
+    # public template, so a fork that has not set the secret would otherwise get a permanently red
+    # check on every PR. The preflight step below detects the key and short-circuits the whole job
+    # to a green pass when it is absent (secrets cannot be read in a job-level `if:`, so the guard
+    # lives in a step). Set the ANTHROPIC_API_KEY Actions secret to turn the gate on.
+    #
+    # Because the job runs once per commit, each run also accumulates its estimated spend into a
+    # PR-level running total (carried between runs in actions/cache) and renders it as a single
+    # sticky PR comment that updates in place, so the full cost of reviewing a PR shows once on
+    # the PR rather than once per commit. The figure is the Claude Code SDK's own client-side
+    # estimate, not an authoritative bill — the Anthropic Console holds the real spend but
+    # cannot attribute it per-PR.
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    # No job-level continue-on-error: this gate must be able to go red. The review *step*
+    # carries continue-on-error instead (see below), because the claude-code-action exits 0
+    # whether or not it finds issues — the "issues found" signal is not its exit code — and it
+    # exits non-zero for infra reasons unrelated to review quality (notably the workflow-
+    # validation check, which fails on any PR that edits this file until it lands on main).
+    # The gate step at the end is the single authority on pass/fail.
+    # Bound the run by wall-clock, not by turn count. A turn cap (--max-turns) truncates the
+    # review mid-way on larger PRs and posts nothing; this kills only a genuinely stuck run
+    # while letting a normal review finish naturally, so cost stays bounded without capping output.
+    timeout-minutes: 20
+    # One review per PR at a time — cancel an in-flight review when a new commit is pushed,
+    # so we only pay to review the latest state of the branch.
+    concurrency:
+      group: codereview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      # Fork-safety guard. Secrets cannot be referenced in a job-level `if:`, so detect the key in
+      # a step and gate every working step on its output. When the key is absent the review steps
+      # are skipped and the gate passes, so a fork without the secret is never blocked.
+      - name: Check for Anthropic API key
+        id: preflight
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::ANTHROPIC_API_KEY is not configured — skipping AI code review. Set the secret to enable the blocking gate.'
+          fi
+
+      - name: Checkout code
+        if: steps.preflight.outputs.enabled == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          # Need the base commit so the agent can diff base...head and scope to the change.
+          fetch-depth: 0
+
+      # Restore this PR's running cost total before the review runs. The review job runs once
+      # per commit and is stateless across runs, so the only place a PR-level total can live is
+      # a store we carry between runs. actions/cache is that store: entries are immutable once
+      # written, so we save under a unique per-run key (below) and restore the latest prior
+      # total by prefix here. A miss (first commit on the PR) just leaves the file absent, which
+      # the accounting step reads as a zero starting total.
+      - name: Restore PR review cost total
+        if: steps.preflight.outputs.enabled == 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        with:
+          path: .codereview-cost
+          key: codereview-cost-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            codereview-cost-pr-${{ github.event.pull_request.number }}-
+
+      # Decide what this run reviews. The review is otherwise stateless: every run re-reviews the
+      # whole base...head diff from scratch, so a large PR gets re-read on every push and the
+      # reviewer keeps surfacing fresh opinions on lines it already passed, and re-deciding
+      # judgment calls each time. Two things fix that, both fed into the prompt below:
+      #
+      #   1. Incremental scope. .codereview-cost (restored above) carries last_reviewed_sha — the
+      #      HEAD of the last run that actually completed a review. If it is set and is an ancestor
+      #      of the current HEAD, this run scopes itself to last_reviewed_sha..HEAD (only the
+      #      commits pushed since), so settled lines are not re-litigated. On the first review of a
+      #      PR, or if that SHA is missing/rebased away/not an ancestor, last_sha is empty and the
+      #      prompt falls back to the full base...head review.
+      #
+      #   2. Dedup. We fetch the inline review comments this bot already posted on the PR and hand
+      #      them to the agent so it does not repeat or contradict its own prior findings. Fetching
+      #      here (not from the agent) keeps it deterministic and off the token budget.
+      - name: Compute review scope
+        id: scope
+        if: steps.preflight.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Resolve the last reviewed SHA only if it is a real ancestor of the current HEAD.
+          # git merge-base --is-ancestor guards the rebase/force-push case: a stale SHA that no
+          # longer leads to HEAD would make git diff produce a meaningless range, so we drop back
+          # to the full diff instead.
+          last_sha=""
+          if [ -f .codereview-cost ]; then
+            stored=$(jq -r '.last_reviewed_sha // ""' .codereview-cost)
+            if [ -n "$stored" ] && git cat-file -e "${stored}^{commit}" 2>/dev/null \
+                && git merge-base --is-ancestor "$stored" "$HEAD_SHA" 2>/dev/null; then
+              last_sha="$stored"
+            fi
+          fi
+          echo "last_sha=$last_sha" >> "$GITHUB_OUTPUT"
+
+          # Fetch this bot's existing inline review comments so the agent can avoid repeating them.
+          # These are pull-request review comments (diff-anchored), not issue comments, and the
+          # action posts them as claude[bot] (the cost issue comment comes from
+          # github-actions[bot] instead — a different author we must not match here). Keep only the
+          # fields the agent needs. An empty array (first review) is a valid, expected result.
+          # A failed fetch must not block the review, so degrade to an empty list (dedup off this
+          # run) rather than failing the step.
+          if ! gh api "repos/$REPO/pulls/$PR_NUMBER/comments" --paginate \
+                --jq '[.[] | select(.user.login == "claude[bot]")
+                       | {path, line: (.line // .original_line), body}]' \
+                | jq -s 'add // []' > .codereview-prior-comments.json; then
+            echo '[]' > .codereview-prior-comments.json
+          fi
+          prior_count=$(jq 'length' .codereview-prior-comments.json)
+          echo "prior_count=$prior_count" >> "$GITHUB_OUTPUT"
+
+      - name: Claude review
+        id: review
+        if: steps.preflight.outputs.enabled == 'true'
+        # Step-level only: an action-level failure (e.g. the workflow-validation check, or a
+        # transient Anthropic API error) must not fail the job by itself. The gate step decides
+        # the job outcome from the transcript, so a real review failure is handled there.
+        continue-on-error: true
+        # Pinned to the v1.0.140 commit, not the floating @v1 tag: @v1 moves between runs, so the
+        # action build could change under us and behave differently run to run. A pinned SHA fixes
+        # the build and makes upgrades deliberate.
+        uses: anthropics/claude-code-action@fbda2eb1bdc90d319b8d853f5deb53bca199a7c1 # v1.0.140
+        with:
+          # anthropic_api_key (not the OIDC/federation path) so inline-comment classification
+          # runs and findings post on the exact changed lines.
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Supplying a prompt runs automation mode — no @claude mention needed.
+          # The action reads AGENTS.md (at every directory level) automatically for the coding
+          # standards. The prompt covers what AGENTS.md cannot: which PR to review, how to scope,
+          # the severity bar (only merge-blocking bugs, not style — lint and SonarQube gate that),
+          # and output format.
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+
+            Apply the project conventions in AGENTS.md (root and any nested AGENTS.md or CLAUDE.md
+            files) as the authoritative standard for how this codebase is meant to be written, on
+            top of general engineering best practice. The "Bar for what to flag" section below
+            governs which violations actually rise to a blocking inline comment.
+
+            Scope. ${{ steps.scope.outputs.last_sha != '' && format('You have already reviewed this PR up to commit {0}. Review ONLY the changes pushed since then: run `git diff {0}..HEAD` and confine your findings to lines that diff touches. Do not re-review or re-comment on code outside that range — it was reviewed and accepted on an earlier run.', steps.scope.outputs.last_sha) || 'This is the first review of this PR. Scope yourself to the full change (the base...head diff).' }}
+            Do not flag pre-existing issues in unchanged code. Read surrounding files only as
+            needed to judge the changes.
+
+            ${{ steps.scope.outputs.prior_count != '0' && format('Avoid duplicates. The file .codereview-prior-comments.json lists the {0} inline comment(s) you posted on this PR on earlier runs (path, line, body). Read it with `cat .codereview-prior-comments.json`. Do not post a comment that repeats one of them, and do not contradict a decision an earlier comment already settled — if the author addressed a point a previous run raised, treat it as resolved rather than reopening it from the other side.', steps.scope.outputs.prior_count) || '' }}
+
+            Do not review third-party or generated files: dependency directories (node_modules,
+            .venv), build output (dist, build), or lockfiles (package-lock.json, Pipfile.lock).
+            If a PR only bumps a dependency, comment on the manifest change, not the lockfile diff.
+
+            Bar for what to flag. This review is a blocking merge gate, so post only findings
+            that should stop a merge. Flag, in order of priority:
+              - Correctness bugs: wrong logic, broken edge cases, null/empty mishandling,
+                off-by-one, incorrect conditionals, race conditions.
+              - Security and data-integrity issues: injection, auth/authorization gaps, leaked
+                secrets or PII, unsafe queries, data loss or corruption.
+              - Performance cliffs: N+1 queries, unbounded scans, a Mongo find/sort/$match pattern
+                with no covering index, N network calls for N items in a render loop.
+              - Architectural violations from AGENTS.md that change behaviour or coupling: importing
+                another module's internal/ package instead of its public *_service.py API, business
+                logic in Flask views or CLI scripts instead of the service layer, non-REST routes
+                (not GET/POST/PATCH/DELETE on resource nouns), missing audit logging on
+                state-changing routes, inline styles or per-page style overrides in the frontend.
+
+            Do NOT flag style or cosmetic issues. Specifically, skip: docstring or comment length
+            and phrasing, comments that restate code, naming, import ordering, formatting,
+            type-annotation style, and anything a linter (mypy, pylint, eslint, remark) or
+            SonarQube already enforces (this repo runs all of them, and they gate separately).
+            AGENTS.md is the standard for the architectural judgments above; do not mine it for
+            mechanical style rules. If a finding is only a style preference, or you are unsure it
+            is a real defect, do not post it.
+
+            For each issue, post an inline comment on the exact line by calling the
+            mcp__github_inline_comment__create_inline_comment tool with confirmed: true so it
+            posts immediately. Give a concrete, committable suggestion where possible. Post only
+            inline comments — do not post a summary comment on the PR. If you find nothing, post
+            nothing.
+          # --model sonnet is an alias that auto-tracks the latest Sonnet — strong reviews at a
+          # fraction of Opus cost per PR. No --max-turns on purpose: a turn cap truncates the
+          # review before it posts comments on larger PRs. The job-level timeout-minutes bounds
+          # cost instead, so the agent runs to completion on any PR size.
+          # --allowedTools must include the inline-comment MCP tool, or the agent finishes the
+          # review but cannot post and the run ends with "No buffered inline comments".
+          # No `gh pr comment` on purpose — the review posts inline comments only, so a
+          # summary comment can never be added and bloat the PR conversation.
+          claude_args: |
+            --model sonnet
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(cat:*)"
+
+      # Add this run's spend to the PR running total and surface it. The action writes an
+      # execution log (its execution_file output) whose final `type: result` message carries
+      # this run's cumulative estimate: total_cost_usd plus a usage object with input, output,
+      # and cache token counts. We read those, add them to the prior total restored above, and
+      # rewrite .codereview-cost (the cache is the source of truth for the total). `if: always()`
+      # so the total still updates on an advisory review step failure; we skip only when no
+      # execution_file was produced.
+      - name: Account review cost
+        if: always() && steps.preflight.outputs.enabled == 'true' && steps.review.outputs.execution_file != ''
+        # Cost accounting is bookkeeping, never a gate. The gh comment upsert occasionally hits a
+        # transient GitHub 422, and the step runs under `bash -e` before the gate, so a hiccup here
+        # would otherwise turn a clean review red. continue-on-error keeps the job outcome owned
+        # solely by the gate step.
+        continue-on-error: true
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          # The commit this run reviewed, used to label its row in the per-commit breakdown.
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # The execution_file is a JSON array of SDK messages; the final `result` message holds
+          # this run's cumulative cost and token usage. Default each field to 0 so a malformed or
+          # truncated log degrades to "this run added nothing" rather than failing the step.
+          run_cost=$(jq -r '[.[] | select(.type == "result")] | last | .total_cost_usd // 0' "$EXECUTION_FILE")
+          run_in=$(jq -r '[.[] | select(.type == "result")] | last | .usage.input_tokens // 0' "$EXECUTION_FILE")
+          run_out=$(jq -r '[.[] | select(.type == "result")] | last | .usage.output_tokens // 0' "$EXECUTION_FILE")
+          run_cache_read=$(jq -r '[.[] | select(.type == "result")] | last | .usage.cache_read_input_tokens // 0' "$EXECUTION_FILE")
+          run_cache_write=$(jq -r '[.[] | select(.type == "result")] | last | .usage.cache_creation_input_tokens // 0' "$EXECUTION_FILE")
+
+          # We store one entry per reviewed commit, not just a rolling sum, so the comment can show
+          # a per-commit breakdown. Start from the prior list restored from cache, or an empty list.
+          if [ -f .codereview-cost ]; then
+            prev='.codereview-cost'
+          else
+            echo '{"entries":[]}' > .codereview-cost.empty
+            prev='.codereview-cost.empty'
+          fi
+
+          # Append this run's entry, keyed by the reviewed SHA. If this SHA already has an entry
+          # (a re-run of the same commit), replace it so a re-run never double-counts. Also stamp
+          # last_reviewed_sha to this run's HEAD: this step only runs when the review produced a
+          # transcript (execution_file != ''), so the SHA advances only after a review actually
+          # completed. The next run scopes its incremental diff from here. A run that never
+          # reviewed (API outage, cancelled push) skips this step, leaving the prior SHA so the
+          # unreviewed commits stay in the next run's range.
+          jq \
+            --arg sha "$HEAD_SHA" \
+            --argjson cost "$run_cost" \
+            --argjson in "$run_in" \
+            --argjson out "$run_out" \
+            --argjson cread "$run_cache_read" \
+            --argjson cwrite "$run_cache_write" \
+            '{last_reviewed_sha: $sha,
+              entries: ((.entries | map(select(.sha != $sha))) + [{
+              sha: $sha, cost: $cost, input_tokens: $in, output_tokens: $out,
+              cache_read_input_tokens: $cread, cache_creation_input_tokens: $cwrite
+            }])}' \
+            "$prev" > .codereview-cost
+          rm -f .codereview-cost.empty
+
+          # Build the comment body from the entry list. The marker is how the next run finds this
+          # comment to update it in place; the cache stays the source of truth, so a hand-edited
+          # comment is overwritten on the next run. Totals are summed from the entries, and each
+          # entry becomes a row in a collapsed <details> breakdown so the comment stays compact.
+          marker="<!-- codereview-cost -->"
+          body=$(jq -r --arg marker "$marker" '
+            .entries as $e
+            | ($e | length) as $n
+            | ($e | map(.cost) | add // 0) as $tcost
+            | ($e | map(.input_tokens) | add // 0) as $tin
+            | ($e | map(.output_tokens) | add // 0) as $tout
+            | ($e | map(.cache_read_input_tokens) | add // 0) as $tcread
+            | ($e | map(.cache_creation_input_tokens) | add // 0) as $tcwrite
+            | [
+                $marker,
+                "### AI code review cost (PR total)",
+                "",
+                "Across **\($n)** review(s) on this PR. Estimated from the Claude Code SDK'"'"'s bundled price table, not an authoritative bill.",
+                "",
+                "| Metric | Total |",
+                "| --- | --- |",
+                "| Cost (USD est.) | $\($tcost * 10000 | round / 10000) |",
+                "| Input tokens | \($tin) |",
+                "| Output tokens | \($tout) |",
+                "| Cache read tokens | \($tcread) |",
+                "| Cache write tokens | \($tcwrite) |",
+                "",
+                "<details><summary>Per-commit breakdown</summary>",
+                "",
+                "| Commit | Cost (USD est.) | Input | Output | Cache read | Cache write |",
+                "| --- | --- | --- | --- | --- | --- |"
+              ]
+              + ($e | map("| `\(.sha[0:7])` | $\(.cost * 10000 | round / 10000) | \(.input_tokens) | \(.output_tokens) | \(.cache_read_input_tokens) | \(.cache_creation_input_tokens) |"))
+              + ["", "</details>"]
+              | join("\n")
+          ' .codereview-cost)
+
+          # Find an existing sticky comment by its marker, then update it; create one if absent.
+          # --paginate runs the jq filter per page, so take the first id across all pages. The
+          # upsert is best-effort: .codereview-cost (saved next) is the source of truth, so a
+          # transient gh failure just leaves the comment stale until the next run refreshes it.
+          comment_id=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -n1) || comment_id=""
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$comment_id" -f body="$body" >/dev/null \
+              || echo "::warning::Cost comment update failed (transient); cache holds the total, next run refreshes it."
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -f body="$body" >/dev/null \
+              || echo "::warning::Cost comment create failed (transient); cache holds the total, next run refreshes it."
+          fi
+
+      # Persist the updated PR total under a unique per-run key. actions/cache keys are immutable,
+      # so a fixed key would only ever save once; the unique key plus the prefix restore above
+      # gives a rolling total that the next commit's review picks up.
+      - name: Save PR review cost total
+        if: always() && steps.preflight.outputs.enabled == 'true' && steps.review.outputs.execution_file != ''
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        with:
+          path: .codereview-cost
+          key: codereview-cost-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # The review only validates against this workflow file as it exists on main. A PR that
+      # edits .github/workflows/ fails that validation until it merges — an expected, self-
+      # resolving condition the action itself says to ignore. Detect it so the gate can tell
+      # "review legitimately could not run on a workflow PR" apart from "review genuinely
+      # failed", which must block. base...head over the fetched history (fetch-depth: 0).
+      - name: Detect workflow file changes
+        id: workflow_changes
+        if: always() && steps.preflight.outputs.enabled == 'true'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=1 --quiet
+          if git diff --name-only "origin/$BASE_REF" HEAD | grep -q '^\.github/workflows/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Turn the review into a merge gate. The action always exits 0 on a finished review
+      # regardless of what it found, so its exit code carries no signal. The transcript it
+      # writes (execution_file) does: it is scoped to this run on this commit, so once the
+      # author pushes fixes a clean re-review posts nothing and the gate goes green.
+      #
+      # Outcomes:
+      #   - review disabled (no ANTHROPIC_API_KEY) -> pass: the gate is opt-in via the secret.
+      #   - transcript present  -> fail if it posted any inline finding the API accepted.
+      #   - no transcript, but this PR edits a workflow file -> pass: the review could not run
+      #     for the expected workflow-validation reason, not a quality problem. Resolves on merge.
+      #   - no transcript, no workflow change -> fail: the review genuinely could not run
+      #     (API outage, crash). A PR must not merge without a completed review.
+      - name: Fail if the review posted findings
+        if: always()
+        env:
+          ENABLED: ${{ steps.preflight.outputs.enabled }}
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          WORKFLOW_CHANGED: ${{ steps.workflow_changes.outputs.changed }}
+        run: |
+          if [ "$ENABLED" != "true" ]; then
+            echo "AI code review is disabled (ANTHROPIC_API_KEY not configured). Passing the gate."
+            exit 0
+          fi
+          node <<'EOF'
+          const fs = require("fs");
+          const path = process.env.EXECUTION_FILE;
+
+          if (!path || !fs.existsSync(path)) {
+            if (process.env.WORKFLOW_CHANGED === "true") {
+              console.log(
+                "Review did not run because this PR edits a workflow file — the action " +
+                  "only validates against the workflow on main. This is expected and " +
+                  "resolves once the PR merges. Passing the gate.",
+              );
+              process.exit(0);
+            }
+            console.log(
+              "Review produced no transcript and this PR does not change any workflow file, " +
+                "so the review could not complete (API error or crash). Re-run the job; if it " +
+                "keeps failing, check the Claude review step logs. Failing the gate.",
+            );
+            process.exit(1);
+          }
+
+          const turns = JSON.parse(fs.readFileSync(path, "utf-8"));
+
+          // Map each create_inline_comment tool_use id to whether its tool_result errored,
+          // so a rejected post (e.g. a line outside the diff) is not counted as a finding.
+          const errored = new Map();
+          for (const turn of turns) {
+            for (const item of turn?.message?.content ?? []) {
+              if (item.type === "tool_result" && item.tool_use_id) {
+                errored.set(item.tool_use_id, item.is_error === true);
+              }
+            }
+          }
+
+          let findings = 0;
+          for (const turn of turns) {
+            for (const item of turn?.message?.content ?? []) {
+              if (
+                item.type === "tool_use" &&
+                typeof item.name === "string" &&
+                item.name.endsWith("create_inline_comment") &&
+                errored.get(item.id) !== true
+              ) {
+                findings++;
+              }
+            }
+          }
+
+          if (findings > 0) {
+            console.log(
+              `Code review posted ${findings} inline finding(s). Address them, then push to re-trigger the review.`,
+            );
+            process.exit(1);
+          }
+          console.log("Code review completed with no findings. Passing the gate.");
+          process.exit(0);
+          EOF
+
   sonarqube:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     needs: test
