@@ -35,10 +35,27 @@ const Otp: React.FC<OtpProps> = ({
 }) => {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
+  // Stable per-box identities so React keys never fall back to the array
+  // index. A fixed-length code has no natural id per digit, so we mint a
+  // unique id per box once and reuse it across renders, growing the list only
+  // if the length increases.
+  const nextBoxId = useRef(0);
+  const boxIds = useRef<string[]>([]);
+  if (boxIds.current.length !== value.length) {
+    boxIds.current = value.map((_, index) => {
+      const existing = boxIds.current[index];
+      if (existing) {
+        return existing;
+      }
+      nextBoxId.current += 1;
+      return `otp-box-${nextBoxId.current}`;
+    });
+  }
+
   const handleDigitChange = (digit: string, index: number) => {
     // Keep only the last typed numeric character so a box never holds more
     // than one digit, matching the single-character box model.
-    const sanitised = digit.replace(/\D/g, '').slice(-1);
+    const sanitised = digit.match(/\d/g)?.pop() ?? '';
     const next = [...value];
     next[index] = sanitised;
     onChange(next);
@@ -65,9 +82,7 @@ const Otp: React.FC<OtpProps> = ({
     <Inline gap={Spacing.Sm} justify="center" testId={testId}>
       {value.map((digit, index) => (
         <input
-          // The position is the stable identity for a fixed-length code; there
-          // is no other key for an empty digit box.
-          key={`otp-digit-${index}`}
+          key={boxIds.current[index]}
           ref={(ref) => {
             inputRefs.current[index] = ref;
           }}
