@@ -1,7 +1,18 @@
 const path = require('path');
 
+const config = require('config');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
+
+// The frontend's public config is injected into the bundle at build time as
+// `window.Config`, read from the `public` section of the active config
+// environment (config/*.yml) — the same values the backend exposes. This
+// removes the runtime `/config.js` fetch, so the app needs no extra request
+// (or dev-server proxy) to read its config.
+const publicConfig = JSON.stringify(
+  config.has('public') ? config.util.toObject(config.get('public')) : {},
+);
 
 module.exports = {
   target: 'web',
@@ -15,6 +26,9 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: 'style.css',
       chunkFilename: 'style.css',
+    }),
+    new webpack.DefinePlugin({
+      'window.Config': publicConfig,
     }),
   ],
   output: {
