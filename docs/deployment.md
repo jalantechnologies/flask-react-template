@@ -180,7 +180,7 @@ All jobs run in parallel and independently:
 
 Single job that builds Docker image and deploys:
 
-1. **cd/deploy** (~3-4 min) - Builds Docker image and deploys to `{pr-name}.preview.platform.bettrhq.com`
+1. **cd/deploy** (~3-4 min) - Builds Docker image and deploys to `{pr-name}.preview.platform.btr.group`
 
 **Note:** All CI checks are advisory and run independently. CD deploys regardless of CI status to enable fast iteration. Code merged to `main` should have passing CI checks from the PR.
 

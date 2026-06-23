@@ -12,16 +12,16 @@ This project has three deployment environments that everyone can access:
 
 - **Production**
   - The live app for end users.
-  - Web App URL: [https://flask-react-template.platform.bettrhq.com](https://flask-react-template.platform.bettrhq.com)
+  - Web App URL: [https://flask-react-template.platform.btr.group](https://flask-react-template.platform.btr.group)
 
 - **Preview (per PR)**
   - A temporary environment for testing the latest changes in each PR
-  - A unique URL is generated for every pull request (e.g. `https://<github_sha>.preview.platform.bettrhq.com`).
+  - A unique URL is generated for every pull request (e.g. `https://<github_sha>.preview.platform.btr.group`).
 
 - **Permanent Preview**
   - Always reflects the latest `main` branch.
   - Useful for ongoing testing of the integrated codebase.
-  - URL: [https://preview.flask-react-template.platform.bettrhq.com](https://preview.flask-react-template.platform.bettrhq.com)
+  - URL: [https://preview.flask-react-template.platform.btr.group](https://preview.flask-react-template.platform.btr.group)
 
 ## Documentation Directory
 
