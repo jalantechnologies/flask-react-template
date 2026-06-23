@@ -116,6 +116,7 @@
     "webpack-merge": "^5.8.0"
   },
   "overrides": {
+    "form-data": ">=4.0.6",
     "@eslint/eslintrc": {
       "minimatch": "3.1.3"
     },
