@@ -54,7 +54,7 @@ jobs:
         with:
           app_name: flask-react-app
           app_env: preview
-          app_hostname: '{1}.preview.platform.bettrhq.com'
+          app_hostname: '{1}.preview.platform.btr.group'
           branch: pr-${{ github.event.pull_request.number }}
           deploy_id: ${{ github.run_number }}
           deploy_root: app/lib/kube

@@ -28,11 +28,11 @@ For a full walkthrough, watch the video below.
 
 The template ships with three environments out of the box:
 
-| Environment           | Trigger                        | URL Pattern                                 |
-| --------------------- | ------------------------------ | ------------------------------------------- |
-| **Preview (per PR)**  | Every pull request open/update | `<github_sha>.preview.platform.bettrhq.com` |
-| **Permanent Preview** | Every merge to `main`          | `preview.<app>.<domain>`                    |
-| **Production**        | Manual or on merge to `main`   | `<app>.<domain>`                            |
+| Environment           | Trigger                        | URL Pattern                               |
+| --------------------- | ------------------------------ | ----------------------------------------- |
+| **Preview (per PR)**  | Every pull request open/update | `<github_sha>.preview.platform.btr.group` |
+| **Permanent Preview** | Every merge to `main`          | `preview.<app>.<domain>`                  |
+| **Production**        | Manual or on merge to `main`   | `<app>.<domain>`                          |
 
 Each preview environment is **fully isolated** — its own WebApp pod, Worker pod, and Redis pod — and is torn down automatically when the PR is closed.
 
