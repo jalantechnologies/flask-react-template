@@ -36,8 +36,8 @@ class AccountView(MethodView):
         return jsonify(account_dict), 201
 
     @access_auth_middleware
-    def get(self, id: str) -> ResponseReturnValue:
-        account_params = AccountSearchByIdParams(id=id)
+    def get(self, account_id: str) -> ResponseReturnValue:
+        account_params = AccountSearchByIdParams(id=account_id)
         account = AccountService.get_account_by_id(params=account_params)
         account_dict = asdict(account)
 
@@ -54,18 +54,18 @@ class AccountView(MethodView):
 
         return jsonify(account_dict), 200
 
-    def patch(self, id: str) -> ResponseReturnValue:
+    def patch(self, account_id: str) -> ResponseReturnValue:
         request_data = request.get_json()
 
         if "token" in request_data and "new_password" in request_data:
-            reset_account_params = ResetPasswordParams(account_id=id, **request_data)
+            reset_account_params = ResetPasswordParams(account_id=account_id, **request_data)
             account = AccountService.reset_account_password(params=reset_account_params)
 
         elif "first_name" in request_data or "last_name" in request_data:
             update_profile_params = UpdateAccountProfileParams(
                 first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
             )
-            account = AccountService.update_account_profile(account_id=id, params=update_profile_params)
+            account = AccountService.update_account_profile(account_id=account_id, params=update_profile_params)
 
         else:
             raise AccountBadRequestError("Invalid request data")
@@ -74,8 +74,8 @@ class AccountView(MethodView):
         return jsonify(account_dict), 200
 
     @access_auth_middleware
-    def delete(self, id: str) -> ResponseReturnValue:
-        AccountService.delete_account(account_id=id)
+    def delete(self, account_id: str) -> ResponseReturnValue:
+        AccountService.delete_account(account_id=account_id)
         return "", 204
 
     @staticmethod
