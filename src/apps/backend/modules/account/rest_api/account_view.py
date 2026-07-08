@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Any
 
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
@@ -15,12 +16,19 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
-from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
+from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware, enforce_account_ownership
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 
 
 class AccountView(MethodView):
+    @staticmethod
+    def _get_request_body_as_object() -> dict[str, Any]:
+        request_data = request.get_json()
+        if not isinstance(request_data, dict):
+            raise AccountBadRequestError("Request body must be a JSON object")
+        return request_data
+
     def post(self) -> ResponseReturnValue:
         request_data = request.get_json()
         account_params: CreateAccountParams
@@ -55,13 +63,16 @@ class AccountView(MethodView):
         return jsonify(account_dict), 200
 
     def patch(self, account_id: str) -> ResponseReturnValue:
-        request_data = request.get_json()
+        request_data = self._get_request_body_as_object()
 
         if "token" in request_data and "new_password" in request_data:
-            reset_account_params = ResetPasswordParams(account_id=account_id, **request_data)
+            reset_account_params = ResetPasswordParams(
+                account_id=account_id, new_password=request_data["new_password"], token=request_data["token"]
+            )
             account = AccountService.reset_account_password(params=reset_account_params)
 
         elif "first_name" in request_data or "last_name" in request_data:
+            enforce_account_ownership(account_id)
             update_profile_params = UpdateAccountProfileParams(
                 first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
             )
@@ -80,10 +91,7 @@ class AccountView(MethodView):
 
     @staticmethod
     def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:
-        request_data = request.get_json()
-
-        if request_data is None:
-            raise AccountBadRequestError("Request body is required")
+        request_data = AccountView._get_request_body_as_object()
 
         for field in ["email_enabled", "push_enabled", "sms_enabled"]:
             if field in request_data and not isinstance(request_data[field], bool):
