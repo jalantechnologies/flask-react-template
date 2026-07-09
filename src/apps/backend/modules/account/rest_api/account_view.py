@@ -90,6 +90,7 @@ class AccountView(MethodView):
         return "", 204
 
     @staticmethod
+    @access_auth_middleware
     def update_account_notification_preferences(account_id: str) -> ResponseReturnValue:
         request_data = AccountView._get_request_body_as_object()
 
