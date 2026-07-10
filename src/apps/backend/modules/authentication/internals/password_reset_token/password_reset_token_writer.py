@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internals.password_reset_token.store.password_reset_token_repository import (
@@ -18,7 +20,9 @@ class PasswordResetTokenWriter:
 
     @staticmethod
     def set_password_reset_token_as_used(password_reset_token_id: str) -> PasswordResetToken:
-        updated_token = PasswordResetTokenRepository.update(password_reset_token_id, {"is_used": True})
+        updated_token = PasswordResetTokenRepository.update(
+            password_reset_token_id, {"is_used": True, "updated_at": datetime.now(UTC)}
+        )
         if updated_token is None:
             raise PasswordResetTokenNotFoundError()
 

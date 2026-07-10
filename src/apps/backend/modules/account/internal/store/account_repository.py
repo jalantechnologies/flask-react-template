@@ -57,11 +57,13 @@ class AccountRepository(ApplicationRepository[Account, AccountQuery]):
     def from_doc(cls, doc: StoredDocument) -> Account:
         model = AccountModel.from_bson(doc)
         return Account(
-            id=str(model.id),
+            created_at=model.created_at,
             first_name=model.first_name,
-            last_name=model.last_name,
             hashed_password=model.hashed_password,
+            id=str(model.id),
+            last_name=model.last_name,
             phone_number=model.phone_number,
+            updated_at=model.updated_at,
             username=model.username,
         )
 

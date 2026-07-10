@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
@@ -29,6 +30,8 @@ class AccountNotificationPreferences:
     email_enabled: bool = True
     push_enabled: bool = True
     sms_enabled: bool = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

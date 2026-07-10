@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Optional
 
 from bson import ObjectId
@@ -13,9 +12,7 @@ class TaskModel(BaseModel):
     description: str
     title: str
     active: bool = True
-    created_at: Optional[datetime] = datetime.now()
     id: Optional[ObjectId | str] = None
-    updated_at: Optional[datetime] = datetime.now()
 
     @classmethod
     def from_bson(cls, bson_data: dict) -> "TaskModel":

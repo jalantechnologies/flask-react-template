@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from server import app
@@ -197,6 +197,61 @@ class TestAccountService(BaseTestAccount):
         assert deletion_result.success is True
         assert deletion_result.deleted_at is not None
         assert isinstance(deletion_result.deleted_at, datetime)
+
+    def test_given_account_details_when_creating_account_then_created_at_and_updated_at_reflect_creation_time(
+        self,
+    ) -> None:
+        before = datetime.now(UTC)
+        created_account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="timestamp_username"
+            )
+        )
+        after = datetime.now(UTC)
+
+        assert created_account.created_at is not None
+        assert created_account.updated_at is not None
+        assert created_account.created_at.tzinfo is not None
+        assert created_account.updated_at.tzinfo is not None
+        assert created_account.created_at.utcoffset() == timedelta(0)
+        assert created_account.updated_at.utcoffset() == timedelta(0)
+        assert created_account.created_at == created_account.updated_at
+        assert before <= created_account.created_at <= after
+        assert before <= created_account.updated_at <= after
+
+    def test_given_existing_account_when_updating_profile_then_updated_at_reflects_update_time(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        before = datetime.now(UTC)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, params=UpdateAccountProfileParams(first_name="updated_first_name")
+        )
+        after = datetime.now(UTC)
+
+        assert updated_account.updated_at is not None
+        assert updated_account.created_at is not None
+        assert before - timedelta(milliseconds=1) <= updated_account.updated_at <= after
+        assert updated_account.updated_at > updated_account.created_at
+
+    def test_given_existing_account_when_deleting_account_then_deleted_at_reflects_deletion_time_in_utc(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        before = datetime.now(UTC)
+        deletion_result = AccountService.delete_account(account_id=account.id)
+        after = datetime.now(UTC)
+
+        assert deletion_result.deleted_at is not None
+        assert deletion_result.deleted_at.tzinfo is not None
+        assert deletion_result.deleted_at.utcoffset() == timedelta(0)
+        assert before <= deletion_result.deleted_at <= after
 
     def test_delete_account_not_found(self) -> None:
         non_existent_account_id = "5f7b1b7b4f3b9b1b3f3b9b1b"

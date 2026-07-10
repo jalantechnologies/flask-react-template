@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_reader import TaskReader
@@ -24,7 +24,7 @@ class TaskWriter:
         TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
         TaskRepository.update_fields(
-            params.task_id, {"description": params.description, "title": params.title, "updated_at": datetime.now()}
+            params.task_id, {"description": params.description, "title": params.title, "updated_at": datetime.now(UTC)}
         )
 
         return TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
@@ -34,7 +34,7 @@ class TaskWriter:
         # Confirm the task exists for this account (raises if not) before soft-deleting it.
         task = TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
-        deletion_time = datetime.now()
+        deletion_time = datetime.now(UTC)
         TaskRepository.update_fields(task.id, {"active": False, "updated_at": deletion_time})
 
         return TaskDeletionResult(task_id=params.task_id, deleted_at=deletion_time, success=True)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from modules.application.common.types import PaginationParams
 from modules.task.errors import TaskNotFoundError
@@ -113,6 +113,39 @@ class TestTaskService(BaseTestTask):
         assert updated_task.title == "Updated Title"
         assert updated_task.description == "Updated Description"
 
+    def test_given_task_details_when_creating_task_then_created_at_and_updated_at_reflect_creation_time(self) -> None:
+        before = datetime.now(UTC)
+        created_task = self.create_test_task(account_id=self.account.id)
+        after = datetime.now(UTC)
+
+        assert created_task.created_at is not None
+        assert created_task.updated_at is not None
+        assert created_task.created_at.tzinfo is not None
+        assert created_task.updated_at.tzinfo is not None
+        assert created_task.created_at.utcoffset() == timedelta(0)
+        assert created_task.updated_at.utcoffset() == timedelta(0)
+        assert created_task.created_at == created_task.updated_at
+        assert before <= created_task.created_at <= after
+        assert before <= created_task.updated_at <= after
+
+    def test_given_existing_task_when_updating_task_then_updated_at_reflects_update_time(self) -> None:
+        created_task = self.create_test_task(account_id=self.account.id)
+        update_params = UpdateTaskParams(
+            account_id=self.account.id,
+            task_id=created_task.id,
+            title="Updated Title",
+            description="Updated Description",
+        )
+
+        before = datetime.now(UTC)
+        updated_task = TaskService.update_task(params=update_params)
+        after = datetime.now(UTC)
+
+        assert updated_task.updated_at is not None
+        assert updated_task.created_at is not None
+        assert before - timedelta(milliseconds=1) <= updated_task.updated_at <= after
+        assert updated_task.updated_at > updated_task.created_at
+
     def test_update_task_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
         update_params = UpdateTaskParams(
@@ -141,6 +174,19 @@ class TestTaskService(BaseTestTask):
         get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
         with self.assertRaises(TaskNotFoundError):
             TaskService.get_task(params=get_params)
+
+    def test_given_existing_task_when_deleting_task_then_deleted_at_reflects_deletion_time_in_utc(self) -> None:
+        created_task = self.create_test_task(account_id=self.account.id)
+        delete_params = DeleteTaskParams(account_id=self.account.id, task_id=created_task.id)
+
+        before = datetime.now(UTC)
+        deletion_result = TaskService.delete_task(params=delete_params)
+        after = datetime.now(UTC)
+
+        assert deletion_result.deleted_at is not None
+        assert deletion_result.deleted_at.tzinfo is not None
+        assert deletion_result.deleted_at.utcoffset() == timedelta(0)
+        assert before <= deletion_result.deleted_at <= after
 
     def test_delete_task_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"

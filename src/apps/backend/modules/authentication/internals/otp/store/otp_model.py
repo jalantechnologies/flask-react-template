@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Optional
 
 from bson import ObjectId
@@ -15,9 +14,6 @@ class OTPModel(BaseModel):
     otp_code: str
     phone_number: PhoneNumber
     status: str
-
-    created_at: Optional[datetime] = datetime.now()
-    updated_at: Optional[datetime] = datetime.now()
 
     @classmethod
     def from_bson(cls, bson_data: dict) -> "OTPModel":

@@ -89,6 +89,8 @@ class Account:
     hashed_password: str
     phone_number: Optional[PhoneNumber]
     username: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

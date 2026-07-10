@@ -1,11 +1,12 @@
 import json
+from datetime import UTC, datetime, timedelta
 from unittest import mock
 
 from server import app
 
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountBadRequestError, AccountNotFoundError
-from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.account.types import CreateAccountByUsernameAndPasswordParams, ResetPasswordParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
@@ -45,6 +46,72 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertTrue(mock_send_email.called)
             self.assertIn("password_reset_link", mock_send_email.call_args.kwargs["params"].template_data)
             self.assertEqual(response.json["account"], account.id)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_given_account_when_creating_password_reset_token_then_created_at_and_updated_at_reflect_creation_time(
+        self, mock_send_email
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+
+        before = datetime.now(UTC)
+        password_reset_token = AuthenticationService.create_password_reset_token(account)
+        after = datetime.now(UTC)
+
+        assert password_reset_token.created_at is not None
+        assert password_reset_token.updated_at is not None
+        assert password_reset_token.created_at.tzinfo is not None
+        assert password_reset_token.updated_at.tzinfo is not None
+        assert password_reset_token.created_at.utcoffset() == timedelta(0)
+        assert password_reset_token.updated_at.utcoffset() == timedelta(0)
+        assert password_reset_token.created_at == password_reset_token.updated_at
+        assert before <= password_reset_token.created_at <= after
+        assert before <= password_reset_token.updated_at <= after
+
+    def test_given_valid_reset_token_when_resetting_password_then_account_updated_at_reflects_update_time(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+        token = PasswordResetTokenUtil.generate_password_reset_token()
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token)
+
+        before = datetime.now(UTC)
+        updated_account = AccountService.reset_account_password(
+            params=ResetPasswordParams(account_id=account.id, new_password="new_password", token=token)
+        )
+        after = datetime.now(UTC)
+
+        assert updated_account.updated_at is not None
+        assert updated_account.created_at is not None
+        assert before - timedelta(milliseconds=1) <= updated_account.updated_at <= after
+        assert updated_account.updated_at > updated_account.created_at
+
+    def test_given_existing_reset_token_when_marking_used_then_updated_at_reflects_update_time(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            )
+        )
+        token = PasswordResetTokenUtil.generate_password_reset_token()
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token)
+        password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(account_id=account.id)
+
+        before = datetime.now(UTC)
+        used_password_reset_token = AuthenticationService.set_password_reset_token_as_used_by_id(
+            password_reset_token.id
+        )
+        after = datetime.now(UTC)
+
+        assert used_password_reset_token.is_used
+        assert used_password_reset_token.updated_at is not None
+        assert used_password_reset_token.created_at is not None
+        assert before - timedelta(milliseconds=1) <= used_password_reset_token.updated_at <= after
+        assert used_password_reset_token.updated_at > used_password_reset_token.created_at
 
     @mock.patch.object(EmailService, "send_email_for_account")
     def test_create_password_reset_token_account_not_found(self, mock_send_email):
