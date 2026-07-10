@@ -8,6 +8,9 @@ celery:
 worker:
   health_check_url: 'http://localhost:8080/api/'
 
+accounts:
+  token_signing_key: 'insecure-local-testing-signing-key'
+
 mailer:
   default_email: 'DEFAULT_EMAIL'
   default_email_name: 'DEFAULT_EMAIL_NAME'

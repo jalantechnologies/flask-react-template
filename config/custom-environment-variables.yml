@@ -1,3 +1,6 @@
+accounts:
+  token_signing_key: 'ACCOUNTS_TOKEN_SIGNING_KEY'
+
 mailer:
   default_email: 'DEFAULT_EMAIL'
   default_email_name: 'DEFAULT_EMAIL_NAME'

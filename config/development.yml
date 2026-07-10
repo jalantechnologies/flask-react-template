@@ -11,6 +11,9 @@ celery:
 worker:
   health_check_url: 'http://localhost:8080/api/'
 
+accounts:
+  token_signing_key: 'insecure-local-development-signing-key'
+
 sms:
   enabled: false
 
@@ -21,14 +24,5 @@ public:
   default_otp:
     enabled: true
     code: '1234'
-
-account:
-  enable_bootstrap_tasks: true
-  create_test_user_account: true
-  test_user:
-    first_name: 'Dev'
-    last_name: 'User'
-    username: 'dev@example.com'
-    password: 'devpassword'
 
 BOOTSTRAP_APP: true
