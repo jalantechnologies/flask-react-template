@@ -118,3 +118,98 @@ class TestAccountPostApi(BaseTestAccount):
             assert response.json.get("code") == OTPErrorCode.REQUEST_FAILED
             assert response.json.get("message") == "Please provide a valid phone number."
             assert mock_send_sms.called is False
+
+    def test_given_valid_username_body_with_extra_keys_when_creating_account_then_ignores_extra_keys(self) -> None:
+        request_body = json.dumps(
+            {
+                "extra_key": "extra_value",
+                "first_name": "first_name",
+                "last_name": "last_name",
+                "password": "password",
+                "username": "username",
+            }
+        )
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 201
+            assert response.json
+            assert response.json.get("username") == "username"
+            assert "extra_key" not in response.json
+
+    def test_given_username_and_password_without_names_when_creating_account_then_returns_bad_request(self) -> None:
+        request_body = json.dumps({"password": "password", "username": "username"})
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_non_string_username_when_creating_account_then_returns_bad_request(self) -> None:
+        request_body = json.dumps(
+            {"first_name": "first_name", "last_name": "last_name", "password": "password", "username": 123}
+        )
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_non_object_phone_number_when_creating_account_then_returns_bad_request(self) -> None:
+        request_body = json.dumps({"phone_number": "not_an_object"})
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_phone_number_without_country_code_when_creating_account_then_returns_bad_request(self) -> None:
+        request_body = json.dumps({"phone_number": {"phone_number": "9999999999"}})
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_unrecognized_request_body_when_creating_account_then_returns_bad_request(self) -> None:
+        request_body = json.dumps({"unrecognized_field": "value"})
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_null_request_body_when_creating_account_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=json.dumps(None))
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_numeric_request_body_when_creating_account_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=json.dumps(123))
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_string_request_body_when_creating_account_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=json.dumps("username"))
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST

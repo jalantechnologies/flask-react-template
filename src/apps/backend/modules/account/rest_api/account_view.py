@@ -11,8 +11,6 @@ from modules.account.types import (
     AccountSearchByIdParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    CreateAccountParams,
-    PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
@@ -30,18 +28,24 @@ class AccountView(MethodView):
         return request_data
 
     def post(self) -> ResponseReturnValue:
-        request_data = request.get_json()
-        account_params: CreateAccountParams
+        request_data = self._get_request_body_as_object()
+
         if "phone_number" in request_data:
-            phone_number_data = request_data["phone_number"]
-            phone_number_obj = PhoneNumber(**phone_number_data)
-            account_params = CreateAccountByPhoneNumberParams(phone_number=phone_number_obj)
-            account = AccountService.get_or_create_account_by_phone_number(params=account_params)
-        elif "username" in request_data and "password" in request_data:
-            account_params = CreateAccountByUsernameAndPasswordParams(**request_data)
-            account = AccountService.create_account_by_username_and_password(params=account_params)
-        account_dict = asdict(account)
-        return jsonify(account_dict), 201
+            account = AccountService.get_or_create_account_by_phone_number(
+                params=CreateAccountByPhoneNumberParams.from_dict(request_data)
+            )
+
+        elif "password" in request_data and "username" in request_data:
+            account = AccountService.create_account_by_username_and_password(
+                params=CreateAccountByUsernameAndPasswordParams.from_dict(request_data)
+            )
+
+        else:
+            raise AccountBadRequestError(
+                "Request body must contain either a phone_number object or username and password fields"
+            )
+
+        return jsonify(asdict(account)), 201
 
     @access_auth_middleware
     def get(self, account_id: str) -> ResponseReturnValue:
