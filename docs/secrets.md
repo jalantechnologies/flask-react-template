@@ -14,8 +14,8 @@ Secrets stored in Doppler are automatically injected into the app at runtime and
    The `flask-react-template` project centralizes secrets for the full stack (frontend + backend).
 
 3. **Choose an environment**
-   - **preview** – Used by PR preview builds.
-   - **production** – Live environment.
+   - **preview** – Preview environment configuration.
+   - **production** – Production environment configuration.
 
 4. **Add or edit secrets**
    - Click **“Secrets”** → **“Add Secret”**.
@@ -56,7 +56,7 @@ _Empty or unset secrets are ignored and fallback to the value defined in the cor
 ## Best Practices
 
 - **Never** commit secrets to the repository.
-- Use **preview** for testing; **production** secrets should be tightly controlled.
+- **production** secrets should be tightly controlled.
 - Remove deprecated keys promptly to avoid confusion.
 - If you add a new mapping in `custom-environment-variables.yml`, remember to create the matching secret in Doppler for every active environment.
 

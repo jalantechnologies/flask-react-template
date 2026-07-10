@@ -1,5 +1,7 @@
 # Deployment Architecture
 
+> **Note:** No hosted environments are currently deployed. The Kubernetes manifests under `lib/kube/` are retained; this document describes the deployment architecture they define.
+
 Flask-React-Template uses a Kubernetes-based deployment strategy for preview and production environments.
 
 ---
@@ -125,20 +127,19 @@ kubectl scale deployment flask-react-template-production-worker-deployment --rep
 
 # CI/CD Pipeline
 
-This project uses **GitHub Actions** for continuous integration and deployment on **Kubernetes**, using workflows defined in [github-ci](https://github.com/jalantechnologies/github-ci).
+This project uses **GitHub Actions** for continuous integration, with reusable building blocks from [github-ci](https://github.com/jalantechnologies/github-ci).
 
 ---
 
-## CI/CD Pipeline Structure
+## CI Pipeline Structure
 
-When you open or update a pull request, CI and CD workflows run independently:
+When you open or update a pull request, CI workflows run independently:
 
 ```mermaid
 graph TB
     Start([PR Opened/Updated])
 
     Start --> CI[CI Workflow<br/>Code Quality & Testing]
-    Start --> CD[CD Workflow<br/>Build & Deploy]
     Start --> Label[PR Labeler<br/>Auto-label]
 
     CI --> Lint[ci/lint<br/>~30s]
@@ -146,18 +147,13 @@ graph TB
     CI --> Review[ci/review<br/>~90s]
     CI --> Test[ci/test<br/>~1 min]
 
-    CD --> Deploy[cd/deploy<br/>~3-4 min<br/>builds + deploys]
-
     Label --> End([Complete])
     Lint --> End
     Sonar --> End
     Review --> End
     Test --> End
-    Deploy --> End
 
     style CI fill:#e1f5ff
-    style CD fill:#fff4e1
-    style Deploy fill:#d4edda
     style Label fill:#f0e6ff
 ```
 
@@ -176,30 +172,14 @@ All jobs run in parallel and independently:
 3. **ci/review** (~90s) - Automated code review (placeholder for future AI-powered review)
 4. **ci/test** (~1 min) - Integration tests using docker-compose
 
-### CD Workflow (Build & Deploy)
-
-Single job that builds Docker image and deploys:
-
-1. **cd/deploy** (~3-4 min) - Builds Docker image and deploys to `{pr-name}.preview.platform.btr.group`
-
-**Note:** All CI checks are advisory and run independently. CD deploys regardless of CI status to enable fast iteration. Code merged to `main` should have passing CI checks from the PR.
+**Note:** All CI checks are advisory and run independently. Code merged to `main` should have passing CI checks from the PR.
 
 ---
 
 ## Deployment Workflows
 
-### CD Workflows
-
-- **cd** - Deploys preview environment for each PR (`cd/deploy`)
-- **cd_production** - Deploys to production when code is merged to `main` (`cd_production/deploy`)
-- **cd_permanent_preview** - Updates permanent preview when `main` changes (`cd_permanent_preview/deploy`)
+Deploy workflows are not included in this repository — no environment is deployed from it. The Kubernetes manifests under `lib/kube/` define the preview and production environments described above; when deploying an application created from this template, wire them up with the reusable deploy workflows from [github-ci](https://github.com/jalantechnologies/github-ci).
 
 ### PR Automation Workflows
 
 - **pr-labeler** - Auto-labels PRs based on semantic title prefix (`feat:`, `fix:`, `docs:`, etc.)
-
-### Cleanup Workflows
-
-- **cleanup_pr** - Automatically removes preview environment when PR is closed
-
-All credentials and secrets are securely managed via GitHub secrets and environment variables. Deployments use github-ci v3.2.5 reusable workflows for Docker image building and Kubernetes deployment.

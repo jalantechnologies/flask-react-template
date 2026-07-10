@@ -71,7 +71,7 @@ doctl version
 kubectl version --client
 ```
 
-> ✅ Make sure both `doctl` and `kubectl` are accessible in your terminal before proceeding with preview or production deployment steps.
+> ✅ Make sure both `doctl` and `kubectl` are accessible in your terminal before proceeding with production deployment steps.
 
 ---
 
@@ -116,5 +116,5 @@ exit
 ## Best Practices
 
 - Always double-check that you are in the correct production namespace.
-- Only run scripts after validating the impact, ideally in preview first.
+- Only run scripts after validating the impact, ideally in a local development environment first.
 - Avoid running scripts that mutate critical state during peak traffic unless absolutely necessary.

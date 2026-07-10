@@ -2,26 +2,13 @@
 
 Boilerplate project for Flask, React & MongoDB based projects. This README documents the steps necessary to get the application up and running, and various components of the application.
 
-| Build Status                                                                                                                                                                                                                         | Code Coverage                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [![Production Deploy](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production.yml/badge.svg?branch=main)](https://github.com/jalantechnologies/flask-react-template/actions/workflows/production.yml) | [![Coverage](https://sonarqube.platform.bettrhq.com/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=sqb_661a4ddf0ce99feb175a0afbf8aa21304e78296f)](https://sonarqube.platform.bettrhq.com/dashboard?id=jalantechnologies_flask-react-template) |
+| Code Coverage                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [![Coverage](https://sonarqube.platform.bettrhq.com/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=sqb_661a4ddf0ce99feb175a0afbf8aa21304e78296f)](https://sonarqube.platform.bettrhq.com/dashboard?id=jalantechnologies_flask-react-template) |
 
 ### Environments & URLs
 
-This project has three deployment environments that everyone can access:
-
-- **Production**
-  - The live app for end users.
-  - Web App URL: [https://flask-react-template.platform.btr.group](https://flask-react-template.platform.btr.group)
-
-- **Preview (per PR)**
-  - A temporary environment for testing the latest changes in each PR
-  - A unique URL is generated for every pull request (e.g. `https://<github_sha>.preview.platform.btr.group`).
-
-- **Permanent Preview**
-  - Always reflects the latest `main` branch.
-  - Useful for ongoing testing of the integrated codebase.
-  - URL: [https://preview.flask-react-template.platform.btr.group](https://preview.flask-react-template.platform.btr.group)
+The template is not deployed to hosted environments. Run it locally per [Getting Started](docs/getting-started.md); the Kubernetes manifests under `lib/kube/` describe the deployment architecture (see [Deployment Architecture](docs/deployment.md)).
 
 ## Documentation Directory
 
