@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from bson import ObjectId
@@ -16,12 +16,14 @@ from modules.logger.logger import Logger
 PASSWORD_RESET_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["account", "expires_at", "token", "is_used"],
+        "required": ["account", "expires_at", "is_used", "token"],
         "properties": {
             "account": {"bsonType": "objectId", "description": "must be an ObjectId and is required"},
+            "created_at": {"bsonType": "date"},
             "expires_at": {"bsonType": "date", "description": "must be a valid date and is required"},
             "is_used": {"bsonType": "bool", "description": "must be a boolean and is required"},
             "token": {"bsonType": "string", "description": "must be a string and is required"},
+            "updated_at": {"bsonType": "date"},
             "_id": {"bsonType": "objectId", "description": "must be an ObjectId"},
         },
     }
@@ -54,12 +56,14 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
     def from_doc(cls, doc: StoredDocument) -> PasswordResetToken:
         model = PasswordResetTokenModel.from_bson(doc)
         return PasswordResetToken(
-            id=str(model.id),
             account=str(model.account),
-            token=model.token,
+            created_at=model.created_at,
             expires_at=str(model.expires_at),
-            is_used=model.is_used,
+            id=str(model.id),
             is_expired=PasswordResetTokenUtil.is_token_expired(model.expires_at),
+            is_used=model.is_used,
+            token=model.token,
+            updated_at=model.updated_at,
         )
 
     @classmethod
@@ -80,11 +84,14 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
         # The stored document keys `account` as an ObjectId and `expires_at` as a real date — a store-shaped
         # write the generic create()/to_doc() (which round-trips the string-typed domain entity) cannot
         # express, so it stays on the repository (see docs/backend-architecture.md).
+        creation_time = datetime.now(UTC)
         doc: StoredDocument = {
             "account": ObjectId(account_id),
+            "created_at": creation_time,
             "expires_at": expires_at,
-            "token": token_hash,
             "is_used": False,
+            "token": token_hash,
+            "updated_at": creation_time,
         }
         result = cls.collection().insert_one(doc)
         return cls.from_doc({**doc, "_id": result.inserted_id})

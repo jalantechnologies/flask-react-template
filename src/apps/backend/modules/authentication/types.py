@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from typing import Optional, Union
 
@@ -53,6 +54,8 @@ class PasswordResetToken:
     is_expired: bool
     is_used: bool
     token: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,8 @@ class OTP:
     # An OTP is active until it is consumed (verified) or superseded by a newer one; verification reads
     # this to tell a correct-but-expired code from an incorrect one.
     active: bool = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pymongo import ReturnDocument
 from pymongo.collection import Collection
@@ -76,9 +76,11 @@ class AccountNotificationPreferencesRepository(
         model = AccountNotificationPreferencesModel.from_bson(doc)
         return AccountNotificationPreferences(
             account_id=model.account_id,
+            created_at=model.created_at,
             email_enabled=model.email_enabled,
             push_enabled=model.push_enabled,
             sms_enabled=model.sms_enabled,
+            updated_at=model.updated_at,
         )
 
     @classmethod
@@ -108,7 +110,7 @@ class AccountNotificationPreferencesRepository(
         # this $set has no generic-verb equivalent and stays on the repository (see backend-architecture.md).
         updated = cls.collection().find_one_and_update(
             {"account_id": account_id, "active": True},
-            {"$set": {**fields, "updated_at": datetime.now()}},
+            {"$set": {**fields, "updated_at": datetime.now(UTC)}},
             return_document=ReturnDocument.AFTER,
         )
         return cls.from_doc(updated)

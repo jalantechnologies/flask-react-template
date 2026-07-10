@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime, timedelta
 
 from server import app
 
@@ -74,6 +75,50 @@ class TestAccessTokenApi(BaseTestAccessToken):
             assert response.status_code == 404
             assert response.json
             assert response.json.get("code") == AccountErrorCode.NOT_FOUND
+
+    def test_given_phone_number_when_creating_one_time_password_then_created_at_and_updated_at_reflect_creation_time(
+        self,
+    ) -> None:
+        phone_number = {"country_code": "+91", "phone_number": "9999999999"}
+        account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+        )
+
+        before = datetime.now(UTC)
+        one_time_password = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+        )
+        after = datetime.now(UTC)
+
+        assert one_time_password.created_at is not None
+        assert one_time_password.updated_at is not None
+        assert one_time_password.created_at.tzinfo is not None
+        assert one_time_password.updated_at.tzinfo is not None
+        assert one_time_password.created_at.utcoffset() == timedelta(0)
+        assert one_time_password.updated_at.utcoffset() == timedelta(0)
+        assert one_time_password.created_at == one_time_password.updated_at
+        assert before <= one_time_password.created_at <= after
+        assert before <= one_time_password.updated_at <= after
+
+    def test_given_existing_one_time_password_when_verifying_then_updated_at_reflects_verification_time(self) -> None:
+        phone_number = {"country_code": "+91", "phone_number": "9999999999"}
+        account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+        )
+        one_time_password = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+        )
+
+        before = datetime.now(UTC)
+        verified_one_time_password = AuthenticationService.verify_otp(
+            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=one_time_password.otp_code)
+        )
+        after = datetime.now(UTC)
+
+        assert verified_one_time_password.updated_at is not None
+        assert verified_one_time_password.created_at is not None
+        assert before - timedelta(milliseconds=1) <= verified_one_time_password.updated_at <= after
+        assert verified_one_time_password.updated_at > verified_one_time_password.created_at
 
     def test_get_access_token_by_phone_number_and_otp(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}

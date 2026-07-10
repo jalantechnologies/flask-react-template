@@ -11,6 +11,8 @@ class Task:
     account_id: str
     description: str
     title: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

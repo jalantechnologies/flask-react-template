@@ -21,10 +21,12 @@ class PasswordResetTokenModel(BaseModel):
     def from_bson(cls, bson_data: dict) -> "PasswordResetTokenModel":
         return cls(
             account=bson_data.get("account"),
+            created_at=bson_data.get("created_at"),
             expires_at=bson_data.get("expires_at", ""),
             id=bson_data.get("_id"),
             is_used=bson_data.get("is_used", ""),
             token=bson_data.get("token", ""),
+            updated_at=bson_data.get("updated_at"),
         )
 
     @staticmethod

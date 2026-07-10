@@ -9,7 +9,7 @@ from modules.logger.logger import Logger
 OTP_VALIDATION_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["otp_code", "phone_number", "status", "active"],
+        "required": ["active", "created_at", "otp_code", "phone_number", "status", "updated_at"],
         "properties": {
             "active": {"bsonType": "bool", "description": "must be a boolean and is required"},
             "otp_code": {"bsonType": "string", "description": "must be a string and is required"},
@@ -56,11 +56,13 @@ class OTPRepository(ApplicationRepository[OTP, OTPQuery]):
     def from_doc(cls, doc: StoredDocument) -> OTP:
         model = OTPModel.from_bson(doc)
         return OTP(
+            active=model.active,
+            created_at=model.created_at,
             id=str(model.id),
             otp_code=model.otp_code,
             phone_number=model.phone_number,
             status=model.status,
-            active=model.active,
+            updated_at=model.updated_at,
         )
 
     @classmethod

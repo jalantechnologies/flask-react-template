@@ -1,9 +1,20 @@
-from dataclasses import asdict, dataclass
-from typing import Any
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from typing import Any, Optional
 
 
-@dataclass
+@dataclass(kw_only=True)
 class BaseModel:
+    created_at: Optional[datetime] = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: Optional[datetime] = None
+
+    def __post_init__(self) -> None:
+        if self.created_at is not None and self.created_at.tzinfo is None:
+            self.created_at = self.created_at.replace(tzinfo=UTC)
+        if self.updated_at is None:
+            self.updated_at = self.created_at
+        elif self.updated_at.tzinfo is None:
+            self.updated_at = self.updated_at.replace(tzinfo=UTC)
 
     def to_bson(self) -> dict[str, Any]:
         data = asdict(self)

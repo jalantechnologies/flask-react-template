@@ -51,7 +51,14 @@ class TaskRepository(ApplicationRepository[Task, TaskQuery]):
     @classmethod
     def from_doc(cls, doc: StoredDocument) -> Task:
         model = TaskModel.from_bson(doc)
-        return Task(id=str(model.id), account_id=model.account_id, description=model.description, title=model.title)
+        return Task(
+            account_id=model.account_id,
+            created_at=model.created_at,
+            description=model.description,
+            id=str(model.id),
+            title=model.title,
+            updated_at=model.updated_at,
+        )
 
     @classmethod
     def to_doc(cls, entity: Task) -> StoredDocument:

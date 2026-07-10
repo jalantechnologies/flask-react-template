@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from modules.account.account_service import AccountService
 from modules.account.types import (
     CreateAccountByPhoneNumberParams,
@@ -10,6 +12,45 @@ from tests.modules.account.base_test_account import BaseTestAccount
 
 
 class TestNotificationPreferencesService(BaseTestAccount):
+    def test_given_account_details_when_creating_account_then_notification_preferences_timestamps_reflect_creation_time(
+        self,
+    ) -> None:
+        before = datetime.now(UTC)
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="timestamp_username"
+            )
+        )
+        after = datetime.now(UTC)
+
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+
+        assert preferences.created_at is not None
+        assert preferences.updated_at is not None
+        assert preferences.created_at.utcoffset() == timedelta(0)
+        assert preferences.updated_at.utcoffset() == timedelta(0)
+        assert preferences.created_at == preferences.updated_at
+        assert before - timedelta(milliseconds=1) <= preferences.created_at <= after
+        assert before - timedelta(milliseconds=1) <= preferences.updated_at <= after
+
+    def test_given_existing_notification_preferences_when_updating_preferences_then_updated_at_reflects_update_time(
+        self,
+    ) -> None:
+        update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+            email_enabled=False, push_enabled=True, sms_enabled=False
+        )
+
+        before = datetime.now(UTC)
+        preferences = NotificationService.create_or_update_account_notification_preferences(
+            account_id=self.account.id, preferences=update_preferences
+        )
+        after = datetime.now(UTC)
+
+        assert preferences.created_at is not None
+        assert preferences.updated_at is not None
+        assert before - timedelta(milliseconds=1) <= preferences.updated_at <= after
+        assert preferences.updated_at > preferences.created_at
+
     def test_get_notification_preferences_returns_existing_preferences(self) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
