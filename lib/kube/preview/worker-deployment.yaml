@@ -51,7 +51,7 @@ spec:
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
-              pipenv run celery -A celery_app worker --loglevel=info --concurrency=2 --queues=critical,default,low -E
+              pipenv run celery -A celery_app worker --loglevel=info --concurrency=1 --queues=critical,default,low -E
           env:
             - name: APP_ENV
               value: 'preview'
@@ -69,10 +69,10 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 192Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 384Mi
           volumeMounts:
             - name: tmp
               mountPath: /app/tmp
@@ -89,7 +89,7 @@ spec:
                 - -c
                 - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 30
-            periodSeconds: 30
+            periodSeconds: 60
             timeoutSeconds: 10
           readinessProbe:
             exec:
@@ -98,7 +98,7 @@ spec:
                 - -c
                 - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 15
-            periodSeconds: 15
+            periodSeconds: 30
             timeoutSeconds: 10
         # Celery Beat - Runs cron jobs
         - name: celery-beat
@@ -130,11 +130,11 @@ spec:
                 - ALL
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 25m
+              memory: 96Mi
             limits:
-              cpu: 200m
-              memory: 256Mi
+              cpu: 100m
+              memory: 192Mi
           volumeMounts:
             - name: tmp
               mountPath: /app/tmp
@@ -192,11 +192,11 @@ spec:
             - containerPort: 5555
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 25m
+              memory: 96Mi
             limits:
-              cpu: 200m
-              memory: 256Mi
+              cpu: 100m
+              memory: 192Mi
           volumeMounts:
             - name: tmp
               mountPath: /app/tmp
@@ -290,11 +290,11 @@ spec:
             - containerPort: 6379
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 25m
+              memory: 64Mi
             limits:
               cpu: 200m
-              memory: 512Mi
+              memory: 256Mi
           volumeMounts:
             - name: redis-data
               mountPath: /data
