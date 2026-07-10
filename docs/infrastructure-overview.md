@@ -10,44 +10,39 @@ For a full walkthrough, watch the video below.
 
 ## Core Tools
 
-| Tool               | Role                                                                     |
-| ------------------ | ------------------------------------------------------------------------ |
-| **Kubernetes**     | Container orchestration — runs all workloads across environments         |
-| **Docker**         | Packages the application into a single image used for all environments   |
-| **GitHub Actions** | CI/CD pipelines — runs tests, linting, and deploys on every PR and merge |
-| **MongoDB**        | Primary database, shared across environments                             |
-| **Redis**          | Message broker for Celery background workers                             |
-| **Celery**         | Async task queue and scheduler (beat) for background jobs                |
-| **Doppler**        | Secrets and environment variable management                              |
-| **nginx ingress**  | Routes external traffic into the cluster                                 |
-| **cert-manager**   | Automates SSL certificate issuance via Let's Encrypt                     |
+| Tool               | Role                                                                   |
+| ------------------ | ---------------------------------------------------------------------- |
+| **Kubernetes**     | Container orchestration — runs all workloads across environments       |
+| **Docker**         | Packages the application into a single image used for all environments |
+| **GitHub Actions** | CI pipelines — runs tests, linting, and code checks on every PR        |
+| **MongoDB**        | Primary database, shared across environments                           |
+| **Redis**          | Message broker for Celery background workers                           |
+| **Celery**         | Async task queue and scheduler (beat) for background jobs              |
+| **Doppler**        | Secrets and environment variable management                            |
+| **nginx ingress**  | Routes external traffic into the cluster                               |
+| **cert-manager**   | Automates SSL certificate issuance via Let's Encrypt                   |
 
 ---
 
 ## Deployment Environments
 
-The template ships with three environments out of the box:
+The Kubernetes manifests under `lib/kube/` define three environments:
 
-| Environment           | Trigger                        | URL Pattern                               |
-| --------------------- | ------------------------------ | ----------------------------------------- |
-| **Preview (per PR)**  | Every pull request open/update | `<github_sha>.preview.platform.btr.group` |
-| **Permanent Preview** | Every merge to `main`          | `preview.<app>.<domain>`                  |
-| **Production**        | Manual or on merge to `main`   | `<app>.<domain>`                          |
+| Environment           | Purpose                               | URL Pattern                     |
+| --------------------- | ------------------------------------- | ------------------------------- |
+| **Preview (per PR)**  | Isolated environment for testing a PR | `<hash>.preview.<app>.<domain>` |
+| **Permanent Preview** | Always reflects `main`                | `preview.<app>.<domain>`        |
+| **Production**        | Live application                      | `<app>.<domain>`                |
 
-Each preview environment is **fully isolated** — its own WebApp pod, Worker pod, and Redis pod — and is torn down automatically when the PR is closed.
+Each preview environment is **fully isolated** — its own WebApp pod, Worker pod, and Redis pod.
 
-See [Deployment Architecture](deployment.md) for pod structure, worker scaling, and resource allocation details.
+This repository itself is not deployed — deploy workflows are not included. See [Deployment Architecture](deployment.md) for pod structure, worker scaling, and resource allocation details.
 
 ---
 
 ## CI/CD Pipeline
 
-Every pull request triggers two independent workflow groups via **GitHub Actions**:
-
-- **CI** — runs lint, SonarQube analysis, automated code review, and integration tests in parallel
-- **CD** — builds the Docker image and deploys to the PR's preview environment (~3–4 min)
-
-Merging to `main` triggers production and permanent-preview deployments automatically.
+Every pull request triggers **CI** via GitHub Actions — lint, SonarQube analysis, automated code review, and integration tests run in parallel. Deploy workflows are not included in this repository.
 
 See [Deployment Architecture](deployment.md) for the full pipeline diagram and workflow descriptions.
 
