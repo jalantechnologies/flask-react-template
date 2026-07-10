@@ -304,6 +304,10 @@ spec:
             - redis-server
             - --appendonly
             - 'yes'
+            - --maxmemory
+            - '128mb'
+            - --maxmemory-policy
+            - 'allkeys-lru'
           livenessProbe:
             exec:
               command:
