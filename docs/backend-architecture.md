@@ -318,12 +318,16 @@ def create() -> Blueprint:
 Registers URL rules on the Blueprint:
 
 ```python
-blueprint.add_url_rule("/accounts", view_func=AccountView.as_view("accounts"))
-blueprint.add_url_rule("/accounts/<id>", view_func=AccountView.as_view("accounts_by_id"), methods=["GET", "PATCH"])
+blueprint.add_url_rule("/accounts", methods=["POST"], view_func=AccountView.as_view("account_view"))
+blueprint.add_url_rule(
+    "/accounts/<account_id>",
+    methods=["DELETE", "GET", "PATCH"],
+    view_func=AccountView.as_view("account_view_by_id"),
+)
 blueprint.add_url_rule(
     "/accounts/<account_id>/notification-preferences",
-    view_func=AccountView.update_account_notification_preferences,
     methods=["PATCH"],
+    view_func=AccountView.update_account_notification_preferences,
 )
 ```
 

@@ -3,7 +3,8 @@ import json
 from server import app
 
 from modules.account.account_service import AccountService
-from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.account.types import AccountErrorCode, CreateAccountByUsernameAndPasswordParams
+from modules.authentication.types import AccessTokenErrorCode
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -13,30 +14,20 @@ HEADERS = {"Content-Type": "application/json"}
 
 
 class TestNotificationPreferencesApi(BaseTestAccount):
-    def test_get_account_with_notification_preferences_included(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        default_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+    def test_given_existing_preferences_when_getting_account_with_preferences_requested_then_returns_preferences(
+        self,
+    ) -> None:
+        preferences = CreateOrUpdateAccountNotificationPreferencesParams(
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=default_preferences
+            account_id=self.account.id, preferences=preferences
         )
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
             response = client.get(
-                f"{ACCOUNT_URL}/{account.id}?include_notification_preferences=true",
-                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+                f"{ACCOUNT_URL}/{self.account.id}?include_notification_preferences=true",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
             )
 
             assert response.status_code == 200
@@ -45,77 +36,37 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["notification_preferences"]["email_enabled"] is True
             assert response.json["notification_preferences"]["push_enabled"] is True
             assert response.json["notification_preferences"]["sms_enabled"] is True
-            assert "account_id" in response.json["notification_preferences"]
-            assert response.json["notification_preferences"]["account_id"] == account.id
+            assert response.json["notification_preferences"]["account_id"] == self.account.id
 
-    def test_get_account_without_notification_preferences_parameter(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
+    def test_given_account_when_getting_account_without_preferences_parameter_then_omits_preferences(self) -> None:
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
             response = client.get(
-                f"{ACCOUNT_URL}/{account.id}",
-                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+                f"{ACCOUNT_URL}/{self.account.id}",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
             )
 
             assert response.status_code == 200
             assert response.json
             assert "notification_preferences" not in response.json
 
-    def test_get_account_with_notification_preferences_false(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
+    def test_given_account_when_getting_account_with_preferences_disabled_then_omits_preferences(self) -> None:
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
             response = client.get(
-                f"{ACCOUNT_URL}/{account.id}?include_notification_preferences=false",
-                headers={"Authorization": f"Bearer {access_token_response.json.get('token')}"},
+                f"{ACCOUNT_URL}/{self.account.id}?include_notification_preferences=false",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
             )
 
             assert response.status_code == 200
             assert response.json
             assert "notification_preferences" not in response.json
 
-    def test_update_notification_preferences_success(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
+    def test_given_authenticated_account_when_updating_all_preferences_then_returns_updated_preferences(self) -> None:
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps(preferences_data),
             )
 
@@ -124,38 +75,21 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["email_enabled"] is False
             assert response.json["push_enabled"] is True
             assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
+            assert response.json["account_id"] == self.account.id
 
-    def test_update_notification_preferences_partial_update_single_field(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+    def test_given_existing_preferences_when_updating_a_single_field_then_updates_only_that_field(self) -> None:
+        preferences = CreateOrUpdateAccountNotificationPreferencesParams(
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=initial_preferences
+            account_id=self.account.id, preferences=preferences
         )
+        preferences_data = {"email_enabled": False}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps(preferences_data),
             )
 
@@ -164,38 +98,21 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["email_enabled"] is False
             assert response.json["push_enabled"] is True
             assert response.json["sms_enabled"] is True
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
+            assert response.json["account_id"] == self.account.id
 
-    def test_update_notification_preferences_partial_update_multiple_fields(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
-        initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
+    def test_given_existing_preferences_when_updating_multiple_fields_then_updates_only_those_fields(self) -> None:
+        preferences = CreateOrUpdateAccountNotificationPreferencesParams(
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=initial_preferences
+            account_id=self.account.id, preferences=preferences
         )
+        preferences_data = {"email_enabled": False, "sms_enabled": False}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": False, "sms_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps(preferences_data),
             )
 
@@ -204,29 +121,13 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json["email_enabled"] is False
             assert response.json["push_enabled"] is True
             assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
+            assert response.json["account_id"] == self.account.id
 
-    def test_update_notification_preferences_empty_body_returns_error(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
-
+    def test_given_empty_body_when_updating_preferences_then_returns_bad_request(self) -> None:
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps({}),
             )
 
@@ -234,28 +135,13 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json
             assert "At least one preference field" in response.json["message"]
 
-    def test_update_notification_preferences_no_valid_fields_returns_error(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
+    def test_given_no_recognized_fields_when_updating_preferences_then_returns_bad_request(self) -> None:
+        preferences_data = {"another_unrecognized_field": False, "unrecognized_field": True}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"invalid_field": True, "another_invalid": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps(preferences_data),
             )
 
@@ -263,28 +149,13 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json
             assert "At least one preference field" in response.json["message"]
 
-    def test_update_notification_preferences_invalid_boolean_value(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
+    def test_given_non_boolean_field_when_updating_preferences_then_returns_bad_request(self) -> None:
+        preferences_data = {"email_enabled": "not_a_boolean"}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account.username, "password": "password"}),
-            )
-
-            preferences_data = {"email_enabled": "not_a_boolean"}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
                 data=json.dumps(preferences_data),
             )
 
@@ -292,89 +163,147 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json
             assert "email_enabled must be a boolean" in response.json["message"]
 
-    def test_update_notification_preferences_no_auth(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
+    def test_given_null_request_body_when_updating_preferences_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(None),
             )
-        )
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_numeric_request_body_when_updating_preferences_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(123),
+            )
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_string_request_body_when_updating_preferences_then_returns_bad_request(self) -> None:
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps("email_enabled"),
+            )
+
+            assert response.status_code == 400
+            assert response.json
+            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+
+    def test_given_no_authorization_header_when_updating_preferences_then_returns_unauthorized(self) -> None:
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
         with app.test_client() as client:
-            preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
                 headers=HEADERS,
                 data=json.dumps(preferences_data),
             )
 
-            assert response.status_code == 200
+            assert response.status_code == 401
             assert response.json
-            assert response.json["email_enabled"] is False
-            assert response.json["push_enabled"] is True
-            assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
+            assert response.json.get("code") == AccessTokenErrorCode.AUTHORIZATION_HEADER_NOT_FOUND
 
-    def test_update_notification_preferences_invalid_token(self) -> None:
-        account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name", last_name="last_name", password="password", username="username"
-            )
-        )
+    def test_given_invalid_access_token_when_updating_preferences_then_returns_unauthorized(self) -> None:
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
         with app.test_client() as client:
-            preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account.id}/notification-preferences",
-                headers={"Content-Type": "application/json", "Authorization": "Bearer invalid_token"},
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": "Bearer invalid_token"},
                 data=json.dumps(preferences_data),
             )
 
-            assert response.status_code == 200
+            assert response.status_code == 401
             assert response.json
-            assert response.json["email_enabled"] is False
-            assert response.json["push_enabled"] is True
-            assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account.id
+            assert response.json.get("code") == AccessTokenErrorCode.ACCESS_TOKEN_INVALID
 
-    def test_update_notification_preferences_different_account(self) -> None:
-        account1 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name1", last_name="last_name1", password="password1", username="username1"
-            )
-        )
-
-        account2 = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
-                first_name="first_name2", last_name="last_name2", password="password2", username="username2"
-            )
-        )
+    def test_given_authorization_header_without_a_token_when_updating_preferences_then_returns_unauthorized(
+        self,
+    ) -> None:
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 
         with app.test_client() as client:
-            access_token_response = client.post(
-                "http://127.0.0.1:8080/api/access-tokens",
-                headers=HEADERS,
-                data=json.dumps({"username": account1.username, "password": "password1"}),
-            )
-
-            preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
-
             response = client.patch(
-                f"{ACCOUNT_URL}/{account2.id}/notification-preferences",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token_response.json.get('token')}",
-                },
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": "Bearer"},
                 data=json.dumps(preferences_data),
             )
 
-            assert response.status_code == 200
+            assert response.status_code == 401
             assert response.json
-            assert response.json["email_enabled"] is False
-            assert response.json["push_enabled"] is True
-            assert response.json["sms_enabled"] is False
-            assert "account_id" in response.json
-            assert response.json["account_id"] == account2.id
+            assert response.json.get("code") == AccessTokenErrorCode.INVALID_AUTHORIZATION_HEADER
+
+    def test_given_authorization_header_with_extra_whitespace_when_updating_preferences_then_returns_unauthorized(
+        self,
+    ) -> None:
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{self.account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer  {self.access_token.token}"},
+                data=json.dumps(preferences_data),
+            )
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.INVALID_AUTHORIZATION_HEADER
+
+    def test_given_authenticated_account_when_updating_another_users_preferences_then_returns_unauthorized(self) -> None:
+        other_account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"
+            )
+        )
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{other_account.id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(preferences_data),
+            )
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.UNAUTHORIZED_ACCESS
+
+    def test_given_authenticated_account_when_updating_a_nonexistent_account_then_returns_unauthorized(self) -> None:
+        nonexistent_account_id = "661e42ec98423703a299a899"
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{nonexistent_account_id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(preferences_data),
+            )
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.UNAUTHORIZED_ACCESS
+
+    def test_given_authenticated_account_when_updating_a_malformed_account_id_then_returns_unauthorized(self) -> None:
+        malformed_account_id = "invalid_object_id"
+        preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{malformed_account_id}/notification-preferences",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(preferences_data),
+            )
+
+            assert response.status_code == 401
+            assert response.json
+            assert response.json.get("code") == AccessTokenErrorCode.UNAUTHORIZED_ACCESS

@@ -9,25 +9,37 @@ from modules.authentication.errors import (
     InvalidAuthorizationHeaderError,
     UnauthorizedAccessError,
 )
+from modules.authentication.types import AccessTokenPayload
 
 
-def access_auth_middleware(next_func: Callable) -> Callable:
-    @wraps(next_func)
+def verify_request_access_token() -> AccessTokenPayload:
+    authorization_header = request.headers.get("Authorization")
+    if not authorization_header:
+        raise AuthorizationHeaderNotFoundError("Authorization header is missing.")
+
+    authorization_parts = authorization_header.split(" ")
+    if len(authorization_parts) != 2 or authorization_parts[0] != "Bearer" or not authorization_parts[1]:
+        raise InvalidAuthorizationHeaderError("Invalid authorization header.")
+
+    access_token_payload = AuthenticationService.verify_access_token(token=authorization_parts[1])
+    setattr(request, "account_id", access_token_payload.account_id)
+    return access_token_payload
+
+
+def enforce_account_ownership(account_id: str) -> None:
+    access_token_payload = verify_request_access_token()
+    if access_token_payload.account_id != account_id:
+        raise UnauthorizedAccessError("Unauthorized access.")
+
+
+def access_auth_middleware(next_function: Callable) -> Callable:
+    @wraps(next_function)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            raise AuthorizationHeaderNotFoundError("Authorization header is missing.")
+        if "account_id" in kwargs:
+            enforce_account_ownership(kwargs["account_id"])
+        else:
+            verify_request_access_token()
 
-        auth_scheme, auth_token = auth_header.split(" ")
-        if auth_scheme != "Bearer" or not auth_token:
-            raise InvalidAuthorizationHeaderError("Invalid authorization header.")
-
-        auth_payload = AuthenticationService.verify_access_token(token=auth_token)
-
-        if "account_id" in kwargs and auth_payload.account_id != kwargs["account_id"]:
-            raise UnauthorizedAccessError("Unauthorized access.")
-
-        setattr(request, "account_id", auth_payload.account_id)  # Set account_id attribute on request
-        return next_func(*args, **kwargs)
+        return next_function(*args, **kwargs)
 
     return wrapper
