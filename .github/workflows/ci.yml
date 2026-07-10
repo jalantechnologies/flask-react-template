@@ -184,7 +184,7 @@ jobs:
         # Pinned to the v1.0.140 commit, not the floating @v1 tag: @v1 moves between runs, so the
         # action build could change under us and behave differently run to run. A pinned SHA fixes
         # the build and makes upgrades deliberate.
-        uses: anthropics/claude-code-action@4633baf5267540f3f8cb58b684f79901d564c280 # v1.0.160
+        uses: anthropics/claude-code-action@f87768c6d25f92ae6efa7175e223ef77d4cbf97f # v1.0.166
         with:
           # anthropic_api_key (not the OIDC/federation path) so inline-comment classification
           # runs and findings post on the exact changed lines.
@@ -657,7 +657,7 @@ jobs:
       - name: Run Checkov action
         id: checkov
         if: ${{ steps.iac_changes.outputs.FILTERED_FILES != '' }}
-        uses: bridgecrewio/checkov-action@4a1afa9897f7afe297a3762c926e1e800361464f
+        uses: bridgecrewio/checkov-action@a7683e7b72a04503521247973281ec8142e1ac1f
         continue-on-error: true
         with:
           directory: iac_changed_files/
@@ -788,7 +788,7 @@ jobs:
 
       - name: Add coverage PR comment
         continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88
         with:
           recreate: true
           path: code-coverage-results.md
