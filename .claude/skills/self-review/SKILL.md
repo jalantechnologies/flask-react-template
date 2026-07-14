@@ -68,6 +68,36 @@ For every open review comment:
 - Reply with a concise explanation of the resolution (or the rationale if no change is required).
 - Resolve the conversation.
 
+**Whether a thread is resolved is a GraphQL-only fact.** The REST payload behind `gh pr view --json comments`
+and `gh api .../pulls/<pr>/comments` carries no resolution state, so it cannot tell an open thread from a
+settled one — read threads through `reviewThreads` instead, or the "no unresolved comments" stop condition
+is not something you can actually check:
+
+```bash
+gh api graphql -f query='
+  query($owner:String!, $repo:String!, $pr:Int!) {
+    repository(owner:$owner, name:$repo) { pullRequest(number:$pr) {
+      reviewThreads(first:100) { nodes {
+        id isResolved isOutdated
+        comments(first:10) { nodes { path line body author { login } } }
+      } }
+    } }
+  }' -f owner=<owner> -f repo=<repo> -F pr=<pr> \
+  --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
+```
+
+Reply on a thread with `gh api .../pulls/<pr>/comments/<comment-id>/replies -f body=...`, then resolve it by
+its thread id (`PRRT_…`, from the query above):
+
+```bash
+gh api graphql -f query='
+  mutation($threadId:ID!) {
+    resolveReviewThread(input:{threadId:$threadId}) { thread { isResolved } }
+  }' -f threadId=<thread-id>
+```
+
+Resolve only threads you have actually addressed — never blanket-resolve to clear the stop condition.
+
 ### 5. Improve the code the PR touches
 
 Refactor to keep the codebase maintainable, but **only within the PR's existing footprint** — the lines and
@@ -103,6 +133,10 @@ all as blocking, whether or not branch protection currently enforces them. GitHu
 - **`ci / codereview`** — the AI code-review gate (`anthropics/claude-code-action`, reading `AGENTS.md`).
   It fails when it posts inline findings, so address/resolve every finding it raises.
 - **`ci / scan`** — Trivy (filesystem / IaC / Docker) and Checkov security scans; fails on HIGH/CRITICAL.
+
+One more check reports outside `ci.yml`: **`label`** (`.github/workflows/pr-labeler.yml`) derives the type and
+semver labels from the PR title and fails when the title is not Conventional Commits. It is the one check no
+commit can fix — repair it with `gh pr edit <pr> --title '<type>: <subject>'`, not by pushing code.
 
 Reproduce failures locally before pushing with `npm run lint`, `npm run fmt:check`, and `make run-test`
 (or `npm run test`).
