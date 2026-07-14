@@ -126,6 +126,8 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 - Ensure MongoDB indexes cover every `find`, `find_one`, aggregation `$match`, or `sort` pattern.
 - Declare indexes in the repository layer (`internal/store/*_repository.py`).
+- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/application/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods — those belong on the module's reader or writer.
+- No MongoDB syntax crosses a repository's public surface. Callers pass a typed query object, never a `{"field": ...}` filter, an `ObjectId`, or a `$set`; every verb returns a domain dataclass, never a raw BSON document.
 
 #### 10. API Design
 
@@ -134,8 +136,9 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 #### 11. Business Logic Placement
 
-- Keep business rules in the service layer.
-- Avoid embedding domain logic inside Flask views or CLI scripts—delegate to services.
+- Keep business rules in the module, not in an execution layer. Avoid embedding domain logic inside Flask views, routers, workers, or CLI scripts—delegate to the module's service.
+- Service methods are thin: they call the right reader or writer. Logic needed only internally (password hashing, OTP generation, validation) lives in the module's `internal/*_writer.py` or `*_util.py`, not in the service itself.
+- Build a typed object from a request body with a `from_dict()`-style factory on the DTO (`types.py`), not with parsing code in the view.
 
 #### 12. Background Jobs
 
@@ -167,6 +170,8 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - Never declare a `children` field in a Props interface or type. Type the component as `React.FC<PropsWithChildren<XProps>>`; for non-JSX content (a markdown string) use a named prop like `content`. Lint-enforced.
 - A component's public props must not accept a `className` escape hatch. className and Tailwind classes live inside components only.
 - Shared components and layout primitives live under `src/apps/frontend/components`, never in page folders.
+- Every component declares an optional `testId?: string` and renders it as `data-testid` on its root element, icons and decorative primitives included. Tests address the UI through stable `data-testid` hooks, never brittle text or class selectors.
+- Every component is accessible. An icon or shape that carries meaning exposes an accessible name (`ariaLabel` / `label`) and drops `aria-hidden`; a purely decorative glyph stays `aria-hidden`. An interactive element is a real semantic element (`button`, `a`, `input`) or carries the correct `role` plus keyboard handling. A form control associates its label and its error (`htmlFor` / `aria-describedby` / `aria-invalid`).
 
 #### 16. Data Fetching & State
 
@@ -194,6 +199,8 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - Add or update pytest coverage for new backend endpoints or services (`tests/modules/...`).
 - Place integration tests alongside module directories under `tests/modules/<module>/`.
 - Target ≥60% coverage (80% preferred). Pytest runs with coverage reporting via `npm run test` or `make run-test`.
+- Write end-to-end, BDD-style tests that assert real system behaviour, not implementation details.
+- Mock third-party APIs only. Never mock internal services, domain objects, database access, or business logic — tests run against real MongoDB collections (see [Testing](docs/testing.md)).
 
 ## Commit and PR Guidelines
 
@@ -298,4 +305,5 @@ Choose your type carefully — it determines the label and semver impact.
 - [Configuration Guide](docs/configuration.md)
 - [MongoDB Security](docs/mongodb-security.md)
 - [Testing Guide](docs/testing.md)
+- [Skills](docs/skills.md)
 - [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md)

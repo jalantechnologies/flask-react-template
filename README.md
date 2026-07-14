@@ -24,6 +24,7 @@ The template is not deployed to hosted environments. Run it locally per [Getting
 - [Scripts](docs/scripts.md)
 - [Code Formatting](docs/code-formatting.md)
 - [Workers](docs/workers.md)
+- [Skills](docs/skills.md)
 
 - [CI/CD](docs/deployment.md)
 - [DNS Setup](docs/dns-setup.md)
