@@ -86,15 +86,28 @@ gh api graphql -f query='
   --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
 ```
 
-Reply on a thread with `gh api .../pulls/<pr>/comments/<comment-id>/replies -f body=...`, then resolve it by
-its thread id (`PRRT_…`, from the query above):
+Reply and resolve with the thread id (`PRRT_…`) the query above already returned — both mutations take it, so
+stay on GraphQL for the whole step:
 
 ```bash
+# reply
+gh api graphql -f query='
+  mutation($threadId:ID!, $body:String!) {
+    addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$threadId, body:$body}) {
+      comment { url }
+    }
+  }' -f threadId=<thread-id> -f body='<reply>'
+
+# then resolve
 gh api graphql -f query='
   mutation($threadId:ID!) {
     resolveReviewThread(input:{threadId:$threadId}) { thread { isResolved } }
   }' -f threadId=<thread-id>
 ```
+
+Do not reach for the REST replies endpoint (`.../pulls/<pr>/comments/<comment-id>/replies`) — it is keyed by
+a comment's numeric `databaseId`, which is neither the thread id nor anything `reviewThreads` returns by
+default, so mixing the two APIs is how this step fails.
 
 Resolve only threads you have actually addressed — never blanket-resolve to clear the stop condition.
 
