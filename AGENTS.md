@@ -84,7 +84,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 - A comment is a signal that the code is not clear enough. When tempted to explain a block, extract it
   into a named helper or introduce a named constant instead.
 - The only permitted exceptions are mechanical directives the toolchain requires (`type: ignore`,
-  `pylint: disable`, `noqa`) and a single irreducible line where the *why* cannot be encoded in the
+  `pylint: disable`, `noqa`) and a single irreducible line where the _why_ cannot be encoded in the
   code itself (a non-obvious external constraint or workaround). Never narrate what the code states.
 - Docstrings follow the same rule: none, except where a public abstract base method's contract cannot
   be conveyed by its signature.
