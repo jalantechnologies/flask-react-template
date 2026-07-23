@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Union
+from typing import Any
 
 from flask import Blueprint, send_from_directory
 from werkzeug.wrappers import Response
@@ -27,7 +27,7 @@ def serve_config() -> Response:
 
 @react_blueprint.route("/", defaults={"path": ""})
 @react_blueprint.route("/<path:path>")
-def serve_react_home(path: Union[os.PathLike[str], str]) -> Response:
+def serve_react_home(path: os.PathLike[str] | str) -> Response:
     assert react_blueprint.static_folder, MISSING_STATIC_ROOT_ERR_MESSAGE
     return send_from_directory(react_blueprint.static_folder, "index.html")
 
@@ -50,7 +50,7 @@ img_assets_blueprint = Blueprint("image_assets", __name__, static_folder=react_i
 
 
 @img_assets_blueprint.route("/assets/img/<path:filename>")
-def serve_static_images(filename: Union[os.PathLike[str], str]) -> Response:
+def serve_static_images(filename: os.PathLike[str] | str) -> Response:
     assert img_assets_blueprint.static_folder, MISSING_STATIC_ROOT_ERR_MESSAGE
     return send_from_directory(img_assets_blueprint.static_folder, filename)
 
