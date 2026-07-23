@@ -50,3 +50,20 @@ class TestRepositoryTimestamps(unittest.TestCase):
 
         assert updated is not None
         assert updated.updated_at == pinned
+
+    def test_empty_update_leaves_updated_at_untouched(self) -> None:
+        task = TaskService.create_task(
+            params=CreateTaskParams(account_id=self.account.id, title="Title", description="Body")
+        )
+        stored = TaskRepository.find(task.id)
+        assert stored is not None
+
+        unchanged = TaskRepository.update(task.id, {})
+
+        assert unchanged is not None
+        assert unchanged.updated_at == stored.updated_at
+
+    def test_empty_update_on_missing_entity_returns_none(self) -> None:
+        missing = TaskRepository.update("507f1f77bcf86cd799439011", {})
+
+        assert missing is None

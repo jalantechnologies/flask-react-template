@@ -219,6 +219,8 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
+        if not fields:
+            return cls._count({"_id": object_id}) > 0
         patch = {"updated_at": datetime.now(UTC), **fields}
         result = cls.collection().update_one({"_id": object_id}, {"$set": patch})
         return bool(result.matched_count > 0)
