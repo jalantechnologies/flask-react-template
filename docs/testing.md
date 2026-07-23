@@ -34,6 +34,21 @@ This command bootstraps the testing environment and runs `pytest` under the hood
 
 ---
 
+## Coverage Gates
+
+CI enforces a minimum coverage floor on both halves of the stack. The `test-backend` and `test-frontend` jobs each run `CodeCoverageSummary` with `fail_below_min: true`, and a follow-up step fails the build when the report step reports a shortfall. Coverage is no longer just a number in a PR comment; a drop below the floor turns the check red and blocks the merge.
+
+Current floors:
+
+| Suite    | Floor | Note                                                                          |
+| -------- | ----- | ----------------------------------------------------------------------------- |
+| Backend  | 80%   | Sits a little under the real ~86%.                                            |
+| Frontend | 35%   | Sits a little under the real ~38%; will be raised as frontend coverage grows. |
+
+Each floor sits a little below where the suite actually runs today. That gap is deliberate: it lets ordinary churn move the real number up and down without going red, while still catching a genuine regression the moment coverage falls past the floor. The frontend suite currently covers only the seed components, so its floor starts low and moves up as more of the app is tested. Moving a floor is a deliberate change to the gate, not something to work around by adding assertion-free tests to pad the number.
+
+---
+
 ## Conventions & Guidelines
 
 | Topic              | Convention                                                                                          |

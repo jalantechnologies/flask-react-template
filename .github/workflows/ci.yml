@@ -831,6 +831,7 @@ jobs:
         continue-on-error: true
 
       - name: Coverage report
+        id: backend_coverage
         continue-on-error: true
         uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95
         with:
@@ -842,7 +843,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both
-          thresholds: '60 80'
+          thresholds: '80 90'
 
       - name: Add coverage PR comment
         continue-on-error: true
@@ -850,6 +851,12 @@ jobs:
         with:
           recreate: true
           path: code-coverage-results.md
+
+      - name: Enforce backend coverage threshold
+        if: steps.backend_coverage.outcome == 'failure'
+        run: |
+          echo "::error::Backend line coverage fell below the enforced floor (see the coverage report above). Add tests to bring it back over the threshold."
+          exit 1
 
   test-frontend:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -884,3 +891,37 @@ jobs:
           path: output/frontend-coverage/lcov.info
           retention-days: 1
         continue-on-error: true
+
+      - name: Coverage report
+        id: frontend_coverage
+        continue-on-error: true
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95
+        with:
+          filename: output/frontend-coverage/cobertura-coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '35 55'
+
+      - name: Title the frontend coverage comment
+        if: always() && hashFiles('code-coverage-results.md') != ''
+        run: |
+          printf '## Frontend\n\n%s' "$(cat code-coverage-results.md)" > frontend-coverage-results.md
+
+      - name: Add frontend coverage PR comment
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88
+        with:
+          header: frontend-coverage
+          recreate: true
+          path: frontend-coverage-results.md
+
+      - name: Enforce frontend coverage threshold
+        if: steps.frontend_coverage.outcome == 'failure'
+        run: |
+          echo "::error::Frontend line coverage fell below the enforced floor (see the coverage report above). Add tests to bring it back over the threshold."
+          exit 1
