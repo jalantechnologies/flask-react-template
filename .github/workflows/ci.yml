@@ -477,7 +477,7 @@ jobs:
 
   sonarqube:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    needs: test
+    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -779,7 +779,7 @@ jobs:
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
 
-  test:
+  test-backend:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -850,3 +850,37 @@ jobs:
         with:
           recreate: true
           path: code-coverage-results.md
+
+  test-frontend:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: '22.13.1'
+
+      - name: Cache npm downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.npm-test-frontend
+          key: npm-test-frontend-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-test-frontend-${{ runner.os }}-
+
+      - name: Install Node dependencies
+        run: npm ci --cache ~/.npm-test-frontend
+
+      - name: Run frontend tests
+        run: npm run test:frontend -- --coverage
+
+      - name: Upload frontend coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-coverage-report
+          path: output/frontend-coverage/lcov.info
+          retention-days: 1
+        continue-on-error: true

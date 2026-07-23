@@ -145,13 +145,15 @@ graph TB
     CI --> Lint[ci/lint<br/>~30s]
     CI --> Sonar[ci/sonarqube<br/>~60s]
     CI --> Review[ci/review<br/>~90s]
-    CI --> Test[ci/test<br/>~1 min]
+    CI --> TestBackend[ci/test-backend<br/>~1 min]
+    CI --> TestFrontend[ci/test-frontend<br/>~1 min]
 
     Label --> End([Complete])
     Lint --> End
     Sonar --> End
     Review --> End
-    Test --> End
+    TestBackend --> End
+    TestFrontend --> End
 
     style CI fill:#e1f5ff
     style Label fill:#f0e6ff
@@ -170,7 +172,8 @@ All jobs run in parallel and independently:
 1. **ci/lint** (~30s) - ESLint and Markdown checks for code style and potential errors
 2. **ci/sonarqube** (~60s) - Code quality metrics, complexity, and code smells
 3. **ci/review** (~90s) - Automated code review (placeholder for future AI-powered review)
-4. **ci/test** (~1 min) - Integration tests using docker-compose
+4. **ci/test-backend** (~1 min) - Backend integration tests using docker-compose
+5. **ci/test-frontend** (~1 min) - Frontend Vitest suite on Node, no backing services
 
 **Note:** All CI checks are advisory and run independently. Code merged to `main` should have passing CI checks from the PR.
 
