@@ -1,3 +1,6 @@
+import importlib
+import pkgutil
+
 from celery import Celery
 from celery.signals import beat_init, worker_ready
 
@@ -23,6 +26,9 @@ app.conf.update(
     # Use RedBeat scheduler to store schedule in Redis (compatible with read-only filesystem)
     beat_scheduler="redbeat.RedBeatScheduler",
     redbeat_redis_url=ConfigService[str].get_value("celery.broker_url"),
+    # A single beat process runs per deployment, so RedBeat's distributed lock only serves to
+    # block the new process for up to 25 minutes behind a restarted process's stale lock.
+    redbeat_lock_key=None,
     # Define task queues with priority levels
     # Workers will process higher priority queues first
     task_queues={
@@ -35,12 +41,16 @@ app.conf.update(
     task_default_routing_key="default",
 )
 
-# Beat schedule for cron jobs
-# Workers can also register themselves here
-app.conf.beat_schedule = {}
+# Import every worker module so each Worker subclass self-registers its Celery task at
+# class-definition time. Celery's autodiscover_tasks looks for a `tasks.py` per package,
+# which the Worker convention does not use, so it would leave the worker process with an
+# empty task list that rejects every dispatched message.
+import modules.application.workers as _workers_pkg
 
-# Auto-discover tasks from all modules
-app.autodiscover_tasks(["modules.application.workers"])
+for _importer, _modname, _ispkg in pkgutil.walk_packages(
+    path=_workers_pkg.__path__, prefix=_workers_pkg.__name__ + "."
+):
+    importlib.import_module(_modname)
 
 
 def initialize_workers() -> None:
@@ -48,8 +58,6 @@ def initialize_workers() -> None:
     Initialize worker registry to register all Worker subclasses and their cron schedules.
     This must run in worker/beat processes, not just the Flask web server.
     """
-    import importlib
-
     worker_registry_module = importlib.import_module("modules.application.worker_registry")
     worker_registry_module.WorkerRegistry.initialize()
 

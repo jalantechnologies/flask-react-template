@@ -29,6 +29,11 @@ class Worker(ABC):
     retry_backoff_max: ClassVar[int] = 600  # 10 minutes
     cron_schedule: ClassVar[Optional[str]] = None  # Cron expression (e.g., '*/10 * * * *')
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if not getattr(cls, "__abstractmethods__", None):
+            cls._get_celery_task()
+
     @classmethod
     @abstractmethod
     def perform(cls, *args: Any, **kwargs: Any) -> Any:
@@ -80,6 +85,7 @@ class Worker(ABC):
             return
 
         from celery.schedules import crontab
+        from redbeat import RedBeatSchedulerEntry
 
         # Parse cron expression (format: minute hour day month day_of_week)
         parts = cls.cron_schedule.split()
@@ -95,13 +101,18 @@ class Worker(ABC):
         task = cls._get_celery_task()
         celery_app = _get_celery_app()
 
-        celery_app.conf.beat_schedule[schedule_name] = {
-            "task": task.name,
-            "schedule": crontab(
+        # The beat scheduler is RedBeatScheduler, which reads its schedule exclusively from Redis
+        # and ignores conf.beat_schedule. Persist the entry to Redis so beat actually dispatches it.
+        entry = RedBeatSchedulerEntry(
+            name=schedule_name,
+            task=task.name,
+            schedule=crontab(
                 minute=minute,
                 hour=hour,
                 day_of_month=day_of_month,
                 month_of_year=month_of_year,
                 day_of_week=day_of_week,
             ),
-        }
+            app=celery_app,
+        )
+        entry.save()
