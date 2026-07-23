@@ -10,7 +10,7 @@ from modules.authentication.errors import (
     UnauthorizedAccessError,
 )
 from modules.authentication.types import AccessTokenPayload
-from modules.core.application_service import ApplicationService
+from modules.core.audit_service import AuditService
 from modules.core.common.types import ActorType, AuditActor, AuditOutcome, ResourceAction
 
 # The account boundary is the only resource the middleware can name for every route without importing
@@ -35,7 +35,7 @@ def verify_request_access_token() -> AccessTokenPayload:
 def enforce_account_ownership(account_id: str) -> None:
     access_token_payload = verify_request_access_token()
     if access_token_payload.account_id != account_id:
-        ApplicationService.record_audit(
+        AuditService.record_audit(
             actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=access_token_payload.account_id),
             resource_type=DENIED_RESOURCE_TYPE,
             resource_id=account_id,

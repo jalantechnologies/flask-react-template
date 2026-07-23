@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from flask import Flask
 from flask.testing import FlaskClient
 
-from modules.core.internal.security_headers import SecurityHeaders
+from modules.core.security_headers import SecurityHeaders
 
 STRICT_CSP = (
     "default-src 'self'; "
@@ -26,7 +26,7 @@ def _build_client(*, behind_proxy: bool = False, config_overrides: Optional[Dict
             return behind_proxy
         return overrides.get(key, default)
 
-    with patch("modules.core.internal.security_headers.ConfigService") as mock_config_service:
+    with patch("modules.core.security_headers.ConfigService") as mock_config_service:
         mock_config_service.__getitem__.return_value.get_value.side_effect = _fake_get_value
         app = Flask(__name__)
 
@@ -104,7 +104,7 @@ class TestGivenProxyFlagIsReadOnce:
                     return False
                 return default
 
-            with patch("modules.core.internal.security_headers.ConfigService") as mock_config_service:
+            with patch("modules.core.security_headers.ConfigService") as mock_config_service:
                 mock_config_service.__getitem__.return_value.get_value.side_effect = _fake_get_value
                 app = Flask(__name__)
 
