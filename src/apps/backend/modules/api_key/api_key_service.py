@@ -12,7 +12,7 @@ from modules.api_key.types import (
     ListApiKeysParams,
     RevokeApiKeyParams,
 )
-from modules.application.common.types import AuditActor
+from modules.application.common.types import ActorType, AuditActor
 
 # Internal keys are not owned by a human; their account_id is a sentinel that identifies the app itself.
 INTERNAL_ACCOUNT_ID = "system"
@@ -47,10 +47,14 @@ class ApiKeyService:
     def authenticate_api_key(*, params: AuthenticateApiKeyParams, actor: AuditActor) -> Optional[ApiKey]:
         # Resolve a plaintext key to its owning account for the auth middleware. Returns None when the
         # key is unknown or not active; raises ApiKeyExpiredError when a matched key has passed expiry.
+        # The lookup runs under the caller's pre-auth actor (identity not yet proven). Once the key
+        # matches, the credential has proven its owner, so the last_used_at / expiry writes are audited
+        # as that account — the same rule login OTP verify and access-token creation follow.
         api_key = ApiKeyReader.get_active_by_plaintext(plaintext=params.plaintext_key, actor=actor)
         if api_key is None:
             return None
-        return ApiKeyWriter.validate_expiry_and_touch(api_key=api_key, actor=actor)
+        owner_actor = AuditActor(actor_type=ActorType.ACCOUNT, actor_id=api_key.account_id)
+        return ApiKeyWriter.validate_expiry_and_touch(api_key=api_key, actor=owner_actor)
 
     @staticmethod
     def expire_expired_keys(*, actor: AuditActor) -> list[ApiKey]:

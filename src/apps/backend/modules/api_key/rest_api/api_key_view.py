@@ -20,7 +20,7 @@ def _serialize_api_key(api_key: ApiKey, *, plaintext_key: Optional[str] = None) 
         "status": api_key.status.value,
         "created_at": api_key.created_at.isoformat() if api_key.created_at else None,
         "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
-        "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
+        "last_used_at": (api_key.last_used_at.isoformat() if api_key.last_used_at else None),
     }
     if plaintext_key is not None:
         payload["key"] = plaintext_key
@@ -34,7 +34,7 @@ class ApiKeyView(MethodView):
         result = ApiKeyService.create_api_key(
             params=params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
         )
-        return jsonify(_serialize_api_key(result.api_key, plaintext_key=result.plaintext_key)), 201
+        return (jsonify(_serialize_api_key(result.api_key, plaintext_key=result.plaintext_key)), 201)
 
     @access_auth_middleware
     def get(self, account_id: str) -> ResponseReturnValue:
@@ -42,7 +42,7 @@ class ApiKeyView(MethodView):
             params=ListApiKeysParams(account_id=account_id),
             actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id),
         )
-        return jsonify({"items": [_serialize_api_key(api_key) for api_key in api_keys]}), 200
+        return (jsonify({"items": [_serialize_api_key(api_key) for api_key in api_keys]}), 200)
 
     @access_auth_middleware
     def delete(self, account_id: str, api_key_id: str) -> ResponseReturnValue:

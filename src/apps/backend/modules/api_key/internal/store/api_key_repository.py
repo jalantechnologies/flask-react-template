@@ -34,7 +34,13 @@ class ApiKeyRepository(ApplicationRepository[ApiKey, ApiKeyQuery]):
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index("key_hash", unique=True)
-        collection.create_index([("account_id", 1), ("kind", 1), ("status", 1)], name="account_kind_status_index")
+        # Covers the Settings list: filter by account_id + kind, then serve the created_at/_id sort order
+        # from the index so no in-memory sort is needed within an account's keys.
+        collection.create_index(
+            [("account_id", 1), ("kind", 1), ("created_at", -1), ("_id", -1)], name="account_kind_created_index"
+        )
+        # Covers the daily expiry scan: filter active keys by an expires_at range.
+        collection.create_index([("status", 1), ("expires_at", 1)], name="status_expires_index")
 
         add_validation_command = {
             "collMod": cls.collection_name,

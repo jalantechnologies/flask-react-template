@@ -3,6 +3,8 @@ from datetime import UTC, datetime, timedelta
 from modules.api_key.internal.api_key_util import ApiKeyUtil
 from modules.api_key.internal.store.api_key_repository import ApiKeyRepository
 from modules.api_key.types import ApiKey, ApiKeyErrorCode, ApiKeyKind, ApiKeyQuery, ApiKeyStatus
+from modules.application.common.types import ActorType, ResourceAction
+from modules.application.internal.audit.store.audit_log_repository import AuditLogRepository
 from modules.authentication.types import AccessTokenErrorCode
 from tests.conftest import TEST_ACTOR
 from tests.modules.api_key.base_test_api_key import ApiKeyRequestBody, BaseTestApiKey
@@ -208,6 +210,47 @@ class TestApiKeyApi(BaseTestApiKey):
         stored = ApiKeyRepository.query_one(self._id_query(seeded.api_key.id), actor=TEST_ACTOR)
         assert stored is not None
         assert stored.last_used_at is not None
+
+    def test_key_use_is_audited_against_the_owning_account(self) -> None:
+        account, _ = self.create_account_and_get_token()
+        seeded = self.seed_api_key(account.id)
+        AuditLogRepository.collection().delete_many({})
+
+        self.call_with_bearer(f"http://127.0.0.1:8080/api/accounts/{account.id}", seeded.plaintext_key)
+
+        # The last_used_at write is an UPDATE on the key attributed to the owning account, not anonymous.
+        updates = [
+            doc
+            for doc in AuditLogRepository.collection().find({})
+            if doc["resource_type"] == "api_keys"
+            and doc["resource_id"] == seeded.api_key.id
+            and doc["action"] == ResourceAction.UPDATE.value
+        ]
+        assert len(updates) >= 1
+        assert all(doc["actor_type"] == ActorType.ACCOUNT.value for doc in updates)
+        assert all(doc["actor_id"] == account.id for doc in updates)
+
+    def test_key_expiry_is_audited_against_the_owning_account(self) -> None:
+        account, _ = self.create_account_and_get_token()
+        seeded = self.seed_api_key(account.id)
+        ApiKeyRepository.collection().update_one(
+            {"key_hash": self._hash(seeded.plaintext_key)},
+            {"$set": {"expires_at": datetime.now(tz=UTC) - timedelta(days=1)}},
+        )
+        AuditLogRepository.collection().delete_many({})
+
+        self.call_with_bearer(f"http://127.0.0.1:8080/api/accounts/{account.id}", seeded.plaintext_key)
+
+        expiry_updates = [
+            doc
+            for doc in AuditLogRepository.collection().find({})
+            if doc["resource_type"] == "api_keys"
+            and doc["resource_id"] == seeded.api_key.id
+            and doc["action"] == ResourceAction.UPDATE.value
+        ]
+        assert len(expiry_updates) >= 1
+        assert all(doc["actor_type"] == ActorType.ACCOUNT.value for doc in expiry_updates)
+        assert all(doc["actor_id"] == account.id for doc in expiry_updates)
 
     # HELPERS
 
