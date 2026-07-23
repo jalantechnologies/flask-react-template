@@ -13,6 +13,7 @@ The template is not deployed to hosted environments. Run it locally per [Getting
 ## Documentation Directory
 
 - [Getting Started](docs/getting-started.md)
+- [Running on Windows (WSL)](docs/windows-wsl.md)
 - [Backend Architecture](docs/backend-architecture.md)
 - [Frontend Architecture](docs/frontend-architecture.md)
 - [Frontend Design System](docs/frontend-design-system.md)

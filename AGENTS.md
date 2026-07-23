@@ -298,6 +298,7 @@ Choose your type carefully — it determines the label and semver impact.
 
 ## Additional Resources
 
+- [Running on Windows (WSL)](docs/windows-wsl.md)
 - [Backend Architecture](docs/backend-architecture.md)
 - [Frontend Architecture](docs/frontend-architecture.md)
 - [Configuration Guide](docs/configuration.md)

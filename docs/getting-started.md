@@ -49,7 +49,7 @@ npm run serve
 - **MongoDB:** `mongodb://localhost:27017`
 - **Redis:** `localhost:6379`
 - Disable the auto‑opening browser tab by exporting `WEBPACK_DEV_DISABLE_OPEN=true`.
-- **Windows users:** run inside WSL or Git Bash for best results.
+- **Windows users:** native Windows is not supported. Run inside WSL2 — see [Running on Windows (WSL)](windows-wsl.md).
 - **Note:** `npm run serve` starts frontend, backend, Celery worker, Celery beat scheduler, and Flower dashboard.
 
 ---
