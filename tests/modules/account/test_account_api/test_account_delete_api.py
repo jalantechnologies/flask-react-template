@@ -1,7 +1,7 @@
 from server import app
 
 from modules.account.account_service import AccountService
-from modules.account.errors import AccountWithUsernameNotFoundError
+from modules.account.errors import AccountInvalidCredentialsError
 from modules.account.types import AccountErrorCode, AccountSearchParams, CreateAccountByUsernameAndPasswordParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import AccessTokenErrorCode
@@ -68,14 +68,16 @@ class TestAccountDeleteApi(BaseTestAccount):
             assert get_response.json
             assert get_response.json.get("code") == AccountErrorCode.NOT_FOUND
 
-    def test_given_deleted_account_when_authenticating_then_raises_account_not_found(self) -> None:
+    def test_given_deleted_account_when_authenticating_then_raises_invalid_credentials(self) -> None:
         with app.test_client() as client:
             delete_response = client.delete(
                 f"{ACCOUNT_URL}/{self.account.id}", headers={"Authorization": f"Bearer {self.access_token.token}"}
             )
             assert delete_response.status_code == 204
 
-        with self.assertRaises(AccountWithUsernameNotFoundError):
+        # A deleted account authenticates as the same generic failure as a wrong password, so its prior
+        # existence cannot be inferred from the login response.
+        with self.assertRaises(AccountInvalidCredentialsError):
             AccountService.get_account_by_username_and_password(
                 params=AccountSearchParams(password="password", username=self.account.username), actor=TEST_ACTOR
             )

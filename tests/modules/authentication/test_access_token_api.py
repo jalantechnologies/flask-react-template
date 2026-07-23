@@ -1,10 +1,12 @@
 import json
 from datetime import UTC, datetime, timedelta
+from unittest import mock
 
 from server import app
 
 from modules.account.account_service import AccountService
 from modules.account.internal.account_writer import AccountWriter
+from modules.account.internal.password_hash import PasswordHash
 from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
@@ -64,9 +66,9 @@ class TestAccessTokenApi(BaseTestAccessToken):
             response = client.post(
                 API_URL, headers=HEADERS, data=json.dumps({"username": "invalid_username", "password": "password"})
             )
-            assert response.status_code == 404
+            assert response.status_code == 401
             assert response.json
-            assert response.json.get("code") == AccountErrorCode.NOT_FOUND
+            assert response.json.get("code") == AccountErrorCode.INVALID_CREDENTIALS
 
     def test_get_access_token_with_invalid_username_and_password(self) -> None:
         with app.test_client() as client:
@@ -75,9 +77,45 @@ class TestAccessTokenApi(BaseTestAccessToken):
                 headers=HEADERS,
                 data=json.dumps({"username": "invalid_username", "password": "invalid_password"}),
             )
-            assert response.status_code == 404
+            assert response.status_code == 401
             assert response.json
-            assert response.json.get("code") == AccountErrorCode.NOT_FOUND
+            assert response.json.get("code") == AccountErrorCode.INVALID_CREDENTIALS
+
+    def test_unknown_username_and_wrong_password_return_byte_identical_responses(self) -> None:
+        # A distinct status, code, or message for "no such account" versus "wrong password" would confirm
+        # whether a username is registered. Both must be indistinguishable so an attacker cannot enumerate
+        # accounts from the login response.
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            unknown_username = client.post(
+                API_URL, headers=HEADERS, data=json.dumps({"username": "nobody", "password": "password"})
+            )
+            wrong_password = client.post(
+                API_URL, headers=HEADERS, data=json.dumps({"username": account.username, "password": "wrong_password"})
+            )
+
+        assert unknown_username.status_code == 401
+        assert wrong_password.status_code == 401
+        assert unknown_username.data == wrong_password.data
+
+    def test_unknown_username_still_verifies_a_password_hash(self) -> None:
+        # The not-found path must run a full bcrypt verify against the absent-account placeholder, so a
+        # missing username costs the same time as a wrong password. Asserted via the code path rather than
+        # wall-clock: a login for an unknown username still calls PasswordHash.matches exactly once.
+        with mock.patch.object(PasswordHash, "matches", return_value=False) as mock_matches:
+            with app.test_client() as client:
+                response = client.post(
+                    API_URL, headers=HEADERS, data=json.dumps({"username": "nobody", "password": "password"})
+                )
+
+        assert response.status_code == 401
+        mock_matches.assert_called_once()
 
     def test_given_phone_number_when_creating_one_time_password_then_created_at_and_updated_at_reflect_creation_time(
         self,

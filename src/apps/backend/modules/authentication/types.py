@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
-from modules.account.types import PhoneNumber
+from modules.account.types import AccountErrorCode, PhoneNumber
 from modules.application.common.types import QueryParams
+from modules.application.errors import AppError
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,15 @@ class AccessTokenPayload:
 class EmailBasedAuthAccessTokenRequestParams:
     password: str
     username: str
+
+    @classmethod
+    def from_dict(cls, request_data: dict[str, Any]) -> "EmailBasedAuthAccessTokenRequestParams":
+        for field in ["password", "username"]:
+            if not isinstance(request_data.get(field), str):
+                raise AppError(
+                    code=AccountErrorCode.BAD_REQUEST, http_status_code=400, message=f"{field} must be a string"
+                )
+        return cls(password=request_data["password"], username=request_data["username"])
 
 
 @dataclass(frozen=True)
