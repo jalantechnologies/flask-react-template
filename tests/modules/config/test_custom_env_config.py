@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Callable
 
 from modules.config.internals.config_files.custom_env_config_file import CustomEnvConfig
 from modules.config.internals.config_utils import ConfigUtil
@@ -10,7 +10,7 @@ from tests.modules.config.base_test_config import BaseTestConfig
 class TestCustomEnvConfig(BaseTestConfig):
     UNSET_ENV_VAR = "FLASK_REACT_TEMPLATE_TEST_UNSET_ENV_VAR"
 
-    def setup_method(self, method: Any) -> None:
+    def setup_method(self, method: Callable[..., object]) -> None:
         super().setup_method(method)
         os.environ.pop(self.UNSET_ENV_VAR, None)
 

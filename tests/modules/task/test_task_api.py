@@ -1,17 +1,15 @@
-from typing import Any
-
 from server import app
 
 from modules.authentication.types import AccessTokenErrorCode
 from modules.task.types import TaskErrorCode
-from tests.modules.task.base_test_task import BaseTestTask
+from tests.modules.task.base_test_task import BaseTestTask, TaskRequestBody
 
 
 class TestTaskApi(BaseTestTask):
 
     def test_create_task_success(self) -> None:
         account, token = self.create_account_and_get_token()
-        task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
+        task_data: TaskRequestBody = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
@@ -26,7 +24,7 @@ class TestTaskApi(BaseTestTask):
 
     def test_create_task_missing_title(self) -> None:
         account, token = self.create_account_and_get_token()
-        task_data = {"description": self.DEFAULT_TASK_DESCRIPTION}
+        task_data: TaskRequestBody = {"description": self.DEFAULT_TASK_DESCRIPTION}
 
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
@@ -36,7 +34,7 @@ class TestTaskApi(BaseTestTask):
 
     def test_create_task_missing_description(self) -> None:
         account, token = self.create_account_and_get_token()
-        task_data = {"title": self.DEFAULT_TASK_TITLE}
+        task_data: TaskRequestBody = {"title": self.DEFAULT_TASK_TITLE}
 
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
@@ -46,7 +44,7 @@ class TestTaskApi(BaseTestTask):
 
     def test_create_task_empty_body(self) -> None:
         account, token = self.create_account_and_get_token()
-        task_data: dict[str, Any] = {}
+        task_data: TaskRequestBody = {}
 
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
@@ -56,7 +54,7 @@ class TestTaskApi(BaseTestTask):
 
     def test_create_task_no_auth(self) -> None:
         account, _ = self.create_account_and_get_token()
-        task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
+        task_data: TaskRequestBody = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
         response = self.make_unauthenticated_request("POST", account.id, data=task_data)
 
@@ -65,7 +63,7 @@ class TestTaskApi(BaseTestTask):
     def test_create_task_invalid_token(self) -> None:
         account, _ = self.create_account_and_get_token()
         invalid_token = "invalid_token"
-        task_data = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
+        task_data: TaskRequestBody = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
         response = self.make_authenticated_request("POST", account.id, invalid_token, data=task_data)
 
@@ -153,7 +151,7 @@ class TestTaskApi(BaseTestTask):
         created_task = self.create_test_task(
             account_id=account.id, title="Original Title", description="Original Description"
         )
-        update_data = {"title": "Updated Title", "description": "Updated Description"}
+        update_data: TaskRequestBody = {"title": "Updated Title", "description": "Updated Description"}
 
         response = self.make_authenticated_request(
             "PATCH", account.id, token, task_id=created_task.id, data=update_data
@@ -172,7 +170,7 @@ class TestTaskApi(BaseTestTask):
     def test_update_task_missing_title(self) -> None:
         account, token = self.create_account_and_get_token()
         created_task = self.create_test_task(account_id=account.id)
-        update_data = {"description": "Updated Description"}
+        update_data: TaskRequestBody = {"description": "Updated Description"}
 
         response = self.make_authenticated_request(
             "PATCH", account.id, token, task_id=created_task.id, data=update_data
@@ -185,7 +183,7 @@ class TestTaskApi(BaseTestTask):
     def test_update_task_missing_description(self) -> None:
         account, token = self.create_account_and_get_token()
         created_task = self.create_test_task(account_id=account.id)
-        update_data = {"title": "Updated Title"}
+        update_data: TaskRequestBody = {"title": "Updated Title"}
 
         response = self.make_authenticated_request(
             "PATCH", account.id, token, task_id=created_task.id, data=update_data
@@ -198,7 +196,7 @@ class TestTaskApi(BaseTestTask):
     def test_update_task_not_found(self) -> None:
         account, token = self.create_account_and_get_token()
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        update_data = {"title": "Updated Title", "description": "Updated Description"}
+        update_data: TaskRequestBody = {"title": "Updated Title", "description": "Updated Description"}
 
         response = self.make_authenticated_request(
             "PATCH", account.id, token, task_id=non_existent_task_id, data=update_data
@@ -209,7 +207,7 @@ class TestTaskApi(BaseTestTask):
     def test_update_task_no_auth(self) -> None:
         account, _ = self.create_account_and_get_token()
         fake_task_id = "507f1f77bcf86cd799439011"
-        update_data = {"title": "Updated Title", "description": "Updated Description"}
+        update_data: TaskRequestBody = {"title": "Updated Title", "description": "Updated Description"}
 
         response = self.make_unauthenticated_request("PATCH", account.id, task_id=fake_task_id, data=update_data)
 
@@ -249,7 +247,7 @@ class TestTaskApi(BaseTestTask):
         account1, token1 = self.create_account_and_get_token("user1@example.com", "password1")
         account2, token2 = self.create_account_and_get_token("user2@example.com", "password2")
 
-        task_data = {"title": "Account 1 Task", "description": "This belongs to account 1"}
+        task_data: TaskRequestBody = {"title": "Account 1 Task", "description": "This belongs to account 1"}
         create_response = self.make_authenticated_request("POST", account1.id, token1, data=task_data)
         assert create_response.json is not None
         account1_task_id = create_response.json.get("id")

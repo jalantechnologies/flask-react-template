@@ -1,7 +1,7 @@
 import os
 import unittest
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator, Optional
+from typing import Callable, Iterator, Optional
 
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import AccessTokenSigningKeyInsecureError
@@ -33,10 +33,10 @@ def _environment(app_env: str, signing_key: Optional[str]) -> Iterator[None]:
 
 
 class TestAccessTokenSigningKey(unittest.TestCase):
-    def setup_method(self, method: Callable[..., Any]) -> None:
+    def setup_method(self, method: Callable[..., object]) -> None:
         print(f"Executing:: {method.__name__}")
 
-    def teardown_method(self, method: Callable[..., Any]) -> None:
+    def teardown_method(self, method: Callable[..., object]) -> None:
         print(f"Executed:: {method.__name__}")
 
     def test_deployed_env_without_signing_key_refuses_boot(self) -> None:

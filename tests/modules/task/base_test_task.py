@@ -1,6 +1,6 @@
 import json
 import unittest
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple, TypedDict
 
 from server import app
 from werkzeug.test import TestResponse
@@ -12,6 +12,29 @@ from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from modules.task.task_service import TaskService
 from modules.task.types import CreateTaskParams, Task
+
+
+class TaskRequestBody(TypedDict, total=False):
+    title: str
+    description: str
+
+
+class TaskResponse(TypedDict, total=False):
+    id: str
+    account_id: str
+    title: str
+    description: str
+
+
+class PaginationParamsResponse(TypedDict):
+    page: int
+    size: int
+
+
+class PaginatedTasksResponse(TypedDict):
+    items: list[TaskResponse]
+    pagination_params: PaginationParamsResponse
+    total_count: int
 
 
 class BaseTestTask(unittest.TestCase):
@@ -108,7 +131,7 @@ class BaseTestTask(unittest.TestCase):
         account_id: str,
         token: str,
         task_id: Optional[str] = None,
-        data: Optional[dict[str, Any]] = None,
+        data: Optional[TaskRequestBody] = None,
         query_params: str = "",
     ) -> TestResponse:
         if task_id:
@@ -133,7 +156,7 @@ class BaseTestTask(unittest.TestCase):
         raise ValueError(f"Unsupported method: {method}")
 
     def make_unauthenticated_request(
-        self, method: str, account_id: str, task_id: Optional[str] = None, data: Optional[dict[str, Any]] = None
+        self, method: str, account_id: str, task_id: Optional[str] = None, data: Optional[TaskRequestBody] = None
     ) -> TestResponse:
         if task_id:
             url = self.get_task_by_id_api_url(account_id, task_id)
@@ -157,7 +180,7 @@ class BaseTestTask(unittest.TestCase):
         target_account_id: str,
         auth_token: str,
         task_id: Optional[str] = None,
-        data: Optional[dict[str, Any]] = None,
+        data: Optional[TaskRequestBody] = None,
     ) -> TestResponse:
         if task_id:
             url = self.get_task_by_id_api_url(target_account_id, task_id)
@@ -180,7 +203,14 @@ class BaseTestTask(unittest.TestCase):
     # ASSERTION HELPER METHODS
 
     def assert_task_response(
-        self, response_json: dict[str, Any], expected_task: Optional[Task] = None, **expected_fields: Any
+        self,
+        response_json: TaskResponse,
+        expected_task: Optional[Task] = None,
+        *,
+        id: Optional[str] = None,
+        account_id: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
     ) -> None:
         assert response_json.get("id") is not None
         assert response_json.get("account_id") is not None
@@ -191,8 +221,14 @@ class BaseTestTask(unittest.TestCase):
             assert response_json.get("title") == expected_task.title
             assert response_json.get("description") == expected_task.description
 
-        for field, value in expected_fields.items():
-            assert response_json.get(field) == value
+        if id is not None:
+            assert response_json.get("id") == id
+        if account_id is not None:
+            assert response_json.get("account_id") == account_id
+        if title is not None:
+            assert response_json.get("title") == title
+        if description is not None:
+            assert response_json.get("description") == description
 
     def assert_error_response(self, response: TestResponse, expected_status: int, expected_error_code: str) -> None:
         assert response.status_code == expected_status, f"Expected status {expected_status}, got {response.status_code}"
@@ -203,7 +239,7 @@ class BaseTestTask(unittest.TestCase):
 
     def assert_pagination_response(
         self,
-        response_json: dict[str, Any],
+        response_json: PaginatedTasksResponse,
         expected_items_count: int,
         expected_total_count: Optional[int] = None,
         expected_page: Optional[int] = None,
