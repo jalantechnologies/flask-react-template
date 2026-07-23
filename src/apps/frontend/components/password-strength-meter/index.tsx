@@ -68,11 +68,10 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             key={segment}
             aria-hidden="true"
             data-testid={testId ? `${testId}-segment-${index}` : undefined}
+            data-filled={index < score}
             className={clsx(
               'h-1 flex-1 rounded-full transition-colors',
-              index < score
-                ? FILLED_SEGMENT_CLASS[variant]
-                : 'bg-line-strong',
+              index < score ? FILLED_SEGMENT_CLASS[variant] : 'bg-line-strong',
             )}
           />
         ))}

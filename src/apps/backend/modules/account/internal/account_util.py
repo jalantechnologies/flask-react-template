@@ -4,6 +4,8 @@ from zxcvbn import zxcvbn
 from modules.account.errors import AccountPasswordTooWeakError
 from modules.config.config_service import ConfigService
 
+MAX_PASSWORD_LENGTH = 128
+
 
 class AccountUtil:
     @staticmethod
@@ -16,6 +18,9 @@ class AccountUtil:
 
     @staticmethod
     def validate_password_strength(*, password: str) -> None:
+        if len(password) > MAX_PASSWORD_LENGTH:
+            raise AccountPasswordTooWeakError(f"Password must be at most {MAX_PASSWORD_LENGTH} characters.")
+
         minimum_score = ConfigService[int].get_value(key="public.password.min_zxcvbn_score")
         result = zxcvbn(password)
         if result["score"] >= minimum_score:

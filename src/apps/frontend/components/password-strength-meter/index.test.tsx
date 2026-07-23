@@ -7,7 +7,7 @@ import PasswordStrengthMeter from 'frontend/components/password-strength-meter';
 const filledSegments = () =>
   [0, 1, 2, 3]
     .map((index) => screen.getByTestId(`meter-segment-${index}`))
-    .filter((segment) => !segment.className.includes('bg-line-strong')).length;
+    .filter((segment) => segment.getAttribute('data-filled') === 'true').length;
 
 describe('PasswordStrengthMeter', () => {
   it('renders nothing until a password is typed', () => {

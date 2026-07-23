@@ -51,6 +51,25 @@ class TestPasswordStrength(BaseTestAccount):
             assert exc.code == AccountErrorCode.PASSWORD_TOO_WEAK
 
     @patch("modules.account.internal.account_util.ConfigService.get_value", return_value=3)
+    def test_create_account_rejects_an_oversized_password_before_scoring(self, mock_min_score) -> None:
+        oversized_password = "a" * 129
+
+        try:
+            AccountService.create_account_by_username_and_password(
+                params=CreateAccountByUsernameAndPasswordParams(
+                    first_name="first_name",
+                    last_name="last_name",
+                    password=oversized_password,
+                    username="oversized@example.com",
+                )
+            )
+            assert False, "Expected AccountPasswordTooWeakError to be raised"
+        except AccountPasswordTooWeakError as exc:
+            assert exc.code == AccountErrorCode.PASSWORD_TOO_WEAK
+            assert "at most 128 characters" in exc.message
+            mock_min_score.assert_not_called()
+
+    @patch("modules.account.internal.account_util.ConfigService.get_value", return_value=3)
     def test_update_password_accepts_a_strong_password(self, _mock_min_score) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
