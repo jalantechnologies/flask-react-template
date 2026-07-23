@@ -1,5 +1,5 @@
 import bcrypt
-from zxcvbn import zxcvbn  # type: ignore[import-untyped]
+from zxcvbn import zxcvbn
 
 from modules.account.errors import AccountPasswordTooWeakError
 from modules.config.config_service import ConfigService
