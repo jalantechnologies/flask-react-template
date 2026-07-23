@@ -910,7 +910,7 @@ jobs:
       - name: Title the frontend coverage comment
         if: always() && hashFiles('code-coverage-results.md') != ''
         run: |
-          printf '## Frontend\n\n%s' "$(cat code-coverage-results.md)" > code-coverage-results.md
+          printf '## Frontend\n\n%s' "$(cat code-coverage-results.md)" > frontend-coverage-results.md
 
       - name: Add frontend coverage PR comment
         continue-on-error: true
@@ -918,7 +918,7 @@ jobs:
         with:
           header: frontend-coverage
           recreate: true
-          path: code-coverage-results.md
+          path: frontend-coverage-results.md
 
       - name: Enforce frontend coverage threshold
         if: steps.frontend_coverage.outcome == 'failure'
