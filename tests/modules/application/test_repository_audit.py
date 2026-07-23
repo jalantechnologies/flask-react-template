@@ -58,6 +58,19 @@ class TestRepositoryAudit(BaseTestAudit):
         assert len(delete_entries) == 1
         assert delete_entries[0]["resource_id"] == created.id
 
+    def test_update_by_query_with_delete_action_records_a_delete_entry(self) -> None:
+        created = AccountRepository.create(self._make_account(), actor=self.ACTOR)
+
+        AccountRepository.update_by_query(
+            AccountQuery(id=created.id), {"active": False}, actor=self.ACTOR, action=ResourceAction.DELETE
+        )
+
+        delete_entries = [d for d in self.audit_docs() if d["action"] == ResourceAction.DELETE.value]
+        assert len(delete_entries) == 1
+        assert delete_entries[0]["resource_id"] == created.id
+        assert delete_entries[0]["changes"]["active"]["old"] is True
+        assert delete_entries[0]["changes"]["active"]["new"] is False
+
     def test_worker_actor_is_recorded_when_passed_a_worker_actor(self) -> None:
         worker_actor = AuditActor(actor_type=ActorType.WORKER, actor_id="a_worker")
         AccountRepository.create(self._make_account(), actor=worker_actor)

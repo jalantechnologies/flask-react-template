@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from modules.application.common.types import AuditActor
+from modules.application.common.types import AuditActor, ResourceAction
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.types import CreateTaskParams, DeleteTaskParams, Task, TaskDeletionResult, TaskQuery, UpdateTaskParams
@@ -30,6 +30,7 @@ class TaskWriter:
             TaskQuery(id=params.task_id, account_id=params.account_id),
             {"active": False, "updated_at": deletion_time},
             actor=actor,
+            action=ResourceAction.DELETE,
         )
         if deleted is None:
             raise TaskNotFoundError(task_id=params.task_id)

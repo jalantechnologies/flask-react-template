@@ -16,7 +16,7 @@ from modules.account.types import (
     PhoneNumber,
     UpdateAccountProfileParams,
 )
-from modules.application.common.types import AuditActor
+from modules.application.common.types import AuditActor, ResourceAction
 from modules.application.repository import FieldUpdates
 from modules.authentication.errors import OTPRequestFailedError
 
@@ -81,7 +81,10 @@ class AccountWriter:
     def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:
         deletion_time = datetime.now(UTC)
         deleted = AccountRepository.update_by_query(
-            AccountQuery(id=account_id), {"active": False, "updated_at": deletion_time}, actor=actor
+            AccountQuery(id=account_id),
+            {"active": False, "updated_at": deletion_time},
+            actor=actor,
+            action=ResourceAction.DELETE,
         )
         if deleted is None:
             raise AccountWithIdNotFoundError(account_id)
