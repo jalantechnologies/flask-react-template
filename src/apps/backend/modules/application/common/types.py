@@ -79,6 +79,11 @@ class ActorType(str, enum.Enum):
     ANONYMOUS = "anonymous"
 
 
+class AuditOutcome(str, enum.Enum):
+    SUCCESS = "success"
+    DENIED = "denied"
+
+
 @dataclass(frozen=True)
 class AuditActor:
     actor_type: ActorType
@@ -103,6 +108,7 @@ class AuditRecord:
     action: ResourceAction
     timestamp: datetime
     changes: FieldChanges = field(default_factory=dict)
+    outcome: AuditOutcome = AuditOutcome.SUCCESS
 
 
 @dataclass(frozen=True)
@@ -115,5 +121,6 @@ class AuditLogEntry:
     action: ResourceAction
     timestamp: datetime
     changes: FieldChanges = field(default_factory=dict)
+    outcome: AuditOutcome = AuditOutcome.SUCCESS
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

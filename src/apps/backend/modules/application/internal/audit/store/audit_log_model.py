@@ -5,7 +5,7 @@ from typing import Any, Optional
 from bson import ObjectId
 
 from modules.application.base_model import BaseModel
-from modules.application.common.types import ActorType, FieldChange, FieldChanges, ResourceAction
+from modules.application.common.types import ActorType, AuditOutcome, FieldChange, FieldChanges, ResourceAction
 
 
 @dataclass
@@ -18,6 +18,7 @@ class AuditLogModel(BaseModel):
     action: ResourceAction
     timestamp: datetime
     changes: FieldChanges = field(default_factory=dict)
+    outcome: AuditOutcome = AuditOutcome.SUCCESS
     id: Optional[ObjectId | str] = None
 
     @classmethod
@@ -34,6 +35,7 @@ class AuditLogModel(BaseModel):
             changes={
                 name: FieldChange(old=value.get("old"), new=value.get("new")) for name, value in raw_changes.items()
             },
+            outcome=AuditOutcome(bson_data.get("outcome", AuditOutcome.SUCCESS.value)),
             created_at=bson_data.get("created_at"),
             updated_at=bson_data.get("updated_at"),
         )

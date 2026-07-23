@@ -5,6 +5,7 @@ from modules.application.common.types import (
     REDACTED,
     AuditActor,
     AuditLogEntry,
+    AuditOutcome,
     AuditRecord,
     FieldChange,
     FieldChanges,
@@ -25,9 +26,15 @@ class AuditWriter:
         resource_id: str,
         action: ResourceAction,
         changes: Optional[FieldChanges] = None,
+        outcome: AuditOutcome = AuditOutcome.SUCCESS,
     ) -> None:
         record = AuditWriter._build_record(
-            actor=actor, resource_type=resource_type, resource_id=resource_id, action=action, changes=changes
+            actor=actor,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            action=action,
+            changes=changes,
+            outcome=outcome,
         )
         AuditWriter._persist(record)
 
@@ -51,6 +58,7 @@ class AuditWriter:
         resource_id: str,
         action: ResourceAction,
         changes: Optional[FieldChanges] = None,
+        outcome: AuditOutcome = AuditOutcome.SUCCESS,
     ) -> AuditRecord:
         return AuditRecord(
             resource_type=resource_type,
@@ -60,6 +68,7 @@ class AuditWriter:
             action=action,
             timestamp=datetime.now(tz=timezone.utc),
             changes=AuditWriter._redact(changes or {}),
+            outcome=outcome,
         )
 
     @staticmethod
@@ -73,6 +82,7 @@ class AuditWriter:
             action=record.action,
             timestamp=record.timestamp,
             changes=record.changes,
+            outcome=record.outcome,
         )
 
     @staticmethod

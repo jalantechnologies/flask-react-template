@@ -30,6 +30,7 @@ AUDIT_LOG_VALIDATION_SCHEMA = {
             "action": {"bsonType": "string"},
             "timestamp": {"bsonType": "date"},
             "changes": {"bsonType": "object"},
+            "outcome": {"bsonType": "string"},
             "created_at": {"bsonType": "date"},
             "updated_at": {"bsonType": "date"},
         },
@@ -97,11 +98,13 @@ class AuditLogRepository:
             action=entity.action,
             timestamp=entity.timestamp,
             changes=entity.changes,
+            outcome=entity.outcome,
         ).to_bson()
         doc.pop("id", None)
         doc.pop("_id", None)
         doc["action"] = entity.action.value
         doc["actor_type"] = entity.actor_type.value
+        doc["outcome"] = entity.outcome.value
         doc["changes"] = {name: {"old": change.old, "new": change.new} for name, change in entity.changes.items()}
         return doc
 
@@ -117,6 +120,7 @@ class AuditLogRepository:
             action=model.action,
             timestamp=model.timestamp,
             changes=model.changes,
+            outcome=model.outcome,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
