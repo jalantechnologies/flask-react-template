@@ -82,9 +82,6 @@ class TestAccessTokenApi(BaseTestAccessToken):
             assert response.json.get("code") == AccountErrorCode.INVALID_CREDENTIALS
 
     def test_unknown_username_and_wrong_password_return_byte_identical_responses(self) -> None:
-        # A distinct status, code, or message for "no such account" versus "wrong password" would confirm
-        # whether a username is registered. Both must be indistinguishable so an attacker cannot enumerate
-        # accounts from the login response.
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
@@ -105,9 +102,6 @@ class TestAccessTokenApi(BaseTestAccessToken):
         assert unknown_username.data == wrong_password.data
 
     def test_unknown_username_still_verifies_a_password_hash(self) -> None:
-        # The not-found path must run a full bcrypt verify against the absent-account placeholder, so a
-        # missing username costs the same time as a wrong password. Asserted via the code path rather than
-        # wall-clock: a login for an unknown username still calls PasswordHash.matches exactly once.
         with mock.patch.object(PasswordHash, "matches", return_value=False) as mock_matches:
             with app.test_client() as client:
                 response = client.post(

@@ -75,8 +75,6 @@ class TestAccountDeleteApi(BaseTestAccount):
             )
             assert delete_response.status_code == 204
 
-        # A deleted account authenticates as the same generic failure as a wrong password, so its prior
-        # existence cannot be inferred from the login response.
         with self.assertRaises(AccountInvalidCredentialsError):
             AccountService.get_account_by_username_and_password(
                 params=AccountSearchParams(password="password", username=self.account.username), actor=TEST_ACTOR

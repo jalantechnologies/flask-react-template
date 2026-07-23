@@ -265,8 +265,6 @@ class TestAccountService(BaseTestAccount):
                 ACCESS_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": "username", "password": "password"})
             )
 
-        # A deleted account logs in as the same generic failure as a wrong password, so a caller cannot
-        # tell a deleted account from a never-existent one or from a wrong password.
         assert login_response.status_code == 401
         assert login_response.json is not None
         assert login_response.json.get("code") == AccountErrorCode.INVALID_CREDENTIALS

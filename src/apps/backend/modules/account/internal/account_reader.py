@@ -34,12 +34,12 @@ class AccountReader:
     def get_account_by_username_and_password(*, params: AccountSearchParams, actor: AuditActor) -> Account:
         account = AccountRepository.query_one(AccountQuery(username=params.username), actor=actor)
 
-        # Every login verifies a password, even when no account matched the username. A missing account
-        # verifies against PasswordHash.absent(), which never matches but costs the same bcrypt work as a
-        # real one, so an attacker cannot learn which usernames exist from the response time. Unknown
-        # username and wrong password then raise the same error, so neither can be told from the response.
-        stored_password = PasswordHash.of(account.hashed_password) if account is not None else PasswordHash.absent()
-        password_matches = stored_password.matches(params.password)
+        password_to_verify = (
+            PasswordHash.of(account.hashed_password)
+            if account is not None
+            else PasswordHash.for_absent_account_with_equalized_timing()
+        )
+        password_matches = password_to_verify.matches(params.password)
 
         if not password_matches or account is None:
             raise AccountInvalidCredentialsError()

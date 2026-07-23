@@ -37,9 +37,6 @@ class AccountWithPhoneNumberNotFoundError(AccountNotFoundError):
 
 class AccountInvalidCredentialsError(AppError):
     def __init__(self) -> None:
-        # One generic answer for every failed username/password login: unknown username and wrong
-        # password are indistinguishable here on purpose. Telling them apart would confirm whether a
-        # username is registered and let an attacker enumerate accounts.
         super().__init__(
             code=AccountErrorCode.INVALID_CREDENTIALS,
             http_status_code=401,
