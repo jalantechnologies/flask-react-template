@@ -1,6 +1,6 @@
 from flask import Flask
 
-from modules.application.internals.security_headers import SecurityHeaders
+from modules.application.internal.security_headers import SecurityHeaders
 
 
 class ApplicationService:

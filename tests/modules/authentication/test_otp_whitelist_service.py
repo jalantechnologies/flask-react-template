@@ -1,8 +1,8 @@
 import os
 
-from modules.authentication.internals.otp.otp_util import OTPUtil
+from modules.authentication.internal.otp.otp_util import OTPUtil
 from modules.config.config_service import ConfigService
-from modules.config.internals.config_manager import ConfigManager
+from modules.config.internal.config_manager import ConfigManager
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 

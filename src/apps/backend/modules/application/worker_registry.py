@@ -17,7 +17,7 @@ class WorkerRegistry:
         for _importer, modname, ispkg in pkgutil.walk_packages(
             path=modules_pkg.__path__, prefix=modules_pkg.__name__ + ".", onerror=lambda _: None
         ):
-            if ispkg and modname.endswith(".internals.workers"):
+            if ispkg and modname.endswith(".internal.workers"):
                 packages.append(modname)
         return packages
 

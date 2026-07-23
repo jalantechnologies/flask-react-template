@@ -2,7 +2,7 @@ import unittest
 from typing import Callable
 
 from modules.account.internal.store.account_repository import AccountRepository
-from modules.authentication.internals.password_reset_token.store.password_reset_token_repository import (
+from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
     PasswordResetTokenRepository,
 )
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer

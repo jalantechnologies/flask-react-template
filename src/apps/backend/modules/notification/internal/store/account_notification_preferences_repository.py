@@ -6,7 +6,7 @@ from pymongo.errors import OperationFailure
 
 from modules.application.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
-from modules.notification.internals.store.account_notification_preferences_model import (
+from modules.notification.internal.store.account_notification_preferences_model import (
     AccountNotificationPreferencesModel,
 )
 from modules.notification.types import AccountNotificationPreferences, AccountNotificationPreferencesQuery

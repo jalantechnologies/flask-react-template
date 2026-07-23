@@ -1,8 +1,8 @@
 import os
 from typing import cast
 
-from modules.config.internals.config_utils import ConfigUtil
-from modules.config.internals.types import Config
+from modules.config.internal.config_utils import ConfigUtil
+from modules.config.internal.types import Config
 
 
 class AppEnvConfig:

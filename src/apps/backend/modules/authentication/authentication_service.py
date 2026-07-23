@@ -2,12 +2,12 @@ import urllib.parse
 from dataclasses import asdict
 
 from modules.account.types import Account, PhoneNumber
-from modules.authentication.internals.access_token.access_token_util import AccessTokenUtil
-from modules.authentication.internals.otp.otp_util import OTPUtil
-from modules.authentication.internals.otp.otp_writer import OTPWriter
-from modules.authentication.internals.password_reset_token.password_reset_token_reader import PasswordResetTokenReader
-from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
-from modules.authentication.internals.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
+from modules.authentication.internal.access_token.access_token_util import AccessTokenUtil
+from modules.authentication.internal.otp.otp_util import OTPUtil
+from modules.authentication.internal.otp.otp_writer import OTPWriter
+from modules.authentication.internal.password_reset_token.password_reset_token_reader import PasswordResetTokenReader
+from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
+from modules.authentication.internal.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
 from modules.authentication.types import (
     OTP,
     AccessToken,

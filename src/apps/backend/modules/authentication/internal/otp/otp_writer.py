@@ -2,8 +2,8 @@ from dataclasses import asdict
 
 from modules.account.types import PhoneNumber
 from modules.authentication.errors import OTPExpiredError, OTPIncorrectError
-from modules.authentication.internals.otp.otp_util import OTPUtil
-from modules.authentication.internals.otp.store.otp_repository import OTPRepository
+from modules.authentication.internal.otp.otp_util import OTPUtil
+from modules.authentication.internal.otp.store.otp_repository import OTPRepository
 from modules.authentication.types import OTP, CreateOTPParams, OTPQuery, OTPStatus, VerifyOTPParams
 
 

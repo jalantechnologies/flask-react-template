@@ -6,8 +6,8 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 from modules.application.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
-from modules.authentication.internals.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
-from modules.authentication.internals.password_reset_token.store.password_reset_token_model import (
+from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
+from modules.authentication.internal.password_reset_token.store.password_reset_token_model import (
     PasswordResetTokenModel,
 )
 from modules.authentication.types import PasswordResetToken, PasswordResetTokenQuery
