@@ -20,6 +20,8 @@ sms:
   enabled: false
 
 public:
+  password:
+    min_zxcvbn_score: 0
   default_otp:
     enabled: false
     code: '1234'

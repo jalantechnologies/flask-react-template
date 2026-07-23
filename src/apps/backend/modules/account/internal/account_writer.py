@@ -27,6 +27,7 @@ class AccountWriter:
         *, params: CreateAccountByUsernameAndPasswordParams, actor: AuditActor
     ) -> Account:
         AccountReader.check_username_not_exist(params=params, actor=actor)
+        AccountUtil.validate_password_strength(password=params.password)
         account = Account(
             id="",
             first_name=params.first_name,
@@ -54,6 +55,7 @@ class AccountWriter:
 
     @staticmethod
     def update_password_by_account_id(account_id: str, password: str, *, actor: AuditActor) -> Account:
+        AccountUtil.validate_password_strength(password=password)
         hashed_password = AccountUtil.hash_password(password=password)
         updated_account = AccountRepository.update(account_id, {"hashed_password": hashed_password}, actor=actor)
         if updated_account is None:

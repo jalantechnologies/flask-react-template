@@ -33,6 +33,8 @@ accounts:
 
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
+  password:
+    min_zxcvbn_score: 3
   datadog:
     enabled: 'false'
 

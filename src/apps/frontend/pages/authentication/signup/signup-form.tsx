@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   Button,
   Inline,
+  PasswordStrengthMeter,
   Spacing,
   Stack,
   Status,
@@ -15,6 +16,7 @@ import routes from 'frontend/constants/routes';
 import useSignupForm from 'frontend/pages/authentication/signup/signup-form.hook';
 import { AsyncError } from 'frontend/types';
 import { ButtonType } from 'frontend/types/button';
+import { getPasswordMinScore } from 'frontend/utils/password-strength';
 
 type SignupFields =
   | 'firstName'
@@ -78,19 +80,28 @@ const SignupForm: React.FC<SignupFormProps> = ({ onError, onSuccess }) => {
           error={getFormikError('username')}
           placeholder="Enter your email"
         />
+        <Stack gap={Spacing.Xs}>
+          <TextField
+            testId="password"
+            label="Password"
+            type="password"
+            name="password"
+            autoComplete="new-password"
+            disabled={isSignupLoading}
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={getFormikError('password')}
+            placeholder="Enter your password"
+          />
+          <PasswordStrengthMeter
+            testId="password-strength"
+            password={formik.values.password}
+            minScore={getPasswordMinScore()}
+          />
+        </Stack>
         <TextField
-          label="Password"
-          type="password"
-          name="password"
-          autoComplete="new-password"
-          disabled={isSignupLoading}
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={getFormikError('password')}
-          placeholder="Enter your password"
-        />
-        <TextField
+          testId="retypePassword"
           label="Re-type Password"
           type="password"
           name="retypePassword"

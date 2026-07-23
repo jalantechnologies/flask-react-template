@@ -11,6 +11,8 @@ const constant = {
   PASSWORD_MATCH_VALIDATION_ERROR:
     "The confirmed password doesn't match the chosen password.",
   PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_STRENGTH_VALIDATION_ERROR:
+    'Please choose a stronger password. Add length and avoid common words or predictable patterns.',
   PASSWORD_VALIDATION_ERROR: 'Please enter at least 8 characters long password',
   PHONE_NUMBER_BASED_AUTHENTICATION: 'PHONE',
   PHONE_VALIDATION_ERROR: 'Please enter a valid phone number',
