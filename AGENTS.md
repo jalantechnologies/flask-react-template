@@ -79,8 +79,15 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 #### 1. Code Documentation
 
-- **DO** write comments that capture intent, invariants, or non-obvious design decisions.
-- **DON'T** narrate what the code already states.
+- **DON'T** write comments. Code must be self-explanatory: express intent through clear names, small
+  single-purpose functions, and well-named intermediate variables and helpers instead of prose.
+- A comment is a signal that the code is not clear enough. When tempted to explain a block, extract it
+  into a named helper or introduce a named constant instead.
+- The only permitted exceptions are mechanical directives the toolchain requires (`type: ignore`,
+  `pylint: disable`, `noqa`) and a single irreducible line where the *why* cannot be encoded in the
+  code itself (a non-obvious external constraint or workaround). Never narrate what the code states.
+- Docstrings follow the same rule: none, except where a public abstract base method's contract cannot
+  be conveyed by its signature.
 
 #### 2. Naming Conventions
 
