@@ -7,6 +7,7 @@ from pymongo.errors import OperationFailure
 
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_model import (
+    PasswordResetTokenDocument,
     PasswordResetTokenModel,
 )
 from modules.authentication.types import PasswordResetToken, PasswordResetTokenQuery
@@ -88,7 +89,7 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
         # write the generic create()/to_doc() (which round-trips the string-typed domain entity) cannot
         # express, so it stays on the repository (see docs/backend-architecture.md).
         creation_time = datetime.now(UTC)
-        doc: StoredDocument = {
+        doc: PasswordResetTokenDocument = {
             "account": ObjectId(account_id),
             "created_at": creation_time,
             "expires_at": expires_at,
@@ -96,6 +97,6 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
             "token": token_hash,
             "updated_at": creation_time,
         }
-        result = cls.collection().insert_one(doc)
+        result = cls.collection().insert_one(dict(doc))
         cls._emit_audit(actor, str(result.inserted_id), ResourceAction.CREATE)
         return cls.from_doc({**doc, "_id": result.inserted_id})

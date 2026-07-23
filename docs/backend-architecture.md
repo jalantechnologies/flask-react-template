@@ -125,7 +125,14 @@ account/
 
 - A `@dataclass` extending `BaseModel`
 - Defines all Mongo fields (e.g. `first_name`, `hashed_password`, `phone_number`, `username`, `active`, `created_at`, `updated_at`)
-- `@staticmethod from_bson()` to validate & hydrate a model from raw BSON
+- A `TypedDict` naming the collection's stored-document shape (`AccountDocument`, extending
+  `StoredDocumentBase`, which carries `_id`/`created_at`/`updated_at`). This is the shape the write path
+  produces — visible to the type checker, not a bare `dict[str, Any]`.
+- `to_bson() -> AccountDocument` builds that document as a TypedDict literal, so mypy checks the persisted
+  shape at construction: a missing or mistyped field is a type error, not a silent runtime surprise.
+- `@classmethod from_bson(doc: StoredDocument) -> AccountModel` hydrates a model from the raw document the
+  driver returns. The read side accepts the untyped `StoredDocument` (`dict[str, Any]`) because that is
+  honestly what pymongo hands back; the model reads the fields it needs with `.get(...)`.
 - `@staticmethod get_collection_name()` returns `"accounts"`
 
 ### 5.2 `account_repository.py`
@@ -135,18 +142,19 @@ account/
   and only declares what is specific to this collection:
   - `collection_name` — the Mongo collection name
   - `on_init_collection()` — sets up JSON-Schema validation (via `create_collection`) and any indexes
-  - `from_doc(doc) -> Account` — hydrates a stored document into the `Account` domain dataclass (required)
-  - `to_doc(entity) -> StoredDocument` — serializes an `Account` into a document; override only when the
-    default (which uses `to_bson()` / a dataclass) is not enough — e.g. when a separate `*Model` supplies
-    stored-only fields like `active`/timestamps
+  - `from_doc(doc: StoredDocument) -> Account` — hydrates the raw stored document into the `Account` domain
+    dataclass (required); it takes the untyped `StoredDocument` the driver returns
+  - `to_doc(entity) -> AccountDocument` — serializes an `Account` into the collection's typed document. The
+    base default returns a generic `Mapping[str, Any]`; a concrete repository narrows the return to its
+    `<Model>Document` (a legal covariant-return override), and builds it through the model's typed `to_bson()`
   - `_to_filter(params) -> StoreFilter` — maps the module's typed `AccountQuery` to a store filter (only
     if the repository supports `query()`)
 
 #### The generic `ApplicationRepository[Entity, Query]`
 
-`ApplicationRepository` (in `modules/core/repository.py`) is generic over the entity it stores **and**
-the typed query object it accepts. It owns the shape of "talk to the database" once, so a concrete
-repository is mostly declaration:
+`ApplicationRepository` (in `modules/core/repository.py`) is generic over the entity it stores and the typed
+query object it accepts. It owns the shape of "talk to the database" once, so a concrete repository is mostly
+declaration:
 
 ```python
 @dataclass(frozen=True)
@@ -203,12 +211,18 @@ The `ObjectId`/`$set`/`count_documents` specifics live inside the base, in each 
 `from_doc`/`to_doc`, and in `_to_filter`. Replacing MongoDB with another store is a change to those hooks,
 not to any consumer.
 
-The only deliberately untyped values in the layer are the storage-boundary aliases declared in the base —
-`StoredDocument`, `StoreFilter`, `FieldUpdates`, `SortSpec` — which name the genuinely heterogeneous maps
-at the database edge so the `dict[str, Any]` blur is confined there and visible.
+The stored-document typing sits where it is real, not where it is asserted. On the **write** side each model
+declares a `<Model>Document` `TypedDict` (extending `StoredDocumentBase`, which supplies
+`_id`/`created_at`/`updated_at`) and its `to_bson()` builds that TypedDict as a literal, so mypy checks every
+persisted field at construction — no `cast`. On the **read** side `from_doc`/`from_bson` accept the raw
+`StoredDocument` (`dict[str, Any]`) the driver actually returns, so a driver result flows straight in with no
+assertion. The remaining storage-boundary aliases in the base — `StoredDocument`, `StoreFilter`,
+`FieldUpdates`, `SortSpec` — name the genuinely heterogeneous maps the base cannot type per-collection (a raw
+read, a filter, a `$set` patch, a sort spec). `StoredDocument` is defined on the leaf `base_model` module so a
+model can name it without importing the repository, which the repository's audit path imports back. The
+database edge is where `dict[str, Any]` legitimately lives, and it is confined to these named seams.
 
-> The generic base uses Python 3.12 type-parameter syntax (`class ApplicationRepository[Entity, Query]:`,
-> `type StoredDocument = ...`). The backend runs and is checked on Python 3.12.
+> The generic base uses Python 3.12 type-parameter syntax (`class ApplicationRepository[Entity, Query]:`, `type StoredDocument = ...`). The backend runs and is checked on Python 3.12.
 
 **A repository is pure storage; domain reads/writes live on the reader/writer.** A thin domain method —
 "find the account with this username", "expire previous OTPs", "mark this token used" — is NOT a repository

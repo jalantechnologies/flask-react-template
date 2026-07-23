@@ -1,9 +1,16 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import NotRequired, Optional
 
 from bson import ObjectId
 
-from modules.core.base_model import BaseModel
+from modules.core.base_model import BaseModel, StoredDocument, StoredDocumentBase
+
+
+class TaskDocument(StoredDocumentBase):
+    account_id: NotRequired[str]
+    description: NotRequired[str]
+    title: NotRequired[str]
+    active: NotRequired[bool]
 
 
 @dataclass
@@ -14,8 +21,21 @@ class TaskModel(BaseModel):
     active: bool = True
     id: Optional[ObjectId | str] = None
 
+    def to_bson(self) -> TaskDocument:
+        doc: TaskDocument = {
+            "account_id": self.account_id,
+            "description": self.description,
+            "title": self.title,
+            "active": self.active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+        if self.id is not None:
+            doc["_id"] = self.id if isinstance(self.id, ObjectId) else ObjectId(self.id)
+        return doc
+
     @classmethod
-    def from_bson(cls, bson_data: dict[str, Any]) -> "TaskModel":
+    def from_bson(cls, bson_data: StoredDocument) -> "TaskModel":
         return cls(
             account_id=bson_data.get("account_id", ""),
             active=bson_data.get("active", True),

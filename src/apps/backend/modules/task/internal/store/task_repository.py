@@ -5,7 +5,7 @@ from pymongo.errors import OperationFailure
 
 from modules.core.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
-from modules.task.internal.store.task_model import TaskModel
+from modules.task.internal.store.task_model import TaskDocument, TaskModel
 from modules.task.types import Task, TaskQuery
 
 TASK_VALIDATION_SCHEMA = {
@@ -61,7 +61,7 @@ class TaskRepository(ApplicationRepository[Task, TaskQuery]):
         )
 
     @classmethod
-    def to_doc(cls, entity: Task) -> StoredDocument:
+    def to_doc(cls, entity: Task) -> TaskDocument:
         # The stored document carries fields the domain Task does not (active, timestamps); TaskModel
         # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
         return TaskModel(account_id=entity.account_id, description=entity.description, title=entity.title).to_bson()

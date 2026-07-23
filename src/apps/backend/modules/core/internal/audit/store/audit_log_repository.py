@@ -1,11 +1,12 @@
-from typing import Any, ClassVar, Optional
+from typing import ClassVar, Optional
 
 from pymongo import ASCENDING
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.core.base_model import StoredDocument
 from modules.core.common.types import AuditLogEntry
-from modules.core.internal.audit.store.audit_log_model import AuditLogModel
+from modules.core.internal.audit.store.audit_log_model import AuditLogDocument, AuditLogModel
 from modules.core.repository_client import ApplicationRepositoryClient
 from modules.logger.logger import Logger
 
@@ -77,7 +78,7 @@ class AuditLogRepository:
     @classmethod
     def create(cls, entity: AuditLogEntry) -> AuditLogEntry:
         doc = cls._to_doc(entity)
-        result = cls.collection().insert_one(doc)
+        result = cls.collection().insert_one(dict(doc))
         return cls._from_doc({**doc, "_id": result.inserted_id})
 
     @classmethod
@@ -85,12 +86,12 @@ class AuditLogRepository:
         # One round trip for a batch of entries so a multi-document read audits in a single insert
         # rather than one per document (see AGENTS.md §13 on N+1 access).
         docs = [cls._to_doc(entity) for entity in entities]
-        result = cls.collection().insert_many(docs)
+        result = cls.collection().insert_many([dict(doc) for doc in docs])
         return [cls._from_doc({**doc, "_id": inserted_id}) for doc, inserted_id in zip(docs, result.inserted_ids)]
 
     @classmethod
-    def _to_doc(cls, entity: AuditLogEntry) -> dict[str, Any]:
-        doc = AuditLogModel(
+    def _to_doc(cls, entity: AuditLogEntry) -> AuditLogDocument:
+        model = AuditLogModel(
             resource_type=entity.resource_type,
             resource_id=entity.resource_id,
             actor_type=entity.actor_type,
@@ -99,17 +100,22 @@ class AuditLogRepository:
             timestamp=entity.timestamp,
             changes=entity.changes,
             outcome=entity.outcome,
-        ).to_bson()
-        doc.pop("id", None)
-        doc.pop("_id", None)
-        doc["action"] = entity.action.value
-        doc["actor_type"] = entity.actor_type.value
-        doc["outcome"] = entity.outcome.value
-        doc["changes"] = {name: {"old": change.old, "new": change.new} for name, change in entity.changes.items()}
-        return doc
+        )
+        return {
+            "resource_type": entity.resource_type,
+            "resource_id": entity.resource_id,
+            "actor_type": entity.actor_type.value,
+            "actor_id": entity.actor_id,
+            "action": entity.action.value,
+            "timestamp": entity.timestamp,
+            "changes": {name: {"old": change.old, "new": change.new} for name, change in entity.changes.items()},
+            "outcome": entity.outcome.value,
+            "created_at": model.created_at,
+            "updated_at": model.updated_at,
+        }
 
     @classmethod
-    def _from_doc(cls, doc: dict[str, Any]) -> AuditLogEntry:
+    def _from_doc(cls, doc: StoredDocument) -> AuditLogEntry:
         model = AuditLogModel.from_bson(doc)
         return AuditLogEntry(
             id=str(model.id),

@@ -1,7 +1,7 @@
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.account.internal.store.account_model import AccountModel
+from modules.account.internal.store.account_model import AccountDocument, AccountModel
 from modules.account.types import Account, AccountQuery
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
@@ -68,7 +68,7 @@ class AccountRepository(ApplicationRepository[Account, AccountQuery]):
         )
 
     @classmethod
-    def to_doc(cls, entity: Account) -> StoredDocument:
+    def to_doc(cls, entity: Account) -> AccountDocument:
         # The stored document carries fields the domain Account does not (active, timestamps); AccountModel
         # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
         return AccountModel(
