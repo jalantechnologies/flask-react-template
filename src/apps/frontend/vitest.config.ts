@@ -27,7 +27,7 @@ export default defineConfig({
       exclude: [
         '**/*.test.{ts,tsx}',
         '**/*.d.ts',
-        '**/index.tsx',
+        'src/apps/frontend/index.tsx',
         '**/webpack.*.js',
         '**/vendor/**',
       ],
