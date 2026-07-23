@@ -2,6 +2,7 @@ import dataclasses
 import os
 import urllib.parse
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from typing import Any, ClassVar, Optional
 
 from bson import ObjectId
@@ -218,7 +219,8 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
-        result = cls.collection().update_one({"_id": object_id}, {"$set": fields})
+        patch = {"updated_at": datetime.now(UTC), **fields}
+        result = cls.collection().update_one({"_id": object_id}, {"$set": patch})
         return bool(result.matched_count > 0)
 
     @classmethod
