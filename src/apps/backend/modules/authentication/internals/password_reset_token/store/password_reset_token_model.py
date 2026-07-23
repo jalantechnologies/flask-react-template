@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from bson import ObjectId
 
@@ -18,7 +18,7 @@ class PasswordResetTokenModel(BaseModel):
     is_used: bool = False
 
     @classmethod
-    def from_bson(cls, bson_data: dict) -> "PasswordResetTokenModel":
+    def from_bson(cls, bson_data: dict[str, Any]) -> "PasswordResetTokenModel":
         return cls(
             account=bson_data.get("account"),
             created_at=bson_data.get("created_at"),

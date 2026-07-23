@@ -1,5 +1,6 @@
 import json
 from unittest import mock
+from unittest.mock import MagicMock
 
 from server import app
 
@@ -58,7 +59,7 @@ class TestAccountPostApi(BaseTestAccount):
 
     @mock.patch.object(SMSService, "send_sms_for_account")
     def test_given_new_phone_number_when_creating_account_then_creates_account_and_sends_one_time_password(
-        self, mock_send_sms
+        self, mock_send_sms: MagicMock
     ) -> None:
         request_body = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "9999999999"}})
 
@@ -66,6 +67,7 @@ class TestAccountPostApi(BaseTestAccount):
             response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
 
             assert response.status_code == 201
+            assert response.json is not None
             assert response.json.get("phone_number") == {"country_code": "+91", "phone_number": "9999999999"}
             assert "id" in response.json
             assert mock_send_sms.called
@@ -79,7 +81,7 @@ class TestAccountPostApi(BaseTestAccount):
 
     @mock.patch.object(SMSService, "send_sms_for_account")
     def test_given_existing_phone_number_when_creating_account_then_returns_account_and_sends_one_time_password(
-        self, mock_send_sms
+        self, mock_send_sms: MagicMock
     ) -> None:
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(
@@ -95,6 +97,7 @@ class TestAccountPostApi(BaseTestAccount):
             )
 
             assert response.status_code == 201
+            assert response.json is not None
             assert response.json.get("phone_number") == {"country_code": "+91", "phone_number": "9999999999"}
             assert "id" in response.json
             assert mock_send_sms.called
@@ -107,7 +110,9 @@ class TestAccountPostApi(BaseTestAccount):
             )
 
     @mock.patch.object(SMSService, "send_sms_for_account")
-    def test_given_invalid_phone_number_when_creating_account_then_returns_bad_request(self, mock_send_sms) -> None:
+    def test_given_invalid_phone_number_when_creating_account_then_returns_bad_request(
+        self, mock_send_sms: MagicMock
+    ) -> None:
         request_body = json.dumps({"phone_number": {"country_code": "+91", "phone_number": "999999999"}})
 
         with app.test_client() as client:

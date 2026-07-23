@@ -1,5 +1,5 @@
 import os
-from typing import Any, Optional, cast
+from typing import Any, Callable, Optional, cast
 
 from modules.config.internals.config_utils import ConfigUtil
 from modules.config.internals.types import Config
@@ -58,7 +58,7 @@ class CustomEnvConfig:
         if value is None:
             return None
 
-        parsers = {
+        parsers: dict[str, Callable[[str], int | float | bool]] = {
             "boolean": lambda x: x.lower() in ["true", "1"],
             "number": lambda x: int(x) if x.isdigit() else float(x),
         }

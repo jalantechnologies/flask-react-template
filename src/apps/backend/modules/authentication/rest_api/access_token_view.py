@@ -5,13 +5,12 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
-from modules.account.types import AccountSearchParams
+from modules.account.types import AccountSearchParams, PhoneNumber
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import (
     CreateAccessTokenParams,
     EmailBasedAuthAccessTokenRequestParams,
     OTPBasedAuthAccessTokenRequestParams,
-    PhoneNumber,
 )
 
 

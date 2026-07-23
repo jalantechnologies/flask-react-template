@@ -1,5 +1,5 @@
 import os
-from typing import Iterator
+from typing import Iterator, cast
 
 import pytest
 from celery_app import app as celery_app
@@ -35,7 +35,7 @@ def _purge_broker_queues() -> None:
 
 def broker_queue_depth(name: str) -> int:
     with celery_app.connection_for_write() as connection:
-        return connection.default_channel._size(name)
+        return cast(int, connection.default_channel._size(name))
 
 
 @pytest.fixture(autouse=True)

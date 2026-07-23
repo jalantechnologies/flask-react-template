@@ -1,3 +1,5 @@
+from typing import Any
+
 from server import app
 
 from modules.authentication.types import AccessTokenErrorCode
@@ -29,6 +31,7 @@ class TestTaskApi(BaseTestTask):
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert response.json is not None
         assert "Title is required" in response.json.get("message")
 
     def test_create_task_missing_description(self) -> None:
@@ -38,15 +41,17 @@ class TestTaskApi(BaseTestTask):
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert response.json is not None
         assert "Description is required" in response.json.get("message")
 
     def test_create_task_empty_body(self) -> None:
         account, token = self.create_account_and_get_token()
-        task_data = {}
+        task_data: dict[str, Any] = {}
 
         response = self.make_authenticated_request("POST", account.id, token, data=task_data)
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert response.json is not None
         assert "Title is required" in response.json.get("message")
 
     def test_create_task_no_auth(self) -> None:
@@ -72,6 +77,7 @@ class TestTaskApi(BaseTestTask):
         response = self.make_authenticated_request("GET", account.id, token)
 
         assert response.status_code == 200
+        assert response.json is not None
         self.assert_pagination_response(response.json, expected_items_count=0, expected_total_count=0)
 
     def test_get_all_tasks_with_tasks(self) -> None:
@@ -81,6 +87,7 @@ class TestTaskApi(BaseTestTask):
         response = self.make_authenticated_request("GET", account.id, token)
 
         assert response.status_code == 200
+        assert response.json is not None
         self.assert_pagination_response(response.json, expected_items_count=3, expected_total_count=3)
 
         assert response.json["items"][0]["title"] == "Task 3"
@@ -95,11 +102,13 @@ class TestTaskApi(BaseTestTask):
         response2 = self.make_authenticated_request("GET", account.id, token, query_params="page=2&size=2")
 
         assert response1.status_code == 200
+        assert response1.json is not None
         self.assert_pagination_response(
             response1.json, expected_items_count=2, expected_total_count=5, expected_page=1, expected_size=2
         )
 
         assert response2.status_code == 200
+        assert response2.json is not None
         self.assert_pagination_response(
             response2.json, expected_items_count=2, expected_total_count=5, expected_page=2, expected_size=2
         )
@@ -120,6 +129,7 @@ class TestTaskApi(BaseTestTask):
         response = self.make_authenticated_request("GET", account.id, token, task_id=created_task.id)
 
         assert response.status_code == 200
+        assert response.json is not None
         self.assert_task_response(response.json, expected_task=created_task)
 
     def test_get_specific_task_not_found(self) -> None:
@@ -150,6 +160,7 @@ class TestTaskApi(BaseTestTask):
         )
 
         assert response.status_code == 200
+        assert response.json is not None
         self.assert_task_response(
             response.json,
             id=created_task.id,
@@ -168,6 +179,7 @@ class TestTaskApi(BaseTestTask):
         )
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert response.json is not None
         assert "Title is required" in response.json.get("message")
 
     def test_update_task_missing_description(self) -> None:
@@ -180,6 +192,7 @@ class TestTaskApi(BaseTestTask):
         )
 
         self.assert_error_response(response, 400, TaskErrorCode.BAD_REQUEST)
+        assert response.json is not None
         assert "Description is required" in response.json.get("message")
 
     def test_update_task_not_found(self) -> None:
@@ -238,6 +251,7 @@ class TestTaskApi(BaseTestTask):
 
         task_data = {"title": "Account 1 Task", "description": "This belongs to account 1"}
         create_response = self.make_authenticated_request("POST", account1.id, token1, data=task_data)
+        assert create_response.json is not None
         account1_task_id = create_response.json.get("id")
 
         get_response = self.make_cross_account_request("GET", account1.id, token2, task_id=account1_task_id)
@@ -252,6 +266,7 @@ class TestTaskApi(BaseTestTask):
 
         verify_response = self.make_authenticated_request("GET", account1.id, token1, task_id=account1_task_id)
         assert verify_response.status_code == 200
+        assert verify_response.json is not None
         assert verify_response.json.get("id") == account1_task_id
 
     def test_invalid_json_request_body(self) -> None:

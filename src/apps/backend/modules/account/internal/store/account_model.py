@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from bson import ObjectId
 
@@ -20,7 +20,7 @@ class AccountModel(BaseModel):
     active: bool = True
 
     @classmethod
-    def from_bson(cls, bson_data: dict) -> "AccountModel":
+    def from_bson(cls, bson_data: dict[str, Any]) -> "AccountModel":
         phone_number_data = bson_data.get("phone_number")
         phone_number = PhoneNumber(**phone_number_data) if phone_number_data else None
         return cls(

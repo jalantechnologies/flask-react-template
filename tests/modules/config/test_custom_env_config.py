@@ -3,6 +3,7 @@ from typing import Any
 
 from modules.config.internals.config_files.custom_env_config_file import CustomEnvConfig
 from modules.config.internals.config_utils import ConfigUtil
+from modules.config.internals.types import Config
 from tests.modules.config.base_test_config import BaseTestConfig
 
 
@@ -18,7 +19,7 @@ class TestCustomEnvConfig(BaseTestConfig):
         assert "feature" not in overrides
 
     def test_unset_name_mapping_does_not_blank_base_value(self) -> None:
-        base_layer = {"feature": {"enabled": True}}
+        base_layer: Config = {"feature": {"enabled": True}}
         override_layer = CustomEnvConfig._apply_environment_overrides({"feature": {"__name": self.UNSET_ENV_VAR}})
 
         merged = ConfigUtil.deep_merge(base_layer, override_layer)

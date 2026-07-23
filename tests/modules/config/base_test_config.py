@@ -1,10 +1,10 @@
 import unittest
-from typing import Callable
+from typing import Any, Callable
 
 
 class BaseTestConfig(unittest.TestCase):
-    def setup_method(self, method: Callable) -> None:
+    def setup_method(self, method: Callable[..., Any]) -> None:
         print(f"Executing:: {method.__name__}")
 
-    def teardown_method(self, method: Callable) -> None:
+    def teardown_method(self, method: Callable[..., Any]) -> None:
         print(f"Executed:: {method.__name__}")

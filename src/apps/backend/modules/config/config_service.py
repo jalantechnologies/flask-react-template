@@ -1,4 +1,4 @@
-from typing import Generic, Optional, cast
+from typing import Generic, Optional
 
 from modules.config.errors import MissingKeyError
 from modules.config.internals.config_manager import ConfigManager
@@ -13,7 +13,7 @@ class ConfigService(Generic[ConfigType]):
         value: Optional[ConfigType] = cls.config_manager.get(key, default=default)
         if value is None:
             raise MissingKeyError(missing_key=key, error_code=ErrorCode.MISSING_KEY)
-        return cast(ConfigType, value)
+        return value
 
     @classmethod
     def has_value(cls, key: str) -> bool:

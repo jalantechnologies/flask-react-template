@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from bson import ObjectId
 
@@ -16,7 +16,7 @@ class AccountNotificationPreferencesModel(BaseModel):
     active: bool = True
 
     @classmethod
-    def from_bson(cls, bson_data: dict) -> "AccountNotificationPreferencesModel":
+    def from_bson(cls, bson_data: dict[str, Any]) -> "AccountNotificationPreferencesModel":
         return cls(
             account_id=str(bson_data.get("account_id")),
             id=bson_data.get("_id"),

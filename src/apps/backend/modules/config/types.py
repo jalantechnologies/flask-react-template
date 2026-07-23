@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import Any, TypeVar
 
-ConfigType = TypeVar("ConfigType", bound=bool | dict | float | int | list | str)
+ConfigType = TypeVar("ConfigType", bound=bool | dict[str, Any] | float | int | list[Any] | str)
 
 
 @dataclass(frozen=True)

@@ -191,7 +191,7 @@ class TestAccessTokenApi(BaseTestAccessToken):
             assert response.json.get("code") == OTPErrorCode.OTP_EXPIRED
             assert response.json.get("message") == "The OTP has expired. Please request a new OTP."
 
-    def test_otp_based_auth_flow_with_disabled_sms_preferences(self):
+    def test_otp_based_auth_flow_with_disabled_sms_preferences(self) -> None:
         """Test complete OTP authentication flow works with disabled SMS preferences"""
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
 

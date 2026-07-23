@@ -1,6 +1,7 @@
 import logging
 import os
 from logging import LogRecord, StreamHandler
+from typing import TextIO
 
 from datadog_api_client import ApiClient, Configuration
 from datadog_api_client.v2.api.logs_api import LogsApi
@@ -9,7 +10,7 @@ from datadog_api_client.v2.models import HTTPLog, HTTPLogItem
 from modules.config.config_service import ConfigService
 
 
-class DatadogHandler(StreamHandler):
+class DatadogHandler(StreamHandler[TextIO]):
     def __init__(self, ddsource: str) -> None:
         StreamHandler.__init__(self)
         self.ddsource = ddsource

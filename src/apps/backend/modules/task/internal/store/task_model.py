@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from bson import ObjectId
 
@@ -15,7 +15,7 @@ class TaskModel(BaseModel):
     id: Optional[ObjectId | str] = None
 
     @classmethod
-    def from_bson(cls, bson_data: dict) -> "TaskModel":
+    def from_bson(cls, bson_data: dict[str, Any]) -> "TaskModel":
         return cls(
             account_id=bson_data.get("account_id", ""),
             active=bson_data.get("active", True),

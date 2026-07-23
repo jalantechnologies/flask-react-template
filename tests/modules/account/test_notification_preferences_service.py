@@ -223,7 +223,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.push_enabled is False
         assert preferences.sms_enabled is False
 
-    def test_account_creation_by_username_automatically_creates_notification_preferences(self):
+    def test_account_creation_by_username_automatically_creates_notification_preferences(self) -> None:
         """Test that creating an account by username automatically creates notification preferences"""
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -238,7 +238,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.push_enabled is True
         assert preferences.sms_enabled is True
 
-    def test_account_creation_by_phone_automatically_creates_notification_preferences(self):
+    def test_account_creation_by_phone_automatically_creates_notification_preferences(self) -> None:
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
