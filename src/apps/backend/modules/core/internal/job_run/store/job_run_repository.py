@@ -3,7 +3,7 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 from modules.core.common.types import JobRun, JobRunQuery
-from modules.core.internal.job_run.store.job_run_model import JobRunModel
+from modules.core.internal.job_run.store.job_run_model import JobRunDocument, JobRunModel
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 
@@ -63,17 +63,16 @@ class JobRunRepository(ApplicationRepository[JobRun, JobRunQuery]):
         )
 
     @classmethod
-    def to_doc(cls, entity: JobRun) -> StoredDocument:
-        doc = JobRunModel(
+    def to_doc(cls, entity: JobRun) -> JobRunDocument:
+        return JobRunModel(
             job_name=entity.job_name,
             status=entity.status,
+            id=None,
             arguments=entity.arguments,
             retry_count=entity.retry_count,
             started_at=entity.started_at,
             ended_at=entity.ended_at,
         ).to_bson()
-        doc["status"] = entity.status.value
-        return doc
 
     @classmethod
     def _to_filter(cls, params: JobRunQuery) -> StoreFilter:

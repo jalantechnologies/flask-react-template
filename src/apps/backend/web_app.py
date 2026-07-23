@@ -24,39 +24,31 @@ cors = CORS(app, resources={r"/*": {"origins": cors_allowed_origin}})
 
 SecurityHeaders.init_app(app)
 
-# Mount deps
 LoggerManager.mount_logger()
 
 AuthenticationService.validate_access_token_signing_key()
 
-# Run bootstrap tasks
 BootstrapApp().run()
 
 JobRegistry.initialize()
 
 
-# Apply ProxyFix to interpret `X-Forwarded` headers if enabled in configuration
-# Visit: https://flask.palletsprojects.com/en/stable/deploying/proxy_fix/ for more information
 if ConfigService.has_value("is_server_running_behind_proxy") and ConfigService[bool].get_value(
     "is_server_running_behind_proxy"
 ):
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
 
-# Register authentication apis
 authentication_blueprint = AuthenticationRestApiServer.create()
 api_blueprint.register_blueprint(authentication_blueprint)
 
-# Register accounts apis
 account_blueprint = AccountRestApiServer.create()
 api_blueprint.register_blueprint(account_blueprint)
 
-# Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
 
 app.register_blueprint(api_blueprint)
 
-# Register frontend elements
 app.register_blueprint(img_assets_blueprint)
 app.register_blueprint(react_blueprint)
 
