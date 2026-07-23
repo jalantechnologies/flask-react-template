@@ -50,8 +50,8 @@ shell and it opens the project with the editor's backend running in Linux.
 
 ## 3. Install the toolchain inside WSL
 
-Install the same dependency versions listed in [Getting Started](getting-started.md#prerequisites).
-Managing them with [asdf](https://asdf-vm.com/) keeps the versions pinned per project:
+Install Node 22.13.1 (per `.nvmrc`) and Python 3.12 (per the backend `Pipfile`). Managing them with
+[asdf](https://asdf-vm.com/) keeps the versions pinned per project:
 
 ```bash
 # Install asdf (see https://asdf-vm.com/guide/getting-started.html for the latest instructions)
@@ -64,13 +64,13 @@ asdf plugin add nodejs
 asdf install nodejs 22.13.1
 asdf global nodejs 22.13.1
 
-# Python
+# Python (the backend Pipfile requires 3.12)
 asdf plugin add python
-asdf install python 3.11
-asdf global python 3.11
+asdf install python 3.12
+asdf global python 3.12
 ```
 
-If you prefer not to use asdf, install Node 22.13.1 and Python 3.11 with any manager you like
+If you prefer not to use asdf, install Node 22.13.1 and Python 3.12 with any manager you like
 (`nvm`, `pyenv`, the Ubuntu packages), as long as the versions match. Then install `pipenv`:
 
 ```bash
