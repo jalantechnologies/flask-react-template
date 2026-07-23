@@ -1,19 +1,18 @@
 import dataclasses
-import os
-import urllib.parse
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
+
+if TYPE_CHECKING:
+    from modules.application.common.types import AuditActor, FieldChanges, ResourceAction
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from pymongo import MongoClient
+from pymongo import ReturnDocument
 from pymongo.collection import Collection
-from pymongo.server_api import ServerApi
 
 from modules.application.common.types import PaginationParams, PaginationResult, QueryParams
-from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
+from modules.application.repository_client import ApplicationRepositoryClient
 
 # Storage-boundary shapes: the only heterogeneous maps in the repository layer. Naming them keeps the
 # `dict[str, Any]` blur confined to the database edge and visible (see docs/backend-architecture.md).
@@ -22,64 +21,14 @@ type StoreFilter = dict[str, Any]
 type FieldUpdates = dict[str, Any]
 type SortSpec = list[tuple[str, int]]  # direction is 1 asc / -1 desc, a convention the type can't express
 
-
-class ApplicationRepositoryClient:
-    _client: Optional[MongoClient] = None
-
-    # TLS on the MongoDB connection is only enforced outside local development and the test suite,
-    # where plaintext traffic to a loopback Mongo is expected.
-    NON_TLS_EXEMPT_ENVS: ClassVar[frozenset[str]] = frozenset({"development", "testing"})
-
-    @classmethod
-    def get_client(cls) -> MongoClient:
-        connection_caching = ConfigService[bool].get_value(key="mongodb.connection_caching")
-
-        if connection_caching:
-            if cls._client is None:
-                cls._client = cls._create_client()
-
-            return cls._client
-
-        else:
-            return cls._create_client()
-
-    @classmethod
-    def _create_client(cls) -> MongoClient:
-        connection_uri = ConfigService[str].get_value(key="mongodb.uri")
-        cls._warn_if_uri_lacks_tls(connection_uri)
-        Logger.info(message=f"connecting to database - {connection_uri}")
-        client = MongoClient(connection_uri, server_api=ServerApi("1"))
-        Logger.info(message=f"connected to database - {connection_uri}")
-
-        return client
-
-    @classmethod
-    def _warn_if_uri_lacks_tls(cls, connection_uri: str) -> None:
-        # Plaintext Mongo traffic exposes credentials and data in transit to anyone on the network
-        # segment (SOC 2 CC6.7, ISO 27001 A.10.1). Warn — non-fatal — when the URI does not opt into
-        # TLS, since TLS may instead be terminated at the network layer (proxy, service mesh) without
-        # appearing in the URI. See docs/mongodb-security.md.
-        app_env = os.environ.get("APP_ENV", "development")
-        if app_env in cls.NON_TLS_EXEMPT_ENVS:
-            return
-
-        parsed = urllib.parse.urlsplit(connection_uri)
-        query_params = urllib.parse.parse_qs(parsed.query)
-
-        has_tls = (
-            parsed.scheme == "mongodb+srv"
-            or query_params.get("tls", [""])[0].lower() == "true"
-            or query_params.get("ssl", [""])[0].lower() == "true"
-        )
-
-        if not has_tls:
-            Logger.warn(
-                message=(
-                    "MONGODB_URI does not appear to use TLS. In production this exposes data in transit. "
-                    "Use mongodb+srv:// (e.g. MongoDB Atlas) or append ?tls=true&tlsCAFile=/path/to/ca.pem "
-                    "to a mongodb:// URI. See docs/mongodb-security.md for guidance."
-                )
-            )
+__all__ = [
+    "ApplicationRepository",
+    "ApplicationRepositoryClient",
+    "StoredDocument",
+    "StoreFilter",
+    "FieldUpdates",
+    "SortSpec",
+]
 
 
 class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
@@ -91,6 +40,30 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
     _collection: ClassVar[Optional[Collection]] = None
 
     collection_name: ClassVar[str]
+
+    audit_resource_type: ClassVar[Optional[str]] = None
+
+    AUDIT_COLLECTION_NAME: ClassVar[str] = "audit_log"
+
+    @classmethod
+    def _resource_type(cls) -> str:
+        return cls.audit_resource_type or cls.collection_name
+
+    @classmethod
+    def _audits(cls) -> bool:
+        return cls.collection_name != cls.AUDIT_COLLECTION_NAME
+
+    @classmethod
+    def _emit_audit(
+        cls, actor: "AuditActor", resource_id: str, action: "ResourceAction", changes: Optional["FieldChanges"] = None
+    ) -> None:
+        if not cls._audits():
+            return
+        from modules.application.internal.audit.audit_writer import AuditWriter
+
+        AuditWriter.record(
+            actor=actor, resource_type=cls._resource_type(), resource_id=resource_id, action=action, changes=changes
+        )
 
     @classmethod
     def collection(cls) -> Collection:
@@ -145,45 +118,58 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         return None
 
     @classmethod
-    def create(cls, entity: EntityT) -> EntityT:
+    def create(cls, entity: EntityT, *, actor: "AuditActor") -> EntityT:
+        from modules.application.common.types import ResourceAction
+
         doc = cls.to_doc(entity)
         result = cls.collection().insert_one(doc)
-        return cls.from_doc({**doc, "_id": result.inserted_id})
+        created = cls.from_doc({**doc, "_id": result.inserted_id})
+        cls._emit_audit(actor, str(result.inserted_id), ResourceAction.CREATE)
+        return created
 
     @classmethod
-    def find(cls, entity_id: str) -> Optional[EntityT]:
+    def find(cls, entity_id: str, *, actor: "AuditActor") -> Optional[EntityT]:
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return None
         doc = cls.collection().find_one({"_id": object_id})
-        return cls.from_doc(doc) if doc is not None else None
+        if doc is None:
+            return None
+        cls._emit_read_audit(actor, [str(doc["_id"])])
+        return cls.from_doc(doc)
 
     @classmethod
-    def find_many(cls, entity_ids: list[str]) -> list[EntityT]:
+    def find_many(cls, entity_ids: list[str], *, actor: "AuditActor") -> list[EntityT]:
         # $in returns store/index order, not entity_ids order; callers needing positional alignment must
         # build their own id->entity map rather than rely on this list order.
         object_ids = [oid for oid in (cls._to_object_id(eid) for eid in entity_ids) if oid is not None]
-        cursor = cls.collection().find({"_id": {"$in": object_ids}})
-        return [cls.from_doc(doc) for doc in cursor]
+        docs = list(cls.collection().find({"_id": {"$in": object_ids}}))
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
+        return [cls.from_doc(doc) for doc in docs]
 
     @classmethod
-    def query(cls, params: QueryT, *, sort: Optional[SortSpec] = None) -> list[EntityT]:
+    def query(cls, params: QueryT, *, actor: "AuditActor", sort: Optional[SortSpec] = None) -> list[EntityT]:
         # An explicit `sort` (including [] for "no ordering") wins; only None falls back to _to_sort.
         resolved_sort = sort if sort is not None else cls._to_sort(params)
-        return cls._query(cls._to_filter(params), sort=resolved_sort)
+        docs = cls._query_docs(cls._to_filter(params), sort=resolved_sort)
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
+        return [cls.from_doc(doc) for doc in docs]
 
     @classmethod
-    def query_one(cls, params: QueryT, *, sort: Optional[SortSpec] = None) -> Optional[EntityT]:
+    def query_one(cls, params: QueryT, *, actor: "AuditActor", sort: Optional[SortSpec] = None) -> Optional[EntityT]:
         resolved_sort = sort if sort is not None else cls._to_sort(params)
         cursor = cls.collection().find(cls._to_filter(params))
         if resolved_sort:
             cursor = cursor.sort(resolved_sort)
         doc = next(iter(cursor.limit(1)), None)
-        return cls.from_doc(doc) if doc is not None else None
+        if doc is None:
+            return None
+        cls._emit_read_audit(actor, [str(doc["_id"])])
+        return cls.from_doc(doc)
 
     @classmethod
     def query_paginated(
-        cls, params: QueryT, pagination: PaginationParams, *, sort: Optional[SortSpec] = None
+        cls, params: QueryT, pagination: PaginationParams, *, actor: "AuditActor", sort: Optional[SortSpec] = None
     ) -> PaginationResult[EntityT]:
         # A page of query() results plus totals, sharing one filter/sort so each listing avoids repeated
         # count + skip + limit + total_pages arithmetic. This is the only place pagination math lives.
@@ -196,9 +182,13 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         skip = (pagination.page - 1) * pagination.size + pagination.offset
         total_pages = (total_count + pagination.size - 1) // pagination.size
         resolved_sort = sort if sort is not None else cls._to_sort(params)
-        items = cls._query(store_filter, sort=resolved_sort, skip=skip, limit=pagination.size)
+        docs = cls._query_docs(store_filter, sort=resolved_sort, skip=skip, limit=pagination.size)
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
         return PaginationResult(
-            items=items, pagination_params=pagination, total_count=total_count, total_pages=total_pages
+            items=[cls.from_doc(doc) for doc in docs],
+            pagination_params=pagination,
+            total_count=total_count,
+            total_pages=total_pages,
         )
 
     @classmethod
@@ -206,53 +196,125 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         return cls._count(cls._to_filter(params))
 
     @classmethod
-    def update(cls, entity_id: str, fields: FieldUpdates) -> Optional[EntityT]:
-        # Two round-trips (not atomic): a concurrent write can skew the read-back. Use update_fields()
-        # to skip the read-back when the caller discards the result.
-        if not cls.update_fields(entity_id, fields):
-            return None
-        return cls.find(entity_id)
+    def _emit_read_audit(cls, actor: "AuditActor", resource_ids: list[str]) -> None:
+        if not cls._audits() or not resource_ids:
+            return
+        from modules.application.common.types import ResourceAction
+        from modules.application.internal.audit.audit_writer import AuditWriter
+
+        AuditWriter.record_many(
+            actor=actor, resource_type=cls._resource_type(), resource_ids=resource_ids, action=ResourceAction.READ
+        )
 
     @classmethod
-    def update_fields(cls, entity_id: str, fields: FieldUpdates) -> bool:
-        # One-round-trip $set returning only whether a document matched; update() adds the read-back.
+    def _query_docs(
+        cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None, skip: int = 0, limit: int = 0
+    ) -> list[StoredDocument]:
+        cursor = cls.collection().find(store_filter)
+        if sort:
+            cursor = cursor.sort(sort)
+        if skip:
+            cursor = cursor.skip(skip)
+        if limit:
+            cursor = cursor.limit(limit)
+        return list(cursor)
+
+    @classmethod
+    def update(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> Optional[EntityT]:
+        object_id = cls._to_object_id(entity_id)
+        if object_id is None:
+            return None
+        return cls._update_matching({"_id": object_id}, fields, actor)
+
+    @classmethod
+    def update_by_query(
+        cls, params: QueryT, fields: FieldUpdates, *, actor: "AuditActor", action: Optional["ResourceAction"] = None
+    ) -> Optional[EntityT]:
+        # Ownership is enforced by the write filter itself (e.g. id AND account_id), so no read-then-write
+        # gap and no separate ownership READ. None when nothing matched the filter. A soft delete flips a
+        # flag through this update path, so a caller passes action=DELETE to record it as a delete.
+        return cls._update_matching(cls._to_filter(params), fields, actor, action)
+
+    @classmethod
+    def update_fields(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> bool:
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
         if not fields:
             return cls._count({"_id": object_id}) > 0
         patch = {"updated_at": datetime.now(UTC), **fields}
-        result = cls.collection().update_one({"_id": object_id}, {"$set": patch})
-        return bool(result.matched_count > 0)
+        return cls._apply_update({"_id": object_id}, patch, fields, actor) is not None
 
     @classmethod
-    def delete(cls, entity_id: str) -> bool:
+    def _update_matching(
+        cls,
+        store_filter: StoreFilter,
+        fields: FieldUpdates,
+        actor: "AuditActor",
+        action: Optional["ResourceAction"] = None,
+    ) -> Optional[EntityT]:
+        if not fields:
+            current: Optional[StoredDocument] = cls.collection().find_one(store_filter)
+            return cls.from_doc(current) if current is not None else None
+        patch = {"updated_at": datetime.now(UTC), **fields}
+        previous = cls._apply_update(store_filter, patch, fields, actor, action)
+        if previous is None:
+            return None
+        return cls.from_doc({**previous, **patch})
+
+    @classmethod
+    def _apply_update(
+        cls,
+        store_filter: StoreFilter,
+        patch: FieldUpdates,
+        fields: FieldUpdates,
+        actor: "AuditActor",
+        action: Optional["ResourceAction"] = None,
+    ) -> Optional[StoredDocument]:
+        # BEFORE returns the document as it was immediately before the $set, so the audit diff's `old`
+        # value is atomic; the audited resource_id is the matched document's own _id.
+        previous: Optional[StoredDocument] = cls.collection().find_one_and_update(
+            store_filter, {"$set": patch}, return_document=ReturnDocument.BEFORE
+        )
+        if previous is None:
+            return None
+        cls._emit_field_update_audit(actor, str(previous["_id"]), fields, previous, action)
+        return previous
+
+    @classmethod
+    def _emit_field_update_audit(
+        cls,
+        actor: "AuditActor",
+        entity_id: str,
+        fields: "FieldUpdates",
+        previous: StoredDocument,
+        action: Optional["ResourceAction"] = None,
+    ) -> None:
+        from modules.application.common.types import FieldChange, ResourceAction
+
+        changes = {
+            name: FieldChange(old=cls._audit_scalar(previous.get(name)), new=cls._audit_scalar(new_value))
+            for name, new_value in fields.items()
+            if name not in ("updated_at", "created_at")
+        }
+        cls._emit_audit(actor, entity_id, action or ResourceAction.UPDATE, changes)
+
+    @staticmethod
+    def _audit_scalar(value: Any) -> Any:
+        return value if isinstance(value, (str, int, float, bool)) or value is None else str(value)
+
+    @classmethod
+    def delete(cls, entity_id: str, *, actor: "AuditActor") -> bool:
+        from modules.application.common.types import ResourceAction
+
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
         result = cls.collection().delete_one({"_id": object_id})
-        return bool(result.deleted_count > 0)
-
-    @classmethod
-    def _query(
-        cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None, skip: int = 0, limit: int = 0
-    ) -> list[EntityT]:
-        cursor = cls.collection().find(store_filter)
-        if sort:  # [] means "no ordering"; query() already resolved None -> _to_sort before calling
-            cursor = cursor.sort(sort)
-        if skip:
-            cursor = cursor.skip(skip)
-        if limit:
-            cursor = cursor.limit(limit)
-        return [cls.from_doc(doc) for doc in cursor]
-
-    @classmethod
-    def _find_one(cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None) -> Optional[EntityT]:
-        cursor = cls.collection().find(store_filter)
-        if sort:
-            cursor = cursor.sort(sort)
-        doc = next(iter(cursor.limit(1)), None)
-        return cls.from_doc(doc) if doc is not None else None
+        deleted = bool(result.deleted_count > 0)
+        if deleted:
+            cls._emit_audit(actor, entity_id, ResourceAction.DELETE)
+        return deleted
 
     @classmethod
     def _count(cls, store_filter: Optional[StoreFilter] = None) -> int:

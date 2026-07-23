@@ -10,6 +10,7 @@ from modules.authentication.internal.otp.store.otp_repository import OTPReposito
 from modules.notification.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
+from tests.conftest import TEST_ACTOR
 
 
 class BaseTestAccount(unittest.TestCase):
@@ -19,7 +20,8 @@ class BaseTestAccount(unittest.TestCase):
         self.account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="default_username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         self.access_token = AuthenticationService.create_access_token_by_username_and_password(account=self.account)
 

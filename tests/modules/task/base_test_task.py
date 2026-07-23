@@ -12,6 +12,7 @@ from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from modules.task.task_service import TaskService
 from modules.task.types import CreateTaskParams, Task
+from tests.conftest import TEST_ACTOR
 
 
 class TaskRequestBody(TypedDict, total=False):
@@ -78,7 +79,8 @@ class BaseTestTask(unittest.TestCase):
                 password=password or self.DEFAULT_PASSWORD,
                 first_name=first_name or self.DEFAULT_FIRST_NAME,
                 last_name=last_name or self.DEFAULT_LAST_NAME,
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
     def get_access_token(self, username: Optional[str] = None, password: Optional[str] = None) -> str:
@@ -113,7 +115,8 @@ class BaseTestTask(unittest.TestCase):
                 account_id=account_id,
                 title=title or self.DEFAULT_TASK_TITLE,
                 description=description or self.DEFAULT_TASK_DESCRIPTION,
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
     def create_multiple_test_tasks(self, account_id: str, count: int) -> list[Task]:

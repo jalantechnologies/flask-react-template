@@ -5,6 +5,7 @@ from bson import ObjectId
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.application.common.types import AuditActor, ResourceAction
 from modules.application.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_model import (
@@ -80,7 +81,9 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
         return [("expires_at", -1)]
 
     @classmethod
-    def create_for_account(cls, account_id: str, token_hash: str, expires_at: datetime) -> PasswordResetToken:
+    def create_for_account(
+        cls, account_id: str, token_hash: str, expires_at: datetime, *, actor: AuditActor
+    ) -> PasswordResetToken:
         # The stored document keys `account` as an ObjectId and `expires_at` as a real date — a store-shaped
         # write the generic create()/to_doc() (which round-trips the string-typed domain entity) cannot
         # express, so it stays on the repository (see docs/backend-architecture.md).
@@ -94,4 +97,5 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
             "updated_at": creation_time,
         }
         result = cls.collection().insert_one(doc)
+        cls._emit_audit(actor, str(result.inserted_id), ResourceAction.CREATE)
         return cls.from_doc({**doc, "_id": result.inserted_id})

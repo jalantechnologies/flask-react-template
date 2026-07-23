@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+import enum
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Generic, List, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 T = TypeVar("T")
 
@@ -57,3 +59,68 @@ class PaginationResult(Generic[T]):
 
 
 UNSET = object()
+
+
+REDACTED = "[redacted]"
+
+type FieldChangeValue = Optional[str | int | float | bool]
+
+
+class ResourceAction(str, enum.Enum):
+    READ = "read"
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+
+
+class ActorType(str, enum.Enum):
+    ACCOUNT = "account"
+    WORKER = "worker"
+    ANONYMOUS = "anonymous"
+
+
+class AuditOutcome(str, enum.Enum):
+    SUCCESS = "success"
+    DENIED = "denied"
+
+
+@dataclass(frozen=True)
+class AuditActor:
+    actor_type: ActorType
+    actor_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class FieldChange:
+    old: FieldChangeValue
+    new: FieldChangeValue
+
+
+type FieldChanges = dict[str, FieldChange]
+
+
+@dataclass(frozen=True)
+class AuditRecord:
+    resource_type: str
+    resource_id: str
+    actor_type: ActorType
+    actor_id: Optional[str]
+    action: ResourceAction
+    timestamp: datetime
+    changes: FieldChanges = field(default_factory=dict)
+    outcome: AuditOutcome = AuditOutcome.SUCCESS
+
+
+@dataclass(frozen=True)
+class AuditLogEntry:
+    id: str
+    resource_type: str
+    resource_id: str
+    actor_type: ActorType
+    actor_id: Optional[str]
+    action: ResourceAction
+    timestamp: datetime
+    changes: FieldChanges = field(default_factory=dict)
+    outcome: AuditOutcome = AuditOutcome.SUCCESS
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

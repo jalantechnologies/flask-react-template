@@ -15,6 +15,7 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPErrorCode, VerifyOTPParams
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
+from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 API_URL = "http://127.0.0.1:8080/api/access-tokens"
@@ -26,7 +27,8 @@ class TestAccessTokenApi(BaseTestAccessToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:
@@ -43,7 +45,8 @@ class TestAccessTokenApi(BaseTestAccessToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:
@@ -81,12 +84,12 @@ class TestAccessTokenApi(BaseTestAccessToken):
     ) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
 
         before = datetime.now(UTC)
         one_time_password = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
         after = datetime.now(UTC)
 
@@ -103,15 +106,17 @@ class TestAccessTokenApi(BaseTestAccessToken):
     def test_given_existing_one_time_password_when_verifying_then_updated_at_reflects_verification_time(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
         one_time_password = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         before = datetime.now(UTC)
         verified_one_time_password = AuthenticationService.verify_otp(
-            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=one_time_password.otp_code)
+            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=one_time_password.otp_code),
+            account_id=account.id,
+            actor=TEST_ACTOR,
         )
         after = datetime.now(UTC)
 
@@ -123,11 +128,11 @@ class TestAccessTokenApi(BaseTestAccessToken):
     def test_get_access_token_by_phone_number_and_otp(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
 
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         with app.test_client() as client:
@@ -143,7 +148,7 @@ class TestAccessTokenApi(BaseTestAccessToken):
     def test_get_access_token_with_invalid_otp(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
 
         with app.test_client() as client:
@@ -171,15 +176,17 @@ class TestAccessTokenApi(BaseTestAccessToken):
     def test_get_access_token_with_expired_otp(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
 
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         AuthenticationService.verify_otp(
-            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=otp.otp_code)
+            params=VerifyOTPParams(phone_number=PhoneNumber(**phone_number), otp_code=otp.otp_code),
+            account_id=account.id,
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:
@@ -196,15 +203,17 @@ class TestAccessTokenApi(BaseTestAccessToken):
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
 
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
 
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=CreateOrUpdateAccountNotificationPreferencesParams(sms_enabled=False)
+            account_id=account.id,
+            actor=TEST_ACTOR,
+            preferences=CreateOrUpdateAccountNotificationPreferencesParams(sms_enabled=False),
         )
 
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         with app.test_client() as client:

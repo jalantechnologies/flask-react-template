@@ -5,15 +5,22 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
+from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreatePasswordResetTokenParams
+
+ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
 
 
 class PasswordResetTokenView(MethodView):
     def post(self) -> ResponseReturnValue:
         request_data = request.get_json()
         password_reset_token_params = CreatePasswordResetTokenParams(**request_data)
-        account_obj = AccountService.get_account_by_username(username=password_reset_token_params.username)
-        password_reset_token = AuthenticationService.create_password_reset_token(params=account_obj)
+        account_obj = AccountService.get_account_by_username(
+            username=password_reset_token_params.username, actor=ANONYMOUS_ACTOR
+        )
+        password_reset_token = AuthenticationService.create_password_reset_token(
+            params=account_obj, actor=ANONYMOUS_ACTOR
+        )
         password_reset_token_dict = asdict(password_reset_token)
         return jsonify(password_reset_token_dict), 201

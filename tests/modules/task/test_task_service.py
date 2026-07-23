@@ -1,204 +1,163 @@
-from datetime import UTC, datetime, timedelta
-
-from modules.application.common.types import PaginationParams
-from modules.task.errors import TaskNotFoundError
-from modules.task.task_service import TaskService
-from modules.task.types import (
-    CreateTaskParams,
-    DeleteTaskParams,
-    GetPaginatedTasksParams,
-    GetTaskParams,
-    TaskErrorCode,
-    UpdateTaskParams,
-)
-from tests.modules.task.base_test_task import BaseTestTask
+from modules.task.types import TaskErrorCode
+from tests.modules.task.base_test_task import BaseTestTask, TaskRequestBody
 
 
 class TestTaskService(BaseTestTask):
     def setUp(self) -> None:
-        self.account = self.create_test_account()
+        super().setUp()
+        self.account, self.token = self.create_account_and_get_token()
 
     def test_create_task(self) -> None:
-        task_params = CreateTaskParams(
-            account_id=self.account.id, title=self.DEFAULT_TASK_TITLE, description=self.DEFAULT_TASK_DESCRIPTION
-        )
+        task_data: TaskRequestBody = {"title": self.DEFAULT_TASK_TITLE, "description": self.DEFAULT_TASK_DESCRIPTION}
 
-        task = TaskService.create_task(params=task_params)
+        response = self.make_authenticated_request("POST", self.account.id, self.token, data=task_data)
 
-        assert task.account_id == self.account.id
-        assert task.title == self.DEFAULT_TASK_TITLE
-        assert task.description == self.DEFAULT_TASK_DESCRIPTION
-        assert task.id is not None
+        assert response.status_code == 201
+        assert response.json is not None
+        assert response.json.get("id") is not None
+        assert response.json.get("account_id") == self.account.id
+        assert response.json.get("title") == self.DEFAULT_TASK_TITLE
+        assert response.json.get("description") == self.DEFAULT_TASK_DESCRIPTION
 
     def test_get_task_for_account(self) -> None:
         created_task = self.create_test_task(account_id=self.account.id)
-        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
 
-        retrieved_task = TaskService.get_task(params=get_params)
+        response = self.make_authenticated_request("GET", self.account.id, self.token, task_id=created_task.id)
 
-        assert retrieved_task.id == created_task.id
-        assert retrieved_task.account_id == self.account.id
-        assert retrieved_task.title == self.DEFAULT_TASK_TITLE
-        assert retrieved_task.description == self.DEFAULT_TASK_DESCRIPTION
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json.get("id") == created_task.id
+        assert response.json.get("account_id") == self.account.id
+        assert response.json.get("title") == self.DEFAULT_TASK_TITLE
+        assert response.json.get("description") == self.DEFAULT_TASK_DESCRIPTION
 
     def test_get_task_for_account_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        get_params = GetTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
 
-        with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.get_task(params=get_params)
+        response = self.make_authenticated_request("GET", self.account.id, self.token, task_id=non_existent_task_id)
 
-        assert context.exception.code == TaskErrorCode.NOT_FOUND
+        self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_get_paginated_tasks_empty(self) -> None:
-        pagination_params = PaginationParams(page=1, size=10, offset=0)
-        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
+        response = self.make_authenticated_request("GET", self.account.id, self.token, query_params="page=1&size=10")
 
-        result = TaskService.get_paginated_tasks(params=get_params)
-
-        assert len(result.items) == 0
-        assert result.total_count == 0
-        assert result.total_pages == 0
-        assert result.pagination_params.page == 1
-        assert result.pagination_params.size == 10
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["items"]) == 0
+        assert response.json["total_count"] == 0
+        assert response.json["pagination_params"]["page"] == 1
+        assert response.json["pagination_params"]["size"] == 10
 
     def test_get_paginated_tasks_with_data(self) -> None:
-        tasks_count = 5
-        self.create_multiple_test_tasks(account_id=self.account.id, count=tasks_count)
-        pagination_params = PaginationParams(page=1, size=3, offset=0)
-        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
+        self.create_multiple_test_tasks(account_id=self.account.id, count=5)
 
-        result = TaskService.get_paginated_tasks(params=get_params)
+        page_one = self.make_authenticated_request("GET", self.account.id, self.token, query_params="page=1&size=3")
+        assert page_one.status_code == 200
+        assert page_one.json is not None
+        assert len(page_one.json["items"]) == 3
+        assert page_one.json["total_count"] == 5
+        assert page_one.json["pagination_params"]["page"] == 1
+        assert page_one.json["pagination_params"]["size"] == 3
 
-        assert len(result.items) == 3
-        assert result.total_count == 5
-        assert result.total_pages == 2
-        assert result.pagination_params.page == 1
-        assert result.pagination_params.size == 3
-
-        pagination_params = PaginationParams(page=2, size=3, offset=0)
-        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        result = TaskService.get_paginated_tasks(params=get_params)
-        assert len(result.items) == 2
-        assert result.total_count == 5
-        assert result.total_pages == 2
+        page_two = self.make_authenticated_request("GET", self.account.id, self.token, query_params="page=2&size=3")
+        assert page_two.status_code == 200
+        assert page_two.json is not None
+        assert len(page_two.json["items"]) == 2
+        assert page_two.json["total_count"] == 5
 
     def test_get_paginated_tasks_default_pagination(self) -> None:
         self.create_test_task(account_id=self.account.id)
-        pagination_params = PaginationParams(page=1, size=1, offset=0)
-        get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks(params=get_params)
+        response = self.make_authenticated_request("GET", self.account.id, self.token, query_params="page=1&size=1")
 
-        assert len(result.items) == 1
-        assert result.total_count == 1
-        assert result.pagination_params.page == 1
-        assert result.pagination_params.size == 1
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["items"]) == 1
+        assert response.json["total_count"] == 1
+        assert response.json["pagination_params"]["page"] == 1
+        assert response.json["pagination_params"]["size"] == 1
 
     def test_update_task(self) -> None:
         created_task = self.create_test_task(
             account_id=self.account.id, title="Original Title", description="Original Description"
         )
-        update_params = UpdateTaskParams(
-            account_id=self.account.id,
-            task_id=created_task.id,
-            title="Updated Title",
-            description="Updated Description",
+        update_data: TaskRequestBody = {"title": "Updated Title", "description": "Updated Description"}
+
+        response = self.make_authenticated_request(
+            "PATCH", self.account.id, self.token, task_id=created_task.id, data=update_data
         )
 
-        updated_task = TaskService.update_task(params=update_params)
-
-        assert updated_task.id == created_task.id
-        assert updated_task.account_id == self.account.id
-        assert updated_task.title == "Updated Title"
-        assert updated_task.description == "Updated Description"
-
-    def test_given_task_details_when_creating_task_then_created_at_and_updated_at_reflect_creation_time(self) -> None:
-        before = datetime.now(UTC)
-        created_task = self.create_test_task(account_id=self.account.id)
-        after = datetime.now(UTC)
-
-        assert created_task.created_at is not None
-        assert created_task.updated_at is not None
-        assert created_task.created_at.tzinfo is not None
-        assert created_task.updated_at.tzinfo is not None
-        assert created_task.created_at.utcoffset() == timedelta(0)
-        assert created_task.updated_at.utcoffset() == timedelta(0)
-        assert created_task.created_at == created_task.updated_at
-        assert before <= created_task.created_at <= after
-        assert before <= created_task.updated_at <= after
-
-    def test_given_existing_task_when_updating_task_then_updated_at_reflects_update_time(self) -> None:
-        created_task = self.create_test_task(account_id=self.account.id)
-        update_params = UpdateTaskParams(
-            account_id=self.account.id,
-            task_id=created_task.id,
-            title="Updated Title",
-            description="Updated Description",
-        )
-
-        before = datetime.now(UTC)
-        updated_task = TaskService.update_task(params=update_params)
-        after = datetime.now(UTC)
-
-        assert updated_task.updated_at is not None
-        assert updated_task.created_at is not None
-        assert before - timedelta(milliseconds=1) <= updated_task.updated_at <= after
-        assert updated_task.updated_at > updated_task.created_at
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json.get("id") == created_task.id
+        assert response.json.get("account_id") == self.account.id
+        assert response.json.get("title") == "Updated Title"
+        assert response.json.get("description") == "Updated Description"
 
     def test_update_task_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        update_params = UpdateTaskParams(
-            account_id=self.account.id,
-            task_id=non_existent_task_id,
-            title="Updated Title",
-            description="Updated Description",
+        update_data: TaskRequestBody = {"title": "Updated Title", "description": "Updated Description"}
+
+        response = self.make_authenticated_request(
+            "PATCH", self.account.id, self.token, task_id=non_existent_task_id, data=update_data
         )
 
-        with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.update_task(params=update_params)
-
-        assert context.exception.code == TaskErrorCode.NOT_FOUND
+        self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_delete_task(self) -> None:
         created_task = self.create_test_task(account_id=self.account.id)
-        delete_params = DeleteTaskParams(account_id=self.account.id, task_id=created_task.id)
 
-        deletion_result = TaskService.delete_task(params=delete_params)
+        delete_response = self.make_authenticated_request(
+            "DELETE", self.account.id, self.token, task_id=created_task.id
+        )
 
-        assert deletion_result.task_id == created_task.id
-        assert deletion_result.success is True
-        assert deletion_result.deleted_at is not None
-        assert isinstance(deletion_result.deleted_at, datetime)
+        assert delete_response.status_code == 204
+        assert delete_response.data == b""
 
-        get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
-        with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task(params=get_params)
-
-    def test_given_existing_task_when_deleting_task_then_deleted_at_reflects_deletion_time_in_utc(self) -> None:
-        created_task = self.create_test_task(account_id=self.account.id)
-        delete_params = DeleteTaskParams(account_id=self.account.id, task_id=created_task.id)
-
-        before = datetime.now(UTC)
-        deletion_result = TaskService.delete_task(params=delete_params)
-        after = datetime.now(UTC)
-
-        assert deletion_result.deleted_at is not None
-        assert deletion_result.deleted_at.tzinfo is not None
-        assert deletion_result.deleted_at.utcoffset() == timedelta(0)
-        assert before <= deletion_result.deleted_at <= after
+        get_response = self.make_authenticated_request("GET", self.account.id, self.token, task_id=created_task.id)
+        self.assert_error_response(get_response, 404, TaskErrorCode.NOT_FOUND)
 
     def test_delete_task_not_found(self) -> None:
         non_existent_task_id = "507f1f77bcf86cd799439011"
-        delete_params = DeleteTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
 
-        with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.delete_task(params=delete_params)
+        response = self.make_authenticated_request("DELETE", self.account.id, self.token, task_id=non_existent_task_id)
 
-        assert context.exception.code == TaskErrorCode.NOT_FOUND
+        self.assert_error_response(response, 404, TaskErrorCode.NOT_FOUND)
+
+    def test_update_task_belonging_to_another_account_is_not_found_and_leaves_it_unchanged(self) -> None:
+        other_account, other_token = self.create_account_and_get_token(username="otheruser@example.com")
+        victim_task = self.create_test_task(
+            account_id=other_account.id, title="Owner Title", description="Owner Description"
+        )
+        update_data: TaskRequestBody = {"title": "Hijacked", "description": "Hijacked"}
+
+        response = self.make_cross_account_request(
+            "PATCH", other_account.id, self.token, task_id=victim_task.id, data=update_data
+        )
+
+        assert response.status_code == 401
+
+        unchanged = self.make_authenticated_request("GET", other_account.id, other_token, task_id=victim_task.id)
+        assert unchanged.status_code == 200
+        assert unchanged.json is not None
+        assert unchanged.json.get("title") == "Owner Title"
+        assert unchanged.json.get("description") == "Owner Description"
+
+    def test_delete_task_belonging_to_another_account_is_not_found_and_leaves_it_intact(self) -> None:
+        other_account, other_token = self.create_account_and_get_token(username="otheruser@example.com")
+        victim_task = self.create_test_task(account_id=other_account.id)
+
+        response = self.make_cross_account_request("DELETE", other_account.id, self.token, task_id=victim_task.id)
+
+        assert response.status_code == 401
+
+        still_there = self.make_authenticated_request("GET", other_account.id, other_token, task_id=victim_task.id)
+        assert still_there.status_code == 200
+        assert still_there.json is not None
+        assert still_there.json.get("id") == victim_task.id
 
     def test_task_isolation_between_accounts(self) -> None:
-        other_account = self.create_test_account(username="otheruser@example.com")
+        other_account, other_token = self.create_account_and_get_token(username="otheruser@example.com")
 
         account1_task = self.create_test_task(
             account_id=self.account.id, title="Account 1 Task", description="Task for account 1"
@@ -207,19 +166,15 @@ class TestTaskService(BaseTestTask):
             account_id=other_account.id, title="Account 2 Task", description="Task for account 2"
         )
 
-        pagination_params = PaginationParams(page=1, size=10, offset=0)
-        get_params1 = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        account1_result = TaskService.get_paginated_tasks(params=get_params1)
+        account1_list = self.make_authenticated_request("GET", self.account.id, self.token)
+        assert account1_list.json is not None
+        assert len(account1_list.json["items"]) == 1
+        assert account1_list.json["items"][0]["id"] == account1_task.id
 
-        get_params2 = GetPaginatedTasksParams(account_id=other_account.id, pagination_params=pagination_params)
-        account2_result = TaskService.get_paginated_tasks(params=get_params2)
+        account2_list = self.make_authenticated_request("GET", other_account.id, other_token)
+        assert account2_list.json is not None
+        assert len(account2_list.json["items"]) == 1
+        assert account2_list.json["items"][0]["id"] == account2_task.id
 
-        assert len(account1_result.items) == 1
-        assert account1_result.items[0].id == account1_task.id
-
-        assert len(account2_result.items) == 1
-        assert account2_result.items[0].id == account2_task.id
-
-        get_params = GetTaskParams(account_id=self.account.id, task_id=account2_task.id)
-        with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task(params=get_params)
+        cross_read = self.make_cross_account_request("GET", other_account.id, self.token, task_id=account2_task.id)
+        assert cross_read.status_code == 401

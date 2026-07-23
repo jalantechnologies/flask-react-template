@@ -7,6 +7,7 @@ from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
 from modules.config.config_service import ConfigService
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -62,7 +63,8 @@ class TestAccountGetApi(BaseTestAccount):
         other_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:

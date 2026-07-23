@@ -1,4 +1,5 @@
 from modules.account.errors import AccountBadRequestError
+from modules.application.common.types import AuditActor
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
@@ -9,9 +10,11 @@ from modules.authentication.types import PasswordResetToken, PasswordResetTokenQ
 
 class PasswordResetTokenReader:
     @staticmethod
-    def get_password_reset_token_by_account_id(account_id: str) -> PasswordResetToken:
+    def get_password_reset_token_by_account_id(account_id: str, *, actor: AuditActor) -> PasswordResetToken:
         # The repository orders by expires_at desc, so this returns the account's most recent token.
-        password_reset_token = PasswordResetTokenRepository.query_one(PasswordResetTokenQuery(account_id=account_id))
+        password_reset_token = PasswordResetTokenRepository.query_one(
+            PasswordResetTokenQuery(account_id=account_id), actor=actor
+        )
 
         if password_reset_token is None:
             raise PasswordResetTokenNotFoundError()
@@ -19,8 +22,8 @@ class PasswordResetTokenReader:
         return password_reset_token
 
     @staticmethod
-    def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
-        password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
+    def verify_password_reset_token(account_id: str, token: str, *, actor: AuditActor) -> PasswordResetToken:
+        password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id, actor=actor)
 
         if password_reset_token.is_expired:
             raise AccountBadRequestError(

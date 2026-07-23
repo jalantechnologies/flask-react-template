@@ -5,6 +5,7 @@ from modules.account.errors import AccountWithUsernameNotFoundError
 from modules.account.types import AccountErrorCode, AccountSearchParams, CreateAccountByUsernameAndPasswordParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import AccessTokenErrorCode
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -76,7 +77,7 @@ class TestAccountDeleteApi(BaseTestAccount):
 
         with self.assertRaises(AccountWithUsernameNotFoundError):
             AccountService.get_account_by_username_and_password(
-                params=AccountSearchParams(password="password", username=self.account.username)
+                params=AccountSearchParams(password="password", username=self.account.username), actor=TEST_ACTOR
             )
 
     def test_given_malformed_account_id_when_deleting_account_then_returns_unauthorized(self) -> None:
@@ -95,7 +96,8 @@ class TestAccountDeleteApi(BaseTestAccount):
         other_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         other_account_token = AuthenticationService.create_access_token_by_username_and_password(account=other_account)
 

@@ -340,3 +340,42 @@ blueprint.add_url_rule(
 - Calls `AccountService.*`
 - Returns `jsonify(asdict(result)), <status_code>`
 - Raises `AccountBadRequestError` for missing/invalid inputs
+
+## 9. Auditing
+
+The audit trail is a SOC2 control, and it is built into the persistence layer so coverage does not depend on any caller remembering to log. It lives inside the `application` module (`modules/application/internals/audit/`), with its shared types in `modules/application/common/types.py`.
+
+### 9.1 Every repository write is audited
+
+`ApplicationRepository.create`, `update`, `update_fields`, and `delete` each record an audit entry automatically. An entry holds:
+
+- `resource_type` (the collection, or a repository's `audit_resource_type`) and `resource_id`
+- `actor_type` (`account`, `worker`, or `anonymous`) and `actor_id` — who performed the action; `actor_id` is null for an anonymous actor
+- `action` (`create` / `update` / `delete` / `read`)
+- `outcome` (`success` or `denied`); defaults to `success`, so every existing path and stored row is a success without change
+- `changes` on an update: `{field: {old, new}}`, with sensitive fields (`password`, `token`, `secret`, `otp`, `mfa`, `hashed`) redacted to `[redacted]`
+- `timestamp`
+
+Because emission is in the base class, a module gets auditing for free. Views, services, readers, and writers contain no audit code beyond passing the actor through.
+
+### 9.2 The actor is an explicit parameter
+
+Every mutating repository method takes a required `actor: AuditActor` keyword argument (`AuditActor(actor_type, actor_id)`, in `modules/application/common/types.py`). There is no ambient context: the actor is threaded from the boundary down through the service and writer to the repository, so the type checker proves at compile time that no write can happen without one.
+
+There are three actor types, chosen by whether identity is proven at the moment of the write:
+
+- `AuditActor(ActorType.ACCOUNT, account_id)` — a proven identity. The credentials, access token, or reset token in hand actually identify an account. Views build it from the account the auth middleware put on the request; internal flows pass the account resolved from the proven credential. This covers login (OTP verify and access-token creation), password-reset completion (verify + mark-used + the password update), and every authenticated mutation.
+- `AuditActor(ActorType.WORKER, worker_name)` — a background job, seed, or system action, named after the worker.
+- `AuditActor(ActorType.ANONYMOUS, None)` — a request with no proven identity yet. `actor_id` is null. This covers signup, OTP request/creation (asking for a code by phone, before authenticating), and the forgot-password token request (you have no session because you forgot your password).
+
+Every repository is audited (the `audit_log` store is the sole exception, to avoid recording its own writes). Threading the actor as a required argument is the completeness guarantee: no unattributed write reaches the database.
+
+### 9.3 Denied ownership-violation attempts
+
+`outcome=denied` records the SOC2-relevant case of an authenticated account rejected for reaching a resource it does not own. `enforce_account_ownership` (in the auth middleware) emits one denied entry before raising `UnauthorizedAccessError`: `outcome=denied`, `action=read` (an access attempt), actor the verified account from the token, and the target account boundary as the resource (`resource_type="accounts"`, `resource_id` the account id in the path). The account boundary is the one resource the middleware can name for every route without importing each module's collection.
+
+Only the ownership-violation case is audited. A missing, malformed, or expired token is rejected with no proven actor, so it would produce an anonymous entry with no resource; those raise without an audit. The emission goes through the same best-effort writer as every other entry, so a failed audit write never turns a 401 into a 500.
+
+### 9.4 The rare explicit case
+
+If a custom method performs an access the generic CRUD does not cover, call `ApplicationService.record_audit(resource_type=..., resource_id=..., action=..., changes=...)`. This should be uncommon; frequent use usually means the data access belongs in a repository instead.

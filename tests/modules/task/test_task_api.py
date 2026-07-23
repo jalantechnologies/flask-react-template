@@ -1,5 +1,7 @@
 from server import app
 
+from modules.application.common.types import ActorType, AuditOutcome, ResourceAction
+from modules.application.internal.audit.store.audit_log_repository import AuditLogRepository
 from modules.authentication.types import AccessTokenErrorCode
 from modules.task.types import TaskErrorCode
 from tests.modules.task.base_test_task import BaseTestTask, TaskRequestBody
@@ -279,3 +281,45 @@ class TestTaskApi(BaseTestTask):
             )
 
         assert response.status_code == 400
+
+    def test_ownership_violation_records_a_denied_audit_entry(self) -> None:
+        AuditLogRepository.collection().delete_many({})
+        account_a, token_a = self.create_account_and_get_token("attacker@example.com", "password_a")
+        account_b, token_b = self.create_account_and_get_token("victim@example.com", "password_b")
+
+        create_response = self.make_authenticated_request(
+            "POST", account_b.id, token_b, data={"title": "B's task", "description": "Belongs to B"}
+        )
+        assert create_response.json is not None
+        account_b_task_id = create_response.json.get("id")
+
+        response = self.make_cross_account_request("GET", account_b.id, token_a, task_id=account_b_task_id)
+
+        self.assert_error_response(response, 401, AccessTokenErrorCode.UNAUTHORIZED_ACCESS)
+
+        denied = [
+            doc for doc in AuditLogRepository.collection().find({}) if doc.get("outcome") == AuditOutcome.DENIED.value
+        ]
+        assert len(denied) == 1
+        entry = denied[0]
+        assert entry["actor_type"] == ActorType.ACCOUNT.value
+        assert entry["actor_id"] == account_a.id
+        assert entry["resource_type"] == "accounts"
+        assert entry["resource_id"] == account_b.id
+        assert entry["action"] == ResourceAction.READ.value
+
+    def test_owner_request_records_success_and_no_denied_entry(self) -> None:
+        AuditLogRepository.collection().delete_many({})
+        account, token = self.create_account_and_get_token("owner@example.com", "password_owner")
+        created_task = self.create_test_task(account_id=account.id)
+
+        response = self.make_authenticated_request("GET", account.id, token, task_id=created_task.id)
+        assert response.status_code == 200
+
+        docs = list(AuditLogRepository.collection().find({}))
+        assert [doc for doc in docs if doc.get("outcome") == AuditOutcome.DENIED.value] == []
+        read_entries = [
+            doc for doc in docs if doc["action"] == ResourceAction.READ.value and doc["resource_id"] == created_task.id
+        ]
+        assert len(read_entries) >= 1
+        assert all(doc.get("outcome") == AuditOutcome.SUCCESS.value for doc in read_entries)

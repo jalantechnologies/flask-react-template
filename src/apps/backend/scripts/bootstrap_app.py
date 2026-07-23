@@ -1,5 +1,6 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
+from modules.application.common.types import ActorType, AuditActor
 from modules.config.config_service import ConfigService
 from modules.config.errors import MissingKeyError
 from modules.logger.logger import Logger
@@ -33,7 +34,9 @@ class BootstrapApp:
                 username=username, password=password, first_name=first_name, last_name=last_name
             )
             try:
-                AccountService.create_account_by_username_and_password(params=params)
+                AccountService.create_account_by_username_and_password(
+                    params=params, actor=AuditActor(actor_type=ActorType.WORKER, actor_id="bootstrap_app")
+                )
                 Logger.info(message=f"Test user '{username}' created.")
             except Exception as e:
                 Logger.error(message=f"Failed to create test user: {e}")
