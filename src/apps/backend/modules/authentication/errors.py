@@ -12,6 +12,18 @@ class AccessTokenExpiredError(AppError):
         super().__init__(code=AccessTokenErrorCode.ACCESS_TOKEN_EXPIRED, http_status_code=401, message=message)
 
 
+class AccessTokenSigningKeyInsecureError(AppError):
+    def __init__(self) -> None:
+        super().__init__(
+            code=AccessTokenErrorCode.SIGNING_KEY_INSECURE,
+            http_status_code=500,
+            message=(
+                "Refusing to start: 'accounts.token_signing_key' is missing or set to an insecure placeholder. "
+                "Set the ACCOUNTS_TOKEN_SIGNING_KEY secret to a high-entropy value unique to this environment."
+            ),
+        )
+
+
 class UnauthorizedAccessError(AppError):
     def __init__(self, message: str) -> None:
         super().__init__(code=AccessTokenErrorCode.UNAUTHORIZED_ACCESS, http_status_code=401, message=message)

@@ -1,3 +1,6 @@
+accounts:
+  token_signing_key: 'insecure-local-testing-signing-key'
+
 mongodb:
   uri: 'mongodb://localhost:27017/flask-react-template-test'
 
