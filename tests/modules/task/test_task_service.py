@@ -198,6 +198,37 @@ class TestTaskService(BaseTestTask):
 
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 
+    def test_update_task_belonging_to_another_account_is_not_found_and_leaves_it_unchanged(self) -> None:
+        other_account = self.create_test_account(username="otheruser@example.com")
+        victim_task = self.create_test_task(
+            account_id=other_account.id, title="Owner Title", description="Owner Description"
+        )
+
+        update_params = UpdateTaskParams(
+            account_id=self.account.id, task_id=victim_task.id, title="Hijacked", description="Hijacked"
+        )
+        with self.assertRaises(TaskNotFoundError):
+            TaskService.update_task(params=update_params, actor=TEST_ACTOR)
+
+        unchanged = TaskService.get_task(
+            params=GetTaskParams(account_id=other_account.id, task_id=victim_task.id), actor=TEST_ACTOR
+        )
+        assert unchanged.title == "Owner Title"
+        assert unchanged.description == "Owner Description"
+
+    def test_delete_task_belonging_to_another_account_is_not_found_and_leaves_it_intact(self) -> None:
+        other_account = self.create_test_account(username="otheruser@example.com")
+        victim_task = self.create_test_task(account_id=other_account.id)
+
+        delete_params = DeleteTaskParams(account_id=self.account.id, task_id=victim_task.id)
+        with self.assertRaises(TaskNotFoundError):
+            TaskService.delete_task(params=delete_params, actor=TEST_ACTOR)
+
+        still_there = TaskService.get_task(
+            params=GetTaskParams(account_id=other_account.id, task_id=victim_task.id), actor=TEST_ACTOR
+        )
+        assert still_there.id == victim_task.id
+
     def test_task_isolation_between_accounts(self) -> None:
         other_account = self.create_test_account(username="otheruser@example.com")
 

@@ -221,46 +221,52 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
 
     @classmethod
     def update(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> Optional[EntityT]:
-        # Returns the updated entity from the same atomic write, so an update records only its UPDATE
-        # entry — no extra READ round-trip for the read-back.
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return None
-        patch = {"updated_at": datetime.now(UTC), **fields} if fields else {}
-        previous = cls._apply_update(object_id, entity_id, patch, fields, actor)
-        if previous is None:
-            return None
-        # {**previous, **patch} is exactly the stored post-image ($set replaces those keys), so the
-        # updated entity is reconstructed in memory rather than read back from the store.
-        return cls.from_doc({**previous, **patch})
+        return cls._update_matching({"_id": object_id}, fields, actor)
+
+    @classmethod
+    def update_by_query(cls, params: QueryT, fields: FieldUpdates, *, actor: "AuditActor") -> Optional[EntityT]:
+        # Ownership is enforced by the write filter itself (e.g. id AND account_id), so no read-then-write
+        # gap and no separate ownership READ. None when nothing matched the filter.
+        return cls._update_matching(cls._to_filter(params), fields, actor)
 
     @classmethod
     def update_fields(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> bool:
-        # Like update() but returns only whether the row existed, for callers that discard the entity.
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
         if not fields:
             return cls._count({"_id": object_id}) > 0
         patch = {"updated_at": datetime.now(UTC), **fields}
-        return cls._apply_update(object_id, entity_id, patch, fields, actor) is not None
+        return cls._apply_update({"_id": object_id}, patch, fields, actor) is not None
+
+    @classmethod
+    def _update_matching(
+        cls, store_filter: StoreFilter, fields: FieldUpdates, actor: "AuditActor"
+    ) -> Optional[EntityT]:
+        if not fields:
+            current: Optional[StoredDocument] = cls.collection().find_one(store_filter)
+            return cls.from_doc(current) if current is not None else None
+        patch = {"updated_at": datetime.now(UTC), **fields}
+        previous = cls._apply_update(store_filter, patch, fields, actor)
+        if previous is None:
+            return None
+        return cls.from_doc({**previous, **patch})
 
     @classmethod
     def _apply_update(
-        cls, object_id: ObjectId, entity_id: str, patch: FieldUpdates, fields: FieldUpdates, actor: "AuditActor"
+        cls, store_filter: StoreFilter, patch: FieldUpdates, fields: FieldUpdates, actor: "AuditActor"
     ) -> Optional[StoredDocument]:
-        # One atomic round-trip: find_one_and_update returns the document exactly as it was before the
-        # $set, so the audit diff's `old` value cannot be skewed by a concurrent write between read and
-        # write. Returns the BEFORE document (None if no row matched).
-        if not patch:
-            current: Optional[StoredDocument] = cls.collection().find_one({"_id": object_id})
-            return current
+        # BEFORE returns the document as it was immediately before the $set, so the audit diff's `old`
+        # value is atomic; the audited resource_id is the matched document's own _id.
         previous: Optional[StoredDocument] = cls.collection().find_one_and_update(
-            {"_id": object_id}, {"$set": patch}, return_document=ReturnDocument.BEFORE
+            store_filter, {"$set": patch}, return_document=ReturnDocument.BEFORE
         )
         if previous is None:
             return None
-        cls._emit_field_update_audit(actor, entity_id, fields, previous)
+        cls._emit_field_update_audit(actor, str(previous["_id"]), fields, previous)
         return previous
 
     @classmethod
