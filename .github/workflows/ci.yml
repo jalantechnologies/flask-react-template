@@ -491,6 +491,10 @@ jobs:
           repository: jalantechnologies/github-ci
           path: platform
 
+      # Keep this at repo-root output/. backend.sonar.python.coverage.reportPaths is
+      # ../../../output/coverage.xml relative to backend.sonar.projectBaseDir (src/apps/backend),
+      # which resolves to <repo-root>/output/coverage.xml. Sonar only walks downward from the base
+      # dir, so a report left anywhere else is unreachable and coverage reads as zero.
       - name: Download coverage report
         uses: actions/download-artifact@v8
         with:
@@ -509,21 +513,110 @@ jobs:
           branch_base: main
           pull_request_number: ${{ github.event.number }}
 
+      # These diagnostics must be scoped to the pull request, not the project as a whole.
+      # Without &pullRequest=<n>, project_status reports the MAIN branch (status NONE, no
+      # conditions) instead of this PR, and the issue search with projectKeys is project-wide,
+      # so it returns issues from unrelated scans (a recent PR printed issues from a completely
+      # different project). componentKeys + pullRequest restricts the search to this PR's new code.
       - name: Fetch SonarQube quality gate details
         if: steps.sonar_analysis.outcome == 'failure'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          PR_NUMBER: ${{ github.event.number }}
         run: |
           PROJECT_KEY=$(grep 'sonar.projectKey' sonar-project.properties | cut -d'=' -f2 | tr -d ' ')
           echo "Quality gate status:"
-          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}" | python3 -m json.tool || true
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}&pullRequest=${PR_NUMBER}" | python3 -m json.tool || true
           echo "New issues:"
-          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?projectKeys=${PROJECT_KEY}&resolved=false&sinceLeakPeriod=true&ps=10" | python3 -m json.tool || true
+          curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?componentKeys=${PROJECT_KEY}&pullRequest=${PR_NUMBER}&resolved=false&ps=20" | python3 -m json.tool || true
 
-      - name: Fail if SonarQube analysis failed
+      # The analyze action sets outcome=failure when its internal sonar-scanner prints
+      # "QUALITY GATE STATUS: FAILED". That scanner verdict has disagreed with the authoritative
+      # PR-scoped gate: on PR #732 the scanner said FAILED while the gate returned "OK" on every
+      # condition (0 new bugs/smells/vulns). So we do NOT trust the scanner's exit alone.
+      #
+      # But we also must not trust a bare project_status?pullRequest=<n>: that returns the LATEST
+      # analysis for the PR, which may be a stale earlier commit's OK/NONE. If this run's scanner
+      # crashed before publishing the current head, a bare PR-scoped OK would wave an UNSCANNED
+      # commit through green. So we anchor the gate to THIS run's analysis:
+      #   1. Read .scannerwork/report-task.txt (written by this run's sonar-scanner) for its
+      #      ceTaskId. No report-task.txt => the scanner never published this commit => FAIL.
+      #   2. Poll api/ce/task?id=<ceTaskId> until terminal. Only SUCCESS with an analysisId means
+      #      this commit was actually analysed; anything else (FAILED/CANCELED) => FAIL.
+      #   3. Query project_status?analysisId=<analysisId> — the gate for exactly this analysis,
+      #      not whatever happens to be latest on the PR.
+      # Pass only on OK/NONE for THIS analysis; fail on ERROR; fail closed on any empty/broken
+      # response so a diagnostic hole can never mask an unscanned commit or a real gate failure.
+      - name: Fail unless this run's own analysis passed the gate
         if: steps.sonar_analysis.outcome == 'failure'
-        run: exit 1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: |
+          REPORT_TASK_FILE=$(find . -type f -name report-task.txt -path '*.scannerwork*' 2>/dev/null | head -1)
+          if [ -z "$REPORT_TASK_FILE" ] || [ ! -f "$REPORT_TASK_FILE" ]; then
+            echo "::error::No .scannerwork/report-task.txt was produced, so this commit was never published to SonarQube. Failing to avoid passing an unscanned commit."
+            exit 1
+          fi
+          CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK_FILE" | cut -d'=' -f2- | tr -d ' \r')
+          if [ -z "$CE_TASK_ID" ]; then
+            echo "::error::report-task.txt has no ceTaskId; cannot confirm this commit was published. Failing."
+            exit 1
+          fi
+
+          # sonar.qualitygate.wait=true means the CE task is normally terminal by now; poll a few
+          # times anyway to absorb a lagging compute-engine queue.
+          CE_TASK_STATUS=""
+          ANALYSIS_ID=""
+          for _ in 1 2 3 4 5 6; do
+            CE_RESPONSE=$(curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${CE_TASK_ID}" || true)
+            CE_PARSED=$(printf '%s' "$CE_RESPONSE" | python3 -c '
+          import sys, json
+          raw = sys.stdin.read().strip()
+          if not raw:
+              sys.exit(0)
+          try:
+              t = json.loads(raw)["task"]
+          except Exception:
+              sys.exit(0)
+          print(t.get("status", "") + "|" + t.get("analysisId", ""))
+          ')
+            CE_TASK_STATUS=${CE_PARSED%%|*}
+            ANALYSIS_ID=${CE_PARSED#*|}
+            case "$CE_TASK_STATUS" in
+              PENDING|IN_PROGRESS) sleep 5 ;;
+              *) break ;;
+            esac
+          done
+
+          if [ "$CE_TASK_STATUS" != "SUCCESS" ] || [ -z "$ANALYSIS_ID" ]; then
+            echo "::error::SonarQube compute-engine task for this run is '${CE_TASK_STATUS:-<unknown>}' (not SUCCESS with an analysisId). The current commit was not analysed. Failing."
+            exit 1
+          fi
+
+          GATE_RESPONSE=$(curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${ANALYSIS_ID}" || true)
+          STATUS=$(printf '%s' "$GATE_RESPONSE" | python3 -c '
+          import sys, json
+          raw = sys.stdin.read().strip()
+          if not raw:
+              sys.exit(0)
+          try:
+              print(json.loads(raw)["projectStatus"]["status"])
+          except Exception:
+              sys.exit(0)
+          ')
+          echo "This run analysisId=${ANALYSIS_ID} quality gate status: ${STATUS:-<none>}"
+          if [ "$STATUS" = "ERROR" ]; then
+            echo "::error::SonarQube quality gate for this run's analysis is ERROR. Failing the build."
+            exit 1
+          elif [ "$STATUS" = "OK" ] || [ "$STATUS" = "NONE" ]; then
+            echo "::warning::sonar-scanner reported a failure, but the quality gate for this run's own analysis (${ANALYSIS_ID}) is ${STATUS}. Treating the scanner's non-zero result as a transient/scanner issue and passing."
+            exit 0
+          else
+            echo "::error::Could not determine the quality gate status for this run's analysis (got '${STATUS:-<empty>}'). Failing so a broken query cannot mask a real gate failure."
+            exit 1
+          fi
 
   scan:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
@@ -750,9 +843,18 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.test.yml down -v || true
 
+      # coverage.xml is produced inside the container (WORKDIR /app, .coveragerc source
+      # src/apps/backend), so it records the in-container path /app/src/apps/backend that does not
+      # exist on the runner. Sonar resolves report paths by walking DOWN from <source>, so a wrong
+      # <source> makes it silently measure zero coverage. Stripping only the filename prefix is not
+      # enough: <source> must also be rewritten to the module base dir (.) so the now-relative
+      # filenames resolve against backend.sonar.projectBaseDir=src/apps/backend.
       - name: Fix coverage paths for SonarQube
         run: |
-          sed -i 's|/app/src/apps/backend/||g' output/coverage.xml || true
+          sed -i \
+            -e 's|/app/src/apps/backend/||g' \
+            -e 's|<source>/app/src/apps/backend</source>|<source>.</source>|g' \
+            output/coverage.xml || true
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
