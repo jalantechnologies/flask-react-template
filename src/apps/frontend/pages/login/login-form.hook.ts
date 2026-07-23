@@ -22,8 +22,11 @@ const useLoginForm = ({ onError, onSuccess }: LoginFormProps) => {
         .email(constant.EMAIL_VALIDATION_ERROR)
         .required(constant.EMAIL_VALIDATION_ERROR),
       password: Yup.string()
-        .min(constant.PASSWORD_MIN_LENGTH, constant.PASSWORD_VALIDATION_ERROR)
-        .required(constant.PASSWORD_VALIDATION_ERROR),
+        .min(
+          constant.passwordPolicy.minLength,
+          constant.passwordPolicy.lengthError,
+        )
+        .required(constant.passwordPolicy.lengthError),
     }),
     onSubmit: (values) => {
       login(values.username, values.password)
