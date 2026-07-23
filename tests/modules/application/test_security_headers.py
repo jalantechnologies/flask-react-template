@@ -1,7 +1,8 @@
 from typing import Dict, List, Optional
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from flask import Flask
+from flask.testing import FlaskClient
 
 from modules.application.internals.security_headers import SecurityHeaders
 
@@ -17,7 +18,7 @@ STRICT_CSP = (
 )
 
 
-def _build_client(*, behind_proxy: bool = False, config_overrides: Optional[Dict[str, object]] = None):
+def _build_client(*, behind_proxy: bool = False, config_overrides: Optional[Dict[str, object]] = None) -> FlaskClient:
     overrides = config_overrides or {}
 
     def _fake_get_value(key: str, default: object = None) -> object:
@@ -125,7 +126,7 @@ class TestGivenProxyFlagIsReadOnce:
 class TestGivenCorsIsConfigured:
     class TestWhenReadingCorsOrigin:
         @patch("modules.config.config_service.ConfigService.get_value")
-        def test_then_origin_reflects_config_and_is_not_wildcard(self, mock_get_value) -> None:
+        def test_then_origin_reflects_config_and_is_not_wildcard(self, mock_get_value: MagicMock) -> None:
             from modules.config.config_service import ConfigService
 
             mock_get_value.return_value = "https://app.example.com"

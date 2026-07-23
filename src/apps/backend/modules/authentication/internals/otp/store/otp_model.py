@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from bson import ObjectId
 
@@ -16,7 +16,7 @@ class OTPModel(BaseModel):
     status: str
 
     @classmethod
-    def from_bson(cls, bson_data: dict) -> "OTPModel":
+    def from_bson(cls, bson_data: dict[str, Any]) -> "OTPModel":
         phone_number_data = bson_data.get("phone_number")
         if not phone_number_data:
             raise ValueError("Phone number data is required for OTPModel")

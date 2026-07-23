@@ -1,6 +1,6 @@
 run-lint:
 	cd src/apps/backend && \
-	pipenv run mypy --config-file mypy.ini . && \
+	MYPYPATH=. pipenv run mypy --config-file mypy.ini . ../../../tests && \
 	pipenv run pylint \
 	  --disable=all \
 	  --reports=no \

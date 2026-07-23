@@ -33,10 +33,10 @@ def _environment(app_env: str, signing_key: Optional[str]) -> Iterator[None]:
 
 
 class TestAccessTokenSigningKey(unittest.TestCase):
-    def setup_method(self, method: Callable) -> None:
+    def setup_method(self, method: Callable[..., object]) -> None:
         print(f"Executing:: {method.__name__}")
 
-    def teardown_method(self, method: Callable) -> None:
+    def teardown_method(self, method: Callable[..., object]) -> None:
         print(f"Executed:: {method.__name__}")
 
     def test_deployed_env_without_signing_key_refuses_boot(self) -> None:

@@ -7,11 +7,11 @@ from modules.authentication.rest_api.authentication_rest_api_server import Authe
 
 
 class BaseTestAccessToken(unittest.TestCase):
-    def setup_method(self, method: Callable) -> None:
+    def setup_method(self, method: Callable[..., object]) -> None:
         print(f"Executing:: {method.__name__}")
         AuthenticationRestApiServer.create()
 
-    def teardown_method(self, method: Callable) -> None:
+    def teardown_method(self, method: Callable[..., object]) -> None:
         print(f"Executed:: {method.__name__}")
         AccountRepository.collection().delete_many({})
         OTPRepository.collection().delete_many({})

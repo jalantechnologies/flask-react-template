@@ -1,8 +1,9 @@
 import json
 import unittest
-from typing import Tuple
+from typing import Optional, Tuple, TypedDict
 
 from server import app
+from werkzeug.test import TestResponse
 
 from modules.account.account_service import AccountService
 from modules.account.internal.store.account_repository import AccountRepository
@@ -11,6 +12,29 @@ from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from modules.task.task_service import TaskService
 from modules.task.types import CreateTaskParams, Task
+
+
+class TaskRequestBody(TypedDict, total=False):
+    title: str
+    description: str
+
+
+class TaskResponse(TypedDict, total=False):
+    id: str
+    account_id: str
+    title: str
+    description: str
+
+
+class PaginationParamsResponse(TypedDict):
+    page: int
+    size: int
+
+
+class PaginatedTasksResponse(TypedDict):
+    items: list[TaskResponse]
+    pagination_params: PaginationParamsResponse
+    total_count: int
 
 
 class BaseTestTask(unittest.TestCase):
@@ -42,7 +66,11 @@ class BaseTestTask(unittest.TestCase):
     # ACCOUNT AND TOKEN HELPER METHODS
 
     def create_test_account(
-        self, username: str = None, password: str = None, first_name: str = None, last_name: str = None
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
     ) -> Account:
         return AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -53,7 +81,7 @@ class BaseTestTask(unittest.TestCase):
             )
         )
 
-    def get_access_token(self, username: str = None, password: str = None) -> str:
+    def get_access_token(self, username: Optional[str] = None, password: Optional[str] = None) -> str:
         with app.test_client() as client:
             response = client.post(
                 self.ACCESS_TOKEN_URL,
@@ -62,9 +90,14 @@ class BaseTestTask(unittest.TestCase):
                     {"username": username or self.DEFAULT_USERNAME, "password": password or self.DEFAULT_PASSWORD}
                 ),
             )
-            return response.json.get("token")
+            assert response.json is not None
+            token = response.json.get("token")
+            assert isinstance(token, str)
+            return token
 
-    def create_account_and_get_token(self, username: str = None, password: str = None) -> Tuple[Account, str]:
+    def create_account_and_get_token(
+        self, username: Optional[str] = None, password: Optional[str] = None
+    ) -> Tuple[Account, str]:
         test_username = username or f"testuser_{id(self)}@example.com"
         test_password = password or self.DEFAULT_PASSWORD
 
@@ -74,7 +107,7 @@ class BaseTestTask(unittest.TestCase):
 
     # TASK HELPER METHODS
 
-    def create_test_task(self, account_id: str, title: str = None, description: str = None) -> Task:
+    def create_test_task(self, account_id: str, title: Optional[str] = None, description: Optional[str] = None) -> Task:
         return TaskService.create_task(
             params=CreateTaskParams(
                 account_id=account_id,
@@ -84,7 +117,7 @@ class BaseTestTask(unittest.TestCase):
         )
 
     def create_multiple_test_tasks(self, account_id: str, count: int) -> list[Task]:
-        tasks = []
+        tasks: list[Task] = []
         for i in range(count):
             task = self.create_test_task(account_id=account_id, title=f"Task {i+1}", description=f"Description {i+1}")
             tasks.append(task)
@@ -93,8 +126,14 @@ class BaseTestTask(unittest.TestCase):
     # HTTP REQUEST HELPER METHODS
 
     def make_authenticated_request(
-        self, method: str, account_id: str, token: str, task_id: str = None, data: dict = None, query_params: str = ""
-    ):
+        self,
+        method: str,
+        account_id: str,
+        token: str,
+        task_id: Optional[str] = None,
+        data: Optional[TaskRequestBody] = None,
+        query_params: str = "",
+    ) -> TestResponse:
         if task_id:
             url = self.get_task_by_id_api_url(account_id, task_id)
         else:
@@ -108,14 +147,17 @@ class BaseTestTask(unittest.TestCase):
         with app.test_client() as client:
             if method.upper() == "GET":
                 return client.get(url, headers={"Authorization": f"Bearer {token}"})
-            elif method.upper() == "POST":
+            if method.upper() == "POST":
                 return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "PATCH":
+            if method.upper() == "PATCH":
                 return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "DELETE":
+            if method.upper() == "DELETE":
                 return client.delete(url, headers={"Authorization": f"Bearer {token}"})
+        raise ValueError(f"Unsupported method: {method}")
 
-    def make_unauthenticated_request(self, method: str, account_id: str, task_id: str = None, data: dict = None):
+    def make_unauthenticated_request(
+        self, method: str, account_id: str, task_id: Optional[str] = None, data: Optional[TaskRequestBody] = None
+    ) -> TestResponse:
         if task_id:
             url = self.get_task_by_id_api_url(account_id, task_id)
         else:
@@ -124,16 +166,22 @@ class BaseTestTask(unittest.TestCase):
         with app.test_client() as client:
             if method.upper() == "GET":
                 return client.get(url)
-            elif method.upper() == "POST":
+            if method.upper() == "POST":
                 return client.post(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "PATCH":
+            if method.upper() == "PATCH":
                 return client.patch(url, headers=self.HEADERS, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "DELETE":
+            if method.upper() == "DELETE":
                 return client.delete(url)
+        raise ValueError(f"Unsupported method: {method}")
 
     def make_cross_account_request(
-        self, method: str, target_account_id: str, auth_token: str, task_id: str = None, data: dict = None
-    ):
+        self,
+        method: str,
+        target_account_id: str,
+        auth_token: str,
+        task_id: Optional[str] = None,
+        data: Optional[TaskRequestBody] = None,
+    ) -> TestResponse:
         if task_id:
             url = self.get_task_by_id_api_url(target_account_id, task_id)
         else:
@@ -144,16 +192,26 @@ class BaseTestTask(unittest.TestCase):
         with app.test_client() as client:
             if method.upper() == "GET":
                 return client.get(url, headers={"Authorization": f"Bearer {auth_token}"})
-            elif method.upper() == "POST":
+            if method.upper() == "POST":
                 return client.post(url, headers=headers, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "PATCH":
+            if method.upper() == "PATCH":
                 return client.patch(url, headers=headers, data=json.dumps(data) if data is not None else None)
-            elif method.upper() == "DELETE":
+            if method.upper() == "DELETE":
                 return client.delete(url, headers={"Authorization": f"Bearer {auth_token}"})
+        raise ValueError(f"Unsupported method: {method}")
 
     # ASSERTION HELPER METHODS
 
-    def assert_task_response(self, response_json: dict, expected_task: Task = None, **expected_fields):
+    def assert_task_response(
+        self,
+        response_json: TaskResponse,
+        expected_task: Optional[Task] = None,
+        *,
+        id: Optional[str] = None,
+        account_id: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> None:
         assert response_json.get("id") is not None
         assert response_json.get("account_id") is not None
 
@@ -163,10 +221,16 @@ class BaseTestTask(unittest.TestCase):
             assert response_json.get("title") == expected_task.title
             assert response_json.get("description") == expected_task.description
 
-        for field, value in expected_fields.items():
-            assert response_json.get(field) == value
+        if id is not None:
+            assert response_json.get("id") == id
+        if account_id is not None:
+            assert response_json.get("account_id") == account_id
+        if title is not None:
+            assert response_json.get("title") == title
+        if description is not None:
+            assert response_json.get("description") == description
 
-    def assert_error_response(self, response, expected_status: int, expected_error_code: str):
+    def assert_error_response(self, response: TestResponse, expected_status: int, expected_error_code: str) -> None:
         assert response.status_code == expected_status, f"Expected status {expected_status}, got {response.status_code}"
         assert response.json is not None, f"Expected JSON response, got None. Response data: {response.data}"
         assert (
@@ -175,12 +239,12 @@ class BaseTestTask(unittest.TestCase):
 
     def assert_pagination_response(
         self,
-        response_json: dict,
+        response_json: PaginatedTasksResponse,
         expected_items_count: int,
-        expected_total_count: int = None,
-        expected_page: int = None,
-        expected_size: int = None,
-    ):
+        expected_total_count: Optional[int] = None,
+        expected_page: Optional[int] = None,
+        expected_size: Optional[int] = None,
+    ) -> None:
         assert "items" in response_json
         assert "pagination_params" in response_json
         assert "total_count" in response_json

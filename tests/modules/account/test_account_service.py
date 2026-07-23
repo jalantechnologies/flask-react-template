@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from server import app
 
@@ -30,7 +30,7 @@ class TestAccountService(BaseTestAccount):
         assert account.last_name == "last_name"
 
     @patch("modules.authentication.authentication_service.AuthenticationService.verify_access_token")
-    def test_get_account_by_id(self, mock_verify_access_token) -> None:
+    def test_get_account_by_id(self, mock_verify_access_token: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
@@ -47,7 +47,7 @@ class TestAccountService(BaseTestAccount):
         assert get_account_by_id.last_name == account.last_name
 
     @patch("modules.authentication.authentication_service.AuthenticationService.verify_access_token")
-    def test_throw_exception_when_usernot_exist(self, mock_verify_access_token) -> None:
+    def test_throw_exception_when_usernot_exist(self, mock_verify_access_token: MagicMock) -> None:
         try:
             mock_verify_access_token.return_value = AccessTokenPayload(account_id="5f7b1b7b4f3b9b1b3f3b9b1b")
             with app.test_request_context():

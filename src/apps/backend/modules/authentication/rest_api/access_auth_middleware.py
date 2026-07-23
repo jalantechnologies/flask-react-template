@@ -32,7 +32,7 @@ def enforce_account_ownership(account_id: str) -> None:
         raise UnauthorizedAccessError("Unauthorized access.")
 
 
-def access_auth_middleware(next_function: Callable) -> Callable:
+def access_auth_middleware(next_function: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(next_function)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         if "account_id" in kwargs:

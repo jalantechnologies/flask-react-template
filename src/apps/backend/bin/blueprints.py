@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Union
+from typing import Any
 
 from flask import Blueprint, send_from_directory
 from werkzeug.wrappers import Response
@@ -18,14 +18,16 @@ MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable to resolve react root path"
 def serve_config() -> Response:
     from modules.config.config_service import ConfigService
 
-    public_config: dict = ConfigService.get_value("public") if ConfigService.has_value("public") else {}
+    public_config: dict[str, Any] = (
+        ConfigService[dict[str, Any]].get_value("public") if ConfigService.has_value("public") else {}
+    )
     config_js = f"window.Config = {json.dumps(public_config)};"
     return Response(config_js, mimetype="application/javascript")
 
 
 @react_blueprint.route("/", defaults={"path": ""})
 @react_blueprint.route("/<path:path>")
-def serve_react_home(path: Union[os.PathLike, str]) -> Response:
+def serve_react_home(path: os.PathLike[str] | str) -> Response:
     assert react_blueprint.static_folder, MISSING_STATIC_ROOT_ERR_MESSAGE
     return send_from_directory(react_blueprint.static_folder, "index.html")
 
@@ -48,7 +50,7 @@ img_assets_blueprint = Blueprint("image_assets", __name__, static_folder=react_i
 
 
 @img_assets_blueprint.route("/assets/img/<path:filename>")
-def serve_static_images(filename: Union[os.PathLike, str]) -> Response:
+def serve_static_images(filename: os.PathLike[str] | str) -> Response:
     assert img_assets_blueprint.static_folder, MISSING_STATIC_ROOT_ERR_MESSAGE
     return send_from_directory(img_assets_blueprint.static_folder, filename)
 
