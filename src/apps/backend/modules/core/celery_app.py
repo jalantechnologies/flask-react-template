@@ -20,8 +20,6 @@ app.conf.update(
     broker_connection_retry_on_startup=True,
     beat_scheduler="redbeat.RedBeatScheduler",
     redbeat_redis_url=ConfigService[str].get_value("celery.broker_url"),
-    # One beat process per deployment, so the distributed lock only serves to strand beat when a
-    # previous process dies without releasing it. Disabling it keeps beat from blocking on restart.
     redbeat_lock_key=None,
     task_queues={
         "critical": {"exchange": "critical", "routing_key": "critical"},

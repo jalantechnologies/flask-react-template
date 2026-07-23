@@ -32,7 +32,6 @@ AuthenticationService.validate_access_token_signing_key()
 # Run bootstrap tasks
 BootstrapApp().run()
 
-# Register every job's Celery task so the web process can enqueue them
 JobRegistry.initialize()
 
 
