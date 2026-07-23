@@ -48,29 +48,34 @@ For every open review comment: consider it carefully, make code changes where ap
 with a concise explanation of the resolution (or the rationale if no change is needed), and resolve
 the conversation.
 
-### 5. Keep the codebase clean
+### 5. Improve the codebase
 
-**Business logic never lives in execution layers** (views, controllers, workers, jobs, CLI
-commands, HTTP handlers). Those orchestrate only. Business logic belongs in domain objects —
-readers, writers, domain models, data classes, services. Example: turning a request-body dict into
-a typed object is `MyType.from_dict()`, not inline in the view.
+Refactor where appropriate to keep the codebase maintainable.
 
-**Prefer object-oriented modelling** over large procedural or functional code. Identify the entities
-involved, model the state each owns and the behaviour that belongs to it, and think from first
-principles. Small helper functions are fine; long functions doing many unrelated things are not.
-Optimize for code a newcomer can understand.
+**Business logic** should **never** live inside execution layers such as views, controllers,
+workers, jobs, CLI commands, or HTTP handlers. Execution layers orchestrate work only. Business
+logic belongs inside appropriate domain objects such as readers, writers, domain models, data
+classes, and services. For example, if a request body is received as a dictionary, converting that
+dictionary into a typed object should be implemented as something like `MyType.from_dict()` rather
+than inside the view.
 
-### 6. Comments
+**Prefer object-oriented modelling.** Discourage large procedural or functional implementations.
+When solving a problem: pause and identify the entities involved, model the state each entity owns,
+model the behaviour that belongs to that entity, and apply first-principles thinking instead of
+writing long functions. Small helper functions are acceptable, but avoid long functions performing
+many unrelated responsibilities. Optimize for code that is easy for someone completely new to the
+codebase to understand.
 
-No new code comments. Code should be self-explanatory through naming and structure. Remove comments
-that narrate what the next line does. (If a genuinely non-obvious invariant or workaround already
-carries a "why" comment, leave it; but do not add new ones.)
+### 6. Code comments
 
-### 7. Tests
+No new code comments. (If a genuinely non-obvious invariant or workaround already carries a "why"
+comment, leave it; but do not add new ones.)
 
-Write end-to-end, BDD-style tests wherever practical. Mock **only third-party APIs**. Do not mock
-internal services, domain objects, database access, or business logic. Tests validate real system
-behaviour, not implementation details.
+### 7. Testing philosophy
+
+Tests should be written in an end-to-end, BDD style wherever practical. Only mock **third-party
+APIs**. Do **not** mock internal services, domain objects, database access, or business logic. Tests
+should validate the real behaviour of the system rather than implementation details.
 
 If a frontend test setup is present (`src/apps/frontend/vitest.config.ts`), any change under
 `src/apps/frontend` that adds or changes behaviour ships a colocated `*.test.tsx` (purely visual
