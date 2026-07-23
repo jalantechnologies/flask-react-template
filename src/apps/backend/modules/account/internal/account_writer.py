@@ -16,13 +16,16 @@ from modules.account.types import (
     PhoneNumber,
     UpdateAccountProfileParams,
 )
+from modules.application.common.types import AuditActor
 from modules.application.repository import FieldUpdates
 from modules.authentication.errors import OTPRequestFailedError
 
 
 class AccountWriter:
     @staticmethod
-    def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
+    def create_account_by_username_and_password(
+        *, params: CreateAccountByUsernameAndPasswordParams, actor: AuditActor
+    ) -> Account:
         AccountReader.check_username_not_exist(params=params)
         account = Account(
             id="",
@@ -32,10 +35,10 @@ class AccountWriter:
             phone_number=None,
             username=params.username,
         )
-        return AccountRepository.create(account)
+        return AccountRepository.create(account, actor=actor)
 
     @staticmethod
-    def create_account_by_phone_number(*, params: CreateAccountByPhoneNumberParams) -> Account:
+    def create_account_by_phone_number(*, params: CreateAccountByPhoneNumberParams, actor: AuditActor) -> Account:
         params_dict = asdict(params)
         phone_number = PhoneNumber(**params_dict["phone_number"])
         is_valid_phone_number = is_valid_number(parse(str(phone_number)))
@@ -47,19 +50,19 @@ class AccountWriter:
         account = Account(
             id="", first_name="", last_name="", hashed_password="", phone_number=phone_number, username=""
         )
-        return AccountRepository.create(account)
+        return AccountRepository.create(account, actor=actor)
 
     @staticmethod
-    def update_password_by_account_id(account_id: str, password: str) -> Account:
+    def update_password_by_account_id(account_id: str, password: str, *, actor: AuditActor) -> Account:
         hashed_password = AccountUtil.hash_password(password=password)
-        updated_account = AccountRepository.update(account_id, {"hashed_password": hashed_password})
+        updated_account = AccountRepository.update(account_id, {"hashed_password": hashed_password}, actor=actor)
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)
 
         return updated_account
 
     @staticmethod
-    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
+    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams, actor: AuditActor) -> Account:
         update_fields: FieldUpdates = {}
 
         if params.first_name is not None:
@@ -68,19 +71,19 @@ class AccountWriter:
         if params.last_name is not None:
             update_fields["last_name"] = params.last_name
 
-        updated_account = AccountRepository.update(account_id, update_fields)
+        updated_account = AccountRepository.update(account_id, update_fields, actor=actor)
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)
 
         return updated_account
 
     @staticmethod
-    def delete_account(*, account_id: str) -> AccountDeletionResult:
+    def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:
         # Confirm an active account exists (raises if not) so re-deleting a soft-deleted account 404s,
         # matching the previous `{"active": True}`-guarded update.
         AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=account_id))
 
         deletion_time = datetime.now(UTC)
-        AccountRepository.update_fields(account_id, {"active": False, "updated_at": deletion_time})
+        AccountRepository.update_fields(account_id, {"active": False, "updated_at": deletion_time}, actor=actor)
 
         return AccountDeletionResult(account_id=account_id, deleted_at=deletion_time, success=True)

@@ -8,6 +8,7 @@ from modules.account.types import (
 )
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 
@@ -42,7 +43,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
 
         before = datetime.now(UTC)
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=self.account.id, preferences=update_preferences
+            account_id=self.account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
         after = datetime.now(UTC)
 
@@ -62,7 +63,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             email_enabled=False, push_enabled=True, sms_enabled=False
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=update_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
         preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
@@ -84,7 +85,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=update_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
         assert preferences.account_id == account.id
@@ -110,7 +111,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=update_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
         assert preferences.account_id == account.id
@@ -129,7 +130,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=initial_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=initial_preferences
         )
 
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -137,7 +138,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=update_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
         assert preferences.account_id == account.id
@@ -164,13 +165,13 @@ class TestNotificationPreferencesService(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=initial_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=initial_preferences
         )
 
         partial_update = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=partial_update
+            account_id=account.id, actor=TEST_ACTOR, preferences=partial_update
         )
 
         assert preferences.account_id == account.id
@@ -189,13 +190,13 @@ class TestNotificationPreferencesService(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=initial_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=initial_preferences
         )
 
         partial_update = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False, sms_enabled=False)
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=partial_update
+            account_id=account.id, actor=TEST_ACTOR, preferences=partial_update
         )
 
         assert preferences.account_id == account.id
@@ -215,7 +216,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
 
         preferences = NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=update_preferences
+            account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
         assert preferences.account_id == account.id

@@ -14,6 +14,7 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
+from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware, enforce_account_ownership
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
@@ -80,17 +81,23 @@ class AccountView(MethodView):
             update_profile_params = UpdateAccountProfileParams(
                 first_name=request_data.get("first_name"), last_name=request_data.get("last_name")
             )
-            account = AccountService.update_account_profile(account_id=account_id, params=update_profile_params)
+            account = AccountService.update_account_profile(
+                account_id=account_id,
+                actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=getattr(request, "account_id")),
+                params=update_profile_params,
+            )
 
         else:
             raise AccountBadRequestError("Invalid request data")
 
-        account_dict = asdict(account)
-        return jsonify(account_dict), 200
+        return jsonify(asdict(account)), 200
 
     @access_auth_middleware
     def delete(self, account_id: str) -> ResponseReturnValue:
-        AccountService.delete_account(account_id=account_id)
+        AccountService.delete_account(
+            account_id=account_id,
+            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=getattr(request, "account_id")),
+        )
         return "", 204
 
     @staticmethod
@@ -121,7 +128,9 @@ class AccountView(MethodView):
         preferences_params = CreateOrUpdateAccountNotificationPreferencesParams(**preferences_kwargs)
 
         updated_preferences = AccountService.create_or_update_account_notification_preferences(
-            account_id=account_id, preferences=preferences_params
+            account_id=account_id,
+            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=getattr(request, "account_id")),
+            preferences=preferences_params,
         )
 
         return jsonify(asdict(updated_preferences)), 200

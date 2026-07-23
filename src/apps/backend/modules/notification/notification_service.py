@@ -1,3 +1,4 @@
+from modules.application.common.types import AuditActor
 from modules.notification.email_service import EmailService
 from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.internal.account_notification_preferences_writer import AccountNotificationPreferenceWriter
@@ -26,10 +27,10 @@ class NotificationService:
 
     @staticmethod
     def create_or_update_account_notification_preferences(
-        *, account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
+        *, account_id: str, actor: AuditActor, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
         return AccountNotificationPreferenceWriter.create_or_update_account_notification_preferences(
-            account_id, preferences
+            account_id, preferences, actor
         )
 
     @staticmethod

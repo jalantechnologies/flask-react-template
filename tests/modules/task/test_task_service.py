@@ -1,3 +1,4 @@
+from tests.conftest import TEST_ACTOR
 from datetime import UTC, datetime, timedelta
 
 from modules.application.common.types import PaginationParams
@@ -23,7 +24,7 @@ class TestTaskService(BaseTestTask):
             account_id=self.account.id, title=self.DEFAULT_TASK_TITLE, description=self.DEFAULT_TASK_DESCRIPTION
         )
 
-        task = TaskService.create_task(params=task_params)
+        task = TaskService.create_task(params=task_params, actor=TEST_ACTOR)
 
         assert task.account_id == self.account.id
         assert task.title == self.DEFAULT_TASK_TITLE
@@ -106,7 +107,7 @@ class TestTaskService(BaseTestTask):
             description="Updated Description",
         )
 
-        updated_task = TaskService.update_task(params=update_params)
+        updated_task = TaskService.update_task(params=update_params, actor=TEST_ACTOR)
 
         assert updated_task.id == created_task.id
         assert updated_task.account_id == self.account.id
@@ -138,7 +139,7 @@ class TestTaskService(BaseTestTask):
         )
 
         before = datetime.now(UTC)
-        updated_task = TaskService.update_task(params=update_params)
+        updated_task = TaskService.update_task(params=update_params, actor=TEST_ACTOR)
         after = datetime.now(UTC)
 
         assert updated_task.updated_at is not None
@@ -156,7 +157,7 @@ class TestTaskService(BaseTestTask):
         )
 
         with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.update_task(params=update_params)
+            TaskService.update_task(params=update_params, actor=TEST_ACTOR)
 
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 
@@ -164,7 +165,7 @@ class TestTaskService(BaseTestTask):
         created_task = self.create_test_task(account_id=self.account.id)
         delete_params = DeleteTaskParams(account_id=self.account.id, task_id=created_task.id)
 
-        deletion_result = TaskService.delete_task(params=delete_params)
+        deletion_result = TaskService.delete_task(params=delete_params, actor=TEST_ACTOR)
 
         assert deletion_result.task_id == created_task.id
         assert deletion_result.success is True
@@ -180,7 +181,7 @@ class TestTaskService(BaseTestTask):
         delete_params = DeleteTaskParams(account_id=self.account.id, task_id=created_task.id)
 
         before = datetime.now(UTC)
-        deletion_result = TaskService.delete_task(params=delete_params)
+        deletion_result = TaskService.delete_task(params=delete_params, actor=TEST_ACTOR)
         after = datetime.now(UTC)
 
         assert deletion_result.deleted_at is not None
@@ -193,7 +194,7 @@ class TestTaskService(BaseTestTask):
         delete_params = DeleteTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
 
         with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.delete_task(params=delete_params)
+            TaskService.delete_task(params=delete_params, actor=TEST_ACTOR)
 
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 

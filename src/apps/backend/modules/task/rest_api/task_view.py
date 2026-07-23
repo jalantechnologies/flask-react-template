@@ -6,7 +6,7 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.application.common.constants import DEFAULT_PAGINATION_PARAMS
-from modules.application.common.types import PaginationParams
+from modules.application.common.types import ActorType, AuditActor, PaginationParams
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
 from modules.task.errors import TaskBadRequestError
 from modules.task.task_service import TaskService
@@ -37,7 +37,9 @@ class TaskView(MethodView):
             account_id=account_id, title=request_data["title"], description=request_data["description"]
         )
 
-        created_task = TaskService.create_task(params=create_task_params)
+        created_task = TaskService.create_task(
+            params=create_task_params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
+        )
         task_dict = asdict(created_task)
 
         return jsonify(task_dict), 201
@@ -90,7 +92,9 @@ class TaskView(MethodView):
             account_id=account_id, task_id=task_id, title=request_data["title"], description=request_data["description"]
         )
 
-        updated_task = TaskService.update_task(params=update_task_params)
+        updated_task = TaskService.update_task(
+            params=update_task_params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
+        )
         task_dict = asdict(updated_task)
 
         return jsonify(task_dict), 200
@@ -99,6 +103,8 @@ class TaskView(MethodView):
     def delete(self, account_id: str, task_id: str) -> ResponseReturnValue:
         delete_params = DeleteTaskParams(account_id=account_id, task_id=task_id)
 
-        TaskService.delete_task(params=delete_params)
+        TaskService.delete_task(
+            params=delete_params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
+        )
 
         return "", 204

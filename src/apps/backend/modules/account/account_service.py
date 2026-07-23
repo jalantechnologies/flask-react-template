@@ -11,6 +11,7 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
+from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
@@ -19,13 +20,16 @@ from modules.notification.types import (
     CreateOrUpdateAccountNotificationPreferencesParams,
 )
 
+ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
+
 
 class AccountService:
     @staticmethod
     def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
-        account = AccountWriter.create_account_by_username_and_password(params=params)
+        account = AccountWriter.create_account_by_username_and_password(params=params, actor=ANONYMOUS_ACTOR)
         AccountService.create_or_update_account_notification_preferences(
             account_id=account.id,
+            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
             preferences=CreateOrUpdateAccountNotificationPreferencesParams(
                 email_enabled=True, push_enabled=True, sms_enabled=True
             ),
@@ -41,9 +45,10 @@ class AccountService:
         account = AccountReader.get_account_by_phone_number_optional(phone_number=params.phone_number)
 
         if account is None:
-            account = AccountWriter.create_account_by_phone_number(params=params)
+            account = AccountWriter.create_account_by_phone_number(params=params, actor=ANONYMOUS_ACTOR)
             AccountService.create_or_update_account_notification_preferences(
                 account_id=account.id,
+                actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
                 preferences=CreateOrUpdateAccountNotificationPreferencesParams(
                     email_enabled=True, push_enabled=True, sms_enabled=True
                 ),
@@ -63,10 +68,14 @@ class AccountService:
         )
 
         updated_account = AccountWriter.update_password_by_account_id(
-            account_id=params.account_id, password=params.new_password
+            account_id=params.account_id,
+            password=params.new_password,
+            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=params.account_id),
         )
 
-        AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token_id=password_reset_token.id)
+        AuthenticationService.set_password_reset_token_as_used_by_id(
+            password_reset_token_id=password_reset_token.id, account_id=params.account_id
+        )
 
         return updated_account
 
@@ -83,15 +92,15 @@ class AccountService:
         return AccountReader.get_account_by_username_and_password(params=params)
 
     @staticmethod
-    def update_account_profile(*, account_id: str, params: UpdateAccountProfileParams) -> Account:
-        return AccountWriter.update_account_profile(account_id=account_id, params=params)
+    def update_account_profile(*, account_id: str, actor: AuditActor, params: UpdateAccountProfileParams) -> Account:
+        return AccountWriter.update_account_profile(account_id=account_id, params=params, actor=actor)
 
     @staticmethod
     def create_or_update_account_notification_preferences(
-        *, account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams
+        *, account_id: str, actor: AuditActor, preferences: CreateOrUpdateAccountNotificationPreferencesParams
     ) -> AccountNotificationPreferences:
         return NotificationService.create_or_update_account_notification_preferences(
-            account_id=account_id, preferences=preferences
+            account_id=account_id, actor=actor, preferences=preferences
         )
 
     @staticmethod
@@ -99,5 +108,5 @@ class AccountService:
         return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
 
     @staticmethod
-    def delete_account(*, account_id: str) -> AccountDeletionResult:
-        return AccountWriter.delete_account(account_id=account_id)
+    def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:
+        return AccountWriter.delete_account(account_id=account_id, actor=actor)

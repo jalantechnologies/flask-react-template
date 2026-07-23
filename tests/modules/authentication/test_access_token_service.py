@@ -7,6 +7,7 @@ from modules.account.types import (
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPBasedAuthAccessTokenRequestParams
+from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 
@@ -40,7 +41,7 @@ class TestAuthenticationService(BaseTestAccessToken):
     def test_get_access_token_by_phone_number(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
         otp = AuthenticationService.create_otp(
             params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
@@ -60,7 +61,7 @@ class TestAuthenticationService(BaseTestAccessToken):
     def test_verify_access_token_by_phone_number(self) -> None:
         phone_number = {"country_code": "+91", "phone_number": "9999999999"}
         account = AccountWriter.create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number))
+            params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
         otp = AuthenticationService.create_otp(
             params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id

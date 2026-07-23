@@ -4,9 +4,12 @@ from typing import Iterator, cast
 import pytest
 from celery_app import app as celery_app
 
+from modules.application.common.types import ActorType, AuditActor
 from modules.logger.logger_manager import LoggerManager
 
 TESTING_APP_ENV = "testing"
+
+TEST_ACTOR = AuditActor(actor_type=ActorType.WORKER, actor_id="test")
 
 
 @pytest.fixture(scope="session", autouse=True)

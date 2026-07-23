@@ -1,4 +1,4 @@
-from modules.application.common.types import PaginationResult
+from modules.application.common.types import AuditActor, PaginationResult
 from modules.task.internal.task_reader import TaskReader
 from modules.task.internal.task_writer import TaskWriter
 from modules.task.types import (
@@ -14,8 +14,8 @@ from modules.task.types import (
 
 class TaskService:
     @staticmethod
-    def create_task(*, params: CreateTaskParams) -> Task:
-        return TaskWriter.create_task(params=params)
+    def create_task(*, params: CreateTaskParams, actor: AuditActor) -> Task:
+        return TaskWriter.create_task(params=params, actor=actor)
 
     @staticmethod
     def get_task(*, params: GetTaskParams) -> Task:
@@ -26,9 +26,9 @@ class TaskService:
         return TaskReader.get_paginated_tasks(params=params)
 
     @staticmethod
-    def update_task(*, params: UpdateTaskParams) -> Task:
-        return TaskWriter.update_task(params=params)
+    def update_task(*, params: UpdateTaskParams, actor: AuditActor) -> Task:
+        return TaskWriter.update_task(params=params, actor=actor)
 
     @staticmethod
-    def delete_task(*, params: DeleteTaskParams) -> TaskDeletionResult:
-        return TaskWriter.delete_task(params=params)
+    def delete_task(*, params: DeleteTaskParams, actor: AuditActor) -> TaskDeletionResult:
+        return TaskWriter.delete_task(params=params, actor=actor)

@@ -34,5 +34,6 @@ class AccessTokenView(MethodView):
                 params=AccountSearchParams(username=access_token_params.username, password=access_token_params.password)
             )
             access_token = AuthenticationService.create_access_token_by_username_and_password(account=account)
+
         access_token_dict = asdict(access_token)
         return jsonify(access_token_dict), 201

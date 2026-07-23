@@ -11,6 +11,7 @@ from modules.account.types import Account, CreateAccountByUsernameAndPasswordPar
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from modules.task.task_service import TaskService
+from tests.conftest import TEST_ACTOR
 from modules.task.types import CreateTaskParams, Task
 
 
@@ -113,7 +114,8 @@ class BaseTestTask(unittest.TestCase):
                 account_id=account_id,
                 title=title or self.DEFAULT_TASK_TITLE,
                 description=description or self.DEFAULT_TASK_DESCRIPTION,
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
     def create_multiple_test_tasks(self, account_id: str, count: int) -> list[Task]:

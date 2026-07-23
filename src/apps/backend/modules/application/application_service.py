@@ -1,5 +1,9 @@
+from typing import Optional
+
 from flask import Flask
 
+from modules.application.common.types import AuditActor, FieldChanges, ResourceAction
+from modules.application.internal.audit.audit_writer import AuditWriter
 from modules.application.internal.security_headers import SecurityHeaders
 
 
@@ -7,3 +11,18 @@ class ApplicationService:
     @staticmethod
     def install_security_headers(app: Flask) -> None:
         SecurityHeaders.init_app(app)
+
+    @staticmethod
+    def record_audit(
+        *,
+        actor: AuditActor,
+        resource_type: str,
+        resource_id: str,
+        action: ResourceAction,
+        changes: Optional[FieldChanges] = None,
+    ) -> None:
+        # Rarely needed: ApplicationRepository already audits every create/update/delete. Use this only
+        # for an access a custom reader/writer performs that the generic CRUD does not cover.
+        AuditWriter.record(
+            actor=actor, resource_type=resource_type, resource_id=resource_id, action=action, changes=changes
+        )

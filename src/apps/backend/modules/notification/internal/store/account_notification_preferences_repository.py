@@ -4,6 +4,7 @@ from pymongo import ReturnDocument
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.application.common.types import AuditActor
 from modules.application.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 from modules.notification.internal.store.account_notification_preferences_model import (
@@ -105,12 +106,16 @@ class AccountNotificationPreferencesRepository(
         return store_filter
 
     @classmethod
-    def update_by_account_id(cls, account_id: str, fields: FieldUpdates) -> AccountNotificationPreferences:
+    def update_by_account_id(
+        cls, account_id: str, fields: FieldUpdates, *, actor: AuditActor
+    ) -> AccountNotificationPreferences:
         # The active preferences row is identified by its natural key (account_id), not its ObjectId, so
         # this $set has no generic-verb equivalent and stays on the repository (see backend-architecture.md).
-        updated = cls.collection().find_one_and_update(
-            {"account_id": account_id, "active": True},
-            {"$set": {**fields, "updated_at": datetime.now(UTC)}},
-            return_document=ReturnDocument.AFTER,
+        # BEFORE returns the document as it was immediately before the $set, so the audit diff's `old`
+        # value is atomic; the updated document is that same doc with the patch applied.
+        patch = {**fields, "updated_at": datetime.now(UTC)}
+        previous = cls.collection().find_one_and_update(
+            {"account_id": account_id, "active": True}, {"$set": patch}, return_document=ReturnDocument.BEFORE
         )
-        return cls.from_doc(updated)
+        cls._emit_field_update_audit(actor, str(previous["_id"]), fields, previous)
+        return cls.from_doc({**previous, **patch})

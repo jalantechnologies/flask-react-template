@@ -7,6 +7,7 @@ from modules.account.types import AccountErrorCode, CreateAccountByUsernameAndPa
 from modules.authentication.types import AccessTokenErrorCode
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -21,7 +22,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=self.account.id, preferences=preferences
+            account_id=self.account.id, actor=TEST_ACTOR, preferences=preferences
         )
 
         with app.test_client() as client:
@@ -82,7 +83,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=self.account.id, preferences=preferences
+            account_id=self.account.id, actor=TEST_ACTOR, preferences=preferences
         )
         preferences_data = {"email_enabled": False}
 
@@ -105,7 +106,7 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             email_enabled=True, push_enabled=True, sms_enabled=True
         )
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=self.account.id, preferences=preferences
+            account_id=self.account.id, actor=TEST_ACTOR, preferences=preferences
         )
         preferences_data = {"email_enabled": False, "sms_enabled": False}
 
@@ -259,7 +260,9 @@ class TestNotificationPreferencesApi(BaseTestAccount):
             assert response.json
             assert response.json.get("code") == AccessTokenErrorCode.INVALID_AUTHORIZATION_HEADER
 
-    def test_given_authenticated_account_when_updating_another_users_preferences_then_returns_unauthorized(self) -> None:
+    def test_given_authenticated_account_when_updating_another_users_preferences_then_returns_unauthorized(
+        self,
+    ) -> None:
         other_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"

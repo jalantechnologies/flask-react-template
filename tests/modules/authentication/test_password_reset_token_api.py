@@ -15,6 +15,7 @@ from modules.authentication.internal.password_reset_token.password_reset_token_w
 from modules.notification.email_service import EmailService
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
+from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_password_reset_token import BaseTestPasswordResetToken
 
 ACCOUNT_API_URL = "http://127.0.0.1:8080/api/accounts"
@@ -80,7 +81,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
         )
         token = PasswordResetTokenUtil.generate_password_reset_token()
-        PasswordResetTokenWriter.create_password_reset_token(account.id, token)
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
 
         before = datetime.now(UTC)
         updated_account = AccountService.reset_account_password(
@@ -100,12 +101,12 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
         )
         token = PasswordResetTokenUtil.generate_password_reset_token()
-        PasswordResetTokenWriter.create_password_reset_token(account.id, token)
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
         password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(account_id=account.id)
 
         before = datetime.now(UTC)
         used_password_reset_token = AuthenticationService.set_password_reset_token_as_used_by_id(
-            password_reset_token.id
+            password_reset_token.id, account_id=account.id
         )
         after = datetime.now(UTC)
 
@@ -144,7 +145,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         )
 
         token = PasswordResetTokenUtil.generate_password_reset_token()
-        PasswordResetTokenWriter.create_password_reset_token(account.id, token)
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
         AuthenticationService.send_password_reset_email(account.id, account.first_name, account.username, token)
 
         new_password = "new_password"
@@ -226,7 +227,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         password_reset_token = AuthenticationService.create_password_reset_token(params=account)
 
-        AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token.id)
+        AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token.id, account_id=account.id)
 
         new_password = "new_password"
 
@@ -340,7 +341,9 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         )
 
         NotificationService.create_or_update_account_notification_preferences(
-            account_id=account.id, preferences=CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
+            account_id=account.id,
+            actor=TEST_ACTOR,
+            preferences=CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False),
         )
 
         reset_password_params = {"username": account.username}

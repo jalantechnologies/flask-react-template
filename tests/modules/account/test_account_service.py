@@ -14,6 +14,7 @@ from modules.account.types import (
     UpdateAccountProfileParams,
 )
 from modules.authentication.types import AccessTokenPayload
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 
@@ -83,7 +84,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(first_name="new_first_name")
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.username == account.username
@@ -98,7 +101,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(last_name="new_last_name")
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.username == account.username
@@ -113,7 +118,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(first_name="new_first_name", last_name="new_last_name")
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.username == account.username
@@ -131,7 +138,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(first_name=None, last_name=None)
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.username == account.username
@@ -149,7 +158,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(first_name="", last_name="")
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.username == account.username
@@ -162,7 +173,9 @@ class TestAccountService(BaseTestAccount):
         update_params = UpdateAccountProfileParams(first_name="new_first_name", last_name="new_last_name")
 
         try:
-            AccountService.update_account_profile(account_id=non_existent_account_id, params=update_params)
+            AccountService.update_account_profile(
+                account_id=non_existent_account_id, actor=TEST_ACTOR, params=update_params
+            )
             assert False, "Expected AccountWithIdNotFoundError to be raised"
         except AccountWithIdNotFoundError as exc:
             assert (
@@ -177,7 +190,9 @@ class TestAccountService(BaseTestAccount):
         )
 
         update_params = UpdateAccountProfileParams(first_name="Phone", last_name="User")
-        updated_account = AccountService.update_account_profile(account_id=account.id, params=update_params)
+        updated_account = AccountService.update_account_profile(
+            account_id=account.id, actor=TEST_ACTOR, params=update_params
+        )
 
         assert updated_account.id == account.id
         assert updated_account.phone_number == phone_number
@@ -191,7 +206,7 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        deletion_result = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
 
         assert deletion_result.account_id == account.id
         assert deletion_result.success is True
@@ -228,7 +243,7 @@ class TestAccountService(BaseTestAccount):
 
         before = datetime.now(UTC)
         updated_account = AccountService.update_account_profile(
-            account_id=account.id, params=UpdateAccountProfileParams(first_name="updated_first_name")
+            account_id=account.id, actor=TEST_ACTOR, params=UpdateAccountProfileParams(first_name="updated_first_name")
         )
         after = datetime.now(UTC)
 
@@ -245,7 +260,7 @@ class TestAccountService(BaseTestAccount):
         )
 
         before = datetime.now(UTC)
-        deletion_result = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
         after = datetime.now(UTC)
 
         assert deletion_result.deleted_at is not None
@@ -257,7 +272,7 @@ class TestAccountService(BaseTestAccount):
         non_existent_account_id = "5f7b1b7b4f3b9b1b3f3b9b1b"
 
         try:
-            AccountService.delete_account(account_id=non_existent_account_id)
+            AccountService.delete_account(account_id=non_existent_account_id, actor=TEST_ACTOR)
             assert False, "Expected AccountWithIdNotFoundError to be raised"
         except AccountWithIdNotFoundError as exc:
             assert (
@@ -272,7 +287,7 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        deletion_result = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         try:
@@ -288,7 +303,7 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        deletion_result = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         try:
@@ -303,7 +318,7 @@ class TestAccountService(BaseTestAccount):
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
         )
 
-        deletion_result = AccountService.delete_account(account_id=account.id)
+        deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         try:
@@ -319,7 +334,7 @@ class TestAccountService(BaseTestAccount):
             )
         )
 
-        deletion_result = AccountService.delete_account(account_id=original_account.id)
+        deletion_result = AccountService.delete_account(account_id=original_account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         new_account = AccountService.create_account_by_username_and_password(
@@ -339,7 +354,7 @@ class TestAccountService(BaseTestAccount):
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
         )
 
-        deletion_result = AccountService.delete_account(account_id=original_account.id)
+        deletion_result = AccountService.delete_account(account_id=original_account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         new_account = AccountService.get_or_create_account_by_phone_number(
