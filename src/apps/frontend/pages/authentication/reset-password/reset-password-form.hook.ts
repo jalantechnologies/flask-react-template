@@ -37,16 +37,19 @@ const useResetPasswordForm = ({
     },
     validationSchema: Yup.object({
       password: Yup.string()
-        .min(constant.PASSWORD_MIN_LENGTH, constant.PASSWORD_VALIDATION_ERROR)
-        .required(constant.PASSWORD_VALIDATION_ERROR)
+        .min(
+          constant.passwordPolicy.minLength,
+          constant.passwordPolicy.lengthError,
+        )
+        .required(constant.passwordPolicy.lengthError)
         .test(
           'password-strength',
-          constant.PASSWORD_STRENGTH_VALIDATION_ERROR,
+          constant.passwordPolicy.strengthError,
           (value) => isPasswordStrongEnough(value ?? ''),
         ),
       confirmPassword: Yup.string()
-        .oneOf([Yup.ref('password')], constant.PASSWORD_MATCH_VALIDATION_ERROR)
-        .required(constant.PASSWORD_MATCH_VALIDATION_ERROR),
+        .oneOf([Yup.ref('password')], constant.passwordPolicy.matchError)
+        .required(constant.passwordPolicy.matchError),
     }),
     onSubmit: (values) => {
       resetPassword({

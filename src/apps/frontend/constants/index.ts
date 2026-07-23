@@ -1,3 +1,11 @@
+const passwordPolicy = {
+  minLength: 8,
+  lengthError: 'Please enter at least 8 characters long password',
+  matchError: "The confirmed password doesn't match the chosen password.",
+  strengthError:
+    'Please choose a stronger password. Add length and avoid common words or predictable patterns.',
+};
+
 const constant = {
   DEFAULT_ERROR_HTTP_STATUS_CODE: 500,
   EMAIL_BASED_AUTHENTICATION: 'EMAIL',
@@ -8,12 +16,7 @@ const constant = {
   LAST_NAME_VALIDATION_ERROR: 'Please specify your last name',
   OTP_INPUT_MAX_LENGTH: 2,
   OTP_LENGTH: 4,
-  PASSWORD_MATCH_VALIDATION_ERROR:
-    "The confirmed password doesn't match the chosen password.",
-  PASSWORD_MIN_LENGTH: 8,
-  PASSWORD_STRENGTH_VALIDATION_ERROR:
-    'Please choose a stronger password. Add length and avoid common words or predictable patterns.',
-  PASSWORD_VALIDATION_ERROR: 'Please enter at least 8 characters long password',
+  passwordPolicy,
   PHONE_NUMBER_BASED_AUTHENTICATION: 'PHONE',
   PHONE_VALIDATION_ERROR: 'Please enter a valid phone number',
   SEND_OTP_DELAY_IN_MS: 60_000,
