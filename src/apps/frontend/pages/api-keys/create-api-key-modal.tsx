@@ -78,7 +78,7 @@ const CreateApiKeyModal: React.FC<CreateApiKeyModalProps> = ({
             <Button
               variant={Variant.Secondary}
               onClick={() => {
-                void copySecret();
+                copySecret().catch(() => undefined);
               }}
               testId="copy-api-key-button"
             >
@@ -126,7 +126,7 @@ const CreateApiKeyModal: React.FC<CreateApiKeyModalProps> = ({
           <Button
             variant={Variant.Primary}
             onClick={() => {
-              void submit();
+              submit().catch(() => undefined);
             }}
             isLoading={isSubmitting}
             disabled={!name.trim()}

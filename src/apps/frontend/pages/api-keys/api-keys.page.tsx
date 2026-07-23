@@ -192,7 +192,7 @@ const ApiKeysPage: React.FC = () => {
           confirmLabel="Revoke"
           danger
           onConfirm={() => {
-            void confirmRevoke();
+            confirmRevoke().catch(() => undefined);
           }}
           onCancel={() => setKeyPendingRevoke(null)}
         />

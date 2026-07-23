@@ -1,7 +1,6 @@
 import { DatadogUser } from './logger';
 
 import { Account } from 'frontend/types/account';
-import { ApiKey, ApiKeyStatus, CreatedApiKey } from 'frontend/types/api-key';
 import {
   AsyncError,
   AsyncResult,
@@ -10,16 +9,15 @@ import {
 import { AccessToken, KeyboardKeys, PhoneNumber } from 'frontend/types/auth';
 import { ApiResponse, ApiError } from 'frontend/types/service-response';
 
+export { ApiKey, ApiKeyStatus, CreatedApiKey } from 'frontend/types/api-key';
+
 export {
   AccessToken,
   Account,
   ApiError,
-  ApiKey,
-  ApiKeyStatus,
   ApiResponse,
   AsyncError,
   AsyncResult,
-  CreatedApiKey,
   KeyboardKeys,
   PhoneNumber,
   UseAsyncResponse,
