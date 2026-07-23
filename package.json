@@ -1,6 +1,6 @@
 {
   "name": "flask-react-template",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "description": "Full-stack starter for building React and Flask applications, maintained by Better.",
   "homepage": "https://bettrhq.com/",
   "repository": {
