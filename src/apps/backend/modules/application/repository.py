@@ -128,39 +128,48 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         return created
 
     @classmethod
-    def find(cls, entity_id: str) -> Optional[EntityT]:
+    def find(cls, entity_id: str, *, actor: "AuditActor") -> Optional[EntityT]:
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return None
         doc = cls.collection().find_one({"_id": object_id})
-        return cls.from_doc(doc) if doc is not None else None
+        if doc is None:
+            return None
+        cls._emit_read_audit(actor, [str(doc["_id"])])
+        return cls.from_doc(doc)
 
     @classmethod
-    def find_many(cls, entity_ids: list[str]) -> list[EntityT]:
+    def find_many(cls, entity_ids: list[str], *, actor: "AuditActor") -> list[EntityT]:
         # $in returns store/index order, not entity_ids order; callers needing positional alignment must
         # build their own id->entity map rather than rely on this list order.
         object_ids = [oid for oid in (cls._to_object_id(eid) for eid in entity_ids) if oid is not None]
-        cursor = cls.collection().find({"_id": {"$in": object_ids}})
-        return [cls.from_doc(doc) for doc in cursor]
+        docs = list(cls.collection().find({"_id": {"$in": object_ids}}))
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
+        return [cls.from_doc(doc) for doc in docs]
 
     @classmethod
-    def query(cls, params: QueryT, *, sort: Optional[SortSpec] = None) -> list[EntityT]:
+    def query(cls, params: QueryT, *, actor: "AuditActor", sort: Optional[SortSpec] = None) -> list[EntityT]:
         # An explicit `sort` (including [] for "no ordering") wins; only None falls back to _to_sort.
         resolved_sort = sort if sort is not None else cls._to_sort(params)
-        return cls._query(cls._to_filter(params), sort=resolved_sort)
+        docs = cls._query_docs(cls._to_filter(params), sort=resolved_sort)
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
+        return [cls.from_doc(doc) for doc in docs]
 
     @classmethod
-    def query_one(cls, params: QueryT, *, sort: Optional[SortSpec] = None) -> Optional[EntityT]:
+    def query_one(cls, params: QueryT, *, actor: "AuditActor", sort: Optional[SortSpec] = None) -> Optional[EntityT]:
         resolved_sort = sort if sort is not None else cls._to_sort(params)
         cursor = cls.collection().find(cls._to_filter(params))
         if resolved_sort:
             cursor = cursor.sort(resolved_sort)
         doc = next(iter(cursor.limit(1)), None)
-        return cls.from_doc(doc) if doc is not None else None
+        if doc is None:
+            return None
+        cls._emit_read_audit(actor, [str(doc["_id"])])
+        return cls.from_doc(doc)
 
     @classmethod
     def query_paginated(
-        cls, params: QueryT, pagination: PaginationParams, *, sort: Optional[SortSpec] = None
+        cls, params: QueryT, pagination: PaginationParams, *, actor: "AuditActor", sort: Optional[SortSpec] = None
     ) -> PaginationResult[EntityT]:
         # A page of query() results plus totals, sharing one filter/sort so each listing avoids repeated
         # count + skip + limit + total_pages arithmetic. This is the only place pagination math lives.
@@ -173,9 +182,13 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         skip = (pagination.page - 1) * pagination.size + pagination.offset
         total_pages = (total_count + pagination.size - 1) // pagination.size
         resolved_sort = sort if sort is not None else cls._to_sort(params)
-        items = cls._query(store_filter, sort=resolved_sort, skip=skip, limit=pagination.size)
+        docs = cls._query_docs(store_filter, sort=resolved_sort, skip=skip, limit=pagination.size)
+        cls._emit_read_audit(actor, [str(doc["_id"]) for doc in docs])
         return PaginationResult(
-            items=items, pagination_params=pagination, total_count=total_count, total_pages=total_pages
+            items=[cls.from_doc(doc) for doc in docs],
+            pagination_params=pagination,
+            total_count=total_count,
+            total_pages=total_pages,
         )
 
     @classmethod
@@ -183,12 +196,36 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         return cls._count(cls._to_filter(params))
 
     @classmethod
+    def _emit_read_audit(cls, actor: "AuditActor", resource_ids: list[str]) -> None:
+        from modules.application.common.types import ResourceAction
+
+        for resource_id in resource_ids:
+            cls._emit_audit(actor, resource_id, ResourceAction.READ)
+
+    @classmethod
+    def _query_docs(
+        cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None, skip: int = 0, limit: int = 0
+    ) -> list[StoredDocument]:
+        cursor = cls.collection().find(store_filter)
+        if sort:
+            cursor = cursor.sort(sort)
+        if skip:
+            cursor = cursor.skip(skip)
+        if limit:
+            cursor = cursor.limit(limit)
+        return list(cursor)
+
+    @classmethod
     def update(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> Optional[EntityT]:
         # Two round-trips (not atomic): a concurrent write can skew the read-back. Use update_fields()
         # to skip the read-back when the caller discards the result.
         if not cls.update_fields(entity_id, fields, actor=actor):
             return None
-        return cls.find(entity_id)
+        # Read back the updated document directly (not via find()) so an update records only its UPDATE
+        # entry, not an extra READ for the same operation the caller asked to be a write.
+        object_id = cls._to_object_id(entity_id)
+        doc = cls.collection().find_one({"_id": object_id}) if object_id is not None else None
+        return cls.from_doc(doc) if doc is not None else None
 
     @classmethod
     def update_fields(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> bool:
@@ -238,27 +275,6 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         if deleted:
             cls._emit_audit(actor, entity_id, ResourceAction.DELETE)
         return deleted
-
-    @classmethod
-    def _query(
-        cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None, skip: int = 0, limit: int = 0
-    ) -> list[EntityT]:
-        cursor = cls.collection().find(store_filter)
-        if sort:  # [] means "no ordering"; query() already resolved None -> _to_sort before calling
-            cursor = cursor.sort(sort)
-        if skip:
-            cursor = cursor.skip(skip)
-        if limit:
-            cursor = cursor.limit(limit)
-        return [cls.from_doc(doc) for doc in cursor]
-
-    @classmethod
-    def _find_one(cls, store_filter: StoreFilter, *, sort: Optional[SortSpec] = None) -> Optional[EntityT]:
-        cursor = cls.collection().find(store_filter)
-        if sort:
-            cursor = cursor.sort(sort)
-        doc = next(iter(cursor.limit(1)), None)
-        return cls.from_doc(doc) if doc is not None else None
 
     @classmethod
     def _count(cls, store_filter: Optional[StoreFilter] = None) -> int:
