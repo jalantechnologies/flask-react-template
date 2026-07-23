@@ -15,6 +15,9 @@ worker:
 
 web_app_host: 'WEB_APP_HOST'
 
+web:
+  cors_allowed_origin: 'CORS_ALLOWED_ORIGIN'
+
 inspectlet:
   key: 'INSPECTLET_KEY'
 

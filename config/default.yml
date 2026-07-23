@@ -8,6 +8,11 @@ mongodb:
 
 web_app_host: 'http://localhost:3000'
 
+web:
+  cors_allowed_origin: 'http://localhost:3000'
+  csp_script_src_extra: []
+  csp_connect_src_extra: []
+
 logger:
   transports: ['console']
 
