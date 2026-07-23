@@ -1,7 +1,7 @@
 import dataclasses
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Mapping, Optional
 
 if TYPE_CHECKING:
     from modules.core.common.types import AuditActor, FieldChanges, ResourceAction
@@ -11,12 +11,12 @@ from bson.errors import InvalidId
 from pymongo import ReturnDocument
 from pymongo.collection import Collection
 
+from modules.core.base_model import StoredDocument
 from modules.core.common.types import PaginationParams, PaginationResult, QueryParams
 from modules.core.repository_client import ApplicationRepositoryClient
 
 # Storage-boundary shapes: the only heterogeneous maps in the repository layer. Naming them keeps the
 # `dict[str, Any]` blur confined to the database edge and visible (see docs/backend-architecture.md).
-type StoredDocument = dict[str, Any]
 type StoreFilter = dict[str, Any]
 type FieldUpdates = dict[str, Any]
 type SortSpec = list[tuple[str, int]]  # direction is 1 asc / -1 desc, a convention the type can't express
@@ -35,7 +35,9 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
     """Generic MongoDB persistence base. A concrete repository declares only what is specific to its
     collection — `collection_name`, `on_init_collection` (indexes), `from_doc`, and `_to_filter` — and
     inherits the CRUD surface. It is the only place that knows about MongoDB, so no store detail
-    (`ObjectId`, `$set`, filter dicts) crosses its public boundary. See docs/backend-architecture.md."""
+    (`ObjectId`, `$set`, filter dicts) crosses its public boundary. `from_doc` accepts the raw
+    `StoredDocument` the driver returns; `to_doc` may narrow its return to the collection's typed document.
+    See docs/backend-architecture.md."""
 
     _collection: ClassVar[Optional[Collection]] = None
 
@@ -92,7 +94,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         ...
 
     @classmethod
-    def to_doc(cls, entity: EntityT) -> StoredDocument:
+    def to_doc(cls, entity: EntityT) -> Mapping[str, Any]:
         # Default serialization for any dataclass (or an object exposing `to_bson`); override for a
         # custom mapping (a separate storage model, nested value objects, an enum stored differently).
         to_bson = getattr(entity, "to_bson", None)
@@ -122,7 +124,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         from modules.core.common.types import ResourceAction
 
         doc = cls.to_doc(entity)
-        result = cls.collection().insert_one(doc)
+        result = cls.collection().insert_one(dict(doc))
         created = cls.from_doc({**doc, "_id": result.inserted_id})
         cls._emit_audit(actor, str(result.inserted_id), ResourceAction.CREATE)
         return created

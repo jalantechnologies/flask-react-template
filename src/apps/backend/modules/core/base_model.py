@@ -1,6 +1,16 @@
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any, Mapping, NotRequired, Optional, TypedDict
+
+from bson import ObjectId
+
+type StoredDocument = dict[str, Any]
+
+
+class StoredDocumentBase(TypedDict):
+    _id: NotRequired[ObjectId]
+    created_at: NotRequired[Optional[datetime]]
+    updated_at: NotRequired[Optional[datetime]]
 
 
 @dataclass(kw_only=True)
@@ -16,7 +26,7 @@ class BaseModel:
         elif self.updated_at.tzinfo is None:
             self.updated_at = self.updated_at.replace(tzinfo=UTC)
 
-    def to_bson(self) -> dict[str, Any]:
+    def to_bson(self) -> Mapping[str, Any]:
         data = asdict(self)
         if data.get("id") is not None:
             data["_id"] = data.pop("id")

@@ -1,11 +1,27 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, NotRequired, Optional, TypedDict
 
 from bson import ObjectId
 
-from modules.core.base_model import BaseModel
+from modules.core.base_model import BaseModel, StoredDocument, StoredDocumentBase
 from modules.core.common.types import ActorType, AuditOutcome, FieldChange, FieldChanges, ResourceAction
+
+
+class AuditLogChangeDocument(TypedDict):
+    old: Any
+    new: Any
+
+
+class AuditLogDocument(StoredDocumentBase):
+    resource_type: str
+    resource_id: str
+    actor_type: str
+    actor_id: Optional[str]
+    action: str
+    timestamp: datetime
+    changes: NotRequired[Optional[dict[str, AuditLogChangeDocument]]]
+    outcome: NotRequired[str]
 
 
 @dataclass
@@ -22,7 +38,7 @@ class AuditLogModel(BaseModel):
     id: Optional[ObjectId | str] = None
 
     @classmethod
-    def from_bson(cls, bson_data: dict[str, Any]) -> "AuditLogModel":
+    def from_bson(cls, bson_data: StoredDocument) -> "AuditLogModel":
         raw_changes = bson_data.get("changes") or {}
         return cls(
             id=bson_data.get("_id"),

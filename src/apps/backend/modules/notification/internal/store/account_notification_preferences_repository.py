@@ -8,6 +8,7 @@ from modules.core.common.types import AuditActor
 from modules.core.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 from modules.notification.internal.store.account_notification_preferences_model import (
+    AccountNotificationPreferencesDocument,
     AccountNotificationPreferencesModel,
 )
 from modules.notification.types import AccountNotificationPreferences, AccountNotificationPreferencesQuery
@@ -85,7 +86,7 @@ class AccountNotificationPreferencesRepository(
         )
 
     @classmethod
-    def to_doc(cls, entity: AccountNotificationPreferences) -> StoredDocument:
+    def to_doc(cls, entity: AccountNotificationPreferences) -> AccountNotificationPreferencesDocument:
         # The stored document carries fields the domain entity does not (active, timestamps); the model
         # supplies their defaults. create() strips id/_id so MongoDB assigns a fresh ObjectId.
         return AccountNotificationPreferencesModel(
