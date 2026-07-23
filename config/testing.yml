@@ -20,7 +20,7 @@ sms:
   enabled: false
 
 public:
-  password:
+  password_policy:
     min_zxcvbn_score: 0
   default_otp:
     enabled: false

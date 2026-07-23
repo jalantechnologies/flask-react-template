@@ -21,7 +21,7 @@ class AccountUtil:
         if len(password) > MAX_PASSWORD_LENGTH:
             raise AccountPasswordTooWeakError(f"Password must be at most {MAX_PASSWORD_LENGTH} characters.")
 
-        minimum_score = ConfigService[int].get_value(key="public.password.min_zxcvbn_score")
+        minimum_score = ConfigService[int].get_value(key="public.password_policy.min_zxcvbn_score")
         result = zxcvbn(password)
         if result["score"] >= minimum_score:
             return
