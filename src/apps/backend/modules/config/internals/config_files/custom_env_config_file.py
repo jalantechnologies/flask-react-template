@@ -26,7 +26,9 @@ class CustomEnvConfig:
 
         for key, value in data.items():
             if isinstance(value, dict):
-                updated_data[key] = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
+                result = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
+                if result is not None:
+                    updated_data[key] = result
             elif isinstance(value, str):
                 result = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
                 if result is not None:
