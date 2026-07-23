@@ -23,9 +23,7 @@ class TaskWriter:
         # Confirm the task exists for this account (raises if not), keeping the update account-scoped.
         TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 
-        TaskRepository.update_fields(
-            params.task_id, {"description": params.description, "title": params.title, "updated_at": datetime.now(UTC)}
-        )
+        TaskRepository.update_fields(params.task_id, {"description": params.description, "title": params.title})
 
         return TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
 

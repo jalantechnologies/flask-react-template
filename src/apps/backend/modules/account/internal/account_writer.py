@@ -52,9 +52,7 @@ class AccountWriter:
     @staticmethod
     def update_password_by_account_id(account_id: str, password: str) -> Account:
         hashed_password = AccountUtil.hash_password(password=password)
-        updated_account = AccountRepository.update(
-            account_id, {"hashed_password": hashed_password, "updated_at": datetime.now(UTC)}
-        )
+        updated_account = AccountRepository.update(account_id, {"hashed_password": hashed_password})
         if updated_account is None:
             raise AccountWithIdNotFoundError(id=account_id)
 
@@ -69,9 +67,6 @@ class AccountWriter:
 
         if params.last_name is not None:
             update_fields["last_name"] = params.last_name
-
-        if update_fields:
-            update_fields["updated_at"] = datetime.now(UTC)
 
         updated_account = AccountRepository.update(account_id, update_fields)
         if updated_account is None:
