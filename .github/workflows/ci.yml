@@ -477,7 +477,7 @@ jobs:
 
   sonarqube:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    needs: [test, test-frontend]
+    needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -779,7 +779,7 @@ jobs:
           echo "❌ Trivy found vulnerabilities — failing the job."
           exit 1
 
-  test:
+  test-backend:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
