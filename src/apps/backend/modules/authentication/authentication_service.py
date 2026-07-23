@@ -23,8 +23,6 @@ from modules.notification.email_service import EmailService
 from modules.notification.sms_service import SMSService
 from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams, SendSMSParams
 
-ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
-
 
 class AuthenticationService:
     @staticmethod
@@ -40,7 +38,9 @@ class AuthenticationService:
         *, params: OTPBasedAuthAccessTokenRequestParams, account: Account
     ) -> AccessToken:
         otp = AuthenticationService.verify_otp(
-            params=VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code), account_id=account.id
+            params=VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code),
+            account_id=account.id,
+            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
         )
         AccessTokenUtil.validate_otp_for_access_token(otp=otp)
 
@@ -51,11 +51,9 @@ class AuthenticationService:
         return AccessTokenUtil.verify_access_token(token=token)
 
     @staticmethod
-    def create_password_reset_token(params: Account) -> PasswordResetToken:
+    def create_password_reset_token(params: Account, *, actor: AuditActor) -> PasswordResetToken:
         token = PasswordResetTokenUtil.generate_password_reset_token()
-        password_reset_token = PasswordResetTokenWriter.create_password_reset_token(
-            params.id, token, actor=ANONYMOUS_ACTOR
-        )
+        password_reset_token = PasswordResetTokenWriter.create_password_reset_token(params.id, token, actor=actor)
         AuthenticationService.send_password_reset_email(
             account_id=params.id, first_name=params.first_name, username=params.username, password_reset_token=token
         )
@@ -66,10 +64,10 @@ class AuthenticationService:
         return PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
 
     @staticmethod
-    def set_password_reset_token_as_used_by_id(password_reset_token_id: str, account_id: str) -> PasswordResetToken:
-        return PasswordResetTokenWriter.set_password_reset_token_as_used(
-            password_reset_token_id, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
-        )
+    def set_password_reset_token_as_used_by_id(
+        password_reset_token_id: str, *, actor: AuditActor
+    ) -> PasswordResetToken:
+        return PasswordResetTokenWriter.set_password_reset_token_as_used(password_reset_token_id, actor=actor)
 
     @staticmethod
     def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
@@ -100,9 +98,9 @@ class AuthenticationService:
         )
 
     @staticmethod
-    def create_otp(*, params: CreateOTPParams, account_id: str) -> OTP:
+    def create_otp(*, params: CreateOTPParams, account_id: str, actor: AuditActor) -> OTP:
         recipient_phone_number = PhoneNumber(**asdict(params)["phone_number"])
-        otp = OTPWriter.create_new_otp(params=params, actor=ANONYMOUS_ACTOR)
+        otp = OTPWriter.create_new_otp(params=params, actor=actor)
 
         if not OTPUtil.should_use_default_otp_for_phone_number(recipient_phone_number.phone_number):
             send_sms_params = SendSMSParams(
@@ -114,5 +112,5 @@ class AuthenticationService:
         return otp
 
     @staticmethod
-    def verify_otp(*, params: VerifyOTPParams, account_id: str) -> OTP:
-        return OTPWriter.verify_otp(params=params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id))
+    def verify_otp(*, params: VerifyOTPParams, account_id: str, actor: AuditActor) -> OTP:
+        return OTPWriter.verify_otp(params=params, actor=actor)

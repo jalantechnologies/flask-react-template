@@ -2,6 +2,7 @@ import unittest
 from typing import Callable
 
 from modules.account.account_service import AccountService
+from tests.conftest import TEST_ACTOR
 from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
@@ -16,11 +17,9 @@ class BaseTestAccount(unittest.TestCase):
     def setup_method(self, method: Callable[..., object]) -> None:
         print(f"Executing:: {method.__name__}")
         AccountRestApiServer.create()
-        self.account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
+        self.account = AccountService.create_account_by_username_and_password(params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="default_username"
-            )
-        )
+            ), actor=TEST_ACTOR)
         self.access_token = AuthenticationService.create_access_token_by_username_and_password(account=self.account)
 
     def teardown_method(self, method: Callable[..., object]) -> None:

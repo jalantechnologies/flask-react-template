@@ -12,14 +12,12 @@ from tests.conftest import TEST_ACTOR
 
 class TestRepositoryTimestamps(unittest.TestCase):
     def setUp(self) -> None:
-        self.account = AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
+        self.account = AccountService.create_account_by_username_and_password(params=CreateAccountByUsernameAndPasswordParams(
                 username="timestamps@example.com",
                 password="testpassword",
                 first_name="Time",
                 last_name="Stamps",
-            )
-        )
+            ), actor=TEST_ACTOR)
 
     def tearDown(self) -> None:
         TaskRepository.collection().delete_many({})

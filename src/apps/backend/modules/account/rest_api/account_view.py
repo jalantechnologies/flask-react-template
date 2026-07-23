@@ -19,6 +19,8 @@ from modules.authentication.rest_api.access_auth_middleware import access_auth_m
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 
+ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
+
 
 class AccountView(MethodView):
     @staticmethod
@@ -33,12 +35,12 @@ class AccountView(MethodView):
 
         if "phone_number" in request_data:
             account = AccountService.get_or_create_account_by_phone_number(
-                params=CreateAccountByPhoneNumberParams.from_dict(request_data)
+                params=CreateAccountByPhoneNumberParams.from_dict(request_data), actor=ANONYMOUS_ACTOR
             )
 
         elif "password" in request_data and "username" in request_data:
             account = AccountService.create_account_by_username_and_password(
-                params=CreateAccountByUsernameAndPasswordParams.from_dict(request_data)
+                params=CreateAccountByUsernameAndPasswordParams.from_dict(request_data), actor=ANONYMOUS_ACTOR
             )
 
         else:
@@ -74,7 +76,9 @@ class AccountView(MethodView):
             reset_account_params = ResetPasswordParams(
                 account_id=account_id, new_password=request_data["new_password"], token=request_data["token"]
             )
-            account = AccountService.reset_account_password(params=reset_account_params)
+            account = AccountService.reset_account_password(
+                params=reset_account_params, actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
+            )
 
         elif "first_name" in request_data or "last_name" in request_data:
             enforce_account_ownership(account_id)

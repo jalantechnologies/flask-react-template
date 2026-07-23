@@ -11,7 +11,7 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
-from modules.application.common.types import ActorType, AuditActor
+from modules.application.common.types import AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
 from modules.notification.notification_service import NotificationService
@@ -20,16 +20,16 @@ from modules.notification.types import (
     CreateOrUpdateAccountNotificationPreferencesParams,
 )
 
-ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
-
 
 class AccountService:
     @staticmethod
-    def create_account_by_username_and_password(*, params: CreateAccountByUsernameAndPasswordParams) -> Account:
-        account = AccountWriter.create_account_by_username_and_password(params=params, actor=ANONYMOUS_ACTOR)
+    def create_account_by_username_and_password(
+        *, params: CreateAccountByUsernameAndPasswordParams, actor: AuditActor
+    ) -> Account:
+        account = AccountWriter.create_account_by_username_and_password(params=params, actor=actor)
         AccountService.create_or_update_account_notification_preferences(
             account_id=account.id,
-            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
+            actor=actor,
             preferences=CreateOrUpdateAccountNotificationPreferencesParams(
                 email_enabled=True, push_enabled=True, sms_enabled=True
             ),
@@ -41,26 +41,28 @@ class AccountService:
         return AccountReader.get_account_by_phone_number(phone_number=phone_number)
 
     @staticmethod
-    def get_or_create_account_by_phone_number(*, params: CreateAccountByPhoneNumberParams) -> Account:
+    def get_or_create_account_by_phone_number(
+        *, params: CreateAccountByPhoneNumberParams, actor: AuditActor
+    ) -> Account:
         account = AccountReader.get_account_by_phone_number_optional(phone_number=params.phone_number)
 
         if account is None:
-            account = AccountWriter.create_account_by_phone_number(params=params, actor=ANONYMOUS_ACTOR)
+            account = AccountWriter.create_account_by_phone_number(params=params, actor=actor)
             AccountService.create_or_update_account_notification_preferences(
                 account_id=account.id,
-                actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
+                actor=actor,
                 preferences=CreateOrUpdateAccountNotificationPreferencesParams(
                     email_enabled=True, push_enabled=True, sms_enabled=True
                 ),
             )
 
         create_otp_params = CreateOTPParams(phone_number=params.phone_number)
-        AuthenticationService.create_otp(params=create_otp_params, account_id=account.id)
+        AuthenticationService.create_otp(params=create_otp_params, account_id=account.id, actor=actor)
 
         return account
 
     @staticmethod
-    def reset_account_password(*, params: ResetPasswordParams) -> Account:
+    def reset_account_password(*, params: ResetPasswordParams, actor: AuditActor) -> Account:
         account = AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=params.account_id))
 
         password_reset_token = AuthenticationService.verify_password_reset_token(
@@ -68,13 +70,11 @@ class AccountService:
         )
 
         updated_account = AccountWriter.update_password_by_account_id(
-            account_id=params.account_id,
-            password=params.new_password,
-            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=params.account_id),
+            account_id=params.account_id, password=params.new_password, actor=actor
         )
 
         AuthenticationService.set_password_reset_token_as_used_by_id(
-            password_reset_token_id=password_reset_token.id, account_id=params.account_id
+            password_reset_token_id=password_reset_token.id, actor=actor
         )
 
         return updated_account

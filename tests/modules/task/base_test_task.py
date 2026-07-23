@@ -73,14 +73,12 @@ class BaseTestTask(unittest.TestCase):
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
     ) -> Account:
-        return AccountService.create_account_by_username_and_password(
-            params=CreateAccountByUsernameAndPasswordParams(
+        return AccountService.create_account_by_username_and_password(params=CreateAccountByUsernameAndPasswordParams(
                 username=username or self.DEFAULT_USERNAME,
                 password=password or self.DEFAULT_PASSWORD,
                 first_name=first_name or self.DEFAULT_FIRST_NAME,
                 last_name=last_name or self.DEFAULT_LAST_NAME,
-            )
-        )
+            ), actor=TEST_ACTOR)
 
     def get_access_token(self, username: Optional[str] = None, password: Optional[str] = None) -> str:
         with app.test_client() as client:
