@@ -194,6 +194,26 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - Keep secrets in environment variables or Doppler; never commit credentials.
 - Use TLS on the MongoDB connection outside local development. Startup warns when `MONGODB_URI` lacks TLS — see [MongoDB Security](docs/mongodb-security.md).
 
+## Security
+
+This template is meant to be SOC2-ready by default. Security is part of the feature, not a later pass. This section is a checklist to apply to every change and to flag in the pull request.
+
+**On any change, check it against the rules below and call out the risk in the PR.** If a change adds a route, a provider, a subprocess, an outbound HTTP call, a login or session step, or a new stored secret, it touches one of these rules. Say which rule applies and how the change satisfies it. If it touches audit logging, access control, credentials, encryption, or session handling, label it SOC2-relevant in the PR so the control is visible. The author raises this, not the reviewer. Do not wait for a security review.
+
+Each rule below is the generic form of a real, shipped, exploitable bug. Follow them so the same bug does not come back in a new provider or route.
+
+**Do not pass the whole environment into a subprocess or an outside call.** `{**os.environ}` hands over every secret the process holds, even ones the callee never needs. One leak like this can expose a database password to a process that had no reason to see it. Pass only the exact variables the callee needs, as an explicit allowlist.
+
+**Take away the ability, not just the option.** You cannot block a bad action by filtering commands or inputs, because a shell or a downstream call can phrase the same thing many ways. Give the caller a credential that simply cannot do the dangerous thing. A database user with a read-only role cannot write, no matter what query it runs.
+
+**Fix a shared gap in the shared code, once.** When many routes or providers go through the same function, put the check there. One change protects every caller, now and later, for the same effort as fixing one spot. For example, if `Link` and `Markdown` both render links through a single `isSafeHref` allowlist, the XSS fix lives in one place.
+
+**Check any URL you will fetch or display, and turn off redirects.** An attacker-controlled URL is an SSRF risk when the server fetches it and an XSS risk when the browser renders it. Validate it with the same parser the fetch library uses, since parsers disagree on odd input and a mismatch lets a bad host through. Allow only the scheme and host you expect (`https` and a known domain), reject a `javascript:` link on the frontend, and pass `allow_redirects=False` so an allowed host cannot bounce you somewhere internal.
+
+**Do not turn a failed read into a "nothing here" answer.** `items = resp.json() if resp.status_code == 200 else []` turns a temporary 5xx into "the list is empty," which then causes a duplicate write or a wrong disabled state on the next call. Raise on a non-200 and let the caller decide whether to retry.
+
+**Audit-log facts must come from something the user cannot fake.** Never record a client header like `X-Forwarded-For` as the actor's IP. Use `request.remote_addr`, which `ProxyFix` already sets correctly behind the trusted proxy (see `server.py`). Also make sure a failed action still writes its audit event, including when the route fails by raising. An audit trail the user can forge or skip is not a trail.
+
 ## Testing Requirements
 
 - Add or update pytest coverage for new backend endpoints or services (`tests/modules/...`).
