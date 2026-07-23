@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from modules.application.common.types import AuditActor
+from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.internal.task_reader import TaskReader
 from modules.task.types import (
@@ -24,13 +25,12 @@ class TaskWriter:
         # Confirm the task exists for this account (raises if not), keeping the update account-scoped.
         TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id), actor=actor)
 
-        TaskRepository.update_fields(
+        updated = TaskRepository.update(
             params.task_id, {"description": params.description, "title": params.title}, actor=actor
         )
-
-        return TaskReader.get_task(
-            params=GetTaskParams(account_id=params.account_id, task_id=params.task_id), actor=actor
-        )
+        if updated is None:
+            raise TaskNotFoundError(task_id=params.task_id)
+        return updated
 
     @staticmethod
     def delete_task(*, params: DeleteTaskParams, actor: AuditActor) -> TaskDeletionResult:

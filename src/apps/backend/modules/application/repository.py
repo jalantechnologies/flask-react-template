@@ -221,34 +221,47 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
 
     @classmethod
     def update(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> Optional[EntityT]:
-        # Two round-trips (not atomic): a concurrent write can skew the read-back. Use update_fields()
-        # to skip the read-back when the caller discards the result.
-        if not cls.update_fields(entity_id, fields, actor=actor):
-            return None
-        # Read back the updated document directly (not via find()) so an update records only its UPDATE
-        # entry, not an extra READ for the same operation the caller asked to be a write.
+        # Returns the updated entity from the same atomic write, so an update records only its UPDATE
+        # entry — no extra READ round-trip for the read-back.
         object_id = cls._to_object_id(entity_id)
-        doc = cls.collection().find_one({"_id": object_id}) if object_id is not None else None
-        return cls.from_doc(doc) if doc is not None else None
+        if object_id is None:
+            return None
+        patch = {"updated_at": datetime.now(UTC), **fields} if fields else {}
+        previous = cls._apply_update(object_id, entity_id, patch, fields, actor)
+        if previous is None:
+            return None
+        # {**previous, **patch} is exactly the stored post-image ($set replaces those keys), so the
+        # updated entity is reconstructed in memory rather than read back from the store.
+        return cls.from_doc({**previous, **patch})
 
     @classmethod
     def update_fields(cls, entity_id: str, fields: FieldUpdates, *, actor: "AuditActor") -> bool:
-        # One atomic round-trip: find_one_and_update returns the document exactly as it was before the
-        # $set, so the audit diff's `old` value cannot be skewed by a concurrent write between read and
-        # write. Returning BEFORE keeps this a single Mongo call, preserving the one-round-trip contract.
+        # Like update() but returns only whether the row existed, for callers that discard the entity.
         object_id = cls._to_object_id(entity_id)
         if object_id is None:
             return False
         if not fields:
             return cls._count({"_id": object_id}) > 0
         patch = {"updated_at": datetime.now(UTC), **fields}
-        previous = cls.collection().find_one_and_update(
+        return cls._apply_update(object_id, entity_id, patch, fields, actor) is not None
+
+    @classmethod
+    def _apply_update(
+        cls, object_id: ObjectId, entity_id: str, patch: FieldUpdates, fields: FieldUpdates, actor: "AuditActor"
+    ) -> Optional[StoredDocument]:
+        # One atomic round-trip: find_one_and_update returns the document exactly as it was before the
+        # $set, so the audit diff's `old` value cannot be skewed by a concurrent write between read and
+        # write. Returns the BEFORE document (None if no row matched).
+        if not patch:
+            current: Optional[StoredDocument] = cls.collection().find_one({"_id": object_id})
+            return current
+        previous: Optional[StoredDocument] = cls.collection().find_one_and_update(
             {"_id": object_id}, {"$set": patch}, return_document=ReturnDocument.BEFORE
         )
         if previous is None:
-            return False
+            return None
         cls._emit_field_update_audit(actor, entity_id, fields, previous)
-        return True
+        return previous
 
     @classmethod
     def _emit_field_update_audit(
