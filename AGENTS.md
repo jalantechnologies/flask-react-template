@@ -303,4 +303,5 @@ Choose your type carefully — it determines the label and semver impact.
 - [Configuration Guide](docs/configuration.md)
 - [MongoDB Security](docs/mongodb-security.md)
 - [Testing Guide](docs/testing.md)
+- [Local AI Pre-Push Review](docs/local-ai-review.md)
 - [Engineering Handbook](https://github.com/jalantechnologies/handbook/blob/main/engineering/index.md)

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+sh "$(dirname "$0")/scripts/ai-review.sh" || exit 0
