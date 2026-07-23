@@ -3,21 +3,21 @@ import '@testing-library/jest-dom/vitest';
 const noop = () => {};
 
 try {
-  Object.defineProperty(window.location, 'assign', {
+  Object.defineProperty(globalThis.location, 'assign', {
     configurable: true,
     value: noop,
   });
-  Object.defineProperty(window.location, 'replace', {
+  Object.defineProperty(globalThis.location, 'replace', {
     configurable: true,
     value: noop,
   });
-  Object.defineProperty(window.location, 'reload', {
+  Object.defineProperty(globalThis.location, 'reload', {
     configurable: true,
     value: noop,
   });
 } catch {
-  const url = new URL(window.location.href);
-  Object.defineProperty(window, 'location', {
+  const url = new URL(globalThis.location.href);
+  Object.defineProperty(globalThis, 'location', {
     configurable: true,
     value: Object.assign(url, {
       assign: noop,
