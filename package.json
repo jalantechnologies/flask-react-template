@@ -39,7 +39,10 @@
     "serve:flower": "make run-flower",
     "serve:frontend": "webpack serve --output-path dist/public --config src/apps/frontend/webpack.dev.js --hot --progress",
     "start": "npm run serve:backend",
-    "test": "cross-env APP_ENV=testing make run-test",
+    "test": "concurrently -m 1 --kill-others-on-fail \"npm:test:py\" \"npm:test:frontend\"",
+    "test:frontend": "vitest run --config src/apps/frontend/vitest.config.ts",
+    "test:py": "cross-env APP_ENV=testing make run-test",
+    "test:watch": "vitest --config src/apps/frontend/vitest.config.ts",
     "prepare": "husky"
   },
   "author": "Jalan Technology Consulting Pvt. Ltd. <developer@bettrhq.com> (https://bettrhq.com/)",
@@ -77,6 +80,9 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/config": "0.0.41",
     "@types/google-libphonenumber": "^7.4.30",
     "@types/lodash": "^4.14.186",
@@ -84,6 +90,7 @@
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "concurrently": "^7.2.2",
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.1",
@@ -99,6 +106,7 @@
     "html-webpack-plugin": "^5.5.0",
     "husky": "^9.1.4",
     "js-yaml": "^4.3.0",
+    "jsdom": "^29.1.1",
     "lint-staged": "^15.4.1",
     "nyc": "^15.1.0",
     "remark-cli": "^10.0.0",
@@ -110,12 +118,14 @@
     "ts-loader": "^9.4.1",
     "tsc-watch": "^5.0.3",
     "typescript": "^4.4.4",
+    "vitest": "^4.1.10",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.11.1",
     "webpack-merge": "^5.8.0"
   },
   "overrides": {
+    "@types/node": "17.0.45",
     "form-data": "^4.0.6",
     "@eslint/eslintrc": {
       "minimatch": "3.1.4"
