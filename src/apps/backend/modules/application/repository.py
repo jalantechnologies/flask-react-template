@@ -197,10 +197,14 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
 
     @classmethod
     def _emit_read_audit(cls, actor: "AuditActor", resource_ids: list[str]) -> None:
+        if not cls._audits() or not resource_ids:
+            return
         from modules.application.common.types import ResourceAction
+        from modules.application.internal.audit.audit_writer import AuditWriter
 
-        for resource_id in resource_ids:
-            cls._emit_audit(actor, resource_id, ResourceAction.READ)
+        AuditWriter.record_many(
+            actor=actor, resource_type=cls._resource_type(), resource_ids=resource_ids, action=ResourceAction.READ
+        )
 
     @classmethod
     def _query_docs(

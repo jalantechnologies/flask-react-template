@@ -1,5 +1,5 @@
 from modules.account.internal.store.account_repository import AccountRepository
-from modules.account.types import Account
+from modules.account.types import Account, AccountQuery
 from modules.application.common.types import ActorType, AuditActor, ResourceAction
 from tests.modules.application.base_test_audit import BaseTestAudit
 
@@ -80,3 +80,35 @@ class TestRepositoryAudit(BaseTestAudit):
         AccountRepository.create(self._make_account(), actor=self.ACTOR)
 
         assert len(self.audit_docs()) == 1
+
+    def test_find_records_a_read_entry(self) -> None:
+        created = AccountRepository.create(self._make_account(), actor=self.ACTOR)
+
+        AccountRepository.find(created.id, actor=self.ACTOR)
+
+        read_entries = [d for d in self.audit_docs() if d["action"] == ResourceAction.READ.value]
+        assert len(read_entries) == 1
+        assert read_entries[0]["resource_id"] == created.id
+        assert read_entries[0]["actor_id"] == "tester"
+
+    def test_query_records_one_read_entry_per_returned_document(self) -> None:
+        first = AccountRepository.create(self._make_account_with_username("one@example.com"), actor=self.ACTOR)
+        second = AccountRepository.create(self._make_account_with_username("two@example.com"), actor=self.ACTOR)
+
+        results = AccountRepository.query(AccountQuery(), actor=self.ACTOR)
+        assert len(results) == 2
+
+        read_entries = [d for d in self.audit_docs() if d["action"] == ResourceAction.READ.value]
+        assert len(read_entries) == 2
+        assert {entry["resource_id"] for entry in read_entries} == {first.id, second.id}
+
+    def _make_account_with_username(self, username: str) -> Account:
+        account = self._make_account()
+        return Account(
+            id=account.id,
+            first_name=account.first_name,
+            last_name=account.last_name,
+            hashed_password=account.hashed_password,
+            phone_number=account.phone_number,
+            username=username,
+        )

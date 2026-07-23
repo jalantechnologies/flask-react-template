@@ -26,7 +26,33 @@ class AuditWriter:
         action: ResourceAction,
         changes: Optional[FieldChanges] = None,
     ) -> None:
-        record = AuditRecord(
+        record = AuditWriter._build_record(
+            actor=actor, resource_type=resource_type, resource_id=resource_id, action=action, changes=changes
+        )
+        AuditWriter._persist(record)
+
+    @staticmethod
+    def record_many(*, actor: AuditActor, resource_type: str, resource_ids: list[str], action: ResourceAction) -> None:
+        # One insert for the whole batch: a multi-document read emits an entry per resource id without a
+        # Mongo round trip per document (see AGENTS.md §13 on N+1 access).
+        if not resource_ids:
+            return
+        records = [
+            AuditWriter._build_record(actor=actor, resource_type=resource_type, resource_id=resource_id, action=action)
+            for resource_id in resource_ids
+        ]
+        AuditWriter._persist_many(records)
+
+    @staticmethod
+    def _build_record(
+        *,
+        actor: AuditActor,
+        resource_type: str,
+        resource_id: str,
+        action: ResourceAction,
+        changes: Optional[FieldChanges] = None,
+    ) -> AuditRecord:
+        return AuditRecord(
             resource_type=resource_type,
             resource_id=resource_id,
             actor_type=actor.actor_type,
@@ -35,7 +61,19 @@ class AuditWriter:
             timestamp=datetime.now(tz=timezone.utc),
             changes=AuditWriter._redact(changes or {}),
         )
-        AuditWriter._persist(record)
+
+    @staticmethod
+    def _to_entry(record: AuditRecord) -> AuditLogEntry:
+        return AuditLogEntry(
+            id="",
+            resource_type=record.resource_type,
+            resource_id=record.resource_id,
+            actor_type=record.actor_type,
+            actor_id=record.actor_id,
+            action=record.action,
+            timestamp=record.timestamp,
+            changes=record.changes,
+        )
 
     @staticmethod
     def _persist(record: AuditRecord) -> None:
@@ -43,22 +81,23 @@ class AuditWriter:
         # so failing here would break the caller's success path for a write that already landed (and could
         # not un-apply it). Audit persistence is best-effort; a lost entry is surfaced via the error log.
         try:
-            AuditLogRepository.create(
-                AuditLogEntry(
-                    id="",
-                    resource_type=record.resource_type,
-                    resource_id=record.resource_id,
-                    actor_type=record.actor_type,
-                    actor_id=record.actor_id,
-                    action=record.action,
-                    timestamp=record.timestamp,
-                    changes=record.changes,
-                )
-            )
+            AuditLogRepository.create(AuditWriter._to_entry(record))
         except Exception as exc:
             Logger.error(
                 message=f"audit log write failed for {record.action.value} on "
                 f"{record.resource_type}:{record.resource_id}: {exc}"
+            )
+
+    @staticmethod
+    def _persist_many(records: list[AuditRecord]) -> None:
+        # Same best-effort contract as _persist: the read already returned, so a lost batch is logged.
+        try:
+            AuditLogRepository.create_many([AuditWriter._to_entry(record) for record in records])
+        except Exception as exc:
+            first = records[0]
+            Logger.error(
+                message=f"audit log batch write failed for {first.action.value} on "
+                f"{first.resource_type} ({len(records)} entries): {exc}"
             )
 
     @staticmethod
