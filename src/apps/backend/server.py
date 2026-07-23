@@ -8,6 +8,7 @@ load_dotenv()
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
+from modules.api_key.rest_api.api_key_rest_api_server import ApiKeyRestApiServer
 from modules.application.application_service import ApplicationService
 from modules.application.errors import AppError
 from modules.application.worker_registry import WorkerRegistry
@@ -54,6 +55,10 @@ api_blueprint.register_blueprint(account_blueprint)
 # Register task apis
 task_blueprint = TaskRestApiServer.create()
 api_blueprint.register_blueprint(task_blueprint)
+
+# Register api key apis
+api_key_blueprint = ApiKeyRestApiServer.create()
+api_blueprint.register_blueprint(api_key_blueprint)
 
 app.register_blueprint(api_blueprint)
 

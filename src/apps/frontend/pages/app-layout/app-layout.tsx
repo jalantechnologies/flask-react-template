@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { AppShell, NavItemSpec } from 'frontend/components';
 import DashboardIcon from 'frontend/components/icons/dashboard-icon';
+import KeyIcon from 'frontend/components/icons/key-icon';
 import routes from 'frontend/constants/routes';
 import { useAccountContext, useAuthContext } from 'frontend/contexts';
 
@@ -11,6 +12,11 @@ const NAV_ITEMS: NavItemSpec[] = [
     icon: <DashboardIcon />,
     label: 'Dashboard',
     path: routes.DASHBOARD,
+  },
+  {
+    icon: <KeyIcon />,
+    label: 'API keys',
+    path: routes.API_KEYS,
   },
 ];
 

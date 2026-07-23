@@ -1,5 +1,6 @@
 const routes = {
   ABOUT: '/about',
+  API_KEYS: '/api-keys',
   DASHBOARD: '/',
   FORGOT_PASSWORD: '/forgot-password',
   LOGIN: '/login',

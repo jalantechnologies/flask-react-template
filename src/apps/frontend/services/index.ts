@@ -1,6 +1,13 @@
 import AccountService from 'frontend/services/account.service';
+import ApiKeyService from 'frontend/services/api-key.service';
 import APIService from 'frontend/services/api.service';
 import AuthService from 'frontend/services/auth.service';
 import ResetPasswordService from 'frontend/services/reset-password.service';
 
-export { AccountService, APIService, AuthService, ResetPasswordService };
+export {
+  AccountService,
+  APIService,
+  ApiKeyService,
+  AuthService,
+  ResetPasswordService,
+};
