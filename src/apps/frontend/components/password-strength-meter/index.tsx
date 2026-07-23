@@ -57,12 +57,7 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
 
   return (
     <Stack gap={Spacing.Xs} testId={testId}>
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label={summary}
-        className="flex gap-1"
-      >
+      <output aria-label={summary} className="flex gap-1">
         {SEGMENTS.map((segment, index) => (
           <span
             key={segment}
@@ -75,7 +70,7 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             )}
           />
         ))}
-      </div>
+      </output>
       <Text
         size="xs"
         weight="medium"
