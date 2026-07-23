@@ -30,8 +30,9 @@ before reviewing.
 
 ### 2. Remove unrelated changes
 
-Keep the PR to its intended scope only. Strip accidental, generated, debugging, or formatting-only
-changes that are not part of the PR's purpose.
+Read the linked issue (if any) to understand the intended scope. Keep the PR to that scope only.
+Strip accidental, generated, debugging, or formatting-only changes that are not part of the PR's
+purpose.
 
 ### 3. Comprehensive review
 
@@ -61,9 +62,9 @@ Optimize for code a newcomer can understand.
 
 ### 6. Comments
 
-Use comments sparingly; code should be self-explanatory. Remove comments that just narrate what the
-next line does. Keep or add comments only for things that are hard to infer: why a decision was
-made, business rules, trade-offs, invariants, assumptions, non-obvious workflows.
+No new code comments. Code should be self-explanatory through naming and structure. Remove comments
+that narrate what the next line does. (If a genuinely non-obvious invariant or workaround already
+carries a "why" comment, leave it; but do not add new ones.)
 
 ### 7. Tests
 
