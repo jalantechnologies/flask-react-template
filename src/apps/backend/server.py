@@ -6,8 +6,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
+from modules.application.application_service import ApplicationService
 from modules.application.errors import AppError
-from modules.application.internals.security_headers import SecurityHeaders
 from modules.application.worker_registry import WorkerRegistry
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
@@ -21,7 +21,7 @@ app = Flask(__name__)
 cors_allowed_origin = ConfigService[str].get_value(key="web.cors_allowed_origin", default="http://localhost:3000")
 cors = CORS(app, resources={r"/*": {"origins": cors_allowed_origin}})
 
-SecurityHeaders.init_app(app)
+ApplicationService.install_security_headers(app)
 
 # Mount deps
 LoggerManager.mount_logger()

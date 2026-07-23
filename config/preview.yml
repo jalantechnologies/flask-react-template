@@ -8,6 +8,13 @@ sms:
 
 is_server_running_behind_proxy: true
 
+web:
+  csp_script_src_extra:
+    - 'https://cdn.inspectlet.com'
+  csp_connect_src_extra:
+    - 'https://*.datadoghq.com'
+    - 'https://*.inspectlet.com'
+
 public:
   authenticationMechanism: 'EMAIL' #or 'PHONE'
   datadog:

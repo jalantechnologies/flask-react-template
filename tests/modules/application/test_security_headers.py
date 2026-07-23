@@ -1,10 +1,11 @@
-from unittest.mock import MagicMock, patch
+from typing import Dict, List, Optional
+from unittest.mock import patch
 
 from flask import Flask
 
 from modules.application.internals.security_headers import SecurityHeaders
 
-EXPECTED_CSP = (
+STRICT_CSP = (
     "default-src 'self'; "
     "script-src 'self'; "
     "style-src 'self' 'unsafe-inline'; "
@@ -15,9 +16,16 @@ EXPECTED_CSP = (
 )
 
 
-def _build_client(behind_proxy: bool):
+def _build_client(*, behind_proxy: bool = False, config_overrides: Optional[Dict[str, object]] = None):
+    overrides = config_overrides or {}
+
+    def _fake_get_value(key: str, default: object = None) -> object:
+        if key == "is_server_running_behind_proxy":
+            return behind_proxy
+        return overrides.get(key, default)
+
     with patch("modules.application.internals.security_headers.ConfigService") as mock_config_service:
-        mock_config_service.__getitem__.return_value.get_value.return_value = behind_proxy
+        mock_config_service.__getitem__.return_value.get_value.side_effect = _fake_get_value
         app = Flask(__name__)
 
         @app.route("/ping")
@@ -31,18 +39,17 @@ def _build_client(behind_proxy: bool):
 class TestGivenSecurityHeadersAreApplied:
     class TestWhenNotBehindProxy:
         def test_then_baseline_headers_are_present(self) -> None:
-            response = _build_client(behind_proxy=False).get("/ping")
+            response = _build_client().get("/ping")
 
             assert response.headers["X-Content-Type-Options"] == "nosniff"
-            assert response.headers["Content-Security-Policy"] == EXPECTED_CSP
+            assert response.headers["Content-Security-Policy"] == STRICT_CSP
             assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
             assert response.headers["Permissions-Policy"] == "geolocation=(), camera=(), microphone=()"
 
         def test_then_csp_keeps_scripts_strict_and_styles_inline(self) -> None:
-            response = _build_client(behind_proxy=False).get("/ping")
+            csp = _build_client().get("/ping").headers["Content-Security-Policy"]
 
-            csp = response.headers["Content-Security-Policy"]
-            assert "script-src 'self'; " in csp
+            assert "script-src 'self';" in csp
             assert "'unsafe-inline'" not in csp.split("script-src")[1].split(";")[0]
             assert "style-src 'self' 'unsafe-inline'" in csp
 
@@ -58,32 +65,61 @@ class TestGivenSecurityHeadersAreApplied:
             assert response.headers["Strict-Transport-Security"] == "max-age=63072000; includeSubDomains"
 
 
+class TestGivenObservabilityOriginsAreAllowlisted:
+    class TestWhenExtraCspSourcesAreConfigured:
+        def test_then_connect_and_script_src_include_them(self) -> None:
+            overrides: Dict[str, object] = {
+                "web.csp_script_src_extra": ["https://cdn.inspectlet.com"],
+                "web.csp_connect_src_extra": ["https://*.datadoghq.com", "https://*.inspectlet.com"],
+            }
+            csp = _build_client(config_overrides=overrides).get("/ping").headers["Content-Security-Policy"]
+
+            assert "script-src 'self' https://cdn.inspectlet.com;" in csp
+            assert "connect-src 'self' https://*.datadoghq.com https://*.inspectlet.com;" in csp
+
+        def test_then_styles_and_defaults_stay_unchanged(self) -> None:
+            overrides: Dict[str, object] = {"web.csp_connect_src_extra": ["https://*.datadoghq.com"]}
+            csp = _build_client(config_overrides=overrides).get("/ping").headers["Content-Security-Policy"]
+
+            assert "default-src 'self';" in csp
+            assert "style-src 'self' 'unsafe-inline'" in csp
+            assert "frame-ancestors 'none'" in csp
+
+
 class TestGivenProxyFlagIsReadOnce:
     class TestWhenInitAppIsCalled:
-        @patch("modules.application.internals.security_headers.ConfigService")
-        def test_then_config_is_read_at_startup(self, mock_config_service: MagicMock) -> None:
-            mock_config_service.__getitem__.return_value.get_value.return_value = False
-            app = Flask(__name__)
+        def test_then_config_is_not_reread_per_request(self) -> None:
+            calls: List[str] = []
 
-            @app.route("/ping")
-            def _ping() -> str:
-                return "pong"
+            def _fake_get_value(key: str, default: object = None) -> object:
+                calls.append(key)
+                if key == "is_server_running_behind_proxy":
+                    return False
+                return default
 
-            SecurityHeaders.init_app(app)
-            read_count_after_init = mock_config_service.__getitem__.return_value.get_value.call_count
+            with patch("modules.application.internals.security_headers.ConfigService") as mock_config_service:
+                mock_config_service.__getitem__.return_value.get_value.side_effect = _fake_get_value
+                app = Flask(__name__)
 
-            client = app.test_client()
-            client.get("/ping")
-            client.get("/ping")
+                @app.route("/ping")
+                def _ping() -> str:
+                    return "pong"
 
-            assert read_count_after_init == 1
-            assert mock_config_service.__getitem__.return_value.get_value.call_count == 1
+                SecurityHeaders.init_app(app)
+                calls_after_init = list(calls)
+
+                client = app.test_client()
+                client.get("/ping")
+                client.get("/ping")
+
+            assert "is_server_running_behind_proxy" in calls_after_init
+            assert calls == calls_after_init
 
 
 class TestGivenCorsIsConfigured:
     class TestWhenReadingCorsOrigin:
         @patch("modules.config.config_service.ConfigService.get_value")
-        def test_then_origin_reflects_config_and_is_not_wildcard(self, mock_get_value: MagicMock) -> None:
+        def test_then_origin_reflects_config_and_is_not_wildcard(self, mock_get_value) -> None:
             from modules.config.config_service import ConfigService
 
             mock_get_value.return_value = "https://app.example.com"
