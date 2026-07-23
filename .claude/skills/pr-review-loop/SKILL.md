@@ -199,6 +199,7 @@ Follow the loop above; these are the mechanics that make each step actually work
   ```
 
   Resolve only threads you have actually addressed — never blanket-resolve to clear the stop condition.
+
 - **Rebase only when it matters** — the PR conflicts or CI fails for something `main` has since fixed. A
   rebase rewrites history, forces a push, and re-anchors every open review thread, so do not do it
   reflexively. On any conflict whose resolution is not unambiguous, `git rebase --abort` and hand back.
