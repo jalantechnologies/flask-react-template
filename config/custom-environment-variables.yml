@@ -3,6 +3,9 @@ mailer:
   default_email_name: 'DEFAULT_EMAIL_NAME'
   forgot_password_mail_template_id: 'FORGOT_PASSWORD_MAIL_TEMPLATE_ID'
 
+accounts:
+  token_signing_key: 'ACCOUNTS_TOKEN_SIGNING_KEY'
+
 mongodb:
   uri: 'MONGODB_URI'
 

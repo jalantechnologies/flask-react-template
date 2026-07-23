@@ -25,6 +25,10 @@ from modules.notification.types import EmailRecipient, EmailSender, SendEmailPar
 
 class AuthenticationService:
     @staticmethod
+    def validate_access_token_signing_key() -> None:
+        AccessTokenUtil.validate_signing_key()
+
+    @staticmethod
     def create_access_token_by_username_and_password(*, account: Account) -> AccessToken:
         return AccessTokenUtil.generate_access_token(account=account)
 

@@ -64,6 +64,14 @@ _Empty or unset secrets are ignored and fallback to the value defined in the cor
 
 ## Required Secrets by Category
 
+### Backend Authentication
+
+Required in **every deployed environment** (preview, production). This key signs and verifies JWT access tokens. `default.yml` ships no value, so deployed environments resolve it only from this secret. Use a high-entropy random value that is unique per environment; the app refuses to boot when it is missing or left at a placeholder.
+
+| Doppler Secret               | Config Key                   | Description                                  |
+| ---------------------------- | ---------------------------- | -------------------------------------------- |
+| `ACCOUNTS_TOKEN_SIGNING_KEY` | `accounts.token_signing_key` | High-entropy JWT signing key, unique per env |
+
 ### Backend Datadog Logging
 
 Required for backend log forwarding to Datadog (when `logger.transports` includes `'datadog'`):
