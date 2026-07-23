@@ -491,10 +491,6 @@ jobs:
           repository: jalantechnologies/github-ci
           path: platform
 
-      # Keep this at repo-root output/. backend.sonar.python.coverage.reportPaths is
-      # ../../../output/coverage.xml relative to backend.sonar.projectBaseDir (src/apps/backend),
-      # which resolves to <repo-root>/output/coverage.xml. Sonar only walks downward from the base
-      # dir, so a report left anywhere else is unreachable and coverage reads as zero.
       - name: Download coverage report
         uses: actions/download-artifact@v8
         with:
@@ -513,11 +509,6 @@ jobs:
           branch_base: main
           pull_request_number: ${{ github.event.number }}
 
-      # These diagnostics must be scoped to the pull request, not the project as a whole.
-      # Without &pullRequest=<n>, project_status reports the MAIN branch (status NONE, no
-      # conditions) instead of this PR, and the issue search with projectKeys is project-wide,
-      # so it returns issues from unrelated scans (a recent PR printed issues from a completely
-      # different project). componentKeys + pullRequest restricts the search to this PR's new code.
       - name: Fetch SonarQube quality gate details
         if: steps.sonar_analysis.outcome == 'failure'
         env:
@@ -531,23 +522,6 @@ jobs:
           echo "New issues:"
           curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/search?componentKeys=${PROJECT_KEY}&pullRequest=${PR_NUMBER}&resolved=false&ps=20" | python3 -m json.tool || true
 
-      # The analyze action sets outcome=failure when its internal sonar-scanner prints
-      # "QUALITY GATE STATUS: FAILED". That scanner verdict has disagreed with the authoritative
-      # PR-scoped gate: on PR #732 the scanner said FAILED while the gate returned "OK" on every
-      # condition (0 new bugs/smells/vulns). So we do NOT trust the scanner's exit alone.
-      #
-      # But we also must not trust a bare project_status?pullRequest=<n>: that returns the LATEST
-      # analysis for the PR, which may be a stale earlier commit's OK/NONE. If this run's scanner
-      # crashed before publishing the current head, a bare PR-scoped OK would wave an UNSCANNED
-      # commit through green. So we anchor the gate to THIS run's analysis:
-      #   1. Read .scannerwork/report-task.txt (written by this run's sonar-scanner) for its
-      #      ceTaskId. No report-task.txt => the scanner never published this commit => FAIL.
-      #   2. Poll api/ce/task?id=<ceTaskId> until terminal. Only SUCCESS with an analysisId means
-      #      this commit was actually analysed; anything else (FAILED/CANCELED) => FAIL.
-      #   3. Query project_status?analysisId=<analysisId> — the gate for exactly this analysis,
-      #      not whatever happens to be latest on the PR.
-      # Pass only on OK/NONE for THIS analysis; fail on ERROR; fail closed on any empty/broken
-      # response so a diagnostic hole can never mask an unscanned commit or a real gate failure.
       - name: Fail unless this run's own analysis passed the gate
         if: steps.sonar_analysis.outcome == 'failure'
         env:
@@ -565,8 +539,6 @@ jobs:
             exit 1
           fi
 
-          # sonar.qualitygate.wait=true means the CE task is normally terminal by now; poll a few
-          # times anyway to absorb a lagging compute-engine queue.
           CE_TASK_STATUS=""
           ANALYSIS_ID=""
           for _ in 1 2 3 4 5 6; do
@@ -843,12 +815,6 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.test.yml down -v || true
 
-      # coverage.xml is produced inside the container (WORKDIR /app, .coveragerc source
-      # src/apps/backend), so it records the in-container path /app/src/apps/backend that does not
-      # exist on the runner. Sonar resolves report paths by walking DOWN from <source>, so a wrong
-      # <source> makes it silently measure zero coverage. Stripping only the filename prefix is not
-      # enough: <source> must also be rewritten to the module base dir (.) so the now-relative
-      # filenames resolve against backend.sonar.projectBaseDir=src/apps/backend.
       - name: Fix coverage paths for SonarQube
         run: |
           sed -i \
