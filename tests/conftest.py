@@ -1,9 +1,12 @@
+import os
 from typing import Iterator
 
 import pytest
 from celery_app import app as celery_app
 
 from modules.logger.logger_manager import LoggerManager
+
+TESTING_APP_ENV = "testing"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -14,11 +17,17 @@ def mount_loggers() -> None:
     LoggerManager.mount_logger()
 
 
+def _running_against_testing_broker() -> bool:
+    return os.environ.get("APP_ENV", "development") == TESTING_APP_ENV
+
+
 def _broker_queue_names() -> list[str]:
     return [getattr(queue, "name", queue) for queue in (celery_app.conf.task_queues or [])]
 
 
 def _purge_broker_queues() -> None:
+    if not _running_against_testing_broker():
+        return
     with celery_app.connection_for_write() as connection:
         for name in _broker_queue_names():
             connection.default_channel.queue_purge(name)
