@@ -4,15 +4,15 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 if TYPE_CHECKING:
-    from modules.application.common.types import AuditActor, FieldChanges, ResourceAction
+    from modules.core.common.types import AuditActor, FieldChanges, ResourceAction
 
 from bson import ObjectId
 from bson.errors import InvalidId
 from pymongo import ReturnDocument
 from pymongo.collection import Collection
 
-from modules.application.common.types import PaginationParams, PaginationResult, QueryParams
-from modules.application.repository_client import ApplicationRepositoryClient
+from modules.core.common.types import PaginationParams, PaginationResult, QueryParams
+from modules.core.repository_client import ApplicationRepositoryClient
 
 # Storage-boundary shapes: the only heterogeneous maps in the repository layer. Naming them keeps the
 # `dict[str, Any]` blur confined to the database edge and visible (see docs/backend-architecture.md).
@@ -59,7 +59,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
     ) -> None:
         if not cls._audits():
             return
-        from modules.application.internal.audit.audit_writer import AuditWriter
+        from modules.core.internal.audit.audit_writer import AuditWriter
 
         AuditWriter.record(
             actor=actor, resource_type=cls._resource_type(), resource_id=resource_id, action=action, changes=changes
@@ -119,7 +119,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
 
     @classmethod
     def create(cls, entity: EntityT, *, actor: "AuditActor") -> EntityT:
-        from modules.application.common.types import ResourceAction
+        from modules.core.common.types import ResourceAction
 
         doc = cls.to_doc(entity)
         result = cls.collection().insert_one(doc)
@@ -199,8 +199,8 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
     def _emit_read_audit(cls, actor: "AuditActor", resource_ids: list[str]) -> None:
         if not cls._audits() or not resource_ids:
             return
-        from modules.application.common.types import ResourceAction
-        from modules.application.internal.audit.audit_writer import AuditWriter
+        from modules.core.common.types import ResourceAction
+        from modules.core.internal.audit.audit_writer import AuditWriter
 
         AuditWriter.record_many(
             actor=actor, resource_type=cls._resource_type(), resource_ids=resource_ids, action=ResourceAction.READ
@@ -290,7 +290,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
         previous: StoredDocument,
         action: Optional["ResourceAction"] = None,
     ) -> None:
-        from modules.application.common.types import FieldChange, ResourceAction
+        from modules.core.common.types import FieldChange, ResourceAction
 
         changes = {
             name: FieldChange(old=cls._audit_scalar(previous.get(name)), new=cls._audit_scalar(new_value))
@@ -305,7 +305,7 @@ class ApplicationRepository[EntityT, QueryT: QueryParams](ABC):
 
     @classmethod
     def delete(cls, entity_id: str, *, actor: "AuditActor") -> bool:
-        from modules.application.common.types import ResourceAction
+        from modules.core.common.types import ResourceAction
 
         object_id = cls._to_object_id(entity_id)
         if object_id is None:

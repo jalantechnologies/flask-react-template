@@ -6,7 +6,7 @@ Backend unit and integration tests live under:
 tests/
 └─ modules/
    ├─ account/
-   ├─ application/
+   ├─ core/
    └─ … (one folder per backend module)
 ```
 

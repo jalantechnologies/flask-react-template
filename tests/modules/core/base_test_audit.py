@@ -2,8 +2,8 @@ import unittest
 from typing import Any, Callable
 
 from modules.account.internal.store.account_repository import AccountRepository
-from modules.application.common.types import ActorType, AuditActor
-from modules.application.internal.audit.store.audit_log_repository import AuditLogRepository
+from modules.core.common.types import ActorType, AuditActor
+from modules.core.internal.audit.store.audit_log_repository import AuditLogRepository
 
 
 class BaseTestAudit(unittest.TestCase):

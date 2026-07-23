@@ -1,4 +1,4 @@
-from modules.application.common.types import AuditActor, PaginationResult
+from modules.core.common.types import AuditActor, PaginationResult
 from modules.task.internal.task_reader import TaskReader
 from modules.task.internal.task_writer import TaskWriter
 from modules.task.types import (

@@ -1,4 +1,4 @@
-from modules.application.common.types import AuditActor
+from modules.core.common.types import AuditActor
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,

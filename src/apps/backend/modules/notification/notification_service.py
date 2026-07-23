@@ -1,4 +1,4 @@
-from modules.application.common.types import AuditActor
+from modules.core.common.types import AuditActor
 from modules.notification.email_service import EmailService
 from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.internal.account_notification_preferences_writer import AccountNotificationPreferenceWriter

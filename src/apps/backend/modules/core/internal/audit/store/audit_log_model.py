@@ -4,8 +4,8 @@ from typing import Any, Optional
 
 from bson import ObjectId
 
-from modules.application.base_model import BaseModel
-from modules.application.common.types import ActorType, AuditOutcome, FieldChange, FieldChanges, ResourceAction
+from modules.core.base_model import BaseModel
+from modules.core.common.types import ActorType, AuditOutcome, FieldChange, FieldChanges, ResourceAction
 
 
 @dataclass

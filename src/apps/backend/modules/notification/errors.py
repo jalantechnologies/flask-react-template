@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from modules.application.errors import AppError
+from modules.core.errors import AppError
 from modules.notification.types import NotificationErrorCode, ValidationFailure
 
 

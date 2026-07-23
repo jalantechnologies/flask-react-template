@@ -1,7 +1,7 @@
 from typing import Optional
 
-from modules.application.common.types import AuditActor, PaginationResult
-from modules.application.repository import SortSpec
+from modules.core.common.types import AuditActor, PaginationResult
+from modules.core.repository import SortSpec
 from modules.task.errors import TaskNotFoundError
 from modules.task.internal.store.task_repository import TaskRepository
 from modules.task.types import GetPaginatedTasksParams, GetTaskParams, Task, TaskQuery

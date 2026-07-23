@@ -4,8 +4,8 @@ from pymongo import ReturnDocument
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.common.types import AuditActor
-from modules.application.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
+from modules.core.common.types import AuditActor
+from modules.core.repository import ApplicationRepository, FieldUpdates, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 from modules.notification.internal.store.account_notification_preferences_model import (
     AccountNotificationPreferencesModel,

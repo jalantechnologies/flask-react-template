@@ -4,8 +4,8 @@ from enum import StrEnum
 from typing import Any, Optional, Union
 
 from modules.account.types import AccountErrorCode, PhoneNumber
-from modules.application.common.types import QueryParams
-from modules.application.errors import AppError
+from modules.core.common.types import QueryParams
+from modules.core.errors import AppError
 
 
 @dataclass(frozen=True)

@@ -2,8 +2,8 @@ from typing import Any
 
 import requests
 
-from modules.application.worker import Worker
 from modules.config.config_service import ConfigService
+from modules.core.worker import Worker
 from modules.logger.logger import Logger
 
 

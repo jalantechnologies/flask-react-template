@@ -3,7 +3,7 @@ from pymongo.errors import OperationFailure
 
 from modules.account.internal.store.account_model import AccountModel
 from modules.account.types import Account, AccountQuery
-from modules.application.repository import ApplicationRepository, StoredDocument, StoreFilter
+from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 
 ACCOUNT_VALIDATION_SCHEMA = {

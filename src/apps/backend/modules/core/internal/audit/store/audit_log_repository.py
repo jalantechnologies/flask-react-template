@@ -4,9 +4,9 @@ from pymongo import ASCENDING
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.common.types import AuditLogEntry
-from modules.application.internal.audit.store.audit_log_model import AuditLogModel
-from modules.application.repository_client import ApplicationRepositoryClient
+from modules.core.common.types import AuditLogEntry
+from modules.core.internal.audit.store.audit_log_model import AuditLogModel
+from modules.core.repository_client import ApplicationRepositoryClient
 from modules.logger.logger import Logger
 
 AUDIT_LOG_VALIDATION_SCHEMA = {

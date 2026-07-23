@@ -11,9 +11,9 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
-from modules.application.common.types import AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.core.common.types import AuditActor
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import (
     AccountNotificationPreferences,

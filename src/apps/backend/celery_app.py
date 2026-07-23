@@ -40,7 +40,7 @@ app.conf.update(
 app.conf.beat_schedule = {}
 
 # Auto-discover tasks from all modules
-app.autodiscover_tasks(["modules.application.workers"])
+app.autodiscover_tasks(["modules.core.workers"])
 
 
 def initialize_workers() -> None:
@@ -50,7 +50,7 @@ def initialize_workers() -> None:
     """
     import importlib
 
-    worker_registry_module = importlib.import_module("modules.application.worker_registry")
+    worker_registry_module = importlib.import_module("modules.core.worker_registry")
     worker_registry_module.WorkerRegistry.initialize()
 
 

@@ -5,9 +5,9 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
-from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreatePasswordResetTokenParams
+from modules.core.common.types import ActorType, AuditActor
 
 ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
 

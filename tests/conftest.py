@@ -4,7 +4,7 @@ from typing import Iterator, cast
 import pytest
 from celery_app import app as celery_app
 
-from modules.application.common.types import ActorType, AuditActor
+from modules.core.common.types import ActorType, AuditActor
 from modules.logger.logger_manager import LoggerManager
 
 TESTING_APP_ENV = "testing"

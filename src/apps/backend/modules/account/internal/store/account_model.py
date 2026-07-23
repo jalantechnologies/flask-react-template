@@ -4,7 +4,7 @@ from typing import Any, Optional
 from bson import ObjectId
 
 from modules.account.types import PhoneNumber
-from modules.application.base_model import BaseModel
+from modules.core.base_model import BaseModel
 
 
 @dataclass

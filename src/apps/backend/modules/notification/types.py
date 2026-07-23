@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from modules.account.types import PhoneNumber
-from modules.application.common.types import QueryParams
+from modules.core.common.types import QueryParams
 
 
 @dataclass(frozen=True)

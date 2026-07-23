@@ -1,8 +1,8 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.application.common.types import ActorType, AuditActor
 from modules.config.config_service import ConfigService
 from modules.config.errors import MissingKeyError
+from modules.core.common.types import ActorType, AuditActor
 from modules.logger.logger import Logger
 
 

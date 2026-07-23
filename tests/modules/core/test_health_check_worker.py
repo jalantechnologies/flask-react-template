@@ -2,16 +2,16 @@ from unittest.mock import MagicMock, patch
 
 import requests
 
-from modules.application.workers.health_check_worker import HealthCheckWorker
+from modules.core.workers.health_check_worker import HealthCheckWorker
 
 TEST_HEALTH_CHECK_URL = "http://localhost:8080/api/"
 
 
 class TestGivenBackendIsRunning:
     class TestWhenHealthCheckReturns200:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.info")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.info")
         def test_then_logs_healthy_status(
             self, mock_logger_info: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
@@ -26,9 +26,9 @@ class TestGivenBackendIsRunning:
             mock_logger_info.assert_called_once_with(message="Backend is healthy")
 
     class TestWhenHealthCheckReturns500:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.error")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.error")
         def test_then_logs_unhealthy_status_with_code(
             self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
@@ -43,9 +43,9 @@ class TestGivenBackendIsRunning:
             mock_logger_error.assert_called_once_with(message="Backend is unhealthy: status 500")
 
     class TestWhenHealthCheckReturns404:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.error")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.error")
         def test_then_logs_unhealthy_status_with_code(
             self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
@@ -62,9 +62,9 @@ class TestGivenBackendIsRunning:
 
 class TestGivenBackendIsUnreachable:
     class TestWhenRequestTimesOut:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.error")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.error")
         def test_then_logs_timeout_error(
             self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
@@ -80,9 +80,9 @@ class TestGivenBackendIsUnreachable:
             assert "timed out" in error_message.lower()
 
     class TestWhenConnectionFails:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.error")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.error")
         def test_then_logs_connection_error(
             self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:
@@ -98,9 +98,9 @@ class TestGivenBackendIsUnreachable:
             assert "refused" in error_message.lower()
 
     class TestWhenUnexpectedExceptionOccurs:
-        @patch("modules.application.workers.health_check_worker.ConfigService")
-        @patch("modules.application.workers.health_check_worker.requests.get")
-        @patch("modules.application.workers.health_check_worker.Logger.error")
+        @patch("modules.core.workers.health_check_worker.ConfigService")
+        @patch("modules.core.workers.health_check_worker.requests.get")
+        @patch("modules.core.workers.health_check_worker.Logger.error")
         def test_then_logs_generic_error(
             self, mock_logger_error: MagicMock, mock_requests_get: MagicMock, mock_config_service: MagicMock
         ) -> None:

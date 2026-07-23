@@ -1,9 +1,9 @@
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.authentication.internal.otp.store.otp_model import OTPModel
 from modules.authentication.types import OTP, OTPQuery
+from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 
 OTP_VALIDATION_SCHEMA = {

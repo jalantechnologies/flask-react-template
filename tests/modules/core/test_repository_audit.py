@@ -1,7 +1,7 @@
 from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.types import Account, AccountQuery
-from modules.application.common.types import ActorType, AuditActor, ResourceAction
-from tests.modules.application.base_test_audit import BaseTestAudit
+from modules.core.common.types import ActorType, AuditActor, ResourceAction
+from tests.modules.core.base_test_audit import BaseTestAudit
 
 
 class TestRepositoryAudit(BaseTestAudit):

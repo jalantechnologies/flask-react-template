@@ -1,11 +1,11 @@
 from dataclasses import asdict
 
 from modules.account.types import PhoneNumber
-from modules.application.common.types import AuditActor
 from modules.authentication.errors import OTPExpiredError, OTPIncorrectError
 from modules.authentication.internal.otp.otp_util import OTPUtil
 from modules.authentication.internal.otp.store.otp_repository import OTPRepository
 from modules.authentication.types import OTP, CreateOTPParams, OTPQuery, OTPStatus, VerifyOTPParams
+from modules.core.common.types import AuditActor
 
 
 class OTPWriter:

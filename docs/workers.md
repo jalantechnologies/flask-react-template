@@ -44,7 +44,7 @@ Workers consume from all queues but prioritize higher priority queues first.
 All workers inherit from the base `Worker` class which provides a Sidekiq-style API:
 
 ```python
-from modules.application.worker import Worker
+from modules.core.worker import Worker
 from modules.logger.logger import Logger
 
 class MyBackgroundWorker(Worker):
@@ -152,7 +152,7 @@ Workers are automatically discovered and registered on application startup via t
 
 ```python
 # In server.py
-from modules.application.worker_registry import WorkerRegistry
+from modules.core.worker_registry import WorkerRegistry
 
 # Initialize worker registry (discovers all workers)
 WorkerRegistry.initialize()
@@ -160,7 +160,7 @@ WorkerRegistry.initialize()
 
 The registry:
 
-- Scans `modules.application.workers/` for Worker subclasses
+- Scans `modules.core.workers/` for Worker subclasses
 - Registers Celery tasks for each worker
 - Sets up cron schedules for workers with `cron_schedule` defined
 - Logs registration details for debugging
@@ -191,7 +191,7 @@ The registry:
 
 ### Development Workflow
 
-1. Create worker in `src/apps/backend/modules/application/workers/`
+1. Create worker in `src/apps/backend/modules/core/workers/`
 2. Worker is automatically discovered on next server restart
 3. Test via Flower dashboard or direct API calls
 4. Monitor execution in Flower at http://localhost:5555
@@ -436,10 +436,10 @@ task_queues = {
 Monitors application health every 10 minutes:
 
 ```python
-# File: modules/application/workers/health_check_worker.py
+# File: modules/core/workers/health_check_worker.py
 from typing import Any
 import requests
-from modules.application.worker import Worker
+from modules.core.worker import Worker
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 
@@ -481,9 +481,9 @@ HealthCheckWorker.perform_async()
 Example worker for processing user data:
 
 ```python
-# File: modules/application/workers/data_processing_worker.py
+# File: modules/core/workers/data_processing_worker.py
 from typing import Any, Dict
-from modules.application.worker import Worker
+from modules.core.worker import Worker
 from modules.logger.logger import Logger
 
 class DataProcessingWorker(Worker):
@@ -594,8 +594,8 @@ class ResourceAwareWorker(Worker):
 Test workers in isolation:
 
 ```python
-# In tests/modules/application/test_my_worker.py
-from modules.application.workers.my_worker import MyWorker
+# In tests/modules/core/test_my_worker.py
+from modules.core.workers.my_worker import MyWorker
 
 class TestMyWorker:
     def test_perform_success(self):
@@ -616,7 +616,7 @@ class TestMyWorker:
 Workers execute synchronously in tests (no Redis needed):
 
 ```python
-from modules.application.workers.my_worker import MyWorker
+from modules.core.workers.my_worker import MyWorker
 
 def test_worker_execution():
     # Execute immediately in tests
@@ -630,7 +630,7 @@ def test_worker_execution():
 
 ```python
 # In a Python shell
-from modules.application.workers.health_check_worker import HealthCheckWorker
+from modules.core.workers.health_check_worker import HealthCheckWorker
 
 # Run immediately
 HealthCheckWorker.perform()

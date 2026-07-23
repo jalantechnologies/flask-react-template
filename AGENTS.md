@@ -62,7 +62,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Backend Architecture
 
-- **Modular Design:** Each domain module (account, authentication, application, task, etc.) under `modules/` owns its REST API, service, and persistence layers.
+- **Modular Design:** Each domain module (account, authentication, core, task, etc.) under `modules/` owns its REST API, service, and persistence layers.
 - **Layered Structure:** HTTP (Flask blueprints) → View → Service → Reader/Writer → Repository → MongoDB.
 - **Encapsulation:** Only expose `*_service.py`, `types.py`, and module-specific exceptions. Everything under `internal/` is private.
 - **Clear Data Models:** Use Pydantic models and dataclasses to validate inputs/outputs at the boundaries.
@@ -133,7 +133,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 - Ensure MongoDB indexes cover every `find`, `find_one`, aggregation `$match`, or `sort` pattern.
 - Declare indexes in the repository layer (`internal/store/*_repository.py`).
-- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/application/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
+- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/core/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
 - No MongoDB syntax crosses a repository's public surface. Callers pass a typed query object, never a `{"field": ...}` filter, an `ObjectId`, or a `$set`; every verb returns a domain dataclass, never a raw BSON document.
 
 #### 10. API Design
@@ -150,7 +150,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 #### 12. Background Jobs
 
 - Use Celery workers for async job processing (document processing, entity extraction, etc.).
-- Define workers in `modules/application/workers/` inheriting from `Worker`.
+- Define workers in `modules/core/workers/` inheriting from `Worker`.
 - Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`).
 
 #### 13. Query Efficiency
@@ -164,7 +164,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 - Every mutating repository method takes a required `actor: AuditActor` keyword argument, threaded explicitly from the boundary through the service and writer. There is no ambient context; the type checker proves at compile time that no write happens without an actor. Choose the actor by whether identity is proven at the write: `AuditActor(ActorType.ACCOUNT, account_id)` when the credential/token in hand identifies an account (authenticated mutations, login OTP verify and access-token creation, password-reset completion); `AuditActor(ActorType.WORKER, "<name>")` for a background job, seed, or system flow; `AuditActor(ActorType.ANONYMOUS, None)` for a request with no proven identity yet (signup, OTP request/creation, forgot-password token request). There is no opt-out — completeness is the point.
 - Never store a secret's value in the trail. The writer redacts sensitive field values (`password`, `token`, `secret`, `otp`, `mfa`, `hashed`); do not defeat this by renaming a sensitive field.
 - Every entry carries an `outcome`: `success` (the default) or `denied`. All create/read/update/delete audits are `success`; the field is defaulted, so existing emission paths and stored rows are unchanged. A `denied` entry records an authenticated account that was rejected for crossing an ownership boundary: the auth middleware (`enforce_account_ownership`) emits one `outcome=denied` READ entry against the target account boundary before raising, with the real authenticated account as actor. Missing, invalid, or expired token rejections have no proven actor and are not audited.
-- For the rare access a custom method performs that the generic CRUD does not cover, call `ApplicationService.record_audit(...)`. This should be uncommon; if you find yourself using it often, the data access likely belongs in a repository.
+- For the rare access a custom method performs that the generic CRUD does not cover, call `AuditService.record_audit(...)`. This should be uncommon; if you find yourself using it often, the data access likely belongs in a repository.
 
 ---
 

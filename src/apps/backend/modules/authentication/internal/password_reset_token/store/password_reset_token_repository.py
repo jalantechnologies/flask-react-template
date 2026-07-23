@@ -5,13 +5,13 @@ from bson import ObjectId
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
-from modules.application.common.types import AuditActor, ResourceAction
-from modules.application.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_model import (
     PasswordResetTokenModel,
 )
 from modules.authentication.types import PasswordResetToken, PasswordResetTokenQuery
+from modules.core.common.types import AuditActor, ResourceAction
+from modules.core.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
 
 PASSWORD_RESET_TOKEN_VALIDATION_SCHEMA = {

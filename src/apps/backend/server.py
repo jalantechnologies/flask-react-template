@@ -8,12 +8,12 @@ load_dotenv()
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
-from modules.application.application_service import ApplicationService
-from modules.application.errors import AppError
-from modules.application.worker_registry import WorkerRegistry
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
+from modules.core.errors import AppError
+from modules.core.security_headers import SecurityHeaders
+from modules.core.worker_registry import WorkerRegistry
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
@@ -22,7 +22,7 @@ app = Flask(__name__)
 cors_allowed_origin = ConfigService[str].get_value(key="web.cors_allowed_origin", default="http://localhost:3000")
 cors = CORS(app, resources={r"/*": {"origins": cors_allowed_origin}})
 
-ApplicationService.install_security_headers(app)
+SecurityHeaders.init_app(app)
 
 # Mount deps
 LoggerManager.mount_logger()

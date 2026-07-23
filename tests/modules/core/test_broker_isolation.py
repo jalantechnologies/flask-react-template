@@ -1,4 +1,4 @@
-from modules.application.workers.health_check_worker import HealthCheckWorker
+from modules.core.workers.health_check_worker import HealthCheckWorker
 from tests.conftest import broker_queue_depth
 
 DEFAULT_QUEUE = "default"
