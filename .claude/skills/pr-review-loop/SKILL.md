@@ -167,6 +167,52 @@ Continue looping until **all** of the following are true:
 - All required CI checks are passing.
 - A fresh review of the updated PR identifies no further significant improvements.
 
+## Operational notes
+
+Follow the loop above; these are the mechanics that make each step actually work with GitHub and CI.
+
+- **Never `sleep`-and-poll for CI.** Block on the result instead: `gh pr checks <pr> --watch` returns the
+  moment the checks settle. Then drill into failures with `gh run view`.
+- **A draft PR runs no CI** — every job is gated on `draft == false`, so no check ever reports and the
+  "all checks green" stop condition can never be met. Check `gh pr view <pr> --json isDraft` first; if it is
+  a draft, ask the user to run `gh pr ready <pr>`, or stop.
+- **Whether a review thread is resolved is a GraphQL-only fact.** The REST payload behind
+  `gh pr view --json comments` carries no resolution state, so read threads through `reviewThreads`, and
+  reply/resolve with the thread id (`PRRT_…`) it returns — stay on GraphQL for the whole step:
+
+  ```bash
+  # list unresolved threads
+  gh api graphql -f query='
+    query($owner:String!, $repo:String!, $pr:Int!) {
+      repository(owner:$owner, name:$repo) { pullRequest(number:$pr) {
+        reviewThreads(first:100) { nodes {
+          id isResolved
+          comments(first:10) { nodes { path line body author { login } } }
+        } }
+      } }
+    }' -f owner=<owner> -f repo=<repo> -F pr=<pr> \
+    --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved | not)'
+
+  # reply, then resolve, using the thread id above
+  gh api graphql -f query='mutation($t:ID!,$b:String!){addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$t,body:$b}){comment{url}}}' -f t=<thread-id> -f b='<reply>'
+  gh api graphql -f query='mutation($t:ID!){resolveReviewThread(input:{threadId:$t}){thread{isResolved}}}' -f t=<thread-id>
+  ```
+
+  Resolve only threads you have actually addressed — never blanket-resolve to clear the stop condition.
+- **Rebase only when it matters** — the PR conflicts or CI fails for something `main` has since fixed. A
+  rebase rewrites history, forces a push, and re-anchors every open review thread, so do not do it
+  reflexively. On any conflict whose resolution is not unambiguous, `git rebase --abort` and hand back.
+- **Pushing after a rebase** is a non-fast-forward: use `git push --force-with-lease`, never a bare
+  `--force`. A rejection means someone else pushed — stop for the user. **Never push to `main`** or any base
+  branch; this loop only ever pushes the branch under review.
+- **The `label` check** (`pr-labeler.yml`) derives type/semver labels from the PR title and fails when the
+  title is not Conventional Commits. It is the one check no commit can fix — repair it with
+  `gh pr edit <pr> --title '<type>: <subject>'`, not by pushing code.
+- **Never let the loop spin forever.** Stop and hand back to the user with a short summary of what remains if:
+  an iteration produces no new commit; a change would revert an earlier iteration; the same check fails 3
+  times in a row; a rebase conflict is not unambiguous or a `--force-with-lease` push is rejected; or you
+  reach 10 iterations. When unsure whether an improvement is significant, prefer to stop.
+
 ## Relationship to pr-conventions
 
 This loop assumes the PR title and description already follow [pr-conventions](../pr-conventions/SKILL.md).
