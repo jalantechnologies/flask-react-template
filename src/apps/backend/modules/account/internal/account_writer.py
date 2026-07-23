@@ -10,7 +10,7 @@ from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.types import (
     Account,
     AccountDeletionResult,
-    AccountSearchByIdParams,
+    AccountQuery,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
@@ -79,11 +79,11 @@ class AccountWriter:
 
     @staticmethod
     def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:
-        # Confirm an active account exists (raises if not) so re-deleting a soft-deleted account 404s,
-        # matching the previous `{"active": True}`-guarded update.
-        AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=account_id), actor=actor)
-
         deletion_time = datetime.now(UTC)
-        AccountRepository.update_fields(account_id, {"active": False, "updated_at": deletion_time}, actor=actor)
+        deleted = AccountRepository.update_by_query(
+            AccountQuery(id=account_id), {"active": False, "updated_at": deletion_time}, actor=actor
+        )
+        if deleted is None:
+            raise AccountWithIdNotFoundError(account_id)
 
         return AccountDeletionResult(account_id=account_id, deleted_at=deletion_time, success=True)

@@ -31,7 +31,7 @@ class AccessTokenView(MethodView):
                 phone_number=access_token_params.phone_number, actor=ANONYMOUS_ACTOR
             )
             access_token = AuthenticationService.create_access_token_by_phone_number(
-                params=access_token_params, account=account
+                params=access_token_params, account=account, actor=ANONYMOUS_ACTOR
             )
         elif "username" in request_data and "password" in request_data:
             access_token_params = EmailBasedAuthAccessTokenRequestParams(**request_data)

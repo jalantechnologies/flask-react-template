@@ -2,7 +2,7 @@ import urllib.parse
 from dataclasses import asdict
 
 from modules.account.types import Account, PhoneNumber
-from modules.application.common.types import ActorType, AuditActor
+from modules.application.common.types import AuditActor
 from modules.authentication.internal.access_token.access_token_util import AccessTokenUtil
 from modules.authentication.internal.otp.otp_util import OTPUtil
 from modules.authentication.internal.otp.otp_writer import OTPWriter
@@ -35,12 +35,12 @@ class AuthenticationService:
 
     @staticmethod
     def create_access_token_by_phone_number(
-        *, params: OTPBasedAuthAccessTokenRequestParams, account: Account
+        *, params: OTPBasedAuthAccessTokenRequestParams, account: Account, actor: AuditActor
     ) -> AccessToken:
         otp = AuthenticationService.verify_otp(
             params=VerifyOTPParams(phone_number=params.phone_number, otp_code=params.otp_code),
             account_id=account.id,
-            actor=AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account.id),
+            actor=actor,
         )
         AccessTokenUtil.validate_otp_for_access_token(otp=otp)
 

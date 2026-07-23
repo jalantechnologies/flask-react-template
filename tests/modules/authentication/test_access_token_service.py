@@ -54,6 +54,7 @@ class TestAuthenticationService(BaseTestAccessToken):
                 otp_code=otp.otp_code, phone_number=PhoneNumber(**phone_number)
             ),
             account=account,
+            actor=TEST_ACTOR,
         )
 
         assert access_token.account_id == account.id
@@ -74,6 +75,7 @@ class TestAuthenticationService(BaseTestAccessToken):
                 phone_number=PhoneNumber(**phone_number), otp_code=otp.otp_code
             ),
             account=account,
+            actor=TEST_ACTOR,
         )
 
         verified_access_token = AuthenticationService.verify_access_token(token=access_token.token)
