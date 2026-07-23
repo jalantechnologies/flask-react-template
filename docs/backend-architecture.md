@@ -378,4 +378,4 @@ Only the ownership-violation case is audited. A missing, malformed, or expired t
 
 ### 9.4 The rare explicit case
 
-If a custom method performs an access the generic CRUD does not cover, call `ApplicationService.record_audit(resource_type=..., resource_id=..., action=..., changes=...)`. This should be uncommon; frequent use usually means the data access belongs in a repository instead.
+If a custom method performs an access the generic CRUD does not cover, call `AuditService.record_audit(resource_type=..., resource_id=..., action=..., changes=...)`. This should be uncommon; frequent use usually means the data access belongs in a repository instead.

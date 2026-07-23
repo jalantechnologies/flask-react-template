@@ -22,7 +22,7 @@ hashing, OTP generation) lives in the writer/util, not the service.
 
 ## Repositories inherit generic CRUD
 
-A repository extends `ApplicationRepository[Entity, Query]` (in `modules/application/repository.py`) and
+A repository extends `ApplicationRepository[Entity, Query]` (in `modules/core/repository.py`) and
 inherits the generic CRUD surface — do not re-implement these per repository:
 
 - `create(entity)` — insert one, return the stored entity.
