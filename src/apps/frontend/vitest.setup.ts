@@ -1,23 +1,28 @@
 import '@testing-library/jest-dom/vitest';
 
-const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
-  window.location;
+const noop = () => {};
 
-Object.defineProperty(window, 'location', {
-  configurable: true,
-  writable: true,
-  value: {
-    href,
-    origin,
-    protocol,
-    host,
-    hostname,
-    port,
-    pathname,
-    search,
-    hash,
-    assign: () => {},
-    replace: () => {},
-    reload: () => {},
-  },
-});
+try {
+  Object.defineProperty(window.location, 'assign', {
+    configurable: true,
+    value: noop,
+  });
+  Object.defineProperty(window.location, 'replace', {
+    configurable: true,
+    value: noop,
+  });
+  Object.defineProperty(window.location, 'reload', {
+    configurable: true,
+    value: noop,
+  });
+} catch {
+  const url = new URL(window.location.href);
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: Object.assign(url, {
+      assign: noop,
+      replace: noop,
+      reload: noop,
+    }),
+  });
+}
