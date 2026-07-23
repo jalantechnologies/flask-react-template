@@ -8,6 +8,9 @@ mongodb:
 
 web_app_host: 'http://localhost:3000'
 
+web:
+  cors_allowed_origin: 'http://localhost:3000'
+
 logger:
   transports: ['console']
 
