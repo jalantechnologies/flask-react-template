@@ -5,7 +5,8 @@ run-lint:
 	  --disable=all \
 	  --reports=no \
 	  --enable=cyclic-import \
-	  ./
+	  ./ && \
+	pipenv run lint-imports
 
 run-format:
 	cd src/apps/backend \

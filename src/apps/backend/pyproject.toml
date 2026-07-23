@@ -27,3 +27,13 @@ paths = [
   "./server.py",
 ]
 sort_by_size = true
+
+[tool.importlinter]
+root_package = "modules"
+
+[[tool.importlinter.contracts]]
+name = "module internals are private to their owning module"
+type = "forbidden"
+source_modules = ["modules.*"]
+forbidden_modules = ["modules.*.internal"]
+allow_indirect_imports = true

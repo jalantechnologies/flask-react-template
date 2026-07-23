@@ -6,7 +6,7 @@ from twilio.rest import Client
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.notification.errors import ServiceError
-from modules.notification.internals.twilio_params import SMSParams
+from modules.notification.internal.twilio_params import SMSParams
 from modules.notification.types import NotificationErrorCode, SendSMSParams
 
 

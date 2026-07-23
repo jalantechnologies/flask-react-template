@@ -5,7 +5,7 @@ from sendgrid.helpers.mail import From, Mail, TemplateId, To
 
 from modules.config.config_service import ConfigService
 from modules.notification.errors import ServiceError
-from modules.notification.internals.sendgrid_email_params import EmailParams
+from modules.notification.internal.sendgrid_email_params import EmailParams
 from modules.notification.types import SendEmailParams
 
 

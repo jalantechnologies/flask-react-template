@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import yaml
 
-from modules.config.internals.types import Config
+from modules.config.internal.types import Config
 
 
 class ConfigUtil:

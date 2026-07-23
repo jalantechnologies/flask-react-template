@@ -1,8 +1,8 @@
 from typing import Any
 
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
-from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
-from modules.notification.internals.store.account_notification_preferences_repository import (
+from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
 )
 from modules.notification.types import (

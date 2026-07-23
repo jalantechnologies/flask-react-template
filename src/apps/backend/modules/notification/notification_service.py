@@ -1,6 +1,6 @@
 from modules.notification.email_service import EmailService
-from modules.notification.internals.account_notification_preferences_reader import AccountNotificationPreferenceReader
-from modules.notification.internals.account_notification_preferences_writer import AccountNotificationPreferenceWriter
+from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
+from modules.notification.internal.account_notification_preferences_writer import AccountNotificationPreferenceWriter
 from modules.notification.sms_service import SMSService
 from modules.notification.types import (
     AccountNotificationPreferences,
