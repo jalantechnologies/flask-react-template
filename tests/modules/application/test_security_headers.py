@@ -12,6 +12,7 @@ STRICT_CSP = (
     "img-src 'self' data:; "
     "font-src 'self'; "
     "connect-src 'self'; "
+    "worker-src 'self' blob:; "
     "frame-ancestors 'none'"
 )
 
@@ -84,6 +85,11 @@ class TestGivenObservabilityOriginsAreAllowlisted:
             assert "default-src 'self';" in csp
             assert "style-src 'self' 'unsafe-inline'" in csp
             assert "frame-ancestors 'none'" in csp
+
+        def test_then_blob_workers_are_allowed_for_session_replay(self) -> None:
+            csp = _build_client().get("/ping").headers["Content-Security-Policy"]
+
+            assert "worker-src 'self' blob:;" in csp
 
 
 class TestGivenProxyFlagIsReadOnce:

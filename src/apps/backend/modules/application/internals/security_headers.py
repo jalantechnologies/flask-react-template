@@ -36,6 +36,7 @@ class SecurityHeaders:
             "img-src 'self' data:; "
             "font-src 'self'; "
             f"connect-src {connect_src}; "
+            "worker-src 'self' blob:; "
             "frame-ancestors 'none'"
         )
 
