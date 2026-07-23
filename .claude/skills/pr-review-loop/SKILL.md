@@ -5,93 +5,167 @@ description: Continuously review and improve a pull request until CI is green, a
 
 # PR review loop
 
-Start a dedicated background agent that continuously reviews and improves a pull request until
-**all** stop conditions are met. Kick this off automatically after you open a PR and after every
-push to it.
+Start a dedicated background AI agent that continuously reviews and improves this pull request until
+**all** of the following conditions are met:
 
-**Do not sleep or add delays between iterations.** GitHub comments and CI results arrive quickly;
-poll and react as soon as new information is available. Begin the next iteration immediately after
-each push.
-
-## Stop conditions
-
-Keep looping until **all** of these are true:
-
-- A fresh review of the updated PR finds no further significant improvements.
-- No unresolved GitHub review comments remain.
+- No significant improvements are identified during the latest review.
+- There are no unresolved GitHub review comments.
 - All required CI checks are passing.
 
-## Each iteration
+The agent should immediately begin another iteration after every push. **Do not sleep or introduce
+delays** between iterations. GitHub comments and CI results often arrive quickly, so continuously
+poll and react as soon as new information is available.
 
-### 1. Sync with the base branch
+Kick this off automatically after you open a PR and after every push to it.
 
-Rebase onto the latest base branch, resolve conflicts, and make sure the branch is up to date
-before reviewing.
+## Review loop
+
+On every iteration, perform the following steps.
+
+### 1. Sync with the latest base branch
+
+- Rebase onto the latest base branch.
+- Resolve any merge conflicts.
+- Ensure the branch is up to date before reviewing.
 
 ### 2. Remove unrelated changes
 
-Read the linked issue (if any) to understand the intended scope. Keep the PR to that scope only.
-Strip accidental, generated, debugging, or formatting-only changes that are not part of the PR's
-purpose.
+- Review the associated issue/ticket, if applicable, to understand the scope of work.
+- Ensure the PR contains only changes related to its intended scope.
+- Remove accidental, generated, debugging, formatting-only, or otherwise unrelated modifications.
 
-### 3. Comprehensive review
+### 3. Perform a comprehensive review
 
-First read and follow all project guidance: `CLAUDE.md`, `AGENTS.md`, and any other repo-specific
-instructions. Then review as an experienced maintainer, looking for improvements to: correctness,
-reliability, security, performance, architecture, maintainability, readability, simplicity, API
-design, error handling, edge cases, naming, and consistency with the existing codebase. Implement
-improvements where appropriate.
+Before reviewing, read and follow all project guidance, including:
 
-### 4. Resolve review comments
+- `CLAUDE.md`
+- `AGENTS.md`
+- skills
+- Any other repository-specific instructions
 
-For every open review comment: consider it carefully, make code changes where appropriate, reply
-with a concise explanation of the resolution (or the rationale if no change is needed), and resolve
-the conversation.
+Review the PR as if you are an experienced maintainer.
+
+Look for opportunities to improve:
+
+- Correctness
+- Reliability
+- Security
+- Performance
+- Architecture
+- Maintainability
+- Readability
+- Simplicity
+- API design
+- Error handling
+- Edge cases
+- Naming
+- Consistency with the existing codebase
+
+Implement improvements wherever appropriate.
+
+### 4. Resolve GitHub review comments
+
+For every open review comment:
+
+- Review the feedback carefully.
+- Implement code changes where appropriate.
+- Reply with a concise explanation of the resolution (or rationale if no change is required).
+- Resolve the conversation.
 
 ### 5. Improve the codebase
 
 Refactor where appropriate to keep the codebase maintainable.
 
-**Business logic** should **never** live inside execution layers such as views, controllers,
-workers, jobs, CLI commands, or HTTP handlers. Execution layers orchestrate work only. Business
-logic belongs inside appropriate domain objects such as readers, writers, domain models, data
-classes, and services. For example, if a request body is received as a dictionary, converting that
-dictionary into a typed object should be implemented as something like `MyType.from_dict()` rather
-than inside the view.
+#### Business logic
 
-**Prefer object-oriented modelling.** Discourage large procedural or functional implementations.
-When solving a problem: pause and identify the entities involved, model the state each entity owns,
-model the behaviour that belongs to that entity, and apply first-principles thinking instead of
-writing long functions. Small helper functions are acceptable, but avoid long functions performing
-many unrelated responsibilities. Optimize for code that is easy for someone completely new to the
-codebase to understand.
+Business logic should **never** live inside execution layers such as:
+
+- Views
+- Controllers
+- Workers
+- Jobs
+- CLI commands
+- HTTP handlers
+
+Execution layers should orchestrate work only.
+
+Business logic should instead live inside appropriate domain objects such as:
+
+- Readers
+- Writers
+- Domain models
+- Data classes
+- Services
+
+For example, if a request body is received as a dictionary, converting that dictionary into a typed
+object should be implemented as something like `MyType.from_dict()` rather than inside the view.
+
+#### Prefer object-oriented modelling
+
+Discourage large procedural or functional implementations.
+
+When solving a problem:
+
+- Pause and identify the entities involved.
+- Model the state each entity owns.
+- Model the behaviour that belongs to that entity.
+- Apply first-principles thinking instead of writing long functions.
+
+Small helper functions are acceptable, but avoid long functions performing many unrelated
+responsibilities.
+
+Optimize for code that is easy for someone completely new to the codebase to understand.
 
 ### 6. Code comments
 
-No new code comments. (If a genuinely non-obvious invariant or workaround already carries a "why"
-comment, leave it; but do not add new ones.)
+No new code comments.
 
 ### 7. Testing philosophy
 
-Tests should be written in an end-to-end, BDD style wherever practical. Only mock **third-party
-APIs**. Do **not** mock internal services, domain objects, database access, or business logic. Tests
-should validate the real behaviour of the system rather than implementation details.
+Tests should be written in an end-to-end, BDD style wherever practical.
 
-If a frontend test setup is present (`src/apps/frontend/vitest.config.ts`), any change under
-`src/apps/frontend` that adds or changes behaviour ships a colocated `*.test.tsx` (purely visual
-markup does not). `axios` and browser navigation are the only permitted mocks — never `vi.mock` a
-module under `frontend/`, which stubs out the code under test and leaves the suite green while the
-behaviour is broken. See `docs/testing.md`.
+Only mock **third-party APIs**.
 
-### 8. Fix CI
+Do **not** mock:
 
-Investigate every failing CI job and fix the underlying cause, not a superficial workaround.
-Continue until every required check passes.
+- Internal services
+- Domain objects
+- Database access
+- Business logic
 
-### 9. Commit and continue
+Tests should validate the real behaviour of the system rather than implementation details.
 
-After each meaningful batch of improvements, make a clear, descriptive commit and push. Then begin
-the next iteration immediately.
+For the frontend, this is a requirement where a frontend test setup is present
+(`src/apps/frontend/vitest.config.ts`): any change under `src/apps/frontend` that adds or changes
+behaviour ships a colocated `*.test.tsx` (purely visual markup does not). `axios` and browser
+navigation are the only permitted mocks — never `vi.mock` a module under `frontend/`, which stubs
+out the code under test and leaves the suite green while the behaviour is broken. See
+`docs/testing.md`.
+
+### 8. Fix CI failures
+
+Investigate every failing CI job.
+
+Fix the underlying issue rather than applying superficial workarounds.
+
+Continue until every required check is passing.
+
+### 9. Commit progress
+
+After each meaningful batch of improvements:
+
+- Create a clear, descriptive commit.
+- Push the branch.
+
+Immediately begin another review iteration.
+
+## Stop conditions
+
+Continue looping until **all** of the following are true:
+
+- No unresolved GitHub review comments remain.
+- All required CI checks are passing.
+- A fresh review of the updated PR identifies no further significant improvements.
 
 ## Relationship to pr-conventions
 
