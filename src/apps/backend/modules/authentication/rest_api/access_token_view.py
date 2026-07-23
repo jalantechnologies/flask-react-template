@@ -34,7 +34,7 @@ class AccessTokenView(MethodView):
                 params=access_token_params, account=account, actor=ANONYMOUS_ACTOR
             )
         elif "username" in request_data and "password" in request_data:
-            access_token_params = EmailBasedAuthAccessTokenRequestParams(**request_data)
+            access_token_params = EmailBasedAuthAccessTokenRequestParams.from_dict(request_data)
             account = AccountService.get_account_by_username_and_password(
                 params=AccountSearchParams(
                     username=access_token_params.username, password=access_token_params.password

@@ -35,12 +35,12 @@ class AccountWithPhoneNumberNotFoundError(AccountNotFoundError):
         )
 
 
-class AccountInvalidPasswordError(AppError):
+class AccountInvalidCredentialsError(AppError):
     def __init__(self) -> None:
         super().__init__(
             code=AccountErrorCode.INVALID_CREDENTIALS,
             http_status_code=401,
-            message="Incorrect password. Please try again or Reset your password if you’ve forgotten it.",
+            message="Invalid credentials. Please try again or reset your password if you’ve forgotten it.",
         )
 
 

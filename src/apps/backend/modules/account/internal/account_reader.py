@@ -1,14 +1,14 @@
 from typing import Optional
 
 from modules.account.errors import (
-    AccountInvalidPasswordError,
+    AccountInvalidCredentialsError,
     AccountWithIdNotFoundError,
     AccountWithPhoneNumberExistsError,
     AccountWithPhoneNumberNotFoundError,
     AccountWithUserNameExistsError,
     AccountWithUsernameNotFoundError,
 )
-from modules.account.internal.account_util import AccountUtil
+from modules.account.internal.password_hash import PasswordHash
 from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.types import (
     Account,
@@ -32,10 +32,18 @@ class AccountReader:
 
     @staticmethod
     def get_account_by_username_and_password(*, params: AccountSearchParams, actor: AuditActor) -> Account:
-        account = AccountReader.get_account_by_username(username=params.username, actor=actor)
+        account = AccountRepository.query_one(AccountQuery(username=params.username), actor=actor)
 
-        if not AccountUtil.compare_password(password=params.password, hashed_password=account.hashed_password):
-            raise AccountInvalidPasswordError()
+        password_to_verify = (
+            PasswordHash.of(account.hashed_password)
+            if account is not None
+            else PasswordHash.for_absent_account_with_equalized_timing()
+        )
+        password_matches = password_to_verify.matches(params.password)
+
+        if not password_matches or account is None:
+            raise AccountInvalidCredentialsError()
+
         return account
 
     @staticmethod

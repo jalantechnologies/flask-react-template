@@ -254,7 +254,7 @@ class TestAccountService(BaseTestAccount):
 
         assert response.status_code == 401
 
-    def test_deleted_account_not_found_by_username(self) -> None:
+    def test_deleted_account_login_returns_invalid_credentials(self) -> None:
         account_id, token = self._create_account_and_get_token("username", "password")
 
         with app.test_client() as client:
@@ -265,9 +265,9 @@ class TestAccountService(BaseTestAccount):
                 ACCESS_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": "username", "password": "password"})
             )
 
-        assert login_response.status_code == 404
+        assert login_response.status_code == 401
         assert login_response.json is not None
-        assert login_response.json.get("code") == AccountErrorCode.NOT_FOUND
+        assert login_response.json.get("code") == AccountErrorCode.INVALID_CREDENTIALS
 
     def test_deleted_account_not_found_by_id(self) -> None:
         account_id, token = self._create_account_and_get_token("username", "password")
