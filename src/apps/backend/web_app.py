@@ -12,8 +12,8 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
 from modules.core.errors import AppError
+from modules.core.job_registry import JobRegistry
 from modules.core.security_headers import SecurityHeaders
-from modules.core.worker_registry import WorkerRegistry
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
@@ -32,8 +32,8 @@ AuthenticationService.validate_access_token_signing_key()
 # Run bootstrap tasks
 BootstrapApp().run()
 
-# Initialize worker registry
-WorkerRegistry.initialize()
+# Register every job's Celery task so the web process can enqueue them
+JobRegistry.initialize()
 
 
 # Apply ProxyFix to interpret `X-Forwarded` headers if enabled in configuration

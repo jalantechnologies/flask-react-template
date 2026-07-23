@@ -1,6 +1,6 @@
 import json
 
-from server import app
+from web_app import app
 
 from modules.account.account_service import AccountService
 from modules.account.internal.account_writer import AccountWriter

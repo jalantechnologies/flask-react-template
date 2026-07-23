@@ -75,6 +75,7 @@ class ResourceAction(str, enum.Enum):
 
 class ActorType(str, enum.Enum):
     ACCOUNT = "account"
+    JOB = "job"
     WORKER = "worker"
     ANONYMOUS = "anonymous"
 
@@ -124,3 +125,32 @@ class AuditLogEntry:
     outcome: AuditOutcome = AuditOutcome.SUCCESS
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+type JobArguments = dict[str, FieldChangeValue]
+
+
+class JobRunStatus(str, enum.Enum):
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+@dataclass(frozen=True)
+class JobRun:
+    id: str
+    job_name: str
+    status: JobRunStatus
+    arguments: JobArguments = field(default_factory=dict)
+    retry_count: int = 0
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass(frozen=True)
+class JobRunQuery(QueryParams):
+    id: Optional[str] = None
+    job_name: Optional[str] = None
+    status: Optional[JobRunStatus] = None

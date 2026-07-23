@@ -376,10 +376,11 @@ Because emission is in the base class, a module gets auditing for free. Views, s
 
 Every mutating repository method takes a required `actor: AuditActor` keyword argument (`AuditActor(actor_type, actor_id)`, in `modules/core/common/types.py`). There is no ambient context: the actor is threaded from the boundary down through the service and writer to the repository, so the type checker proves at compile time that no write can happen without one.
 
-There are three actor types, chosen by whether identity is proven at the moment of the write:
+There are four actor types, chosen by whether identity is proven at the moment of the write:
 
 - `AuditActor(ActorType.ACCOUNT, account_id)` — a proven identity. The credentials, access token, or reset token in hand actually identify an account. Views build it from the account the auth middleware put on the request; internal flows pass the account resolved from the proven credential. This covers login (OTP verify and access-token creation), password-reset completion (verify + mark-used + the password update), and every authenticated mutation.
-- `AuditActor(ActorType.WORKER, worker_name)` — a background job, seed, or system action, named after the worker.
+- `AuditActor(ActorType.JOB, job_run_id)` — a background job execution. The id is the `job_run` record the `Job` base created for this run (see §10), so a system-initiated change traces to a concrete run ("job X, run #123 at time T"), not a class name. The base builds this actor and threads it into `perform`, so every write the job body makes carries it.
+- `AuditActor(ActorType.WORKER, worker_name)` — a seed or system action with no job run, and the bootstrapping actor for the `job_run` record's own first write before its id exists.
 - `AuditActor(ActorType.ANONYMOUS, None)` — a request with no proven identity yet. `actor_id` is null. This covers signup, OTP request/creation (asking for a code by phone, before authenticating), and the forgot-password token request (you have no session because you forgot your password).
 
 Every repository is audited (the `audit_log` store is the sole exception, to avoid recording its own writes). Threading the actor as a required argument is the completeness guarantee: no unattributed write reaches the database.
@@ -393,3 +394,26 @@ Only the ownership-violation case is audited. A missing, malformed, or expired t
 ### 9.4 The rare explicit case
 
 If a custom method performs an access the generic CRUD does not cover, call `AuditService.record_audit(resource_type=..., resource_id=..., action=..., changes=...)`. This should be uncommon; frequent use usually means the data access belongs in a repository instead.
+
+---
+
+## 10. Background Jobs
+
+The backend runs two processes off one codebase, named for the process they start:
+
+```
+web_app.py       gunicorn web_app:app
+worker_app.py    celery -A worker_app worker | beat | flower
+```
+
+Both entrypoints are thin and import downward into modules. The Celery app object lives in `modules/core/celery_app.py`, which both import, so no domain code reaches back up to an entrypoint. Every import arrow points down.
+
+A **job** is the unit of async work; a **worker** is the Celery process that runs it. A job subclasses `Job` (`modules/core/job.py`) and lives in the public `modules/<module>/jobs/` package of the domain that owns it. `JobRegistry` discovers jobs with one scoped pass: import every `modules/*/jobs/` package, then register each immediate `Job` subclass. The registry never reaches into a module's `internal/`. Registration runs at entrypoint import, before the worker snapshots its task table, so a queued message is never rejected as an unregistered task.
+
+A cron job declares `cron_schedule` (five-field crontab). The schedule persists to the RedBeat Redis store, which survives a read-only filesystem and does not depend on `conf.beat_schedule`.
+
+### 10.1 The `job_run` record
+
+Every execution writes a `job_run` row (`modules/core/internal/job_run/`): job name, redacted arguments, start and end time, status (`running` → `succeeded` | `failed`), and retry count. The `Job` base creates it at the start of the run and finalizes it on completion or failure. The run's id is the job's audit actor (`AuditActor(ActorType.JOB, job_run_id)`), threaded into `perform`, so every write the job makes joins back to a concrete run. The record answers "which job run made this change, when, with what outcome" and gives job observability (history, status, retries) for free.
+
+The `job_run` record is itself written through `ApplicationRepository`, so it is audited like any other collection. Its first write uses a bootstrapping `AuditActor(ActorType.WORKER, "job_runner")` because the run's own id does not exist until that insert returns; the completion/failure updates then use the `JOB` actor carrying the new id.

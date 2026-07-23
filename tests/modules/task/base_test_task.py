@@ -2,7 +2,7 @@ import json
 import unittest
 from typing import Optional, Tuple, TypedDict
 
-from server import app
+from web_app import app
 from werkzeug.test import TestResponse
 
 from modules.account.account_service import AccountService

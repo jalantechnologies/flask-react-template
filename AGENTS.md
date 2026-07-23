@@ -149,9 +149,10 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 #### 12. Background Jobs
 
-- Use Celery workers for async job processing (document processing, entity extraction, etc.).
-- Define workers in `modules/core/workers/` inheriting from `Worker`.
-- Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`).
+- A **job** is the unit of async work; a **worker** is the Celery process that runs it. Define jobs in the public `modules/<module>/jobs/` package of the domain that owns them, inheriting from `Job` (`modules/core/job.py`). Do not put them under `internal/`.
+- The Celery app object lives in `modules/core/celery_app.py`. The process entrypoints are `web_app.py` (gunicorn `web_app:app`) and `worker_app.py` (celery `-A worker_app worker|beat|flower`); both import downward into modules. `JobRegistry` discovers jobs by importing every `modules/*/jobs/` package and registering each immediate `Job` subclass, so registration happens at entrypoint import, before the worker snapshots its task table.
+- Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`). Cron entries persist to the RedBeat Redis schedule.
+- Every execution records a `job_run` row (job name, redacted arguments, start/end time, status `running`→`succeeded|failed`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure; the run's id becomes the job's audit actor (see §14). `perform` receives an `actor: AuditActor` keyword and threads it into every repository call so the writes attribute to that run.
 
 #### 13. Query Efficiency
 
@@ -161,7 +162,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 #### 14. Auditing (SOC2)
 
 - Every write through `ApplicationRepository` (`create`, `update`, `update_fields`, `delete`) is audited automatically. You do not add audit calls in views, services, readers, or writers — the base repository records the resource type, resource id, actor, action, and (on update) the changed fields. Keep audit code out of the execution and domain layers.
-- Every mutating repository method takes a required `actor: AuditActor` keyword argument, threaded explicitly from the boundary through the service and writer. There is no ambient context; the type checker proves at compile time that no write happens without an actor. Choose the actor by whether identity is proven at the write: `AuditActor(ActorType.ACCOUNT, account_id)` when the credential/token in hand identifies an account (authenticated mutations, login OTP verify and access-token creation, password-reset completion); `AuditActor(ActorType.WORKER, "<name>")` for a background job, seed, or system flow; `AuditActor(ActorType.ANONYMOUS, None)` for a request with no proven identity yet (signup, OTP request/creation, forgot-password token request). There is no opt-out — completeness is the point.
+- Every mutating repository method takes a required `actor: AuditActor` keyword argument, threaded explicitly from the boundary through the service and writer. There is no ambient context; the type checker proves at compile time that no write happens without an actor. Choose the actor by whether identity is proven at the write: `AuditActor(ActorType.ACCOUNT, account_id)` when the credential/token in hand identifies an account (authenticated mutations, login OTP verify and access-token creation, password-reset completion); `AuditActor(ActorType.JOB, job_run_id)` for a background job execution, where the id is the `job_run` record for that run so every write the job makes joins back to a concrete run (the `Job` base builds this actor and passes it into `perform`, never a class name); `AuditActor(ActorType.WORKER, "<name>")` for a seed or system flow with no job run, and for the `job_run` record's own first write before its id exists; `AuditActor(ActorType.ANONYMOUS, None)` for a request with no proven identity yet (signup, OTP request/creation, forgot-password token request). There is no opt-out — completeness is the point.
 - Never store a secret's value in the trail. The writer redacts sensitive field values (`password`, `token`, `secret`, `otp`, `mfa`, `hashed`); do not defeat this by renaming a sensitive field.
 - Every entry carries an `outcome`: `success` (the default) or `denied`. All create/read/update/delete audits are `success`; the field is defaulted, so existing emission paths and stored rows are unchanged. A `denied` entry records an authenticated account that was rejected for crossing an ownership boundary: the auth middleware (`enforce_account_ownership`) emits one `outcome=denied` READ entry against the target account boundary before raising, with the real authenticated account as actor. Missing, invalid, or expired token rejections have no proven actor and are not audited.
 - For the rare access a custom method performs that the generic CRUD does not cover, call `AuditService.record_audit(...)`. This should be uncommon; if you find yourself using it often, the data access likely belongs in a repository.
@@ -227,7 +228,7 @@ Each rule below is the generic form of a real, shipped, exploitable bug. Follow 
 
 **Do not turn a failed read into a "nothing here" answer.** `items = resp.json() if resp.status_code == 200 else []` turns a temporary 5xx into "the list is empty," which then causes a duplicate write or a wrong disabled state on the next call. Raise on a non-200 and let the caller decide whether to retry.
 
-**Audit-log facts must come from something the user cannot fake.** Never record a client header like `X-Forwarded-For` as the actor's IP. Use `request.remote_addr`, which `ProxyFix` already sets correctly behind the trusted proxy (see `server.py`). Also make sure a failed action still writes its audit event, including when the route fails by raising. An audit trail the user can forge or skip is not a trail.
+**Audit-log facts must come from something the user cannot fake.** Never record a client header like `X-Forwarded-For` as the actor's IP. Use `request.remote_addr`, which `ProxyFix` already sets correctly behind the trusted proxy (see `web_app.py`). Also make sure a failed action still writes its audit event, including when the route fails by raising. An audit trail the user can forge or skip is not a trail.
 
 ## Testing Requirements
 

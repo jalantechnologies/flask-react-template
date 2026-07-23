@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from server import app
+from web_app import app
 
 from modules.authentication.errors import (
     AccessTokenExpiredError,
