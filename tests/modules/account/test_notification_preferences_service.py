@@ -20,7 +20,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="timestamp_username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         after = datetime.now(UTC)
 
@@ -56,7 +57,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -77,7 +79,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -105,7 +108,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(email_enabled=False)
@@ -123,7 +127,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -158,7 +163,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -183,7 +189,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         initial_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -208,7 +215,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_preferences = CreateOrUpdateAccountNotificationPreferencesParams(
@@ -229,7 +237,8 @@ class TestNotificationPreferencesService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="Test", last_name="User", password="password123", username="testuser@example.com"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
@@ -242,7 +251,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
     def test_account_creation_by_phone_automatically_creates_notification_preferences(self) -> None:
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)

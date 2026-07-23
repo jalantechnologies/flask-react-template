@@ -31,7 +31,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         reset_password_params = {"username": account.username}
@@ -57,11 +58,12 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         before = datetime.now(UTC)
-        password_reset_token = AuthenticationService.create_password_reset_token(account)
+        password_reset_token = AuthenticationService.create_password_reset_token(account, actor=TEST_ACTOR)
         after = datetime.now(UTC)
 
         assert password_reset_token.created_at is not None
@@ -78,14 +80,16 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         token = PasswordResetTokenUtil.generate_password_reset_token()
         PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
 
         before = datetime.now(UTC)
         updated_account = AccountService.reset_account_password(
-            params=ResetPasswordParams(account_id=account.id, new_password="new_password", token=token)
+            params=ResetPasswordParams(account_id=account.id, new_password="new_password", token=token),
+            actor=TEST_ACTOR,
         )
         after = datetime.now(UTC)
 
@@ -98,7 +102,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         token = PasswordResetTokenUtil.generate_password_reset_token()
         PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
@@ -106,7 +111,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         before = datetime.now(UTC)
         used_password_reset_token = AuthenticationService.set_password_reset_token_as_used_by_id(
-            password_reset_token.id, account_id=account.id
+            password_reset_token.id, actor=TEST_ACTOR
         )
         after = datetime.now(UTC)
 
@@ -141,7 +146,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         token = PasswordResetTokenUtil.generate_password_reset_token()
@@ -198,7 +204,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         new_password = "new_password"
@@ -222,12 +229,13 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
-        password_reset_token = AuthenticationService.create_password_reset_token(params=account)
+        password_reset_token = AuthenticationService.create_password_reset_token(params=account, actor=TEST_ACTOR)
 
-        AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token.id, account_id=account.id)
+        AuthenticationService.set_password_reset_token_as_used_by_id(password_reset_token.id, actor=TEST_ACTOR)
 
         new_password = "new_password"
 
@@ -254,10 +262,11 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
-        AuthenticationService.create_password_reset_token(params=account)
+        AuthenticationService.create_password_reset_token(params=account, actor=TEST_ACTOR)
 
         new_password = "new_password"
 
@@ -287,10 +296,11 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
-        password_reset_token = AuthenticationService.create_password_reset_token(params=account)
+        password_reset_token = AuthenticationService.create_password_reset_token(params=account, actor=TEST_ACTOR)
 
         mock_is_token_expired.return_value = True
 
@@ -319,7 +329,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="Test", last_name="User", password="password123", username="testuser@example.com"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         token = "test_token_123"
@@ -337,7 +348,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="Test", last_name="User", password="old_password", username="testuser@example.com"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         NotificationService.create_or_update_account_notification_preferences(

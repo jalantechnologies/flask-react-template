@@ -5,6 +5,7 @@ from server import app
 from modules.account.account_service import AccountService
 from modules.account.types import AccountErrorCode, CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -138,7 +139,8 @@ class TestAccountPatchApi(BaseTestAccount):
         other_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         request_body = {"first_name": "new_first_name"}
 

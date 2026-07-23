@@ -12,6 +12,7 @@ from modules.authentication.types import CreateOTPParams
 from modules.config.config_service import ConfigService
 from modules.config.internal.config_manager import ConfigManager
 from modules.notification.sms_service import SMSService
+from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -120,7 +121,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
 
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id"
+            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id", actor=TEST_ACTOR
         )
 
         self.assertEqual(otp.otp_code, "1234")
@@ -137,7 +138,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
 
         phone_number = PhoneNumber(country_code="+91", phone_number="8888888888")
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id"
+            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id", actor=TEST_ACTOR
         )
 
         self.assertNotEqual(otp.otp_code, "1234")
@@ -156,7 +157,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
 
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id"
+            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id", actor=TEST_ACTOR
         )
 
         self.assertNotEqual(otp.otp_code, "1234")
@@ -175,7 +176,7 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
 
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id"
+            params=CreateOTPParams(phone_number=phone_number), account_id="test_account_id", actor=TEST_ACTOR
         )
 
         self.assertEqual(otp.otp_code, "1234")
@@ -187,12 +188,14 @@ class TestOTPWhitelistApi(BaseTestAccessToken):
         """Test that OTP creation uses bypass_preferences=True for SMS"""
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         mock_send_sms.reset_mock()
 
-        otp = AuthenticationService.create_otp(params=CreateOTPParams(phone_number=phone_number), account_id=account.id)
+        otp = AuthenticationService.create_otp(
+            params=CreateOTPParams(phone_number=phone_number), account_id=account.id, actor=TEST_ACTOR
+        )
 
         mock_send_sms.assert_called_once()
         call_kwargs = mock_send_sms.call_args.kwargs

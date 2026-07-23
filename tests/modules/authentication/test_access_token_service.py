@@ -16,7 +16,8 @@ class TestAuthenticationService(BaseTestAccessToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         access_token = AuthenticationService.create_access_token_by_username_and_password(account=account)
@@ -29,7 +30,8 @@ class TestAuthenticationService(BaseTestAccessToken):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         access_token = AuthenticationService.create_access_token_by_username_and_password(account=account)
@@ -44,7 +46,7 @@ class TestAuthenticationService(BaseTestAccessToken):
             params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         access_token = AuthenticationService.create_access_token_by_phone_number(
@@ -64,7 +66,7 @@ class TestAuthenticationService(BaseTestAccessToken):
             params=CreateAccountByPhoneNumberParams(phone_number=PhoneNumber(**phone_number)), actor=TEST_ACTOR
         )
         otp = AuthenticationService.create_otp(
-            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id
+            params=CreateOTPParams(phone_number=PhoneNumber(**phone_number)), account_id=account.id, actor=TEST_ACTOR
         )
 
         access_token = AuthenticationService.create_access_token_by_phone_number(

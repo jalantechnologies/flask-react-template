@@ -13,6 +13,7 @@ from modules.account.types import (
 )
 from modules.authentication.types import OTPErrorCode
 from modules.notification.sms_service import SMSService
+from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
@@ -36,7 +37,8 @@ class TestAccountPostApi(BaseTestAccount):
         existing_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:
@@ -86,7 +88,8 @@ class TestAccountPostApi(BaseTestAccount):
         AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(
                 phone_number=PhoneNumber(country_code="+91", phone_number="9999999999")
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         with app.test_client() as client:

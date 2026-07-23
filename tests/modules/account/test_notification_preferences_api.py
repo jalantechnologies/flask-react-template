@@ -266,7 +266,8 @@ class TestNotificationPreferencesApi(BaseTestAccount):
         other_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="other_first_name", last_name="other_last_name", password="password", username="other_user"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         preferences_data = {"email_enabled": False, "push_enabled": True, "sms_enabled": False}
 

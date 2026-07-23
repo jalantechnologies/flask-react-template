@@ -23,7 +23,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 password="password", username="username", first_name="first_name", last_name="last_name"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         assert account.username == "username"
@@ -35,7 +36,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         mock_verify_access_token.return_value = AccessTokenPayload(account_id=account.id)
@@ -60,7 +62,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.get_or_create_account_by_phone_number(
             params=CreateAccountByPhoneNumberParams(
                 phone_number=PhoneNumber(**{"country_code": "+91", "phone_number": "9999999999"})
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         assert account.phone_number == PhoneNumber(country_code="+91", phone_number="9999999999")
@@ -80,7 +83,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 password="password", username="username", first_name="old_first_name", last_name="old_last_name"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_params = UpdateAccountProfileParams(first_name="new_first_name")
@@ -97,7 +101,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 password="password", username="username", first_name="old_first_name", last_name="old_last_name"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_params = UpdateAccountProfileParams(last_name="new_last_name")
@@ -114,7 +119,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 password="password", username="username", first_name="old_first_name", last_name="old_last_name"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_params = UpdateAccountProfileParams(first_name="new_first_name", last_name="new_last_name")
@@ -134,7 +140,8 @@ class TestAccountService(BaseTestAccount):
                 username="username",
                 first_name="original_first_name",
                 last_name="original_last_name",
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_params = UpdateAccountProfileParams(first_name=None, last_name=None)
@@ -154,7 +161,8 @@ class TestAccountService(BaseTestAccount):
                 username="username",
                 first_name="original_first_name",
                 last_name="original_last_name",
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         update_params = UpdateAccountProfileParams(first_name="", last_name="")
@@ -186,7 +194,7 @@ class TestAccountService(BaseTestAccount):
     def test_update_account_profile_with_phone_number_account(self) -> None:
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         update_params = UpdateAccountProfileParams(first_name="Phone", last_name="User")
@@ -203,7 +211,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
@@ -220,7 +229,8 @@ class TestAccountService(BaseTestAccount):
         created_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="timestamp_username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
         after = datetime.now(UTC)
 
@@ -238,7 +248,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         before = datetime.now(UTC)
@@ -256,7 +267,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         before = datetime.now(UTC)
@@ -284,7 +296,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
@@ -300,7 +313,8 @@ class TestAccountService(BaseTestAccount):
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
@@ -315,7 +329,7 @@ class TestAccountService(BaseTestAccount):
     def test_deleted_phone_number_account_not_found(self) -> None:
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
         account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         deletion_result = AccountService.delete_account(account_id=account.id, actor=TEST_ACTOR)
@@ -331,7 +345,8 @@ class TestAccountService(BaseTestAccount):
         original_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="first_name", last_name="last_name", password="password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         deletion_result = AccountService.delete_account(account_id=original_account.id, actor=TEST_ACTOR)
@@ -340,7 +355,8 @@ class TestAccountService(BaseTestAccount):
         new_account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
                 first_name="new_first_name", last_name="new_last_name", password="new_password", username="username"
-            )
+            ),
+            actor=TEST_ACTOR,
         )
 
         assert new_account.username == "username"
@@ -351,14 +367,14 @@ class TestAccountService(BaseTestAccount):
         phone_number = PhoneNumber(country_code="+91", phone_number="9999999999")
 
         original_account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         deletion_result = AccountService.delete_account(account_id=original_account.id, actor=TEST_ACTOR)
         assert deletion_result.success is True
 
         new_account = AccountService.get_or_create_account_by_phone_number(
-            params=CreateAccountByPhoneNumberParams(phone_number=phone_number)
+            params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
         assert new_account.phone_number == phone_number
