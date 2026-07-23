@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple
 
 from pymongo.cursor import Cursor
 
-from modules.application.common.types import PaginationParams, SortParams
+from modules.core.common.types import PaginationParams, SortParams
 
 
 @dataclass

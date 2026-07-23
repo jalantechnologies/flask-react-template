@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from modules.application.common.types import (
+from modules.core.common.types import (
     REDACTED,
     AuditActor,
     AuditLogEntry,
@@ -11,7 +11,7 @@ from modules.application.common.types import (
     FieldChanges,
     ResourceAction,
 )
-from modules.application.internal.audit.store.audit_log_repository import AuditLogRepository
+from modules.core.internal.audit.store.audit_log_repository import AuditLogRepository
 from modules.logger.logger import Logger
 
 SENSITIVE_FIELD_KEYWORDS = ("password", "token", "secret", "otp", "mfa", "hashed")

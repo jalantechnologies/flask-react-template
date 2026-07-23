@@ -1,4 +1,4 @@
-from modules.application.common.types import AuditActor
+from modules.core.common.types import AuditActor
 from modules.logger.logger import Logger
 from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
 from modules.notification.internal.sendgrid_service import SendGridService

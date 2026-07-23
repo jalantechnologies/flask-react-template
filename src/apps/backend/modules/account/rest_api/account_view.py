@@ -14,8 +14,8 @@ from modules.account.types import (
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
-from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware, enforce_account_ownership
+from modules.core.common.types import ActorType, AuditActor
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 

@@ -1,8 +1,8 @@
 from server import app
 
-from modules.application.common.types import ActorType, AuditOutcome, ResourceAction
-from modules.application.internal.audit.store.audit_log_repository import AuditLogRepository
 from modules.authentication.types import AccessTokenErrorCode
+from modules.core.common.types import ActorType, AuditOutcome, ResourceAction
+from modules.core.internal.audit.store.audit_log_repository import AuditLogRepository
 from modules.task.types import TaskErrorCode
 from tests.modules.task.base_test_task import BaseTestTask, TaskRequestBody
 

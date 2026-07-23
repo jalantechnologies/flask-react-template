@@ -5,9 +5,9 @@ from flask import jsonify, request
 from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
-from modules.application.common.constants import DEFAULT_PAGINATION_PARAMS
-from modules.application.common.types import ActorType, AuditActor, PaginationParams
 from modules.authentication.rest_api.access_auth_middleware import access_auth_middleware
+from modules.core.common.constants import DEFAULT_PAGINATION_PARAMS
+from modules.core.common.types import ActorType, AuditActor, PaginationParams
 from modules.task.errors import TaskBadRequestError
 from modules.task.task_service import TaskService
 from modules.task.types import (

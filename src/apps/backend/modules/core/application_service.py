@@ -2,9 +2,9 @@ from typing import Optional
 
 from flask import Flask
 
-from modules.application.common.types import AuditActor, AuditOutcome, FieldChanges, ResourceAction
-from modules.application.internal.audit.audit_writer import AuditWriter
-from modules.application.internal.security_headers import SecurityHeaders
+from modules.core.common.types import AuditActor, AuditOutcome, FieldChanges, ResourceAction
+from modules.core.internal.audit.audit_writer import AuditWriter
+from modules.core.internal.security_headers import SecurityHeaders
 
 
 class ApplicationService:

@@ -144,7 +144,7 @@ account/
 
 #### The generic `ApplicationRepository[Entity, Query]`
 
-`ApplicationRepository` (in `modules/application/repository.py`) is generic over the entity it stores **and**
+`ApplicationRepository` (in `modules/core/repository.py`) is generic over the entity it stores **and**
 the typed query object it accepts. It owns the shape of "talk to the database" once, so a concrete
 repository is mostly declaration:
 
@@ -343,7 +343,7 @@ blueprint.add_url_rule(
 
 ## 9. Auditing
 
-The audit trail is a SOC2 control, and it is built into the persistence layer so coverage does not depend on any caller remembering to log. It lives inside the `application` module (`modules/application/internals/audit/`), with its shared types in `modules/application/common/types.py`.
+The audit trail is a SOC2 control, and it is built into the persistence layer so coverage does not depend on any caller remembering to log. It lives inside the `core` module (`modules/core/internal/audit/`), with its shared types in `modules/core/common/types.py`.
 
 ### 9.1 Every repository write is audited
 
@@ -360,7 +360,7 @@ Because emission is in the base class, a module gets auditing for free. Views, s
 
 ### 9.2 The actor is an explicit parameter
 
-Every mutating repository method takes a required `actor: AuditActor` keyword argument (`AuditActor(actor_type, actor_id)`, in `modules/application/common/types.py`). There is no ambient context: the actor is threaded from the boundary down through the service and writer to the repository, so the type checker proves at compile time that no write can happen without one.
+Every mutating repository method takes a required `actor: AuditActor` keyword argument (`AuditActor(actor_type, actor_id)`, in `modules/core/common/types.py`). There is no ambient context: the actor is threaded from the boundary down through the service and writer to the repository, so the type checker proves at compile time that no write can happen without one.
 
 There are three actor types, chosen by whether identity is proven at the moment of the write:
 

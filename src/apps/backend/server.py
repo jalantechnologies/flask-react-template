@@ -8,12 +8,12 @@ load_dotenv()
 
 from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
-from modules.application.application_service import ApplicationService
-from modules.application.errors import AppError
-from modules.application.worker_registry import WorkerRegistry
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
 from modules.config.config_service import ConfigService
+from modules.core.application_service import ApplicationService
+from modules.core.errors import AppError
+from modules.core.worker_registry import WorkerRegistry
 from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp

@@ -18,7 +18,7 @@ from modules.account.types import (
     CreateAccountByUsernameAndPasswordParams,
     PhoneNumber,
 )
-from modules.application.common.types import AuditActor
+from modules.core.common.types import AuditActor
 
 
 class AccountReader:

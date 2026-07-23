@@ -62,7 +62,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Backend Architecture
 
-- **Modular Design:** Each domain module (account, authentication, application, task, etc.) under `modules/` owns its REST API, service, and persistence layers.
+- **Modular Design:** Each domain module (account, authentication, core, task, etc.) under `modules/` owns its REST API, service, and persistence layers.
 - **Layered Structure:** HTTP (Flask blueprints) → View → Service → Reader/Writer → Repository → MongoDB.
 - **Encapsulation:** Only expose `*_service.py`, `types.py`, and module-specific exceptions. Everything under `internal/` is private.
 - **Clear Data Models:** Use Pydantic models and dataclasses to validate inputs/outputs at the boundaries.
@@ -133,7 +133,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 - Ensure MongoDB indexes cover every `find`, `find_one`, aggregation `$match`, or `sort` pattern.
 - Declare indexes in the repository layer (`internal/store/*_repository.py`).
-- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/application/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
+- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/core/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
 - No MongoDB syntax crosses a repository's public surface. Callers pass a typed query object, never a `{"field": ...}` filter, an `ObjectId`, or a `$set`; every verb returns a domain dataclass, never a raw BSON document.
 
 #### 10. API Design
@@ -150,7 +150,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 #### 12. Background Jobs
 
 - Use Celery workers for async job processing (document processing, entity extraction, etc.).
-- Define workers in `modules/application/workers/` inheriting from `Worker`.
+- Define workers in `modules/core/workers/` inheriting from `Worker`.
 - Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`).
 
 #### 13. Query Efficiency

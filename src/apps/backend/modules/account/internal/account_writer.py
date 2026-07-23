@@ -16,9 +16,9 @@ from modules.account.types import (
     PhoneNumber,
     UpdateAccountProfileParams,
 )
-from modules.application.common.types import AuditActor, ResourceAction
-from modules.application.repository import FieldUpdates
 from modules.authentication.errors import OTPRequestFailedError
+from modules.core.common.types import AuditActor, ResourceAction
+from modules.core.repository import FieldUpdates
 
 
 class AccountWriter:

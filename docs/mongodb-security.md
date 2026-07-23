@@ -28,7 +28,7 @@ mongodb://host:27017/dbname?ssl=true
 
 ## How the Warning Works
 
-`ApplicationRepositoryClient` validates the URI when it creates a MongoDB connection (in `modules/application/repository.py`, where `mongodb.uri` is read and the client is constructed). If the URI does not use the `mongodb+srv://` scheme and does not contain `tls=true` or `ssl=true` in the query string, a `WARN`-level log is emitted. This is intentionally non-fatal: TLS may be terminated at the network layer (e.g. a TLS-terminating proxy or service mesh) without appearing in the URI itself. The warning is the operator's cue to either add TLS parameters or confirm that the network layer provides equivalent protection.
+`ApplicationRepositoryClient` validates the URI when it creates a MongoDB connection (in `modules/core/repository.py`, where `mongodb.uri` is read and the client is constructed). If the URI does not use the `mongodb+srv://` scheme and does not contain `tls=true` or `ssl=true` in the query string, a `WARN`-level log is emitted. This is intentionally non-fatal: TLS may be terminated at the network layer (e.g. a TLS-terminating proxy or service mesh) without appearing in the URI itself. The warning is the operator's cue to either add TLS parameters or confirm that the network layer provides equivalent protection.
 
 The check is skipped when `APP_ENV` is `development` or `testing`.
 

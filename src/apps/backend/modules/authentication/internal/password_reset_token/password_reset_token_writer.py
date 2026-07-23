@@ -1,10 +1,10 @@
-from modules.application.common.types import AuditActor
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
     PasswordResetTokenRepository,
 )
 from modules.authentication.types import PasswordResetToken
+from modules.core.common.types import AuditActor
 
 
 class PasswordResetTokenWriter:

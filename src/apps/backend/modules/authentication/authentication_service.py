@@ -2,7 +2,6 @@ import urllib.parse
 from dataclasses import asdict
 
 from modules.account.types import Account, PhoneNumber
-from modules.application.common.types import AuditActor
 from modules.authentication.internal.access_token.access_token_util import AccessTokenUtil
 from modules.authentication.internal.otp.otp_util import OTPUtil
 from modules.authentication.internal.otp.otp_writer import OTPWriter
@@ -19,6 +18,7 @@ from modules.authentication.types import (
     VerifyOTPParams,
 )
 from modules.config.config_service import ConfigService
+from modules.core.common.types import AuditActor
 from modules.notification.email_service import EmailService
 from modules.notification.sms_service import SMSService
 from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams, SendSMSParams

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional, Union
 
-from modules.application.common.types import QueryParams
-from modules.application.errors import AppError
+from modules.core.common.types import QueryParams
+from modules.core.errors import AppError
 
 
 @dataclass(frozen=True)

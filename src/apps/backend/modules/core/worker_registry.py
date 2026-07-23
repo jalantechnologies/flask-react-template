@@ -3,12 +3,12 @@ import inspect
 import pkgutil
 from typing import Type
 
-from modules.application.worker import Worker
+from modules.core.worker import Worker
 from modules.logger.logger import Logger
 
 
 class WorkerRegistry:
-    _WORKER_PACKAGES = ["modules.application.workers"]
+    _WORKER_PACKAGES = ["modules.core.workers"]
 
     @staticmethod
     def _discover_worker_packages() -> list[str]:

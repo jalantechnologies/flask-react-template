@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from modules.application.common.types import PaginationParams, QueryParams, SortParams
+from modules.core.common.types import PaginationParams, QueryParams, SortParams
 
 
 @dataclass(frozen=True)
