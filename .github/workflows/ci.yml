@@ -533,21 +533,70 @@ jobs:
 
       # The analyze action sets outcome=failure when its internal sonar-scanner prints
       # "QUALITY GATE STATUS: FAILED". That scanner verdict has disagreed with the authoritative
-      # PR-scoped gate: on PR #732 the scanner said FAILED while project_status?pullRequest=732
-      # returned "OK" on every condition (0 new bugs/smells/vulns). So we do NOT trust the
-      # scanner's exit alone. When it reports failure we re-query the PR-scoped gate and fail only
-      # if that gate is a real ERROR. If the query itself breaks or returns no status, we fail
-      # closed so a broken diagnostic can never mask a genuine gate failure.
-      - name: Fail only on a real PR-scoped gate error
+      # PR-scoped gate: on PR #732 the scanner said FAILED while the gate returned "OK" on every
+      # condition (0 new bugs/smells/vulns). So we do NOT trust the scanner's exit alone.
+      #
+      # But we also must not trust a bare project_status?pullRequest=<n>: that returns the LATEST
+      # analysis for the PR, which may be a stale earlier commit's OK/NONE. If this run's scanner
+      # crashed before publishing the current head, a bare PR-scoped OK would wave an UNSCANNED
+      # commit through green. So we anchor the gate to THIS run's analysis:
+      #   1. Read .scannerwork/report-task.txt (written by this run's sonar-scanner) for its
+      #      ceTaskId. No report-task.txt => the scanner never published this commit => FAIL.
+      #   2. Poll api/ce/task?id=<ceTaskId> until terminal. Only SUCCESS with an analysisId means
+      #      this commit was actually analysed; anything else (FAILED/CANCELED) => FAIL.
+      #   3. Query project_status?analysisId=<analysisId> — the gate for exactly this analysis,
+      #      not whatever happens to be latest on the PR.
+      # Pass only on OK/NONE for THIS analysis; fail on ERROR; fail closed on any empty/broken
+      # response so a diagnostic hole can never mask an unscanned commit or a real gate failure.
+      - name: Fail unless this run's own analysis passed the gate
         if: steps.sonar_analysis.outcome == 'failure'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-          PR_NUMBER: ${{ github.event.number }}
         run: |
-          PROJECT_KEY=$(grep 'sonar.projectKey' sonar-project.properties | cut -d'=' -f2 | tr -d ' ')
-          RESPONSE=$(curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${PROJECT_KEY}&pullRequest=${PR_NUMBER}" || true)
-          STATUS=$(printf '%s' "$RESPONSE" | python3 -c '
+          REPORT_TASK_FILE=$(find . -type f -name report-task.txt -path '*.scannerwork*' 2>/dev/null | head -1)
+          if [ -z "$REPORT_TASK_FILE" ] || [ ! -f "$REPORT_TASK_FILE" ]; then
+            echo "::error::No .scannerwork/report-task.txt was produced, so this commit was never published to SonarQube. Failing to avoid passing an unscanned commit."
+            exit 1
+          fi
+          CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK_FILE" | cut -d'=' -f2- | tr -d ' \r')
+          if [ -z "$CE_TASK_ID" ]; then
+            echo "::error::report-task.txt has no ceTaskId; cannot confirm this commit was published. Failing."
+            exit 1
+          fi
+
+          # sonar.qualitygate.wait=true means the CE task is normally terminal by now; poll a few
+          # times anyway to absorb a lagging compute-engine queue.
+          CE_TASK_STATUS=""
+          ANALYSIS_ID=""
+          for _ in 1 2 3 4 5 6; do
+            CE_RESPONSE=$(curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${CE_TASK_ID}" || true)
+            CE_PARSED=$(printf '%s' "$CE_RESPONSE" | python3 -c '
+          import sys, json
+          raw = sys.stdin.read().strip()
+          if not raw:
+              sys.exit(0)
+          try:
+              t = json.loads(raw)["task"]
+          except Exception:
+              sys.exit(0)
+          print(t.get("status", "") + "|" + t.get("analysisId", ""))
+          ')
+            CE_TASK_STATUS=${CE_PARSED%%|*}
+            ANALYSIS_ID=${CE_PARSED#*|}
+            case "$CE_TASK_STATUS" in
+              PENDING|IN_PROGRESS) sleep 5 ;;
+              *) break ;;
+            esac
+          done
+
+          if [ "$CE_TASK_STATUS" != "SUCCESS" ] || [ -z "$ANALYSIS_ID" ]; then
+            echo "::error::SonarQube compute-engine task for this run is '${CE_TASK_STATUS:-<unknown>}' (not SUCCESS with an analysisId). The current commit was not analysed. Failing."
+            exit 1
+          fi
+
+          GATE_RESPONSE=$(curl -sf -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${ANALYSIS_ID}" || true)
+          STATUS=$(printf '%s' "$GATE_RESPONSE" | python3 -c '
           import sys, json
           raw = sys.stdin.read().strip()
           if not raw:
@@ -557,15 +606,15 @@ jobs:
           except Exception:
               sys.exit(0)
           ')
-          echo "PR-scoped quality gate status: ${STATUS:-<none>}"
+          echo "This run analysisId=${ANALYSIS_ID} quality gate status: ${STATUS:-<none>}"
           if [ "$STATUS" = "ERROR" ]; then
-            echo "::error::SonarQube PR-scoped quality gate status is ERROR. Failing the build."
+            echo "::error::SonarQube quality gate for this run's analysis is ERROR. Failing the build."
             exit 1
           elif [ "$STATUS" = "OK" ] || [ "$STATUS" = "NONE" ]; then
-            echo "::warning::sonar-scanner reported a failure, but the PR-scoped quality gate (project_status?pullRequest=${PR_NUMBER}) status is ${STATUS}. Treating the scanner's non-zero result as a transient/scanner issue and passing."
+            echo "::warning::sonar-scanner reported a failure, but the quality gate for this run's own analysis (${ANALYSIS_ID}) is ${STATUS}. Treating the scanner's non-zero result as a transient/scanner issue and passing."
             exit 0
           else
-            echo "::error::Could not determine the PR-scoped quality gate status (got '${STATUS:-<empty>}'). Failing the build so a broken query cannot mask a real gate failure."
+            echo "::error::Could not determine the quality gate status for this run's analysis (got '${STATUS:-<empty>}'). Failing so a broken query cannot mask a real gate failure."
             exit 1
           fi
 
