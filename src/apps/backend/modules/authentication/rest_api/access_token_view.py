@@ -6,12 +6,15 @@ from flask.views import MethodView
 
 from modules.account.account_service import AccountService
 from modules.account.types import AccountSearchParams, PhoneNumber
+from modules.application.common.types import ActorType, AuditActor
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import (
     CreateAccessTokenParams,
     EmailBasedAuthAccessTokenRequestParams,
     OTPBasedAuthAccessTokenRequestParams,
 )
+
+ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
 
 
 class AccessTokenView(MethodView):
@@ -24,14 +27,19 @@ class AccessTokenView(MethodView):
             access_token_params = OTPBasedAuthAccessTokenRequestParams(
                 otp_code=request_data["otp_code"], phone_number=phone_number_obj
             )
-            account = AccountService.get_account_by_phone_number(phone_number=access_token_params.phone_number)
+            account = AccountService.get_account_by_phone_number(
+                phone_number=access_token_params.phone_number, actor=ANONYMOUS_ACTOR
+            )
             access_token = AuthenticationService.create_access_token_by_phone_number(
                 params=access_token_params, account=account
             )
         elif "username" in request_data and "password" in request_data:
             access_token_params = EmailBasedAuthAccessTokenRequestParams(**request_data)
             account = AccountService.get_account_by_username_and_password(
-                params=AccountSearchParams(username=access_token_params.username, password=access_token_params.password)
+                params=AccountSearchParams(
+                    username=access_token_params.username, password=access_token_params.password
+                ),
+                actor=ANONYMOUS_ACTOR,
             )
             access_token = AuthenticationService.create_access_token_by_username_and_password(account=account)
 

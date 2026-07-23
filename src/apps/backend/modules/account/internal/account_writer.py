@@ -26,7 +26,7 @@ class AccountWriter:
     def create_account_by_username_and_password(
         *, params: CreateAccountByUsernameAndPasswordParams, actor: AuditActor
     ) -> Account:
-        AccountReader.check_username_not_exist(params=params)
+        AccountReader.check_username_not_exist(params=params, actor=actor)
         account = Account(
             id="",
             first_name=params.first_name,
@@ -46,7 +46,7 @@ class AccountWriter:
         if not is_valid_phone_number:
             raise OTPRequestFailedError()
 
-        AccountReader.check_phone_number_not_exist(phone_number=params.phone_number)
+        AccountReader.check_phone_number_not_exist(phone_number=params.phone_number, actor=actor)
         account = Account(
             id="", first_name="", last_name="", hashed_password="", phone_number=phone_number, username=""
         )
@@ -81,7 +81,7 @@ class AccountWriter:
     def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:
         # Confirm an active account exists (raises if not) so re-deleting a soft-deleted account 404s,
         # matching the previous `{"active": True}`-guarded update.
-        AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=account_id))
+        AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=account_id), actor=actor)
 
         deletion_time = datetime.now(UTC)
         AccountRepository.update_fields(account_id, {"active": False, "updated_at": deletion_time}, actor=actor)

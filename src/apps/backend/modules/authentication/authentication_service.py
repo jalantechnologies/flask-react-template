@@ -55,13 +55,17 @@ class AuthenticationService:
         token = PasswordResetTokenUtil.generate_password_reset_token()
         password_reset_token = PasswordResetTokenWriter.create_password_reset_token(params.id, token, actor=actor)
         AuthenticationService.send_password_reset_email(
-            account_id=params.id, first_name=params.first_name, username=params.username, password_reset_token=token
+            account_id=params.id,
+            first_name=params.first_name,
+            username=params.username,
+            password_reset_token=token,
+            actor=actor,
         )
         return password_reset_token
 
     @staticmethod
-    def get_password_reset_token_by_account_id(account_id: str) -> PasswordResetToken:
-        return PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id)
+    def get_password_reset_token_by_account_id(account_id: str, *, actor: AuditActor) -> PasswordResetToken:
+        return PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id, actor=actor)
 
     @staticmethod
     def set_password_reset_token_as_used_by_id(
@@ -70,11 +74,13 @@ class AuthenticationService:
         return PasswordResetTokenWriter.set_password_reset_token_as_used(password_reset_token_id, actor=actor)
 
     @staticmethod
-    def verify_password_reset_token(account_id: str, token: str) -> PasswordResetToken:
-        return PasswordResetTokenReader.verify_password_reset_token(account_id=account_id, token=token)
+    def verify_password_reset_token(account_id: str, token: str, *, actor: AuditActor) -> PasswordResetToken:
+        return PasswordResetTokenReader.verify_password_reset_token(account_id=account_id, token=token, actor=actor)
 
     @staticmethod
-    def send_password_reset_email(account_id: str, first_name: str, username: str, password_reset_token: str) -> None:
+    def send_password_reset_email(
+        account_id: str, first_name: str, username: str, password_reset_token: str, *, actor: AuditActor
+    ) -> None:
         web_app_host = ConfigService[str].get_value(key="web_app_host")
         default_email = ConfigService[str].get_value(key="mailer.default_email")
         default_email_name = ConfigService[str].get_value(key="mailer.default_email_name")
@@ -94,7 +100,7 @@ class AuthenticationService:
         )
 
         EmailService.send_email_for_account(
-            account_id=account_id, bypass_preferences=True, params=password_reset_email_params
+            account_id=account_id, bypass_preferences=True, params=password_reset_email_params, actor=actor
         )
 
     @staticmethod
@@ -107,7 +113,9 @@ class AuthenticationService:
                 message_body=f"{otp.otp_code} is your One Time Password (OTP) for verification.",
                 recipient_phone=recipient_phone_number,
             )
-            SMSService.send_sms_for_account(account_id=account_id, bypass_preferences=True, params=send_sms_params)
+            SMSService.send_sms_for_account(
+                account_id=account_id, bypass_preferences=True, params=send_sms_params, actor=actor
+            )
 
         return otp
 

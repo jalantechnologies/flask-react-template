@@ -25,7 +25,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
         )
         after = datetime.now(UTC)
 
-        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id, actor=TEST_ACTOR
+        )
 
         assert preferences.created_at is not None
         assert preferences.updated_at is not None
@@ -68,7 +70,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
             account_id=account.id, actor=TEST_ACTOR, preferences=update_preferences
         )
 
-        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id, actor=TEST_ACTOR
+        )
 
         assert preferences.account_id == account.id
         assert preferences.email_enabled is False
@@ -97,7 +101,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.sms_enabled is True
 
         retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
-            account_id=account.id
+            account_id=account.id, actor=TEST_ACTOR
         )
         assert retrieved_preferences.account_id == account.id
         assert retrieved_preferences.email_enabled is False
@@ -152,7 +156,7 @@ class TestNotificationPreferencesService(BaseTestAccount):
         assert preferences.sms_enabled is False
 
         retrieved_preferences = NotificationService.get_account_notification_preferences_by_account_id(
-            account_id=account.id
+            account_id=account.id, actor=TEST_ACTOR
         )
         assert retrieved_preferences.account_id == account.id
         assert retrieved_preferences.email_enabled is False
@@ -241,7 +245,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
             actor=TEST_ACTOR,
         )
 
-        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id, actor=TEST_ACTOR
+        )
 
         assert preferences.account_id == account.id
         assert preferences.email_enabled is True
@@ -254,7 +260,9 @@ class TestNotificationPreferencesService(BaseTestAccount):
             params=CreateAccountByPhoneNumberParams(phone_number=phone_number), actor=TEST_ACTOR
         )
 
-        preferences = NotificationService.get_account_notification_preferences_by_account_id(account_id=account.id)
+        preferences = NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account.id, actor=TEST_ACTOR
+        )
 
         assert preferences.account_id == account.id
         assert preferences.email_enabled is True

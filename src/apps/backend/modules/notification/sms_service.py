@@ -1,3 +1,4 @@
+from modules.application.common.types import AuditActor
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 from modules.notification.internal.account_notification_preferences_reader import AccountNotificationPreferenceReader
@@ -7,7 +8,9 @@ from modules.notification.types import SendSMSParams
 
 class SMSService:
     @staticmethod
-    def send_sms_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendSMSParams) -> None:
+    def send_sms_for_account(
+        *, account_id: str, bypass_preferences: bool = False, params: SendSMSParams, actor: AuditActor
+    ) -> None:
         is_sms_enabled = ConfigService[bool].get_value(key="sms.enabled")
         if not is_sms_enabled:
             Logger.warn(message=f"SMS is disabled. Could not send message - {params.message_body}")
@@ -15,7 +18,7 @@ class SMSService:
 
         if not bypass_preferences:
             preferences = AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(
-                account_id
+                account_id, actor=actor
             )
             if not preferences.sms_enabled:
                 Logger.info(

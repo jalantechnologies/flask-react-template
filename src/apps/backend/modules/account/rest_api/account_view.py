@@ -52,8 +52,9 @@ class AccountView(MethodView):
 
     @access_auth_middleware
     def get(self, account_id: str) -> ResponseReturnValue:
+        actor = AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
         account_params = AccountSearchByIdParams(id=account_id)
-        account = AccountService.get_account_by_id(params=account_params)
+        account = AccountService.get_account_by_id(params=account_params, actor=actor)
         account_dict = asdict(account)
 
         include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
@@ -61,7 +62,7 @@ class AccountView(MethodView):
         if include_notification_preferences:
             try:
                 notification_preferences = AccountService.get_account_notification_preferences_by_account_id(
-                    account_id=account.id
+                    account_id=account.id, actor=actor
                 )
                 account_dict["notification_preferences"] = asdict(notification_preferences)
             except AccountNotificationPreferencesNotFoundError:

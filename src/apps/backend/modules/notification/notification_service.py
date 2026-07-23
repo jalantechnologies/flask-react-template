@@ -14,15 +14,19 @@ from modules.notification.types import (
 class NotificationService:
 
     @staticmethod
-    def send_email_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendEmailParams) -> None:
+    def send_email_for_account(
+        *, account_id: str, bypass_preferences: bool = False, params: SendEmailParams, actor: AuditActor
+    ) -> None:
         return EmailService.send_email_for_account(
-            account_id=account_id, bypass_preferences=bypass_preferences, params=params
+            account_id=account_id, bypass_preferences=bypass_preferences, params=params, actor=actor
         )
 
     @staticmethod
-    def send_sms_for_account(*, account_id: str, bypass_preferences: bool = False, params: SendSMSParams) -> None:
+    def send_sms_for_account(
+        *, account_id: str, bypass_preferences: bool = False, params: SendSMSParams, actor: AuditActor
+    ) -> None:
         return SMSService.send_sms_for_account(
-            account_id=account_id, bypass_preferences=bypass_preferences, params=params
+            account_id=account_id, bypass_preferences=bypass_preferences, params=params, actor=actor
         )
 
     @staticmethod
@@ -34,5 +38,9 @@ class NotificationService:
         )
 
     @staticmethod
-    def get_account_notification_preferences_by_account_id(*, account_id: str) -> AccountNotificationPreferences:
-        return AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
+    def get_account_notification_preferences_by_account_id(
+        *, account_id: str, actor: AuditActor
+    ) -> AccountNotificationPreferences:
+        return AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(
+            account_id, actor=actor
+        )

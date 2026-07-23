@@ -37,14 +37,14 @@ class AccountService:
         return account
 
     @staticmethod
-    def get_account_by_phone_number(*, phone_number: PhoneNumber) -> Account:
-        return AccountReader.get_account_by_phone_number(phone_number=phone_number)
+    def get_account_by_phone_number(*, phone_number: PhoneNumber, actor: AuditActor) -> Account:
+        return AccountReader.get_account_by_phone_number(phone_number=phone_number, actor=actor)
 
     @staticmethod
     def get_or_create_account_by_phone_number(
         *, params: CreateAccountByPhoneNumberParams, actor: AuditActor
     ) -> Account:
-        account = AccountReader.get_account_by_phone_number_optional(phone_number=params.phone_number)
+        account = AccountReader.get_account_by_phone_number_optional(phone_number=params.phone_number, actor=actor)
 
         if account is None:
             account = AccountWriter.create_account_by_phone_number(params=params, actor=actor)
@@ -63,10 +63,10 @@ class AccountService:
 
     @staticmethod
     def reset_account_password(*, params: ResetPasswordParams, actor: AuditActor) -> Account:
-        account = AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=params.account_id))
+        account = AccountReader.get_account_by_id(params=AccountSearchByIdParams(id=params.account_id), actor=actor)
 
         password_reset_token = AuthenticationService.verify_password_reset_token(
-            account_id=account.id, token=params.token
+            account_id=account.id, token=params.token, actor=actor
         )
 
         updated_account = AccountWriter.update_password_by_account_id(
@@ -80,16 +80,16 @@ class AccountService:
         return updated_account
 
     @staticmethod
-    def get_account_by_id(*, params: AccountSearchByIdParams) -> Account:
-        return AccountReader.get_account_by_id(params=params)
+    def get_account_by_id(*, params: AccountSearchByIdParams, actor: AuditActor) -> Account:
+        return AccountReader.get_account_by_id(params=params, actor=actor)
 
     @staticmethod
-    def get_account_by_username(*, username: str) -> Account:
-        return AccountReader.get_account_by_username(username=username)
+    def get_account_by_username(*, username: str, actor: AuditActor) -> Account:
+        return AccountReader.get_account_by_username(username=username, actor=actor)
 
     @staticmethod
-    def get_account_by_username_and_password(*, params: AccountSearchParams) -> Account:
-        return AccountReader.get_account_by_username_and_password(params=params)
+    def get_account_by_username_and_password(*, params: AccountSearchParams, actor: AuditActor) -> Account:
+        return AccountReader.get_account_by_username_and_password(params=params, actor=actor)
 
     @staticmethod
     def update_account_profile(*, account_id: str, actor: AuditActor, params: UpdateAccountProfileParams) -> Account:
@@ -104,8 +104,12 @@ class AccountService:
         )
 
     @staticmethod
-    def get_account_notification_preferences_by_account_id(*, account_id: str) -> AccountNotificationPreferences:
-        return NotificationService.get_account_notification_preferences_by_account_id(account_id=account_id)
+    def get_account_notification_preferences_by_account_id(
+        *, account_id: str, actor: AuditActor
+    ) -> AccountNotificationPreferences:
+        return NotificationService.get_account_notification_preferences_by_account_id(
+            account_id=account_id, actor=actor
+        )
 
     @staticmethod
     def delete_account(*, account_id: str, actor: AuditActor) -> AccountDeletionResult:

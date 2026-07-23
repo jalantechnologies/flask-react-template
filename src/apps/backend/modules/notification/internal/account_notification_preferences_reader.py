@@ -1,3 +1,4 @@
+from modules.application.common.types import AuditActor
 from modules.notification.errors import AccountNotificationPreferencesNotFoundError
 from modules.notification.internal.store.account_notification_preferences_repository import (
     AccountNotificationPreferencesRepository,
@@ -7,9 +8,11 @@ from modules.notification.types import AccountNotificationPreferences, AccountNo
 
 class AccountNotificationPreferenceReader:
     @staticmethod
-    def get_account_notification_preferences_by_account_id(account_id: str) -> AccountNotificationPreferences:
+    def get_account_notification_preferences_by_account_id(
+        account_id: str, *, actor: AuditActor
+    ) -> AccountNotificationPreferences:
         preferences = AccountNotificationPreferencesRepository.query_one(
-            AccountNotificationPreferencesQuery(account_id=account_id)
+            AccountNotificationPreferencesQuery(account_id=account_id), actor=actor
         )
 
         if preferences is None:

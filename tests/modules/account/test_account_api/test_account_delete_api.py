@@ -77,7 +77,7 @@ class TestAccountDeleteApi(BaseTestAccount):
 
         with self.assertRaises(AccountWithUsernameNotFoundError):
             AccountService.get_account_by_username_and_password(
-                params=AccountSearchParams(password="password", username=self.account.username)
+                params=AccountSearchParams(password="password", username=self.account.username), actor=TEST_ACTOR
             )
 
     def test_given_malformed_account_id_when_deleting_account_then_returns_unauthorized(self) -> None:

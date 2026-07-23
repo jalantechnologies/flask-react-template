@@ -47,9 +47,7 @@ class TestPreviewConfig(BaseTestConfig):
             preview_config = yaml.safe_load(f)
 
         logger_transports = preview_config.get("logger", {}).get("transports", [])
-        assert "datadog" in logger_transports, (
-            "preview.yml should include 'datadog' in logger transports"
-        )
+        assert "datadog" in logger_transports, "preview.yml should include 'datadog' in logger transports"
 
 
 class TestProductionConfig(BaseTestConfig):
@@ -59,6 +57,4 @@ class TestProductionConfig(BaseTestConfig):
             production_config = yaml.safe_load(f)
 
         logger_transports = production_config.get("logger", {}).get("transports", [])
-        assert "datadog" in logger_transports, (
-            "production.yml should include 'datadog' in logger transports"
-        )
+        assert "datadog" in logger_transports, "production.yml should include 'datadog' in logger transports"

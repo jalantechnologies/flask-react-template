@@ -107,7 +107,9 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         )
         token = PasswordResetTokenUtil.generate_password_reset_token()
         PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
-        password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(account_id=account.id)
+        password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(
+            account_id=account.id, actor=TEST_ACTOR
+        )
 
         before = datetime.now(UTC)
         used_password_reset_token = AuthenticationService.set_password_reset_token_as_used_by_id(
@@ -152,7 +154,9 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         token = PasswordResetTokenUtil.generate_password_reset_token()
         PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
-        AuthenticationService.send_password_reset_email(account.id, account.first_name, account.username, token)
+        AuthenticationService.send_password_reset_email(
+            account.id, account.first_name, account.username, token, actor=TEST_ACTOR
+        )
 
         new_password = "new_password"
 
@@ -171,7 +175,9 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertEqual(response.json["username"], account.username)
 
             # Check if password reset token is marked as used.
-            updated_password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(account.id)
+            updated_password_reset_token = AuthenticationService.get_password_reset_token_by_account_id(
+                account.id, actor=TEST_ACTOR
+            )
             self.assertTrue(updated_password_reset_token.is_used)
             self.assertTrue(mock_send_email.called)
 
@@ -335,7 +341,11 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         token = "test_token_123"
         AuthenticationService.send_password_reset_email(
-            account_id=account.id, first_name=account.first_name, username=account.username, password_reset_token=token
+            account_id=account.id,
+            first_name=account.first_name,
+            username=account.username,
+            password_reset_token=token,
+            actor=TEST_ACTOR,
         )
 
         mock_send_email.assert_called_once()

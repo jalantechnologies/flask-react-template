@@ -11,7 +11,7 @@ from modules.authentication.types import OTP, CreateOTPParams, OTPQuery, OTPStat
 class OTPWriter:
     @staticmethod
     def expire_previous_otps(phone_number: PhoneNumber, *, actor: AuditActor) -> None:
-        previous_otps = OTPRepository.query(OTPQuery(phone_number=phone_number, active=True))
+        previous_otps = OTPRepository.query(OTPQuery(phone_number=phone_number, active=True), actor=actor)
         for otp in previous_otps:
             OTPRepository.update_fields(otp.id, {"active": False, "status": str(OTPStatus.EXPIRED)}, actor=actor)
 
@@ -27,7 +27,7 @@ class OTPWriter:
     def verify_otp(*, params: VerifyOTPParams, actor: AuditActor) -> OTP:
         # Newest first, so a stale code resolves to the most recent attempt; matches the previous _id sort.
         otp = OTPRepository.query_one(
-            OTPQuery(otp_code=params.otp_code, phone_number=params.phone_number), sort=[("_id", -1)]
+            OTPQuery(otp_code=params.otp_code, phone_number=params.phone_number), actor=actor, sort=[("_id", -1)]
         )
         if otp is None:
             raise OTPIncorrectError()

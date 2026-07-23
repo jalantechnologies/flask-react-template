@@ -18,12 +18,12 @@ class TaskService:
         return TaskWriter.create_task(params=params, actor=actor)
 
     @staticmethod
-    def get_task(*, params: GetTaskParams) -> Task:
-        return TaskReader.get_task(params=params)
+    def get_task(*, params: GetTaskParams, actor: AuditActor) -> Task:
+        return TaskReader.get_task(params=params, actor=actor)
 
     @staticmethod
-    def get_paginated_tasks(*, params: GetPaginatedTasksParams) -> PaginationResult[Task]:
-        return TaskReader.get_paginated_tasks(params=params)
+    def get_paginated_tasks(*, params: GetPaginatedTasksParams, actor: AuditActor) -> PaginationResult[Task]:
+        return TaskReader.get_paginated_tasks(params=params, actor=actor)
 
     @staticmethod
     def update_task(*, params: UpdateTaskParams, actor: AuditActor) -> Task:

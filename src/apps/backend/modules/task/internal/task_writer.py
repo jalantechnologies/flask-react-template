@@ -22,18 +22,22 @@ class TaskWriter:
     @staticmethod
     def update_task(*, params: UpdateTaskParams, actor: AuditActor) -> Task:
         # Confirm the task exists for this account (raises if not), keeping the update account-scoped.
-        TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
+        TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id), actor=actor)
 
         TaskRepository.update_fields(
             params.task_id, {"description": params.description, "title": params.title}, actor=actor
         )
 
-        return TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
+        return TaskReader.get_task(
+            params=GetTaskParams(account_id=params.account_id, task_id=params.task_id), actor=actor
+        )
 
     @staticmethod
     def delete_task(*, params: DeleteTaskParams, actor: AuditActor) -> TaskDeletionResult:
         # Confirm the task exists for this account (raises if not) before soft-deleting it.
-        task = TaskReader.get_task(params=GetTaskParams(account_id=params.account_id, task_id=params.task_id))
+        task = TaskReader.get_task(
+            params=GetTaskParams(account_id=params.account_id, task_id=params.task_id), actor=actor
+        )
 
         deletion_time = datetime.now(UTC)
         TaskRepository.update_fields(task.id, {"active": False, "updated_at": deletion_time}, actor=actor)

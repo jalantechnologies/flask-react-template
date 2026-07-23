@@ -43,7 +43,9 @@ class TestAccountService(BaseTestAccount):
         mock_verify_access_token.return_value = AccessTokenPayload(account_id=account.id)
 
         with app.test_request_context():
-            get_account_by_id = AccountService.get_account_by_id(params=AccountSearchByIdParams(id=account.id))
+            get_account_by_id = AccountService.get_account_by_id(
+                params=AccountSearchByIdParams(id=account.id), actor=TEST_ACTOR
+            )
 
         assert get_account_by_id.username == account.username
         assert get_account_by_id.first_name == account.first_name
@@ -54,7 +56,9 @@ class TestAccountService(BaseTestAccount):
         try:
             mock_verify_access_token.return_value = AccessTokenPayload(account_id="5f7b1b7b4f3b9b1b3f3b9b1b")
             with app.test_request_context():
-                AccountService.get_account_by_id(params=AccountSearchByIdParams(id="5f7b1b7b4f3b9b1b3f3b9b1b"))
+                AccountService.get_account_by_id(
+                    params=AccountSearchByIdParams(id="5f7b1b7b4f3b9b1b3f3b9b1b"), actor=TEST_ACTOR
+                )
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND
 
@@ -71,7 +75,7 @@ class TestAccountService(BaseTestAccount):
     def test_throw_exception_when_phone_number_not_exist(self) -> None:
         phone_number = PhoneNumber(**{"country_code": "+91", "phone_number": "9999999999"})
         try:
-            AccountService.get_account_by_phone_number(phone_number=phone_number)
+            AccountService.get_account_by_phone_number(phone_number=phone_number, actor=TEST_ACTOR)
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND
             assert (
@@ -304,7 +308,7 @@ class TestAccountService(BaseTestAccount):
         assert deletion_result.success is True
 
         try:
-            AccountService.get_account_by_username(username=account.username)
+            AccountService.get_account_by_username(username=account.username, actor=TEST_ACTOR)
             assert False, "Expected AccountWithUsernameNotFoundError to be raised"
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND
@@ -321,7 +325,7 @@ class TestAccountService(BaseTestAccount):
         assert deletion_result.success is True
 
         try:
-            AccountService.get_account_by_id(params=AccountSearchByIdParams(id=account.id))
+            AccountService.get_account_by_id(params=AccountSearchByIdParams(id=account.id), actor=TEST_ACTOR)
             assert False, "Expected AccountWithIdNotFoundError to be raised"
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND
@@ -336,7 +340,7 @@ class TestAccountService(BaseTestAccount):
         assert deletion_result.success is True
 
         try:
-            AccountService.get_account_by_phone_number(phone_number=phone_number)
+            AccountService.get_account_by_phone_number(phone_number=phone_number, actor=TEST_ACTOR)
             assert False, "Expected AccountWithPhoneNumberNotFoundError to be raised"
         except AccountNotFoundError as exc:
             assert exc.code == AccountErrorCode.NOT_FOUND

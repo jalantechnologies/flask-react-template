@@ -1,4 +1,3 @@
-from tests.conftest import TEST_ACTOR
 from datetime import UTC, datetime, timedelta
 
 from modules.application.common.types import PaginationParams
@@ -12,6 +11,7 @@ from modules.task.types import (
     TaskErrorCode,
     UpdateTaskParams,
 )
+from tests.conftest import TEST_ACTOR
 from tests.modules.task.base_test_task import BaseTestTask
 
 
@@ -35,7 +35,7 @@ class TestTaskService(BaseTestTask):
         created_task = self.create_test_task(account_id=self.account.id)
         get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
 
-        retrieved_task = TaskService.get_task(params=get_params)
+        retrieved_task = TaskService.get_task(params=get_params, actor=TEST_ACTOR)
 
         assert retrieved_task.id == created_task.id
         assert retrieved_task.account_id == self.account.id
@@ -47,7 +47,7 @@ class TestTaskService(BaseTestTask):
         get_params = GetTaskParams(account_id=self.account.id, task_id=non_existent_task_id)
 
         with self.assertRaises(TaskNotFoundError) as context:
-            TaskService.get_task(params=get_params)
+            TaskService.get_task(params=get_params, actor=TEST_ACTOR)
 
         assert context.exception.code == TaskErrorCode.NOT_FOUND
 
@@ -55,7 +55,7 @@ class TestTaskService(BaseTestTask):
         pagination_params = PaginationParams(page=1, size=10, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params, actor=TEST_ACTOR)
 
         assert len(result.items) == 0
         assert result.total_count == 0
@@ -69,7 +69,7 @@ class TestTaskService(BaseTestTask):
         pagination_params = PaginationParams(page=1, size=3, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params, actor=TEST_ACTOR)
 
         assert len(result.items) == 3
         assert result.total_count == 5
@@ -79,7 +79,7 @@ class TestTaskService(BaseTestTask):
 
         pagination_params = PaginationParams(page=2, size=3, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        result = TaskService.get_paginated_tasks(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params, actor=TEST_ACTOR)
         assert len(result.items) == 2
         assert result.total_count == 5
         assert result.total_pages == 2
@@ -89,7 +89,7 @@ class TestTaskService(BaseTestTask):
         pagination_params = PaginationParams(page=1, size=1, offset=0)
         get_params = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
 
-        result = TaskService.get_paginated_tasks(params=get_params)
+        result = TaskService.get_paginated_tasks(params=get_params, actor=TEST_ACTOR)
 
         assert len(result.items) == 1
         assert result.total_count == 1
@@ -174,7 +174,7 @@ class TestTaskService(BaseTestTask):
 
         get_params = GetTaskParams(account_id=self.account.id, task_id=created_task.id)
         with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task(params=get_params)
+            TaskService.get_task(params=get_params, actor=TEST_ACTOR)
 
     def test_given_existing_task_when_deleting_task_then_deleted_at_reflects_deletion_time_in_utc(self) -> None:
         created_task = self.create_test_task(account_id=self.account.id)
@@ -210,10 +210,10 @@ class TestTaskService(BaseTestTask):
 
         pagination_params = PaginationParams(page=1, size=10, offset=0)
         get_params1 = GetPaginatedTasksParams(account_id=self.account.id, pagination_params=pagination_params)
-        account1_result = TaskService.get_paginated_tasks(params=get_params1)
+        account1_result = TaskService.get_paginated_tasks(params=get_params1, actor=TEST_ACTOR)
 
         get_params2 = GetPaginatedTasksParams(account_id=other_account.id, pagination_params=pagination_params)
-        account2_result = TaskService.get_paginated_tasks(params=get_params2)
+        account2_result = TaskService.get_paginated_tasks(params=get_params2, actor=TEST_ACTOR)
 
         assert len(account1_result.items) == 1
         assert account1_result.items[0].id == account1_task.id
@@ -223,4 +223,4 @@ class TestTaskService(BaseTestTask):
 
         get_params = GetTaskParams(account_id=self.account.id, task_id=account2_task.id)
         with self.assertRaises(TaskNotFoundError):
-            TaskService.get_task(params=get_params)
+            TaskService.get_task(params=get_params, actor=TEST_ACTOR)

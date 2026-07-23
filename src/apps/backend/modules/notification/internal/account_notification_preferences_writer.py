@@ -47,7 +47,9 @@ class AccountNotificationPreferenceWriter:
         account_id: str, preferences: CreateOrUpdateAccountNotificationPreferencesParams, actor: AuditActor
     ) -> AccountNotificationPreferences:
         try:
-            AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(account_id)
+            AccountNotificationPreferenceReader.get_account_notification_preferences_by_account_id(
+                account_id, actor=actor
+            )
             return AccountNotificationPreferenceWriter._update_account_notification_preferences(
                 account_id, preferences, actor
             )
