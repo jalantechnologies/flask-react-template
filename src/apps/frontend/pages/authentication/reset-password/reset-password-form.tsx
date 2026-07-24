@@ -2,6 +2,7 @@ import React from 'react';
 
 import {
   Button,
+  PasswordStrengthMeter,
   Spacing,
   Stack,
   TextField,
@@ -10,6 +11,7 @@ import {
 import useResetPasswordForm from 'frontend/pages/authentication/reset-password/reset-password-form.hook';
 import { AsyncError } from 'frontend/types';
 import { ButtonType } from 'frontend/types/button';
+import { getPasswordMinScore } from 'frontend/utils/password-strength';
 
 interface ResetPasswordFormProps {
   onSuccess: () => void;
@@ -28,19 +30,26 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   return (
     <form onSubmit={formik.handleSubmit}>
       <Stack gap={Spacing.Md}>
-        <TextField
-          testId="password"
-          label="Password"
-          type="password"
-          name="password"
-          autoComplete="new-password"
-          disabled={isResetPasswordLoading}
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.password ? formik.errors.password : ''}
-          placeholder="Enter your new password"
-        />
+        <Stack gap={Spacing.Xs}>
+          <TextField
+            testId="password"
+            label="Password"
+            type="password"
+            name="password"
+            autoComplete="new-password"
+            disabled={isResetPasswordLoading}
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.password ? formik.errors.password : ''}
+            placeholder="Enter your new password"
+          />
+          <PasswordStrengthMeter
+            testId="password-strength"
+            password={formik.values.password}
+            minScore={getPasswordMinScore()}
+          />
+        </Stack>
         <TextField
           testId="confirmPassword"
           label="Re-type Password"

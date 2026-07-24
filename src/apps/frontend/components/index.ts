@@ -34,6 +34,7 @@ export { default as Text } from 'frontend/components/typography/text';
 export { default as Button } from 'frontend/components/button';
 export { default as IconButton } from 'frontend/components/icon-button';
 export { default as TextField } from 'frontend/components/text-field';
+export { default as PasswordStrengthMeter } from 'frontend/components/password-strength-meter';
 export { default as Textarea } from 'frontend/components/textarea';
 export { default as Select } from 'frontend/components/select';
 export { default as Field } from 'frontend/components/field';

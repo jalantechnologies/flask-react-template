@@ -49,6 +49,11 @@ class AccountBadRequestError(AppError):
         super().__init__(code=AccountErrorCode.BAD_REQUEST, http_status_code=400, message=message)
 
 
+class AccountPasswordTooWeakError(AppError):
+    def __init__(self, feedback: str) -> None:
+        super().__init__(code=AccountErrorCode.PASSWORD_TOO_WEAK, http_status_code=400, message=feedback)
+
+
 class AccountWithPhoneNumberExistsError(AppError):
     def __init__(self, phone_number: PhoneNumber) -> None:
         super().__init__(
