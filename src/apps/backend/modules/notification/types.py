@@ -1,9 +1,30 @@
+import enum
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from modules.account.types import PhoneNumber
 from modules.core.common.types import QueryParams
+
+
+class NotificationChannel(str, enum.Enum):
+    EMAIL = "email"
+    SMS = "sms"
+    PUSH = "push"
+
+
+class NotificationStatus(str, enum.Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    SENT = "sent"
+    DELIVERED = "delivered"
+    FAILED = "failed"
+    EXPIRED = "expired"
+
+
+class NotificationPriority(str, enum.Enum):
+    IMMEDIATE = "immediate"
+    NORMAL = "normal"
 
 
 @dataclass(frozen=True)
@@ -53,6 +74,60 @@ class SendEmailParams:
 class SendSMSParams:
     message_body: str
     recipient_phone: PhoneNumber
+
+
+@dataclass(frozen=True)
+class EmailNotificationPayload:
+    recipient_email: str
+    sender_email: str
+    sender_name: str
+    template_id: str
+    template_data: Optional[Dict[str, Any]] = None
+
+    @classmethod
+    def from_send_email_params(cls, params: "SendEmailParams") -> "EmailNotificationPayload":
+        return cls(
+            recipient_email=params.recipient.email,
+            sender_email=params.sender.email,
+            sender_name=params.sender.name,
+            template_id=params.template_id,
+            template_data=params.template_data,
+        )
+
+    def to_send_email_params(self) -> "SendEmailParams":
+        return SendEmailParams(
+            recipient=EmailRecipient(email=self.recipient_email),
+            sender=EmailSender(email=self.sender_email, name=self.sender_name),
+            template_id=self.template_id,
+            template_data=self.template_data,
+        )
+
+
+@dataclass(frozen=True)
+class QueuedNotification:
+    account_id: str
+    channel: NotificationChannel
+    payload: EmailNotificationPayload
+    priority: NotificationPriority
+    status: NotificationStatus
+    expires_at: datetime
+    id: Optional[str] = None
+    max_retries: int = 5
+    retry_count: int = 0
+    next_retry_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass(frozen=True)
+class QueuedNotificationQuery(QueryParams):
+    id: Optional[str] = None
+    account_id: Optional[str] = None
+    statuses: Optional[List[NotificationStatus]] = None
+    due_before: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

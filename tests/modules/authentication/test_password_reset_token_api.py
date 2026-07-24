@@ -12,7 +12,6 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
-from modules.notification.email_service import EmailService
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.conftest import TEST_ACTOR
@@ -26,7 +25,7 @@ HEADERS = {"Content-Type": "application/json"}
 class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
     # POST /password-reset-tokens tests
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_create_password_reset_token(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -51,7 +50,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertIn("password_reset_link", mock_send_email.call_args.kwargs["params"].template_data)
             self.assertEqual(response.json["account"], account.id)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_given_account_when_creating_password_reset_token_then_created_at_and_updated_at_reflect_creation_time(
         self, mock_send_email: MagicMock
     ) -> None:
@@ -123,7 +122,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         assert before - timedelta(milliseconds=1) <= used_password_reset_token.updated_at <= after
         assert used_password_reset_token.updated_at > used_password_reset_token.created_at
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_create_password_reset_token_account_not_found(self, mock_send_email: MagicMock) -> None:
         username = "nonexistent_username@example.com"
         reset_password_params = {"username": username}
@@ -143,7 +142,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertFalse(mock_send_email.called)
 
     # PATCH /account/:account_id tests
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_reset_account_password(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -181,7 +180,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertTrue(updated_password_reset_token.is_used)
             self.assertTrue(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_reset_account_password_account_not_found(self, mock_send_email: MagicMock) -> None:
         account_id = "661e42ec98423703a299a899"
         new_password = "new_password"
@@ -205,7 +204,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
             self.assertFalse(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_reset_account_password_token_not_found(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -230,7 +229,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertEqual(response.json["message"], PasswordResetTokenNotFoundError().message)
             self.assertFalse(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_reset_account_password_token_already_used(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -263,7 +262,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
             self.assertTrue(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_reset_account_password_invalid_token(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -294,7 +293,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
             self.assertTrue(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     @mock.patch.object(PasswordResetTokenUtil, "is_token_expired")
     def test_reset_account_password_expired_token(
         self, mock_is_token_expired: MagicMock, mock_send_email: MagicMock
@@ -330,7 +329,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             )
             self.assertTrue(mock_send_email.called)
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_password_reset_email_uses_bypass_preferences(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
@@ -353,7 +352,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         assert call_kwargs["bypass_preferences"] is True
         assert call_kwargs["account_id"] == account.id
 
-    @mock.patch.object(EmailService, "send_email_for_account")
+    @mock.patch.object(NotificationService, "send_email_for_account")
     def test_password_reset_flow_with_disabled_email_preferences(self, mock_send_email: MagicMock) -> None:
         account = AccountService.create_account_by_username_and_password(
             params=CreateAccountByUsernameAndPasswordParams(
