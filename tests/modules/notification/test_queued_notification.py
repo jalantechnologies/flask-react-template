@@ -243,6 +243,21 @@ class TestGivenEmailPreferenceDisabled(BaseTestQueuedNotification):
         mock_send.assert_called_once()
 
 
+class TestGivenARecordStuckInProcessing(BaseTestQueuedNotification):
+    @mock.patch(SENDGRID_SEND)
+    def test_then_the_drain_reclaims_and_sends_it(self, mock_send: MagicMock) -> None:
+        seeded = self._seed(
+            status=NotificationStatus.PROCESSING, next_retry_at=datetime.now(UTC) - timedelta(minutes=10)
+        )
+
+        QueuedNotificationService.drain_pending_notifications(actor=TEST_ACTOR)
+
+        mock_send.assert_called_once()
+        stored = self._stored(seeded.id or "")
+        assert stored is not None
+        assert stored.status == NotificationStatus.SENT
+
+
 class TestGivenTheDrainJobSendsAnEmail(BaseTestQueuedNotification):
     @mock.patch(SENDGRID_SEND)
     def test_then_the_send_is_attributed_to_the_job_run_actor(self, mock_send: MagicMock) -> None:

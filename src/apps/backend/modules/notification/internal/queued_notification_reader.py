@@ -7,8 +7,11 @@ from modules.notification.types import NotificationStatus, QueuedNotification, Q
 
 
 class QueuedNotificationReader:
+    DRAINABLE_STATUSES = [NotificationStatus.PENDING, NotificationStatus.PROCESSING]
+
     @staticmethod
     def get_drainable_notifications(*, actor: AuditActor) -> List[QueuedNotification]:
         return QueuedNotificationRepository.query(
-            QueuedNotificationQuery(statuses=[NotificationStatus.PENDING], due_before=datetime.now(UTC)), actor=actor
+            QueuedNotificationQuery(statuses=QueuedNotificationReader.DRAINABLE_STATUSES, due_before=datetime.now(UTC)),
+            actor=actor,
         )
