@@ -158,6 +158,82 @@ class TestGivenAnImmediateEmail(BaseTestQueuedNotification):
         assert stored.status == NotificationStatus.SENT
 
 
+class TestGivenAnEmailPayloadCarriesASecret(BaseTestQueuedNotification):
+    def _email_params_with_secret(self) -> SendEmailParams:
+        return SendEmailParams(
+            recipient=EmailRecipient(email="queued@example.com"),
+            sender=EmailSender(email="sender@example.com", name="Sender"),
+            template_id="template-123",
+            template_data={
+                "first_name": "first_name",
+                "password_reset_link": "https://app.example.com/reset?token=live-secret-token",
+            },
+        )
+
+    @mock.patch(SENDGRID_SEND)
+    def test_then_the_secret_is_not_persisted_but_the_email_is_sent_with_it(self, mock_send: MagicMock) -> None:
+        notification = NotificationService.send_email_for_account(
+            account_id=self.account.id,
+            bypass_preferences=True,
+            params=self._email_params_with_secret(),
+            priority=NotificationPriority.IMMEDIATE,
+            actor=TEST_ACTOR,
+        )
+
+        assert notification is not None
+        stored = self._stored(notification.id or "")
+        assert stored is not None
+        assert stored.status == NotificationStatus.SENT
+        assert stored.payload.template_data is not None
+        assert stored.payload.template_data["password_reset_link"] == "[REDACTED]"
+        assert stored.payload.template_data["first_name"] == "first_name"
+
+        raw_doc = QueuedNotificationRepository.collection().find_one({})
+        assert raw_doc is not None
+        assert "live-secret-token" not in str(raw_doc)
+
+        mock_send.assert_called_once()
+        sent_params = mock_send.call_args.args[0]
+        assert sent_params.template_data["password_reset_link"] == "https://app.example.com/reset?token=live-secret-token"
+
+    @mock.patch(SENDGRID_SEND)
+    def test_then_the_audit_trail_does_not_store_the_secret(self, mock_send: MagicMock) -> None:
+        NotificationService.send_email_for_account(
+            account_id=self.account.id,
+            bypass_preferences=True,
+            params=self._email_params_with_secret(),
+            priority=NotificationPriority.IMMEDIATE,
+            actor=TEST_ACTOR,
+        )
+
+        audit_docs = list(AuditLogRepository.collection().find({}))
+        assert audit_docs
+        assert all("live-secret-token" not in str(doc) for doc in audit_docs)
+
+
+class TestGivenTwoDrainRunsOverlap(BaseTestQueuedNotification):
+    @mock.patch(SENDGRID_SEND)
+    def test_then_a_claimed_record_is_not_processed_again(self, mock_send: MagicMock) -> None:
+        seeded = self._seed(status=NotificationStatus.PENDING)
+
+        from modules.notification.internal.queued_notification_delivery_service import (
+            QueuedNotificationDeliveryService,
+        )
+        from modules.notification.internal.queued_notification_reader import QueuedNotificationReader
+
+        first_view = QueuedNotificationReader.get_drainable_notifications(actor=TEST_ACTOR)
+        second_view = QueuedNotificationReader.get_drainable_notifications(actor=TEST_ACTOR)
+        assert len(first_view) == 1 and len(second_view) == 1
+
+        QueuedNotificationDeliveryService.deliver(notification=first_view[0], actor=TEST_ACTOR)
+        QueuedNotificationDeliveryService.deliver(notification=second_view[0], actor=TEST_ACTOR)
+
+        mock_send.assert_called_once()
+        stored = self._stored(seeded.id or "")
+        assert stored is not None
+        assert stored.status == NotificationStatus.SENT
+
+
 class TestGivenSendGridFails(BaseTestQueuedNotification):
     @mock.patch(SENDGRID_SEND, side_effect=RuntimeError("transient sendgrid error"))
     def test_then_a_transient_failure_increments_retry_and_stays_retryable(self, mock_send: MagicMock) -> None:

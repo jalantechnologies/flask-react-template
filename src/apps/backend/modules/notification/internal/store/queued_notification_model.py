@@ -53,12 +53,13 @@ class QueuedNotificationModel(BaseModel):
     error_message: Optional[str] = None
 
     def to_bson(self) -> QueuedNotificationDocument:
+        stored_payload = self.payload.redacted_for_storage()
         payload: EmailNotificationPayloadDocument = {
-            "recipient_email": self.payload.recipient_email,
-            "sender_email": self.payload.sender_email,
-            "sender_name": self.payload.sender_name,
-            "template_id": self.payload.template_id,
-            "template_data": self.payload.template_data,
+            "recipient_email": stored_payload.recipient_email,
+            "sender_email": stored_payload.sender_email,
+            "sender_name": stored_payload.sender_name,
+            "template_id": stored_payload.template_id,
+            "template_data": stored_payload.template_data,
         }
         doc: QueuedNotificationDocument = {
             "account_id": self.account_id,

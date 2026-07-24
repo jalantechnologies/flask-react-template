@@ -8,11 +8,13 @@ from modules.notification.types import (
     NotificationPriority,
     NotificationStatus,
     QueuedNotification,
+    QueuedNotificationQuery,
 )
 
 DEFAULT_MAX_RETRIES = 5
 RETRY_BACKOFF_BASE_SECONDS = 30
 DEFAULT_EXPIRY = timedelta(hours=24)
+PROCESSING_LEASE = timedelta(minutes=10)
 
 
 class QueuedNotificationWriter:
@@ -35,10 +37,17 @@ class QueuedNotificationWriter:
         return QueuedNotificationRepository.create(notification, actor=actor)
 
     @staticmethod
-    def mark_processing(*, notification_id: str, actor: AuditActor) -> None:
-        QueuedNotificationRepository.update_fields(
-            notification_id, {"status": NotificationStatus.PROCESSING.value}, actor=actor
+    def claim_for_processing(*, notification: QueuedNotification, actor: AuditActor) -> bool:
+        claimed = QueuedNotificationRepository.update_by_query(
+            QueuedNotificationQuery(
+                id=str(notification.id),
+                statuses=[NotificationStatus.PENDING, NotificationStatus.PROCESSING],
+                due_before=datetime.now(UTC),
+            ),
+            {"status": NotificationStatus.PROCESSING.value, "next_retry_at": datetime.now(UTC) + PROCESSING_LEASE},
+            actor=actor,
         )
+        return claimed is not None
 
     @staticmethod
     def mark_sent(*, notification_id: str, actor: AuditActor) -> None:

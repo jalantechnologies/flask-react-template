@@ -1,10 +1,13 @@
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from modules.account.types import PhoneNumber
 from modules.core.common.types import QueryParams
+
+SENSITIVE_TEMPLATE_DATA_KEYWORDS = ("password", "token", "secret", "otp", "mfa", "hashed")
+REDACTED_TEMPLATE_VALUE = "[REDACTED]"
 
 
 class NotificationChannel(str, enum.Enum):
@@ -101,6 +104,20 @@ class EmailNotificationPayload:
             template_id=self.template_id,
             template_data=self.template_data,
         )
+
+    def redacted_for_storage(self) -> "EmailNotificationPayload":
+        if not self.template_data:
+            return self
+        redacted = {
+            key: (REDACTED_TEMPLATE_VALUE if self._is_sensitive_key(key) else value)
+            for key, value in self.template_data.items()
+        }
+        return replace(self, template_data=redacted)
+
+    @staticmethod
+    def _is_sensitive_key(key: str) -> bool:
+        lowered = key.lower()
+        return any(keyword in lowered for keyword in SENSITIVE_TEMPLATE_DATA_KEYWORDS)
 
 
 @dataclass(frozen=True)

@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from modules.core.common.types import AuditActor
 from modules.notification.internal.queued_notification_delivery_service import QueuedNotificationDeliveryService
 from modules.notification.internal.queued_notification_reader import QueuedNotificationReader
@@ -15,14 +17,12 @@ class QueuedNotificationService:
     def queue_email(
         *, account_id: str, params: SendEmailParams, priority: NotificationPriority, actor: AuditActor
     ) -> QueuedNotification:
+        payload = EmailNotificationPayload.from_send_email_params(params)
         notification = QueuedNotificationWriter.enqueue_email(
-            account_id=account_id,
-            payload=EmailNotificationPayload.from_send_email_params(params),
-            priority=priority,
-            actor=actor,
+            account_id=account_id, payload=payload, priority=priority, actor=actor
         )
         if priority is NotificationPriority.IMMEDIATE:
-            QueuedNotificationDeliveryService.deliver(notification=notification, actor=actor)
+            QueuedNotificationDeliveryService.deliver(notification=replace(notification, payload=payload), actor=actor)
         return notification
 
     @staticmethod

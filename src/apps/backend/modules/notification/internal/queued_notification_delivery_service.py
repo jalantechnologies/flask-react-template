@@ -14,7 +14,8 @@ class QueuedNotificationDeliveryService:
             QueuedNotificationWriter.mark_expired(notification_id=str(notification.id), actor=actor)
             return
 
-        QueuedNotificationWriter.mark_processing(notification_id=str(notification.id), actor=actor)
+        if not QueuedNotificationWriter.claim_for_processing(notification=notification, actor=actor):
+            return
 
         try:
             QueuedNotificationDeliveryService._send(notification)
