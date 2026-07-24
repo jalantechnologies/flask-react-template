@@ -1,5 +1,3 @@
-from dataclasses import replace
-
 from modules.core.common.types import AuditActor
 from modules.notification.internal.queued_notification_delivery_service import QueuedNotificationDeliveryService
 from modules.notification.internal.queued_notification_reader import QueuedNotificationReader
@@ -22,7 +20,7 @@ class QueuedNotificationService:
             account_id=account_id, payload=payload, priority=priority, actor=actor
         )
         if priority is NotificationPriority.IMMEDIATE:
-            QueuedNotificationDeliveryService.deliver(notification=replace(notification, payload=payload), actor=actor)
+            QueuedNotificationDeliveryService.deliver(notification=notification, actor=actor, payload=payload)
         return notification
 
     @staticmethod
