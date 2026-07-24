@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from unittest import mock
 from unittest.mock import MagicMock
 
-from server import app
+from web_app import app
 
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountBadRequestError, AccountNotFoundError

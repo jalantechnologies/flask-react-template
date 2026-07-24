@@ -2,8 +2,8 @@ import os
 from typing import Iterator, cast
 
 import pytest
-from celery_app import app as celery_app
 
+from modules.core.celery_app import app as celery_app
 from modules.core.common.types import ActorType, AuditActor
 from modules.logger.logger_manager import LoggerManager
 

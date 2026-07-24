@@ -3,25 +3,18 @@ from typing import Any
 import requests
 
 from modules.config.config_service import ConfigService
-from modules.core.worker import Worker
+from modules.core.common.types import AuditActor
+from modules.core.job import Job
 from modules.logger.logger import Logger
 
 
-class HealthCheckWorker(Worker):
-    """
-    Periodic health check worker that monitors the backend API availability.
-
-    This worker is designed for monitoring/alerting purposes. It catches all exceptions
-    and logs them rather than re-raising, because health checks should not fail or retry -
-    they are diagnostic and should always complete, reporting the health status observed.
-    """
-
+class HealthCheckJob(Job):
     queue = "default"
     max_retries = 1
-    cron_schedule = "*/10 * * * *"  # Every 10 minutes
+    cron_schedule = "*/10 * * * *"
 
     @classmethod
-    def perform(cls, *args: Any, **kwargs: Any) -> None:
+    def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> None:
         health_check_url = ConfigService[str].get_value("worker.health_check_url", default="http://localhost:8080/api/")
 
         try:

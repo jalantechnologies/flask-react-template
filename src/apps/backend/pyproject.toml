@@ -24,7 +24,8 @@ min_confidence = 90
 paths = [
   "modules",
   "bin",
-  "./server.py",
+  "./web_app.py",
+  "./worker_app.py",
 ]
 sort_by_size = true
 

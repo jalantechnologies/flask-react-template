@@ -39,42 +39,35 @@ Jobs are processed in priority order across three queues:
 
 Workers consume from all queues but prioritize higher priority queues first.
 
-## Creating Workers
+## Creating Jobs
 
-All workers inherit from the base `Worker` class which provides a Sidekiq-style API:
+A **job** is the unit of async work; a **worker** is the Celery process that runs it. All jobs inherit from the base `Job` class, which provides a Sidekiq-style API. A job lives in the public `jobs/` package of the domain that owns it (`modules/<module>/jobs/`):
 
 ```python
-from modules.core.worker import Worker
+from typing import Any
+
+from modules.core.common.types import AuditActor
+from modules.core.job import Job
 from modules.logger.logger import Logger
 
-class MyBackgroundWorker(Worker):
-    # Worker configuration
-    queue = "default"                    # Queue assignment
-    max_retries = 3                     # Retry failed jobs up to 3 times
-    retry_backoff = True                # Use exponential backoff
-    retry_backoff_max = 600             # Max 10 minutes between retries
-    cron_schedule = "0 2 * * *"         # Optional: run daily at 2 AM
+
+class MyBackgroundJob(Job):
+    queue = "default"
+    max_retries = 3
+    retry_backoff = True
+    retry_backoff_max = 600
+    cron_schedule = "0 2 * * *"
 
     @classmethod
-    def perform(cls, user_id: int, data: dict) -> None:
-        """
-        Main job logic. This method is called when the job executes.
-
-        Args:
-            user_id: ID of the user to process
-            data: Additional data for processing
-        """
-        try:
-            # Your job logic here
-            Logger.info(message=f"Processing user {user_id}")
-            # ... processing logic ...
-            Logger.info(message=f"Completed processing user {user_id}")
-        except Exception as e:
-            Logger.error(message=f"Failed to process user {user_id}: {e}")
-            raise  # Re-raise to trigger retry mechanism
+    def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> None:
+        user_id = kwargs["user_id"]
+        Logger.info(message=f"Processing user {user_id}")
+        # Thread `actor` into every repository call so each write attributes to this run.
 ```
 
-### Worker Configuration Options
+`perform` receives an `actor: AuditActor` keyword identifying the specific run. Thread it into every repository call the job makes, so those writes attribute to the job's `job_run` record.
+
+### Job Configuration Options
 
 | Option              | Type   | Default     | Description                             |
 | ------------------- | ------ | ----------- | --------------------------------------- |
@@ -98,13 +91,13 @@ cron_schedule = "0 0 1 * *"      # First day of every month at midnight
 
 ## Running Jobs
 
-The Worker base class provides several methods for job execution:
+The Job base class provides several methods for job execution:
 
 ### Immediate Execution
 
 ```python
 # Queue job for immediate processing
-result = MyBackgroundWorker.perform_async(user_id=123, data={"key": "value"})
+result = MyBackgroundJob.perform_async(user_id=123, data={"key": "value"})
 
 # Get job ID for tracking
 job_id = result.id
@@ -118,10 +111,10 @@ from datetime import datetime, timedelta
 
 # Schedule job for specific time
 run_time = datetime.now() + timedelta(hours=2)
-result = MyBackgroundWorker.perform_at(run_time, user_id=123, data={"key": "value"})
+result = MyBackgroundJob.perform_at(run_time, user_id=123, data={"key": "value"})
 
 # Schedule job with delay
-result = MyBackgroundWorker.perform_in(
+result = MyBackgroundJob.perform_in(
     delay_seconds=300,  # 5 minutes
     user_id=123,
     data={"key": "value"}
@@ -146,24 +139,28 @@ except Exception as e:
     print(f"Job failed: {e}")
 ```
 
-## Worker Registry
+## Job Registry
 
-Workers are automatically discovered and registered on application startup via the `WorkerRegistry`:
+Jobs are automatically discovered and registered at entrypoint import via the `JobRegistry`:
 
 ```python
-# In server.py
-from modules.core.worker_registry import WorkerRegistry
+# In web_app.py and worker_app.py
+from modules.core.job_registry import JobRegistry
 
-# Initialize worker registry (discovers all workers)
-WorkerRegistry.initialize()
+# Discover jobs and register their Celery tasks
+JobRegistry.initialize()
 ```
 
 The registry:
 
-- Scans `modules.core.workers/` for Worker subclasses
-- Registers Celery tasks for each worker
-- Sets up cron schedules for workers with `cron_schedule` defined
-- Logs registration details for debugging
+- Imports every `modules/*/jobs/` package (public surface, never `internal/`)
+- Registers a Celery task for each immediate `Job` subclass
+- Persists cron schedules to the RedBeat Redis store for jobs with `cron_schedule` defined
+- Runs at entrypoint import, before the worker snapshots its task table, so a queued message is never rejected as an unregistered task
+
+## Job Run Records
+
+Every execution writes a `job_run` row (job name, redacted arguments, start/end time, status `running` → `succeeded` | `failed`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure. The run's id becomes the job's audit actor (`AuditActor(ActorType.JOB, job_run_id)`), so every write the job makes joins back to a concrete run. This gives both a trustworthy audit actor and job observability (history, status, retries) for free.
 
 ## Development
 
@@ -191,8 +188,8 @@ The registry:
 
 ### Development Workflow
 
-1. Create worker in `src/apps/backend/modules/core/workers/`
-2. Worker is automatically discovered on next server restart
+1. Create a job in `src/apps/backend/modules/<module>/jobs/`
+2. The job is automatically discovered at the next entrypoint restart
 3. Test via Flower dashboard or direct API calls
 4. Monitor execution in Flower at http://localhost:5555
 
@@ -201,7 +198,7 @@ The registry:
 The backend application runs bootstrap tasks once at startup:
 
 - Database seeding (test users, initial data)
-- Worker registry initialization (discovers and registers all worker classes)
+- Job registry initialization (discovers and registers all job classes)
 
 **Gunicorn Configuration:**
 
@@ -245,12 +242,12 @@ LRANGE default 0 -1  # View all jobs in default queue
 
 #### Logging
 
-Workers use the application's logging system:
+Jobs use the application's logging system:
 
 ```python
 from modules.logger.logger import Logger
 
-class MyWorker(Worker):
+class MyJob(Job):
     @classmethod
     def perform(cls, data):
         Logger.info(message="Starting job processing")
@@ -419,7 +416,7 @@ kubectl exec -it deployment/flask-react-template-production-redis-deployment \
 
 ### Queue Configuration
 
-Queues are automatically configured in `celery_app.py`:
+Queues are automatically configured in `modules/core/celery_app.py`:
 
 ```python
 task_queues = {
@@ -429,28 +426,28 @@ task_queues = {
 }
 ```
 
-## Example Workers
+## Example Jobs
 
-### Health Check Worker
+### Health Check Job
 
 Monitors application health every 10 minutes:
 
 ```python
-# File: modules/core/workers/health_check_worker.py
+# File: modules/core/jobs/health_check_job.py
 from typing import Any
 import requests
-from modules.core.worker import Worker
+from modules.core.common.types import AuditActor
+from modules.core.job import Job
 from modules.config.config_service import ConfigService
 from modules.logger.logger import Logger
 
-class HealthCheckWorker(Worker):
+class HealthCheckJob(Job):
     queue = "default"
     max_retries = 1
-    cron_schedule = "*/10 * * * *"  # Every 10 minutes
+    cron_schedule = "*/10 * * * *"
 
     @classmethod
-    def perform(cls, *args: Any, **kwargs: Any) -> None:
-        # URL is configurable via HEALTH_CHECK_URL env var or config
+    def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> None:
         health_check_url = ConfigService[str].get_value(
             "worker.health_check_url",
             default="http://localhost:8080/api/",
@@ -470,42 +467,39 @@ Usage:
 
 ```python
 # Manual execution
-HealthCheckWorker.perform_async()
+HealthCheckJob.perform_async()
 
-# Automatic execution via cron (every 10 minutes)
-# No code needed - runs automatically when beat scheduler is active
+# Automatic execution via cron (every 10 minutes) once the beat scheduler is active
 ```
 
-### Data Processing Worker
+### Data Processing Job
 
-Example worker for processing user data:
+Example job for processing user data:
 
 ```python
-# File: modules/core/workers/data_processing_worker.py
+# File: modules/<module>/jobs/data_processing_job.py
 from typing import Any, Dict
-from modules.core.worker import Worker
+from modules.core.common.types import AuditActor
+from modules.core.job import Job
 from modules.logger.logger import Logger
 
-class DataProcessingWorker(Worker):
+class DataProcessingJob(Job):
     queue = "default"
     max_retries = 3
 
     @classmethod
-    def perform(cls, user_id: int, processing_options: Dict[str, Any]) -> Dict[str, Any]:
+    def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> Dict[str, Any]:
+        user_id = kwargs["user_id"]
         Logger.info(message=f"Starting data processing for user {user_id}")
 
         try:
-            # Simulate data processing
             processed_data = {
                 "user_id": user_id,
                 "status": "completed",
-                "processed_at": "2024-01-01T00:00:00Z",
-                "options": processing_options
+                "options": kwargs.get("processing_options", {}),
             }
-
             Logger.info(message=f"Data processing completed for user {user_id}")
             return processed_data
-
         except Exception as e:
             Logger.error(message=f"Data processing failed for user {user_id}: {e}")
             raise
@@ -515,14 +509,14 @@ Usage:
 
 ```python
 # Queue processing job
-result = DataProcessingWorker.perform_async(
+result = DataProcessingJob.perform_async(
     user_id=123,
     processing_options={"format": "json", "include_metadata": True}
 )
 
 # Schedule for later
 from datetime import datetime, timedelta
-DataProcessingWorker.perform_at(
+DataProcessingJob.perform_at(
     datetime.now() + timedelta(hours=1),
     user_id=123,
     processing_options={"format": "csv"}
@@ -533,31 +527,30 @@ DataProcessingWorker.perform_at(
 
 ### Error Handling
 
-Always handle exceptions properly in workers:
+Always handle exceptions properly in jobs. Re-raise to trigger the retry mechanism; swallow only for a diagnostic job that should always complete:
 
 ```python
-class MyWorker(Worker):
+class MyJob(Job):
     @classmethod
-    def perform(cls, data):
+    def perform(cls, *args, actor, **kwargs):
         try:
-            # Job logic here
             pass
         except SpecificException as e:
             Logger.error(message=f"Specific error: {e}")
-            # Don't re-raise if you want to mark job as completed
         except Exception as e:
             Logger.error(message=f"Unexpected error: {e}")
-            raise  # Re-raise to trigger retry mechanism
+            raise
 ```
 
 ### Idempotency
 
-Make workers idempotent (safe to run multiple times):
+Make jobs idempotent (safe to run multiple times):
 
 ```python
-class IdempotentWorker(Worker):
+class IdempotentJob(Job):
     @classmethod
-    def perform(cls, record_id: int):
+    def perform(cls, *args, actor, **kwargs):
+        record_id = kwargs["record_id"]
         # Check if already processed
         if is_already_processed(record_id):
             Logger.info(message=f"Record {record_id} already processed, skipping")
@@ -575,7 +568,7 @@ class IdempotentWorker(Worker):
 Be mindful of resource usage in workers:
 
 ```python
-class ResourceAwareWorker(Worker):
+class ResourceAwareJob(Job):
     @classmethod
     def perform(cls, large_dataset):
         # Process in chunks to avoid memory issues
@@ -589,38 +582,43 @@ class ResourceAwareWorker(Worker):
             time.sleep(0.1)
 ```
 
-### Testing Workers
+### Testing Jobs
 
-Test workers in isolation:
+Test jobs in isolation:
+
+Call `perform` directly with a `JOB` actor (in tests a fixed id stands in for the job_run id):
 
 ```python
-# In tests/modules/core/test_my_worker.py
-from modules.core.workers.my_worker import MyWorker
+# In tests/modules/<module>/test_my_job.py
+from modules.core.common.types import ActorType, AuditActor
+from modules.<module>.jobs.my_job import MyJob
 
-class TestMyWorker:
+job_actor = AuditActor(actor_type=ActorType.JOB, actor_id="test-run")
+
+class TestMyJob:
     def test_perform_success(self):
         # Test successful execution
-        result = MyWorker.perform(test_data="valid")
+        result = MyJob.perform(test_data="valid", actor=job_actor)
         assert result["status"] == "success"
 
     def test_perform_failure(self):
         # Test error handling
         with pytest.raises(ValueError):
-            MyWorker.perform(test_data="invalid")
+            MyJob.perform(test_data="invalid", actor=job_actor)
 ```
 
-## Testing Workers
+## Testing Jobs
 
 ### In Tests
 
-Workers execute synchronously in tests (no Redis needed):
+Jobs execute synchronously in tests (no Redis needed):
 
 ```python
-from modules.core.workers.my_worker import MyWorker
+from modules.<module>.jobs.my_job import MyJob
 
-def test_worker_execution():
+def test_job_execution():
     # Execute immediately in tests
-    MyWorker.perform(data="test_data")
+    MyJob.perform(data="test_data", actor=job_actor)
 
     # Verify results
     assert expected_result
@@ -630,13 +628,13 @@ def test_worker_execution():
 
 ```python
 # In a Python shell
-from modules.core.workers.health_check_worker import HealthCheckWorker
+from modules.core.jobs.health_check_job import HealthCheckJob
 
 # Run immediately
-HealthCheckWorker.perform()
+HealthCheckJob.perform(actor=job_actor)
 
 # Queue for async execution
-result = HealthCheckWorker.perform_async()
+result = HealthCheckJob.perform_async()
 
 # Check result
 print(result.id)           # Task ID
@@ -684,7 +682,7 @@ Already configured in `lib/kube/production/worker-deployment.yaml`.
 ```python
 from celery import Task
 
-class CustomWorker(Worker):
+class CustomJob(Job):
     @classmethod
     def perform(cls):
         task = cls._get_celery_task()
@@ -701,9 +699,9 @@ from celery import chain
 
 # Execute tasks in sequence
 workflow = chain(
-    FirstWorker._get_celery_task().s(data="123"),
-    SecondWorker._get_celery_task().s(),
-    ThirdWorker._get_celery_task().s(),
+    FirstJob._get_celery_task().s(data="123"),
+    SecondJob._get_celery_task().s(),
+    ThirdJob._get_celery_task().s(),
 )
 workflow.apply_async()
 ```
@@ -715,9 +713,9 @@ from celery import group
 
 # Execute tasks in parallel
 job = group(
-    ProcessWorker._get_celery_task().s(item_id="1"),
-    ProcessWorker._get_celery_task().s(item_id="2"),
-    ProcessWorker._get_celery_task().s(item_id="3"),
+    ProcessJob._get_celery_task().s(item_id="1"),
+    ProcessJob._get_celery_task().s(item_id="2"),
+    ProcessJob._get_celery_task().s(item_id="3"),
 )
 result = job.apply_async()
 ```
@@ -748,7 +746,7 @@ result = job.apply_async()
 
 **Jobs timing out:**
 
-- Increase `task_time_limit` in celery_app.py
+- Increase `task_time_limit` in `modules/core/celery_app.py`
 - Break large jobs into smaller tasks
 - Use `perform_in()` for delayed processing
 
@@ -756,11 +754,11 @@ result = job.apply_async()
 
 1. Verify beat scheduler is running:
    ```bash
-   celery -A celery_app inspect scheduled
+   celery -A worker_app inspect scheduled
    ```
 2. Check worker logs for cron registration:
    ```
-   Registered worker HealthCheckWorker with cron schedule: */10 * * * *
+   Registered job HealthCheckJob with cron schedule: */10 * * * *
    ```
 3. Ensure beat is running alongside worker:
    ```bash
@@ -786,8 +784,8 @@ kubectl exec -it deployment/flask-react-template-redis-deployment -- redis-cli
 kubectl scale deployment flask-react-template-worker-deployment --replicas=5
 
 # View active workers (CLI)
-celery -A celery_app inspect active
+celery -A worker_app inspect active
 
 # View registered tasks
-celery -A celery_app inspect registered
+celery -A worker_app inspect registered
 ```

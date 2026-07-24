@@ -1,4 +1,4 @@
-from server import app
+from web_app import app
 
 from modules.authentication.types import AccessTokenErrorCode
 from modules.core.common.types import ActorType, AuditOutcome, ResourceAction

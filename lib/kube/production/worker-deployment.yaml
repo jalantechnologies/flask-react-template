@@ -51,7 +51,7 @@ spec:
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
-              pipenv run celery -A celery_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
+              pipenv run celery -A worker_app worker --loglevel=info --concurrency=8 --queues=critical,default,low -E
           env:
             - name: APP_ENV
               value: 'production'
@@ -87,7 +87,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+                - cd /app/src/apps/backend && pipenv run celery -A worker_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 10
@@ -96,7 +96,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - cd /app/src/apps/backend && pipenv run celery -A celery_app inspect ping -d "celery@$(hostname)"
+                - cd /app/src/apps/backend && pipenv run celery -A worker_app inspect ping -d "celery@$(hostname)"
             initialDelaySeconds: 15
             periodSeconds: 15
             timeoutSeconds: 10
@@ -113,7 +113,7 @@ spec:
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
-              pipenv run celery -A celery_app beat --loglevel=info
+              pipenv run celery -A worker_app beat --loglevel=info
           env:
             - name: APP_ENV
               value: 'production'
@@ -173,7 +173,7 @@ spec:
                 [ -f "$file" ] && export "$(basename "$file")=$(cat "$file")"
               done
               cd /app/src/apps/backend
-              pipenv run celery -A celery_app flower --port=5555
+              pipenv run celery -A worker_app flower --port=5555
           env:
             - name: APP_ENV
               value: 'production'

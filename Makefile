@@ -32,19 +32,19 @@ run-vulture:
 run-engine:
 	cd src/apps/backend \
 		&& pipenv run python --version \
-		&& pipenv run gunicorn -c gunicorn_config.py --reload server:app
+		&& pipenv run gunicorn -c gunicorn_config.py --reload web_app:app
 
 run-worker:
 	cd src/apps/backend \
-		&& pipenv run celery -A celery_app worker --loglevel=info --concurrency=4 --queues=critical,default,low -E
+		&& pipenv run celery -A worker_app worker --loglevel=info --concurrency=4 --queues=critical,default,low -E
 
 run-beat:
 	cd src/apps/backend \
-		&& pipenv run celery -A celery_app beat --loglevel=info
+		&& pipenv run celery -A worker_app beat --loglevel=info
 
 run-flower:
 	cd src/apps/backend \
-		&& pipenv run celery -A celery_app flower --port=5555
+		&& pipenv run celery -A worker_app flower --port=5555
 
 
 run-test:
@@ -54,7 +54,7 @@ run-engine-winx86:
 	echo "This command is specifically for Windows platform \
 	since gunicorn is not well supported by Windows OS"
 	cd src/apps/backend \
-		&& pipenv run waitress-serve --listen 127.0.0.1:8080 server:app
+		&& pipenv run waitress-serve --listen 127.0.0.1:8080 web_app:app
 
 run-script:
 	cd src/apps/backend && \

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import jwt
-from server import app
+from web_app import app
 
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
