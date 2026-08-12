@@ -8,3 +8,7 @@ def average_account_age(ages: List[int]) -> float:
     for age in ages:
         total += age
     return total / len(ages)
+
+
+def total_account_age(ages: List[int]) -> int:
+    return sum(ages)
