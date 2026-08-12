@@ -12,3 +12,7 @@ def average_account_age(ages: List[int]) -> float:
 
 def total_account_age(ages: List[int]) -> int:
     return sum(ages)
+
+
+def newest_account_age(ages: List[int]) -> int:
+    return ages[len(ages)]
