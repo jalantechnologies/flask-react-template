@@ -238,7 +238,7 @@ jobs:
             note="gateway price unavailable"
           fi
 
-          if [ ! -f .codereview-cost ]; then
+          if [ ! -s .codereview-cost ] || ! jq -e . .codereview-cost >/dev/null 2>&1; then
             echo '{"entries":[]}' > .codereview-cost
           fi
 
