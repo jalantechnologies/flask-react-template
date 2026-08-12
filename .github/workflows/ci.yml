@@ -183,10 +183,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          run_in=$(jq -r '[.[] | select(.type == "result")] | last | .usage.input_tokens // 0' "$EXECUTION_FILE")
-          run_out=$(jq -r '[.[] | select(.type == "result")] | last | .usage.output_tokens // 0' "$EXECUTION_FILE")
-          run_cache_read=$(jq -r '[.[] | select(.type == "result")] | last | .usage.cache_read_input_tokens // 0' "$EXECUTION_FILE")
-          run_cache_write=$(jq -r '[.[] | select(.type == "result")] | last | .usage.cache_creation_input_tokens // 0' "$EXECUTION_FILE")
+          usage=$(jq -c '
+            ([.[] | select(.type == "result") | .usage // empty] | last) as $r
+            | if $r != null then
+                {in: ($r.input_tokens // 0), out: ($r.output_tokens // 0),
+                 cread: ($r.cache_read_input_tokens // 0), cwrite: ($r.cache_creation_input_tokens // 0)}
+              else
+                ([.[] | select(.type == "assistant") | select(.message.usage != null)
+                  | {id: .message.id, u: .message.usage}] | unique_by(.id) | map(.u)) as $au
+                | {in: ([$au[].input_tokens // 0] | add // 0), out: ([$au[].output_tokens // 0] | add // 0),
+                   cread: ([$au[].cache_read_input_tokens // 0] | add // 0), cwrite: ([$au[].cache_creation_input_tokens // 0] | add // 0)}
+              end' "$EXECUTION_FILE")
+          run_in=$(printf '%s' "$usage" | jq -r '.in')
+          run_out=$(printf '%s' "$usage" | jq -r '.out')
+          run_cache_read=$(printf '%s' "$usage" | jq -r '.cread')
+          run_cache_write=$(printf '%s' "$usage" | jq -r '.cwrite')
+
+          if [ "$run_in" = "0" ] && [ "$run_out" = "0" ] && [ "$run_cache_read" = "0" ] && [ "$run_cache_write" = "0" ]; then
+            echo "::warning title=Review cost incomplete::The review ran but its transcript reported no token usage, so this run is counted as \$0 and the PR total may under-report actual spend."
+          fi
 
           catalog=$(curl -sf --max-time 15 "$CODE_REVIEW_BASE_URL/v1/model/info") || catalog=""
           if [ -z "$catalog" ]; then
@@ -216,11 +231,8 @@ jobs:
             --argjson pin "$in_price" --argjson pout "$out_price" --argjson pcache "$cache_price" \
             '(($in * $pin) + ($out * $pout) + (($cread + $cwrite) * $pcache)) / 1000000')
 
-          if [ -f .codereview-cost ]; then
-            prev='.codereview-cost'
-          else
-            echo '{"entries":[]}' > .codereview-cost.empty
-            prev='.codereview-cost.empty'
+          if [ ! -f .codereview-cost ]; then
+            echo '{"entries":[]}' > .codereview-cost
           fi
 
           jq \
@@ -235,8 +247,8 @@ jobs:
               sha: $sha, cost: $cost, input_tokens: $in, output_tokens: $out,
               cache_read_input_tokens: $cread, cache_creation_input_tokens: $cwrite
             }])}' \
-            "$prev" > .codereview-cost
-          rm -f .codereview-cost.empty
+            .codereview-cost > .codereview-cost.new
+          mv .codereview-cost.new .codereview-cost
 
           marker="<!-- codereview-cost -->"
           body=$(jq -r --arg marker "$marker" '
