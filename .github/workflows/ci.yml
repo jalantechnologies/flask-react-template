@@ -231,12 +231,20 @@ jobs:
             --argjson pin "$in_price" --argjson pout "$out_price" --argjson pcache "$cache_price" \
             '(($in * $pin) + ($out * $pout) + (($cread + $cwrite) * $pcache)) / 1000000')
 
+          note=""
+          if [ "$run_in" = "0" ] && [ "$run_out" = "0" ] && [ "$run_cache_read" = "0" ] && [ "$run_cache_write" = "0" ]; then
+            note="token usage was not reported by the review transcript"
+          elif [ "$in_price" = "0" ] && [ "$out_price" = "0" ] && [ "$cache_price" = "0" ]; then
+            note="gateway price unavailable"
+          fi
+
           if [ ! -f .codereview-cost ]; then
             echo '{"entries":[]}' > .codereview-cost
           fi
 
           jq \
             --arg sha "$HEAD_SHA" \
+            --arg note "$note" \
             --argjson cost "$run_cost" \
             --argjson in "$run_in" \
             --argjson out "$run_out" \
@@ -244,7 +252,7 @@ jobs:
             --argjson cwrite "$run_cache_write" \
             '{last_reviewed_sha: $sha,
               entries: ((.entries | map(select(.sha != $sha))) + [{
-              sha: $sha, cost: $cost, input_tokens: $in, output_tokens: $out,
+              sha: $sha, cost: $cost, note: $note, input_tokens: $in, output_tokens: $out,
               cache_read_input_tokens: $cread, cache_creation_input_tokens: $cwrite
             }])}' \
             .codereview-cost > .codereview-cost.new
@@ -259,12 +267,23 @@ jobs:
             | ($e | map(.output_tokens) | add // 0) as $tout
             | ($e | map(.cache_read_input_tokens) | add // 0) as $tcread
             | ($e | map(.cache_creation_input_tokens) | add // 0) as $tcwrite
+            | ($e | map(select((.note // "") != ""))) as $bad
+            | ($bad | length) as $nbad
+            | (if $nbad > 0 then
+                 ["> [!WARNING]",
+                  "> **This total is understated.** \($nbad) of \($n) review(s) could not be fully priced and show as $0, so the real cost is higher than below:"]
+                 + ($bad | map("> - `\(.sha[0:7])` — \(.note)"))
+                 + [">", "> This is usually a transient reporting gap; a later review typically shows a full figure.", ""]
+               else [] end) as $warn
             | [
                 $marker,
                 "### AI code review cost (PR total)",
                 "",
                 "Across **\($n)** review(s) on this PR. Estimated from DigitalOcean'"'"'s published per-token pricing for the configured model, not an authoritative bill.",
-                "",
+                ""
+              ]
+              + $warn
+              + [
                 "| Metric | Total |",
                 "| --- | --- |",
                 "| Cost (USD est.) | $\($tcost * 10000 | round / 10000) |",
@@ -278,7 +297,7 @@ jobs:
                 "| Commit | Cost (USD est.) | Input | Output | Cache read | Cache write |",
                 "| --- | --- | --- | --- | --- | --- |"
               ]
-              + ($e | map("| `\(.sha[0:7])` | $\((.cost // 0) * 10000 | round / 10000) | \(.input_tokens) | \(.output_tokens) | \(.cache_read_input_tokens) | \(.cache_creation_input_tokens) |"))
+              + ($e | map((if (.note // "") != "" then "⚠️ $" else "$" end) as $pfx | "| `\(.sha[0:7])` | \($pfx)\((.cost // 0) * 10000 | round / 10000) | \(.input_tokens) | \(.output_tokens) | \(.cache_read_input_tokens) | \(.cache_creation_input_tokens) |"))
               + ["", "</details>"]
               | join("\n")
           ' .codereview-cost)
