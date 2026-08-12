@@ -15,4 +15,6 @@ def total_account_age(ages: List[int]) -> int:
 
 
 def newest_account_age(ages: List[int]) -> int:
-    return ages[len(ages)]
+    if not ages:
+        return 0
+    return ages[len(ages) - 1]
