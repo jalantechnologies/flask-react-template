@@ -19,9 +19,9 @@ from modules.authentication.types import (
 )
 from modules.config.config_service import ConfigService
 from modules.core.common.types import AuditActor
-from modules.notification.email_service import EmailService
+from modules.notification.notification_service import NotificationService
 from modules.notification.sms_service import SMSService
-from modules.notification.types import EmailRecipient, EmailSender, SendEmailParams, SendSMSParams
+from modules.notification.types import EmailRecipient, EmailSender, NotificationPriority, SendEmailParams, SendSMSParams
 
 
 class AuthenticationService:
@@ -99,8 +99,12 @@ class AuthenticationService:
             template_data=template_data,
         )
 
-        EmailService.send_email_for_account(
-            account_id=account_id, bypass_preferences=True, params=password_reset_email_params, actor=actor
+        NotificationService.send_email_for_account(
+            account_id=account_id,
+            bypass_preferences=True,
+            params=password_reset_email_params,
+            priority=NotificationPriority.IMMEDIATE,
+            actor=actor,
         )
 
     @staticmethod
