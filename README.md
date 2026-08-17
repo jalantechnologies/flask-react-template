@@ -2,9 +2,9 @@
 
 Boilerplate project for Flask, React & MongoDB based projects. This README documents the steps necessary to get the application up and running, and various components of the application.
 
-| Code Coverage                                                                                                                                                                                                                                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [![Coverage](https://sonarqube.platform.bettrhq.com/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=sqb_661a4ddf0ce99feb175a0afbf8aa21304e78296f)](https://sonarqube.platform.bettrhq.com/dashboard?id=jalantechnologies_flask-react-template) |
+| Code Coverage                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [![Coverage](https://code-scan.platform.btr.group/api/project_badges/measure?project=jalantechnologies_flask-react-template&metric=coverage&token=sqb_661a4ddf0ce99feb175a0afbf8aa21304e78296f)](https://code-scan.platform.btr.group/dashboard?id=jalantechnologies_flask-react-template) |
 
 ### Environments & URLs
 
