@@ -8,6 +8,7 @@ from flask.views import MethodView
 from modules.account.account_service import AccountService
 from modules.account.errors import AccountBadRequestError
 from modules.account.types import (
+    AccountResponse,
     AccountSearchByIdParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
@@ -48,14 +49,14 @@ class AccountView(MethodView):
                 "Request body must contain either a phone_number object or username and password fields"
             )
 
-        return jsonify(asdict(account)), 201
+        return jsonify(asdict(AccountResponse.from_account(account))), 201
 
     @access_auth_middleware
     def get(self, account_id: str) -> ResponseReturnValue:
         actor = AuditActor(actor_type=ActorType.ACCOUNT, actor_id=account_id)
         account_params = AccountSearchByIdParams(id=account_id)
         account = AccountService.get_account_by_id(params=account_params, actor=actor)
-        account_dict = asdict(account)
+        account_dict = asdict(AccountResponse.from_account(account))
 
         include_notification_preferences = request.args.get("include_notification_preferences", "").lower() == "true"
 
@@ -95,7 +96,7 @@ class AccountView(MethodView):
         else:
             raise AccountBadRequestError("Invalid request data")
 
-        return jsonify(asdict(account)), 200
+        return jsonify(asdict(AccountResponse.from_account(account))), 200
 
     @access_auth_middleware
     def delete(self, account_id: str) -> ResponseReturnValue:

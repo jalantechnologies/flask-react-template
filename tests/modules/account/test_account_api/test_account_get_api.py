@@ -27,6 +27,30 @@ class TestAccountGetApi(BaseTestAccount):
             assert response.json.get("first_name") == self.account.first_name
             assert response.json.get("last_name") == self.account.last_name
 
+    def test_given_authenticated_account_when_requesting_own_account_then_response_omits_hashed_password(self) -> None:
+        with app.test_client() as client:
+            response = client.get(
+                f"{ACCOUNT_URL}/{self.account.id}", headers={"Authorization": f"Bearer {self.access_token.token}"}
+            )
+
+            assert response.status_code == 200
+            assert response.json
+            assert "hashed_password" not in response.json
+            assert "hashed_password" not in response.get_data(as_text=True)
+
+    def test_given_notification_preferences_included_when_requesting_account_then_response_omits_hashed_password(
+        self,
+    ) -> None:
+        with app.test_client() as client:
+            response = client.get(
+                f"{ACCOUNT_URL}/{self.account.id}?include_notification_preferences=true",
+                headers={"Authorization": f"Bearer {self.access_token.token}"},
+            )
+
+            assert response.status_code == 200
+            assert response.json
+            assert "hashed_password" not in response.get_data(as_text=True)
+
     def test_given_no_authorization_header_when_requesting_account_then_returns_unauthorized(self) -> None:
         with app.test_client() as client:
             response = client.get(f"{ACCOUNT_URL}/{self.account.id}")

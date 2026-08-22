@@ -17,6 +17,7 @@ from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 
 ACCOUNT_URL = "http://127.0.0.1:8080/api/accounts"
+ACCESS_TOKEN_URL = "http://127.0.0.1:8080/api/access-tokens"
 HEADERS = {"Content-Type": "application/json"}
 
 
@@ -32,6 +33,37 @@ class TestAccountPostApi(BaseTestAccount):
             assert response.status_code == 201
             assert response.json
             assert response.json.get("username") == "username"
+
+    def test_given_valid_username_and_password_when_creating_account_then_response_omits_hashed_password(self) -> None:
+        request_body = json.dumps(
+            {"first_name": "first_name", "last_name": "last_name", "password": "password", "username": "username"}
+        )
+
+        with app.test_client() as client:
+            response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert response.status_code == 201
+            assert response.json
+            assert "hashed_password" not in response.json
+            assert "hashed_password" not in response.get_data(as_text=True)
+
+    def test_given_account_created_over_the_api_when_logging_in_then_returns_access_token(self) -> None:
+        request_body = json.dumps(
+            {"first_name": "first_name", "last_name": "last_name", "password": "password", "username": "username"}
+        )
+
+        with app.test_client() as client:
+            create_response = client.post(ACCOUNT_URL, headers=HEADERS, data=request_body)
+
+            assert create_response.status_code == 201
+
+            login_response = client.post(
+                ACCESS_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": "username", "password": "password"})
+            )
+
+            assert login_response.status_code == 201
+            assert login_response.json
+            assert login_response.json.get("token")
 
     def test_given_existing_username_when_creating_account_then_returns_conflict(self) -> None:
         existing_account = AccountService.create_account_by_username_and_password(
