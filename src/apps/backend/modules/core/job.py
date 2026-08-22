@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, ClassVar, Optional
@@ -10,7 +11,11 @@ from redbeat import RedBeatSchedulerEntry
 from modules.core.celery_app import app as celery_app
 from modules.core.common.types import ActorType, AuditActor, JobArguments
 from modules.core.internal.job_run.job_run_service import JobRunService
+from modules.core.lock_service import LockService
 from modules.logger.logger import Logger
+
+DEFAULT_UNIQUE_FOR_SECONDS = 3600
+JOB_LOCK_KEY_PREFIX = "job-lock"
 
 
 class Job(ABC):
@@ -19,12 +24,17 @@ class Job(ABC):
     retry_backoff: ClassVar[bool] = True
     retry_backoff_max: ClassVar[int] = 600
     cron_schedule: ClassVar[Optional[str]] = None
+    unique_for_seconds: ClassVar[int] = DEFAULT_UNIQUE_FOR_SECONDS
 
     @classmethod
     @abstractmethod
     def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> Any:
         """Run the job body. `actor` identifies this specific run so every write the body makes is
         attributed to the job_run record; subclasses thread it into their repository calls."""
+
+    @classmethod
+    def unique_key(cls, *args: Any, **kwargs: Any) -> Optional[str]:
+        return None
 
     @classmethod
     def perform_async(cls, *args: Any, **kwargs: Any) -> AsyncResult:
@@ -40,6 +50,32 @@ class Job(ABC):
     def perform_in(cls, delay_seconds: int, *args: Any, **kwargs: Any) -> AsyncResult:
         task = cls._get_celery_task()
         return task.apply_async(args=args, kwargs=kwargs, countdown=delay_seconds)
+
+    @classmethod
+    def _run_task(cls, task: Task, args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
+        key = cls.unique_key(*args, **kwargs)
+        if key is None:
+            return cls._run_with_job_run(task, args, kwargs)
+
+        lock_key = f"{JOB_LOCK_KEY_PREFIX}:{cls.__name__}:{key}"
+        token = uuid.uuid4().hex
+        if not LockService.acquire(key=lock_key, token=token, ttl_seconds=cls.unique_for_seconds):
+            return cls._record_skipped_run(task, args, kwargs, key)
+
+        try:
+            return cls._run_with_job_run(task, args, kwargs)
+        finally:
+            LockService.release(key=lock_key, token=token)
+
+    @classmethod
+    def _record_skipped_run(cls, task: Task, args: tuple[Any, ...], kwargs: dict[str, Any], key: str) -> None:
+        Logger.info(message=f"Skipped job {cls.__name__}: another run already holds the key {key}")
+        job_run = JobRunService.start(
+            job_name=cls.__name__,
+            arguments=cls._describe_arguments(args, kwargs),
+            retry_count=task.request.retries or 0,
+        )
+        JobRunService.mark_skipped(job_run_id=job_run.id)
 
     @classmethod
     def _run_with_job_run(cls, task: Task, args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
@@ -86,7 +122,7 @@ class Job(ABC):
             retry_jitter=True,
         )
         def celery_task(self: Task, *args: Any, **kwargs: Any) -> Any:
-            return cls._run_with_job_run(self, args, kwargs)
+            return cls._run_task(self, args, kwargs)
 
         return celery_task
 

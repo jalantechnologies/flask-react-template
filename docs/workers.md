@@ -69,13 +69,14 @@ class MyBackgroundJob(Job):
 
 ### Job Configuration Options
 
-| Option              | Type   | Default     | Description                             |
-| ------------------- | ------ | ----------- | --------------------------------------- |
-| `queue`             | `str`  | `"default"` | Queue name for job routing              |
-| `max_retries`       | `int`  | `3`         | Maximum retry attempts for failed jobs  |
-| `retry_backoff`     | `bool` | `True`      | Use exponential backoff between retries |
-| `retry_backoff_max` | `int`  | `600`       | Maximum seconds between retries         |
-| `cron_schedule`     | `str`  | `None`      | Cron expression for recurring jobs      |
+| Option               | Type   | Default     | Description                                          |
+| -------------------- | ------ | ----------- | ---------------------------------------------------- |
+| `queue`              | `str`  | `"default"` | Queue name for job routing                           |
+| `max_retries`        | `int`  | `3`         | Maximum retry attempts for failed jobs               |
+| `retry_backoff`      | `bool` | `True`      | Use exponential backoff between retries              |
+| `retry_backoff_max`  | `int`  | `600`       | Maximum seconds between retries                      |
+| `cron_schedule`      | `str`  | `None`      | Cron expression for recurring jobs                   |
+| `unique_for_seconds` | `int`  | `3600`      | How long a uniqueness lock is held before it expires |
 
 ### Cron Schedule Format
 
@@ -160,7 +161,28 @@ The registry:
 
 ## Job Run Records
 
-Every execution writes a `job_run` row (job name, redacted arguments, start/end time, status `running` → `succeeded` | `failed`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure. The run's id becomes the job's audit actor (`AuditActor(ActorType.JOB, job_run_id)`), so every write the job makes joins back to a concrete run. This gives both a trustworthy audit actor and job observability (history, status, retries) for free.
+Every execution writes a `job_run` row (job name, redacted arguments, start/end time, status `running` → `succeeded` | `failed` | `skipped`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure. The run's id becomes the job's audit actor (`AuditActor(ActorType.JOB, job_run_id)`), so every write the job makes joins back to a concrete run. This gives both a trustworthy audit actor and job observability (history, status, retries) for free.
+
+A run that is skipped for uniqueness also writes a row, finalized as `skipped`. Silence would be indistinguishable from a worker that never picked the message up, so the skip is recorded rather than left out.
+
+## Running At Most Once Per Key
+
+A job scheduled every five minutes that sometimes takes six will start overlapping with itself. To prevent that, declare `unique_key`:
+
+```python
+class SyncUserJob(Job):
+    unique_for_seconds = 3600
+
+    @classmethod
+    def unique_key(cls, user_id: str) -> str:
+        return f"sync-user:{user_id}"
+```
+
+`unique_key` receives the same arguments `perform` does. When it returns a key, the run takes a Redis lock on that key before doing any work. If the lock is already held, the run logs the skip, writes a `skipped` job run row, and returns without calling `perform`. Two runs with different keys never block each other.
+
+The default `unique_key` returns `None`, which means no uniqueness and no lock.
+
+The lock always carries `unique_for_seconds` as its expiry, so a process that dies mid-job frees the key rather than blocking it forever. Set it comfortably above the job's worst-case runtime. The lock is released as soon as the run finishes, whether it succeeded or raised, and a run only ever releases the lock it took itself.
 
 ## Development
 
