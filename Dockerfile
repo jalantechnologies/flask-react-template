@@ -40,10 +40,12 @@ WORKDIR /build
 # fixed release and fail the build if the vulnerable version survives.
 RUN npm install -g npm@12.0.1 && \
     npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
-    rm -rf /usr/local/lib/node_modules/npm/node_modules/tar && \
-    cp -R /tmp/tar-fix/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar && \
+    TAR_DIR="$(npm root -g)/npm/node_modules/tar" && \
+    rm -rf "$TAR_DIR" && \
+    mkdir -p "$TAR_DIR" && \
+    cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
     rm -rf /tmp/tar-fix && \
-    grep -q '"version": "7.5.21"' /usr/local/lib/node_modules/npm/node_modules/tar/package.json
+    grep -q '"version": "7.5.21"' "$TAR_DIR/package.json"
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
@@ -86,10 +88,12 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g npm@12.0.1 && \
     npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
-    rm -rf /usr/local/lib/node_modules/npm/node_modules/tar && \
-    cp -R /tmp/tar-fix/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar && \
+    TAR_DIR="$(npm root -g)/npm/node_modules/tar" && \
+    rm -rf "$TAR_DIR" && \
+    mkdir -p "$TAR_DIR" && \
+    cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
     rm -rf /tmp/tar-fix && \
-    grep -q '"version": "7.5.21"' /usr/local/lib/node_modules/npm/node_modules/tar/package.json && \
+    grep -q '"version": "7.5.21"' "$TAR_DIR/package.json" && \
     apt-get remove -y curl && \
     apt-get autoremove -y && \
     apt-get clean && \
