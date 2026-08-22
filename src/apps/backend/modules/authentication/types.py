@@ -55,9 +55,6 @@ class AccessTokenErrorCode:
     BAD_REQUEST: str = "ACCESS_TOKEN_ERR_07"
 
 
-from dataclasses import dataclass
-
-
 @dataclass(frozen=True)
 class PasswordResetToken:
     id: str

@@ -47,7 +47,7 @@ class PasswordResetTokenNotFoundError(AppError):
         super().__init__(
             code=PasswordResetTokenErrorCode.PASSWORD_RESET_TOKEN_NOT_FOUND,
             http_status_code=404,
-            message=f"System is unable to find a token with this account",
+            message="No password reset token was found for this account.",
         )
 
 
