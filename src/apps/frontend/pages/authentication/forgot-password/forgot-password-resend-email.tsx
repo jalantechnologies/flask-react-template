@@ -48,7 +48,9 @@ const ForgotPasswordResendEmail: React.FC<ForgotPasswordResendEmailProps> = ({
 
   return (
     <Stack gap={Spacing.Md}>
-      <Text>{constant.PASSWORD_RESET_LINK_SENT_MESSAGE}</Text>
+      <Text testId="password-reset-confirmation">
+        {constant.PASSWORD_RESET_LINK_SENT_MESSAGE}
+      </Text>
       {!isResendEnabled && (
         <Inline justify="end">
           <Text emphasis={Emphasis.Muted}>

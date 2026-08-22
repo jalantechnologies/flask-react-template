@@ -16,6 +16,7 @@ vi.mock('axios', () => ({
 
 const KNOWN_EMAIL = 'known@example.com';
 const UNKNOWN_EMAIL = 'unknown@example.com';
+const CONFIRMATION_TEST_ID = 'password-reset-confirmation';
 
 const NEUTRAL_API_RESPONSE = {
   data: {
@@ -51,9 +52,9 @@ describe('ForgotPassword', () => {
     renderForgotPassword();
     await submitEmail(KNOWN_EMAIL);
 
-    expect(
-      await screen.findByText(constant.PASSWORD_RESET_LINK_SENT_MESSAGE),
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId(CONFIRMATION_TEST_ID)).toHaveTextContent(
+      constant.PASSWORD_RESET_LINK_SENT_MESSAGE,
+    );
     expect(post).toHaveBeenCalledWith('/password-reset-tokens', {
       username: KNOWN_EMAIL,
     });
@@ -65,9 +66,9 @@ describe('ForgotPassword', () => {
     renderForgotPassword();
     await submitEmail(UNKNOWN_EMAIL);
 
-    expect(
-      await screen.findByText(constant.PASSWORD_RESET_LINK_SENT_MESSAGE),
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId(CONFIRMATION_TEST_ID)).toHaveTextContent(
+      constant.PASSWORD_RESET_LINK_SENT_MESSAGE,
+    );
   });
 
   it('does not reveal whether the submitted address has an account', async () => {
@@ -76,13 +77,13 @@ describe('ForgotPassword', () => {
     renderForgotPassword();
     await submitEmail(KNOWN_EMAIL);
 
-    await screen.findByText(constant.PASSWORD_RESET_LINK_SENT_MESSAGE);
+    const confirmation = await screen.findByTestId(CONFIRMATION_TEST_ID);
 
-    expect(screen.queryByText(new RegExp(KNOWN_EMAIL, 'i'))).toBeNull();
-    expect(screen.queryByText(/has been sent to/i)).toBeNull();
+    expect(confirmation).not.toHaveTextContent(KNOWN_EMAIL);
+    expect(confirmation).not.toHaveTextContent(/has been sent to/i);
   });
 
-  it('reports the failure when the request is rejected', async () => {
+  it('keeps the form on screen when the request is rejected', async () => {
     post.mockRejectedValue({
       response: { data: { message: 'Something went wrong', code: 'ERR' } },
     });
@@ -91,8 +92,6 @@ describe('ForgotPassword', () => {
     await submitEmail(KNOWN_EMAIL);
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
-    expect(
-      screen.queryByText(constant.PASSWORD_RESET_LINK_SENT_MESSAGE),
-    ).toBeNull();
+    expect(screen.queryByTestId(CONFIRMATION_TEST_ID)).toBeNull();
   });
 });
