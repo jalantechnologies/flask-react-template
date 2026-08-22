@@ -40,19 +40,18 @@ const useSignupForm = ({ onError, onSuccess }: SignupFormProps) => {
         .oneOf([Yup.ref('password')], constant.PASSWORD_MATCH_VALIDATION_ERROR)
         .required(constant.PASSWORD_MATCH_VALIDATION_ERROR),
     }),
-    onSubmit: (values) => {
-      signup(
-        values.firstName,
-        values.lastName,
-        values.username,
-        values.password,
-      )
-        .then(() => {
-          onSuccess();
-        })
-        .catch((err) => {
-          onError(err as AsyncError);
-        });
+    onSubmit: async (values) => {
+      try {
+        await signup(
+          values.firstName,
+          values.lastName,
+          values.username,
+          values.password,
+        );
+        onSuccess();
+      } catch (err) {
+        onError(err as AsyncError);
+      }
     },
   });
 

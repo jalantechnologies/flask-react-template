@@ -28,20 +28,19 @@ const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
     onError,
   });
 
-  const setFormikFieldValue = (fieldName: string, data: string) => {
-    formik
-      .setFieldValue(fieldName, data)
-      .then()
-      .catch((err) => {
-        onError(err as AsyncError);
-      });
+  const setFormikFieldValue = async (fieldName: string, data: string) => {
+    try {
+      await formik.setFieldValue(fieldName, data);
+    } catch (err) {
+      onError(err as AsyncError);
+    }
   };
 
   const handleChangePhone = ({
     target,
   }: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = target;
-    setFormikFieldValue('phoneNumber', value);
+    void setFormikFieldValue('phoneNumber', value);
   };
 
   const handleChangeSelect = ({
@@ -49,9 +48,9 @@ const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
   }: React.ChangeEvent<HTMLSelectElement>) => {
     const { value } = target;
     const [countryCode, country] = value.split(', ');
-    setFormikFieldValue('country', country);
-    setFormikFieldValue('countryCode', countryCode);
-    setFormikFieldValue('phoneNumber', '');
+    void setFormikFieldValue('country', country);
+    void setFormikFieldValue('countryCode', countryCode);
+    void setFormikFieldValue('phoneNumber', '');
   };
 
   return (

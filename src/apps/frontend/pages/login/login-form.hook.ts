@@ -25,14 +25,13 @@ const useLoginForm = ({ onError, onSuccess }: LoginFormProps) => {
         .min(constant.PASSWORD_MIN_LENGTH, constant.PASSWORD_VALIDATION_ERROR)
         .required(constant.PASSWORD_VALIDATION_ERROR),
     }),
-    onSubmit: (values) => {
-      login(values.username, values.password)
-        .then(() => {
-          onSuccess();
-        })
-        .catch((error) => {
-          onError(error as AsyncError);
-        });
+    onSubmit: async (values) => {
+      try {
+        await login(values.username, values.password);
+        onSuccess();
+      } catch (error) {
+        onError(error as AsyncError);
+      }
     },
   });
 

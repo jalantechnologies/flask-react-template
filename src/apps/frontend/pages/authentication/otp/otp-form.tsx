@@ -60,13 +60,16 @@ const OTPForm: React.FC<OTPFormProps> = ({
     }
   }, [phoneNumber, countryCode, navigate]);
 
+  const setOtpFieldValue = async (value: string[]) => {
+    try {
+      await formik.setFieldValue('otp', value);
+    } catch (error) {
+      onError(error as AsyncError);
+    }
+  };
+
   const handleChange = (value: string[]) => {
-    formik
-      .setFieldValue('otp', value)
-      .then()
-      .catch((error) => {
-        onError(error as AsyncError);
-      });
+    void setOtpFieldValue(value);
   };
 
   const otpError = formik.touched.otp ? (formik.errors.otp as string) : '';

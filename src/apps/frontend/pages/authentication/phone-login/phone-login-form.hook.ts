@@ -32,7 +32,7 @@ const usePhoneLoginForm = ({
       phoneNumber: Yup.string().required(constant.PHONE_VALIDATION_ERROR),
     }),
 
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       const parsedPhoneNumber = PhoneNumberUtil.getInstance().parse(
         values.phoneNumber,
         values.country,
@@ -49,19 +49,18 @@ const usePhoneLoginForm = ({
       const encodedCountryCode = encodeURIComponent(values.countryCode);
       const otpPageUrl = `${routes.VERIFY_OTP}?&country_code=${encodedCountryCode}&phone_number=${formattedPhoneNumber}`;
 
-      sendOTP(
-        new PhoneNumber({
-          country_code: values.countryCode,
-          phone_number: formattedPhoneNumber.toString(),
-        }),
-      )
-        .then(() => {
-          onSendOTPSuccess();
-          navigate(otpPageUrl);
-        })
-        .catch((err) => {
-          onError(err as AsyncError);
-        });
+      try {
+        await sendOTP(
+          new PhoneNumber({
+            country_code: values.countryCode,
+            phone_number: formattedPhoneNumber.toString(),
+          }),
+        );
+        onSendOTPSuccess();
+        navigate(otpPageUrl);
+      } catch (err) {
+        onError(err as AsyncError);
+      }
     },
   });
 
