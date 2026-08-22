@@ -22,20 +22,23 @@ class CustomEnvConfig:
         if not isinstance(data, dict):
             return data
 
-        updated_data = {}
+        updated_data = data.copy()
 
         for key, value in data.items():
             if isinstance(value, dict):
                 result = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
-                if result is not None:
+                if result is None or result == {}:
+                    del updated_data[key]
+                else:
                     updated_data[key] = result
             elif isinstance(value, str):
-                result = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
-                if result is not None:
-                    updated_data[key] = result
+                secret_file_value = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
+                env_value = CustomEnvConfig._search_and_get_str_value_from_env(value)
+                result = env_value if env_value is not None else secret_file_value
 
-                result = CustomEnvConfig._search_and_get_str_value_from_env(value)
-                if result is not None:
+                if result is None:
+                    del updated_data[key]
+                else:
                     updated_data[key] = result
 
         return updated_data

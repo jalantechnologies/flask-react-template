@@ -64,6 +64,32 @@ class TestCustomEnvConfig(BaseTestConfig):
 
         assert "keys" not in overrides
 
+    def test_non_string_values_survive_without_matching_env_vars(self) -> None:
+        overrides = CustomEnvConfig._apply_environment_overrides(
+            {"retries": 3, "enabled": True, "hosts": ["alpha", "beta"]}
+        )
+
+        assert overrides == {"retries": 3, "enabled": True, "hosts": ["alpha", "beta"]}
+
+    def test_non_string_values_survive_inside_nested_dict(self) -> None:
+        overrides = CustomEnvConfig._apply_environment_overrides({"server": {"port": 8080, "debug": False}})
+
+        assert overrides["server"] == {"port": 8080, "debug": False}
+
+    def test_unset_string_mapping_omits_key_without_dropping_siblings(self) -> None:
+        overrides = CustomEnvConfig._apply_environment_overrides({"region": self.UNSET_ENV_VAR, "retries": 3})
+
+        assert overrides == {"retries": 3}
+
+    def test_set_env_var_overrides_plain_string_value(self) -> None:
+        os.environ[self.UNSET_ENV_VAR] = "from-env"
+        try:
+            overrides = CustomEnvConfig._apply_environment_overrides({"region": self.UNSET_ENV_VAR, "retries": 3})
+        finally:
+            os.environ.pop(self.UNSET_ENV_VAR, None)
+
+        assert overrides == {"region": "from-env", "retries": 3}
+
     def test_nested_dict_without_name_still_merges(self) -> None:
         os.environ[self.UNSET_ENV_VAR] = "child-value"
         try:

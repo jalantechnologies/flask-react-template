@@ -15,9 +15,9 @@ class ConfigManager:
     def __init__(self) -> None:
         default_content = DefaultConfig.load()
         app_env_content = AppEnvConfig.load()
-        os_env_content = CustomEnvConfig.load()
+        env_overrides_content = CustomEnvConfig.load()
 
-        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, os_env_content)
+        merged_content = ConfigUtil.deep_merge(default_content, app_env_content, env_overrides_content)
 
         self.config_store: Config = merged_content
 
