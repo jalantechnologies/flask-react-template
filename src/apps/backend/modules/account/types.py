@@ -94,6 +94,29 @@ class Account:
 
 
 @dataclass(frozen=True)
+class AccountResponse:
+    id: str
+    first_name: str
+    last_name: str
+    phone_number: Optional[PhoneNumber]
+    username: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    @classmethod
+    def from_account(cls, account: Account) -> "AccountResponse":
+        return cls(
+            id=account.id,
+            first_name=account.first_name,
+            last_name=account.last_name,
+            phone_number=account.phone_number,
+            username=account.username,
+            created_at=account.created_at,
+            updated_at=account.updated_at,
+        )
+
+
+@dataclass(frozen=True)
 class AccountQuery(QueryParams):
     id: Optional[str] = None
     username: Optional[str] = None

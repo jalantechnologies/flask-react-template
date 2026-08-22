@@ -64,6 +64,21 @@ class TestAccountPatchApi(BaseTestAccount):
             assert response.json.get("first_name") == "new_first_name"
             assert response.json.get("last_name") == "new_last_name"
 
+    def test_given_account_when_updating_profile_then_response_omits_hashed_password(self) -> None:
+        request_body = {"first_name": "new_first_name", "last_name": "new_last_name"}
+
+        with app.test_client() as client:
+            response = client.patch(
+                f"{ACCOUNT_URL}/{self.account.id}",
+                headers={**HEADERS, "Authorization": f"Bearer {self.access_token.token}"},
+                data=json.dumps(request_body),
+            )
+
+            assert response.status_code == 200
+            assert response.json
+            assert "hashed_password" not in response.json
+            assert "hashed_password" not in response.get_data(as_text=True)
+
     def test_given_account_when_updating_names_to_empty_strings_then_returns_updated_account(self) -> None:
         request_body = {"first_name": "", "last_name": ""}
 
