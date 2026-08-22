@@ -55,4 +55,11 @@ class JobRegistry:
 
     @classmethod
     def _loaded_jobs(cls) -> list[Type[Job]]:
-        return sorted(Job.__subclasses__(), key=lambda job: job.__name__)
+        return sorted(set(cls._runnable_jobs(Job.__subclasses__())), key=lambda job: job.__name__)
+
+    @classmethod
+    def _runnable_jobs(cls, subclasses: list[Type[Job]]) -> Iterator[Type[Job]]:
+        for subclass in subclasses:
+            if not subclass.__abstractmethods__:
+                yield subclass
+            yield from cls._runnable_jobs(subclass.__subclasses__())
