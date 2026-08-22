@@ -170,3 +170,18 @@ class TestGivenTheProviderSucceeds:
             _point_sendgrid_at(monkeypatch, sendgrid_server)
 
             SendGridService.send_email(SEND_EMAIL_PARAMS)
+
+
+class TestGivenADeliveryFailure:
+    class TestWhenTheErrorReachesTheCaller:
+        def test_then_the_message_does_not_name_the_recipient(
+            self, sendgrid_server: str, monkeypatch: pytest.MonkeyPatch
+        ) -> None:
+            _SendGridHandler.status_code = 500
+            _point_sendgrid_at(monkeypatch, sendgrid_server)
+
+            with pytest.raises(EmailServiceUnavailableError) as raised:
+                SendGridService.send_email(SEND_EMAIL_PARAMS)
+
+            assert SEND_EMAIL_PARAMS.recipient.email not in raised.value.message
+            assert raised.value.recipient == SEND_EMAIL_PARAMS.recipient.email

@@ -29,7 +29,11 @@ class SendGridService:
             client.send(message)
 
         except HTTPError as err:
-            status_code = int(err.status_code)
+            status_code = SendGridService.__status_code_of(err)
+
+            if status_code is None:
+                raise SendGridService.__unavailable(params, "the provider responded without a status", err) from err
+
             reason = f"the provider responded with status {status_code}"
 
             if status_code >= LOWEST_SERVER_ERROR_STATUS:
@@ -42,6 +46,13 @@ class SendGridService:
 
         except sendgrid.SendGridException as err:
             raise SendGridService.__rejected(params, "the message failed provider validation", err) from err
+
+    @staticmethod
+    def __status_code_of(error: HTTPError) -> Optional[int]:
+        try:
+            return int(error.status_code)
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def __rejected(

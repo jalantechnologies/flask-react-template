@@ -38,7 +38,7 @@ class EmailRejectedError(AppError):
         super().__init__(
             code=NotificationErrorCode.EMAIL_REJECTED,
             http_status_code=502,
-            message=f"The email to {recipient} was rejected by the email provider: {reason}.",
+            message=f"The email was rejected by the email provider: {reason}.",
         )
         self.recipient = recipient
         self.reason = reason
@@ -50,10 +50,7 @@ class EmailServiceUnavailableError(AppError):
         super().__init__(
             code=NotificationErrorCode.EMAIL_SERVICE_UNAVAILABLE,
             http_status_code=503,
-            message=(
-                f"The email to {recipient} could not be delivered "
-                f"because the email provider is unavailable: {reason}."
-            ),
+            message=f"The email could not be delivered because the email provider is unavailable: {reason}.",
         )
         self.recipient = recipient
         self.reason = reason
