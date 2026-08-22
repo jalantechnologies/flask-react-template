@@ -24,10 +24,10 @@ const useAsync = <T>(
 
         return response.data ?? null;
       } catch (e) {
-        const err = new AsyncOperationError({
-          code: e?.response?.data?.code || e.code,
-          message: e?.response?.data?.message || e.message,
-        });
+        const err = AsyncOperationError.fromUnknown(
+          e,
+          'Something went wrong. Please try again.',
+        );
 
         setError(err);
         throw new Error(err.message);
