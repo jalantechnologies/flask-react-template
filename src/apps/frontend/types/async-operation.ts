@@ -1,7 +1,7 @@
 import { JsonObject, Nullable } from 'frontend/types/common-types';
 
 export interface AsyncError {
-  code: string;
+  code?: string;
   message: string;
 }
 
@@ -49,11 +49,11 @@ const readNestedResponseField = (
 };
 
 export class AsyncOperationError implements AsyncError {
-  code: string;
+  code?: string;
   message: string;
 
   constructor(json: JsonObject) {
-    this.code = isString(json.code) ? json.code : '';
+    this.code = isString(json.code) ? json.code : undefined;
     this.message = isString(json.message) ? json.message : '';
   }
 
@@ -64,7 +64,7 @@ export class AsyncOperationError implements AsyncError {
     const code =
       readNestedResponseField(thrown, 'code') ??
       readStringField(thrown, 'code') ??
-      '';
+      undefined;
 
     const message =
       readNestedResponseField(thrown, 'message') ??

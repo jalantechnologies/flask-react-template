@@ -2,14 +2,14 @@ import { AsyncError, AsyncResult } from 'frontend/types/async-operation';
 import { JsonObject } from 'frontend/types/common-types';
 
 export class ApiError implements AsyncError {
-  code: string;
+  code?: string;
   httpStatusCode: number;
   message: string;
 
   constructor(json: JsonObject) {
-    this.code = json.code as string;
+    this.code = typeof json.code === 'string' ? json.code : undefined;
     this.httpStatusCode = json.httpStatusCode as number;
-    this.message = json.message as string;
+    this.message = typeof json.message === 'string' ? json.message : '';
   }
 }
 
