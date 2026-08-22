@@ -22,6 +22,7 @@ logger:
   service: 'flask-react-template'
 
 accounts:
+  token_verification_keys: []
   token_expiry_days: 1
   token_expires_in_seconds: 3600
   create_test_user_account: false
