@@ -10,6 +10,7 @@ import {
   Stack,
   Variant,
 } from 'frontend/components';
+import constant from 'frontend/constants';
 import routes from 'frontend/constants/routes';
 import AuthenticationPageLayout from 'frontend/pages/authentication//authentication-page-layout';
 import AuthenticationFormLayout from 'frontend/pages/authentication/authentication-form-layout';
@@ -38,9 +39,7 @@ export const ForgotPassword: React.FC = () => {
 
   const onResendEmailSuccess = () => {
     startTimer();
-    toast.success(
-      'A password reset link has been re-sent. Please check your inbox',
-    );
+    toast.success(constant.PASSWORD_RESET_LINK_RESENT_MESSAGE);
   };
 
   const onError = (error: AsyncError) => {

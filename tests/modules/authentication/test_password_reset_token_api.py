@@ -2,6 +2,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from unittest import mock
 from unittest.mock import MagicMock
+from urllib.parse import parse_qs, urlparse
 
 from web_app import app
 
@@ -15,6 +16,7 @@ from modules.authentication.internal.password_reset_token.password_reset_token_w
 from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
     PasswordResetTokenRepository,
 )
+from modules.authentication.rest_api.password_reset_token_view import PASSWORD_RESET_REQUESTED_MESSAGE
 from modules.authentication.types import PasswordResetTokenQuery
 from modules.notification.email_service import EmailService
 from modules.notification.notification_service import NotificationService
@@ -25,6 +27,11 @@ from tests.modules.authentication.base_test_password_reset_token import BaseTest
 ACCOUNT_API_URL = "http://127.0.0.1:8080/api/accounts"
 PASSWORD_RESET_TOKEN_URL = "http://127.0.0.1:8080/api/password-reset-tokens"
 HEADERS = {"Content-Type": "application/json"}
+
+
+def extract_token_from_password_reset_link(mock_send_email: MagicMock) -> str:
+    password_reset_link = mock_send_email.call_args.kwargs["params"].template_data["password_reset_link"]
+    return parse_qs(urlparse(password_reset_link).query)["token"][0]
 
 
 class TestAccountPasswordReset(BaseTestPasswordResetToken):
@@ -45,15 +52,92 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             response = client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps(reset_password_params))
             assert response.json is not None
 
-            self.assertEqual(response.status_code, 201)
-            self.assertTrue(response.json)
-            self.assertIn("id", response.json)
-            self.assertIn("account", response.json)
-            self.assertIn("token", response.json)
-            self.assertFalse(response.json["is_used"])
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json, {"message": PASSWORD_RESET_REQUESTED_MESSAGE})
             self.assertTrue(mock_send_email.called)
             self.assertIn("password_reset_link", mock_send_email.call_args.kwargs["params"].template_data)
-            self.assertEqual(response.json["account"], account.id)
+
+        stored_token = AuthenticationService.get_password_reset_token_by_account_id(account.id, actor=TEST_ACTOR)
+        self.assertFalse(stored_token.is_used)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_create_password_reset_token_response_omits_the_token_and_account_identifiers(
+        self, mock_send_email: MagicMock
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            response = client.post(
+                PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username})
+            )
+
+        emailed_token = extract_token_from_password_reset_link(mock_send_email)
+        stored_token = AuthenticationService.get_password_reset_token_by_account_id(account.id, actor=TEST_ACTOR)
+        response_body = response.get_data(as_text=True)
+
+        self.assertTrue(
+            PasswordResetTokenUtil.compare_password(password=emailed_token, hashed_password=stored_token.token)
+        )
+        self.assertNotIn(emailed_token, response_body)
+        self.assertNotIn(stored_token.token, response_body)
+        self.assertNotIn(stored_token.id, response_body)
+        self.assertNotIn(account.id, response_body)
+        assert response.json is not None
+        self.assertEqual(list(response.json.keys()), ["message"])
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_known_and_unknown_username_produce_identical_password_reset_responses(
+        self, mock_send_email: MagicMock
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            known_username = client.post(
+                PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username})
+            )
+            unknown_username = client.post(
+                PASSWORD_RESET_TOKEN_URL,
+                headers=HEADERS,
+                data=json.dumps({"username": "nonexistent_username@example.com"}),
+            )
+
+        self.assertEqual(known_username.status_code, 200)
+        self.assertEqual(unknown_username.status_code, known_username.status_code)
+        self.assertEqual(unknown_username.data, known_username.data)
+        self.assertEqual(mock_send_email.call_count, 1)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_emailed_password_reset_token_still_resets_the_password(self, mock_send_email: MagicMock) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username}))
+
+            emailed_token = extract_token_from_password_reset_link(mock_send_email)
+            response = client.patch(
+                f"{ACCOUNT_API_URL}/{account.id}",
+                headers=HEADERS,
+                data=json.dumps({"new_password": "new_password", "token": emailed_token}),
+            )
+
+        self.assertEqual(response.status_code, 200)
+        assert response.json is not None
+        self.assertEqual(response.json["id"], account.id)
 
     @mock.patch.object(EmailService, "send_email_for_account")
     def test_given_account_when_creating_password_reset_token_then_created_at_and_updated_at_reflect_creation_time(
@@ -136,14 +220,9 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             response = client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps(reset_password_params))
             assert response.json is not None
 
-            self.assertEqual(response.status_code, 404)
-            self.assertIn("message", response.json)
-            self.assertEqual(
-                response.json["message"],
-                AccountNotFoundError(
-                    f"We could not find an account associated with username: {username}. Please verify it or you can create a new account."
-                ).message,
-            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json, {"message": PASSWORD_RESET_REQUESTED_MESSAGE})
+            self.assertNotIn(username, response.get_data(as_text=True))
             self.assertFalse(mock_send_email.called)
 
     # PATCH /account/:account_id tests
@@ -378,9 +457,8 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             response = client.post(PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps(reset_password_params))
             assert response.json is not None
 
-            self.assertEqual(response.status_code, 201)
-            self.assertTrue(response.json)
-            self.assertIn("id", response.json)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json, {"message": PASSWORD_RESET_REQUESTED_MESSAGE})
 
         self.assertTrue(mock_send_email.called)
         self.assertTrue(mock_send_email.call_args.kwargs["bypass_preferences"])

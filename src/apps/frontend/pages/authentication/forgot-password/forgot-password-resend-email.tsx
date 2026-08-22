@@ -9,6 +9,7 @@ import {
   Text,
   Variant,
 } from 'frontend/components';
+import constant from 'frontend/constants';
 import { useResetPasswordContext } from 'frontend/contexts';
 import { AsyncError } from 'frontend/types';
 import { ButtonType } from 'frontend/types/button';
@@ -47,10 +48,7 @@ const ForgotPasswordResendEmail: React.FC<ForgotPasswordResendEmailProps> = ({
 
   return (
     <Stack gap={Spacing.Md}>
-      <Text>
-        A password reset link has been sent to {username}. Please check your
-        inbox and follow the instructions.
-      </Text>
+      <Text>{constant.PASSWORD_RESET_LINK_SENT_MESSAGE}</Text>
       {!isResendEnabled && (
         <Inline justify="end">
           <Text emphasis={Emphasis.Muted}>

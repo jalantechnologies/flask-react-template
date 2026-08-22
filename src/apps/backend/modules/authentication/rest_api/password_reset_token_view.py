@@ -1,5 +1,3 @@
-from dataclasses import asdict
-
 from flask import jsonify, request
 from flask.typing import ResponseReturnValue
 from flask.views import MethodView
@@ -10,17 +8,17 @@ from modules.authentication.types import CreatePasswordResetTokenParams
 from modules.core.common.types import ActorType, AuditActor
 
 ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
+PASSWORD_RESET_REQUESTED_MESSAGE = "If an account exists for that email, a reset link has been sent."
 
 
 class PasswordResetTokenView(MethodView):
     def post(self) -> ResponseReturnValue:
         request_data = request.get_json()
         password_reset_token_params = CreatePasswordResetTokenParams(**request_data)
-        account_obj = AccountService.get_account_by_username(
+        account = AccountService.get_account_by_username_optional(
             username=password_reset_token_params.username, actor=ANONYMOUS_ACTOR
         )
-        password_reset_token = AuthenticationService.create_password_reset_token(
-            params=account_obj, actor=ANONYMOUS_ACTOR
-        )
-        password_reset_token_dict = asdict(password_reset_token)
-        return jsonify(password_reset_token_dict), 201
+        if account is not None:
+            AuthenticationService.create_password_reset_token(params=account, actor=ANONYMOUS_ACTOR)
+
+        return jsonify({"message": PASSWORD_RESET_REQUESTED_MESSAGE}), 200

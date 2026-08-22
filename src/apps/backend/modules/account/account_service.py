@@ -1,3 +1,5 @@
+from typing import Optional
+
 from modules.account.internal.account_reader import AccountReader
 from modules.account.internal.account_writer import AccountWriter
 from modules.account.types import (
@@ -86,6 +88,10 @@ class AccountService:
     @staticmethod
     def get_account_by_username(*, username: str, actor: AuditActor) -> Account:
         return AccountReader.get_account_by_username(username=username, actor=actor)
+
+    @staticmethod
+    def get_account_by_username_optional(*, username: str, actor: AuditActor) -> Optional[Account]:
+        return AccountReader.get_account_by_username_optional(username=username, actor=actor)
 
     @staticmethod
     def get_account_by_username_and_password(*, params: AccountSearchParams, actor: AuditActor) -> Account:

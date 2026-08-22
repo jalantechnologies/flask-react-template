@@ -23,8 +23,12 @@ from modules.core.common.types import AuditActor
 
 class AccountReader:
     @staticmethod
+    def get_account_by_username_optional(*, username: str, actor: AuditActor) -> Optional[Account]:
+        return AccountRepository.query_one(AccountQuery(username=username), actor=actor)
+
+    @staticmethod
     def get_account_by_username(*, username: str, actor: AuditActor) -> Account:
-        account = AccountRepository.query_one(AccountQuery(username=username), actor=actor)
+        account = AccountReader.get_account_by_username_optional(username=username, actor=actor)
         if account is None:
             raise AccountWithUsernameNotFoundError(username=username)
 
