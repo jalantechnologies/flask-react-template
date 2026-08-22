@@ -69,14 +69,14 @@ class MyBackgroundJob(Job):
 
 ### Job Configuration Options
 
-| Option              | Type   | Default     | Description                             |
-| ------------------- | ------ | ----------- | --------------------------------------- |
-| `queue`             | `str`  | `"default"` | Queue name for job routing              |
-| `max_retries`       | `int`  | `3`         | Maximum retry attempts for failed jobs  |
-| `retry_backoff`     | `bool` | `True`      | Use exponential backoff between retries |
-| `retry_backoff_max` | `int`  | `600`       | Maximum seconds between retries         |
-| `cron_schedule`     | `str`  | `None`      | Cron expression for recurring jobs      |
-| `unique_for_seconds` | `int` | `3600`      | How long a uniqueness lock is held before it expires |
+| Option               | Type   | Default     | Description                                          |
+| -------------------- | ------ | ----------- | ---------------------------------------------------- |
+| `queue`              | `str`  | `"default"` | Queue name for job routing                           |
+| `max_retries`        | `int`  | `3`         | Maximum retry attempts for failed jobs               |
+| `retry_backoff`      | `bool` | `True`      | Use exponential backoff between retries              |
+| `retry_backoff_max`  | `int`  | `600`       | Maximum seconds between retries                      |
+| `cron_schedule`      | `str`  | `None`      | Cron expression for recurring jobs                   |
+| `unique_for_seconds` | `int`  | `3600`      | How long a uniqueness lock is held before it expires |
 
 ### Cron Schedule Format
 
