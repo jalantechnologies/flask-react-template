@@ -58,6 +58,10 @@ npm run lint:md
 
 Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend tooling and `npm install` for frontend dependencies.
 
+Backend tests run against a real MongoDB. `make run-lint` runs `mypy` (strict) and a `pylint` cyclic-import
+check; `make run-format` and `make run-format-check` run autoflake, isort, and black (line length 120). Keep
+all of these green before pushing.
+
 ## Architecture Principles
 
 ### Backend Architecture
@@ -231,12 +235,78 @@ slower to review, harder to revert cleanly, and hides the change the reviewer wa
 - **DON'T** import from another module's `internal/` packages.
 - **DO** rely on the public service API (`*_service.py`) or shared types.
 
+The backend (`src/apps/backend`) is organised into modules, one per domain concept (account, task,
+authentication, notification, and so on). A module exposes a `<module>_service.py` as its public API;
+other modules call only the service, never a module's internals. Inside a module:
+
+- `internal/store/` — the persistence layer: a `*_model.py` (BSON dataclass) and a `*_repository.py`.
+- `internal/*_reader.py` / `internal/*_writer.py` — business reads and writes.
+- `internal/*_util.py` — pure helpers (hashing, generation, validation).
+- `rest_api/` — Flask blueprint, router, and view.
+- `types.py` / `errors.py` — DTOs (`@dataclass(frozen=True)`) and `AppError` subclasses.
+
 #### 16. Database Indexes & Data Access
 
 - Ensure MongoDB indexes cover every `find`, `find_one`, aggregation `$match`, or `sort` pattern.
 - Declare indexes in the repository layer (`internal/store/*_repository.py`).
-- A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/core/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
-- No MongoDB syntax crosses a repository's public surface. Callers pass a typed query object, never a `{"field": ...}` filter, an `ObjectId`, or a `$set`; every verb returns a domain dataclass, never a raw BSON document.
+
+**Repositories inherit generic CRUD.** A repository extends `ApplicationRepository[Entity, Query]`
+(in `modules/core/repository.py`) and inherits the generic CRUD surface. Do not re-implement these per
+repository:
+
+- `create(entity)` — insert one, return the stored entity.
+- `find(id)` / `find_many(ids)` — read by primary id.
+- `query(params)` / `query_one(params)` — read many / at-most-one by a typed query object.
+- `query_paginated(params, pagination)` — a page of `query()` results plus totals (`PaginationResult`).
+  This is the only place pagination math lives.
+- `count(params)` — how many match a typed query.
+- `update(id, fields)` — patch fields on one by id, return the refreshed entity.
+- `update_fields(id, fields)` — same `$set` without the read-back; returns `True` if a document matched.
+  Use this in writers that patch and discard the result, one round-trip instead of two.
+- `delete(id)` — remove one by id.
+
+A malformed id is treated as "no such document" (the verb returns `None`/`False`), not an error.
+
+A concrete repository declares only what is specific to its collection:
+
+- `collection_name` — the Mongo collection name.
+- `on_init_collection(collection)` — declares indexes and JSON-Schema validation.
+- `from_doc(doc) -> Entity` — hydrates a stored document into the domain entity. **Required.**
+- `to_doc(entity) -> StoredDocument` — serializes an entity for insertion. Override when the default is
+  not enough, for example when a separate `*Model` supplies stored-only fields (`active`, timestamps)
+  the domain entity omits.
+- `_to_filter(params) -> StoreFilter` — maps the module's typed query object to a store filter. Required
+  only if the repository supports `query()`; a query-less repository (singleton, write-only log) declares
+  `NoQuery` as its query type.
+- `_to_sort(params) -> Optional[SortSpec]` — optional default ordering for `query()`/`query_paginated()`.
+
+**No MongoDB syntax may cross the public surface.** Callers never write a `{"field": ...}` filter, an
+`ObjectId`, or a `$set`. A field-combination read is a typed query object, `query(AccountQuery(username=x))`
+and not `query({"username": x})`, and `_to_filter` is the single place domain fields become store syntax.
+Every verb returns a domain dataclass (via `from_doc`), never a raw BSON document. The only intentionally
+untyped values are the storage-boundary aliases `StoredDocument` / `StoreFilter` / `FieldUpdates` /
+`SortSpec`. Use those names, not bare `dict[str, Any]`, so the boundary is visible.
+
+**A repository is pure storage.** Thin domain reads and writes do NOT live on it. They live on the module's
+reader (reads) or writer (writes), which call the verbs. `AccountReader.get_account_by_username` is
+`AccountRepository.query_one(AccountQuery(username=username))`; the account writer's soft-delete is
+`AccountRepository.update_fields(id, {"active": False, ...})`. Do not add `find_by_<field>` /
+`update_<field>` / `count_<thing>` methods to a repository, put them on the reader or writer.
+
+The only methods that stay on a repository beyond the verbs are operations no CRUD verb can express, which is
+exactly the code a storage swap would rewrite: an upsert or update by a natural key
+(`AccountNotificationPreferencesRepository.update_by_account_id`), a create that keys store-shaped fields the
+domain entity does not carry (`PasswordResetTokenRepository.create_for_account` keys `account` as an
+`ObjectId`), an atomic `$inc`/`$push`, an aggregation, a `distinct`. Implement these with the protected
+helpers (`_query`, `_find_one`, `_count`, `_to_object_id`) where possible; reach for the raw `collection()`
+only when the operation genuinely has no helper form.
+
+Soft-deleted collections (account, task, notification preferences) carry an `active` flag. Their query
+objects default `active=True`, so reads see only live records and the soft-delete is a single
+`update_fields(id, {"active": False, ...})` on the writer.
+
+> The generic base uses Python 3.12 type-parameter syntax (`class ApplicationRepository[Entity, Query]:`,
+> `type StoredDocument = ...`). The backend runs and is checked on Python 3.12.
 
 #### 17. API Design
 
@@ -289,15 +359,22 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - A component's public props must not accept a `className` escape hatch. className and Tailwind classes live inside components only.
 - Shared components and layout primitives live under `src/apps/frontend/components`, never in page folders.
 - Every component declares an optional `testId?: string` and renders it as `data-testid` on its root element, icons and decorative primitives included. Tests address the UI through stable `data-testid` hooks, never brittle text or class selectors.
-- Every component is accessible. An icon or shape that carries meaning exposes an accessible name (`ariaLabel` / `label`) and drops `aria-hidden`; a purely decorative glyph stays `aria-hidden`. An interactive element is a real semantic element (`button`, `a`, `input`) or carries the correct `role` plus keyboard handling. A form control associates its label and its error (`htmlFor` / `aria-describedby` / `aria-invalid`).
+- Every component is accessible. An icon or shape that carries meaning exposes an accessible name (`ariaLabel` / `label`) and drops `aria-hidden`; a purely decorative glyph stays `aria-hidden`. An interactive element is a real semantic element (`button`, `a`, `input`) or carries the correct `role` plus keyboard handling. A form control associates its label and its error or description (`htmlFor` / `aria-describedby` / `aria-invalid`), and signals busy, expanded, or selected state with the right `aria-*` attribute. A component whose meaning or interactivity is not reachable by a screen reader or keyboard is incomplete; review rejects it.
+- Reuse a catalogue component before writing new markup. If the component you need does not exist, build it under `frontend/components`, drive it with tokens, and export it from the barrel. Break long components and deeply nested JSX into smaller, named pieces.
 
-#### 24. Data Fetching & State
+#### 24. File Naming and Language Use
+
+- All frontend files (TypeScript, TSX) use kebab-case names, for example `panel-header.tsx`, `chat-bubble-icon.tsx`. Never PascalCase or camelCase for file names. Split a TSX file that holds several independently reusable components into kebab-case files (`add-user-modal.tsx`, `reset-password-modal.tsx`).
+- TypeScript interfaces and types use camelCase fields. No snake_case properties on frontend types.
+- Use `async`/`await` for all async work, never `.then()` / `.catch()` chains.
+
+#### 25. Data Fetching & State
 
 - Fetch data through service modules under `services/` or `api/`.
 - Normalize API responses into typed models before storing them in state.
 - Avoid performing side-effectful data fetching inside render without hooks.
 
-#### 25. List Rendering Performance
+#### 26. List Rendering Performance
 
 - Batch API requests when rendering collections. Never fire N network calls for N items within a render loop.
 
@@ -336,7 +413,11 @@ Each rule below is the generic form of a real, shipped, exploitable bug. Follow 
 
 - Add or update pytest coverage for new backend endpoints or services (`tests/modules/...`).
 - Place integration tests alongside module directories under `tests/modules/<module>/`.
-- Target ≥60% coverage (80% preferred). Pytest runs with coverage reporting via `npm run test` or `make run-test`.
+- CI enforces a hard coverage floor and fails the build below it: **80% backend**, **35% frontend**. These
+  are floors, not targets. The `test-backend` and `test-frontend` jobs each run `CodeCoverageSummary` with
+  `fail_below_min: true` and fail the check on a shortfall. Backend tests run with coverage via `npm run test`
+  or `make run-test`; the frontend suite runs via `npm run test:frontend -- --coverage`. See
+  [Testing Guide](docs/testing.md) for why each floor sits where it does and how to move one.
 
 ### Never mock MongoDB or Redis
 
