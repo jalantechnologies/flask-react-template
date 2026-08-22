@@ -1,10 +1,18 @@
 from pymongo.collection import Collection
-from pymongo.errors import OperationFailure
+from pymongo.errors import DuplicateKeyError, OperationFailure
 
+from modules.account.errors import AccountWithUserNameExistsError
 from modules.account.internal.store.account_model import AccountDocument, AccountModel
 from modules.account.types import Account, AccountQuery
+from modules.core.common.types import AuditActor
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
 from modules.logger.logger import Logger
+
+NAMESPACE_NOT_FOUND_ERROR_CODE = 26
+
+LEGACY_ACTIVE_USERNAME_INDEX_NAME = "active_username_index"
+ACTIVE_USERNAME_UNIQUE_INDEX_NAME = "active_username_unique"
+ACTIVE_USERNAME_PARTIAL_FILTER = {"active": True, "username": {"$gt": ""}}
 
 ACCOUNT_VALIDATION_SCHEMA = {
     "$jsonSchema": {
@@ -35,7 +43,7 @@ class AccountRepository(ApplicationRepository[Account, AccountQuery]):
     @classmethod
     def on_init_collection(cls, collection: Collection) -> bool:
         collection.create_index("username")
-        collection.create_index([("active", 1), ("username", 1)], name="active_username_index")
+        cls._ensure_active_username_is_unique(collection)
         collection.create_index([("active", 1), ("phone_number", 1)], name="active_phone_number_index")
 
         add_validation_command = {
@@ -47,11 +55,37 @@ class AccountRepository(ApplicationRepository[Account, AccountQuery]):
         try:
             collection.database.command(add_validation_command)
         except OperationFailure as e:
-            if e.code == 26:  # NamespaceNotFound MongoDB error code
+            if e.code == NAMESPACE_NOT_FOUND_ERROR_CODE:
                 collection.database.create_collection(cls.collection_name, validator=ACCOUNT_VALIDATION_SCHEMA)
             else:
                 Logger.error(message=f"OperationFailure occurred for collection accounts: {e.details}")
         return True
+
+    @classmethod
+    def _ensure_active_username_is_unique(cls, collection: Collection) -> None:
+        try:
+            collection.create_index(
+                [("active", 1), ("username", 1)],
+                name=ACTIVE_USERNAME_UNIQUE_INDEX_NAME,
+                unique=True,
+                partialFilterExpression=ACTIVE_USERNAME_PARTIAL_FILTER,
+            )
+        except OperationFailure as e:
+            Logger.error(
+                message=f"Could not build the unique username index on collection accounts, so duplicate active "
+                f"usernames remain possible; resolve the duplicate usernames and restart: {e.details}"
+            )
+            return
+
+        if LEGACY_ACTIVE_USERNAME_INDEX_NAME in collection.index_information():
+            collection.drop_index(LEGACY_ACTIVE_USERNAME_INDEX_NAME)
+
+    @classmethod
+    def create(cls, entity: Account, *, actor: AuditActor) -> Account:
+        try:
+            return super().create(entity, actor=actor)
+        except DuplicateKeyError as e:
+            raise AccountWithUserNameExistsError(username=entity.username) from e
 
     @classmethod
     def from_doc(cls, doc: StoredDocument) -> Account:
