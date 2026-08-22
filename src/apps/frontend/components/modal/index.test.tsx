@@ -15,8 +15,27 @@ describe('Modal', () => {
 
     const dialog = screen.getByTestId('modal');
     expect(dialog).toHaveAttribute('open');
+    expect(dialog).toHaveProperty('open', true);
     expect(screen.getByText('Edit task')).toBeVisible();
     expect(screen.getByText('Task details')).toBeVisible();
+  });
+
+  it('drops the open attribute when it unmounts', () => {
+    const { unmount } = render(
+      <Modal testId="modal" title="Edit task" onClose={vi.fn()}>
+        <p>Task details</p>
+      </Modal>,
+    );
+
+    const dialog = screen.getByTestId('modal');
+    const closed = vi.fn();
+    dialog.addEventListener('close', closed);
+
+    unmount();
+
+    expect(dialog).not.toHaveAttribute('open');
+    expect(dialog).toHaveProperty('open', false);
+    expect(closed).toHaveBeenCalledTimes(1);
   });
 
   it('renders a second time without leaking the first render', () => {
