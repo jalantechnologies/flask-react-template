@@ -73,7 +73,8 @@ class PasswordResetTokenRepository(ApplicationRepository[PasswordResetToken, Pas
         store_filter: StoreFilter = {}
         if params.account_id is not None:
             # The account reference is stored as an ObjectId, so the domain account id is converted here.
-            store_filter["account"] = ObjectId(params.account_id)
+            object_id = cls._to_object_id(params.account_id)
+            store_filter["account"] = object_id if object_id is not None else {"$in": []}
         return store_filter
 
     @classmethod

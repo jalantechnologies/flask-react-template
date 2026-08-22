@@ -12,6 +12,10 @@ from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
+from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
+    PasswordResetTokenRepository,
+)
+from modules.authentication.types import PasswordResetTokenQuery
 from modules.notification.email_service import EmailService
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
@@ -380,3 +384,30 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
 
         self.assertTrue(mock_send_email.called)
         self.assertTrue(mock_send_email.call_args.kwargs["bypass_preferences"])
+
+    def test_given_malformed_account_id_when_reading_password_reset_token_then_not_found_is_raised(self) -> None:
+        with self.assertRaises(PasswordResetTokenNotFoundError):
+            AuthenticationService.get_password_reset_token_by_account_id(account_id="not-a-real-id", actor=TEST_ACTOR)
+
+    def test_given_malformed_account_id_when_querying_password_reset_tokens_then_no_documents_match(self) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+        token = PasswordResetTokenUtil.generate_password_reset_token()
+        PasswordResetTokenWriter.create_password_reset_token(account.id, token, actor=TEST_ACTOR)
+
+        malformed_query = PasswordResetTokenQuery(account_id="not-a-real-id")
+
+        self.assertIsNone(PasswordResetTokenRepository.query_one(malformed_query, actor=TEST_ACTOR))
+        self.assertEqual(PasswordResetTokenRepository.query(malformed_query, actor=TEST_ACTOR), [])
+        self.assertEqual(PasswordResetTokenRepository.count(malformed_query), 0)
+        self.assertEqual(PasswordResetTokenRepository.count(PasswordResetTokenQuery(account_id=account.id)), 1)
+
+    def test_given_malformed_account_id_when_verifying_password_reset_token_then_not_found_is_raised(self) -> None:
+        with self.assertRaises(PasswordResetTokenNotFoundError):
+            AuthenticationService.verify_password_reset_token(
+                account_id="not-a-real-id", token="token", actor=TEST_ACTOR
+            )
