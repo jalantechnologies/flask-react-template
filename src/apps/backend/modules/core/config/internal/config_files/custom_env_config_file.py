@@ -22,23 +22,31 @@ class CustomEnvConfig:
         if not isinstance(data, dict):
             return data
 
-        updated_data = {}
+        updated_data = data.copy()
 
         for key, value in data.items():
-            if isinstance(value, dict):
-                result = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
-                if result is not None:
-                    updated_data[key] = result
-            elif isinstance(value, str):
-                result = ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
-                if result is not None:
-                    updated_data[key] = result
+            if not isinstance(value, (dict, str)):
+                continue
 
-                result = CustomEnvConfig._search_and_get_str_value_from_env(value)
-                if result is not None:
-                    updated_data[key] = result
+            resolved = CustomEnvConfig._resolve_override(value)
+            if resolved is None:
+                del updated_data[key]
+            else:
+                updated_data[key] = resolved
 
         return updated_data
+
+    @staticmethod
+    def _resolve_override(value: Any) -> Any:
+        if isinstance(value, dict):
+            resolved = CustomEnvConfig._search_and_replace_dict_value_with_env(value)
+            return None if resolved == {} else resolved
+
+        env_value = CustomEnvConfig._search_and_get_str_value_from_env(value)
+        if env_value is not None:
+            return env_value
+
+        return ConfigUtil.read_value_from_file(f"{CustomEnvConfig.SECRETS_DIR}/{value}")
 
     @staticmethod
     def _search_and_replace_dict_value_with_env(value: dict[str, Any]) -> Any:
