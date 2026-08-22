@@ -84,7 +84,7 @@ class AuditLogRepository:
     @classmethod
     def create_many(cls, entities: list[AuditLogEntry]) -> list[AuditLogEntry]:
         # One round trip for a batch of entries so a multi-document read audits in a single insert
-        # rather than one per document (see AGENTS.md §13 on N+1 access).
+        # rather than one per document (see AGENTS.md §20 on N+1 access).
         docs = [cls._to_doc(entity) for entity in entities]
         result = cls.collection().insert_many([dict(doc) for doc in docs])
         return [cls._from_doc({**doc, "_id": inserted_id}) for doc, inserted_id in zip(docs, result.inserted_ids)]
