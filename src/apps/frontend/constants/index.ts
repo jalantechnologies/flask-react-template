@@ -11,6 +11,10 @@ const constant = {
   PASSWORD_MATCH_VALIDATION_ERROR:
     "The confirmed password doesn't match the chosen password.",
   PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_RESET_LINK_RESENT_MESSAGE:
+    'If an account exists for that email, a reset link has been sent again. Please check your inbox.',
+  PASSWORD_RESET_LINK_SENT_MESSAGE:
+    'If an account exists for that email, a reset link has been sent. Please check your inbox and follow the instructions.',
   PASSWORD_VALIDATION_ERROR: 'Please enter at least 8 characters long password',
   PHONE_NUMBER_BASED_AUTHENTICATION: 'PHONE',
   PHONE_VALIDATION_ERROR: 'Please enter a valid phone number',
