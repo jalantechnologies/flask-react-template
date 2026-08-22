@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "deb8a52e47bfd10a6f0a584095cf33ad2c35ff3f234e79eb1953bb4d33a8860c"
+            "sha256": "99f27b613af1e9beada7376e16bf10a24cb2ace25a1c373fc64f44a184e9a12e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -390,15 +390,6 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==0.3.0"
-        },
-        "datadog-api-client": {
-            "hashes": [
-                "sha256:09895285879d4b3c4c7084ce0063d7b53e275b11818127f5f53a926803836d0c",
-                "sha256:212747aa448ba09d30c71395a035616dac393651f34652824aee8512c21b633d"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.7'",
-            "version": "==2.31.0"
         },
         "dnspython": {
             "hashes": [

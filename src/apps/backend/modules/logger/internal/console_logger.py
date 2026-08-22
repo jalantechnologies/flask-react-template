@@ -1,16 +1,21 @@
 import logging
+import sys
 
 from modules.logger.internal.base_logger import BaseLogger
+from modules.logger.internal.json_formatter import JsonFormatter
+from modules.logger.internal.log_level import LogLevel
 
 
 class ConsoleLogger(BaseLogger):
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        configured_level = LogLevel.get_level()
 
-        console_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        console_handler.setFormatter(formatter)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(configured_level)
+
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(configured_level)
+        console_handler.setFormatter(JsonFormatter())
 
         self._attach_handler(self.logger, console_handler)
 

@@ -72,16 +72,14 @@ Required in **every deployed environment** (preview, production). This key signs
 | ---------------------------- | ---------------------------- | -------------------------------------------- |
 | `ACCOUNTS_TOKEN_SIGNING_KEY` | `accounts.token_signing_key` | High-entropy JWT signing key, unique per env |
 
-### Backend Datadog Logging
+### Backend Logging
 
-Required for backend log forwarding to Datadog (when `logger.transports` includes `'datadog'`):
+The backend writes logs to stdout and never ships them itself, so no API key is needed. Both keys below are optional and only override the values in `default.yml`:
 
-| Doppler Secret      | Config Key          | Description                          |
-| ------------------- | ------------------- | ------------------------------------ |
-| `DATADOG_API_KEY`   | `datadog.api_key`   | Datadog API key for backend logging  |
-| `DATADOG_SITE_NAME` | `datadog.site_name` | Datadog site (e.g., `datadoghq.com`) |
-| `DATADOG_APP_NAME`  | `datadog.app_name`  | Application name in Datadog          |
-| `DATADOG_LOG_LEVEL` | `datadog.log_level` | Log level (e.g., `info`, `debug`)    |
+| Doppler Secret     | Config Key       | Description                                             |
+| ------------------ | ---------------- | ------------------------------------------------------- |
+| `LOG_LEVEL`        | `logger.level`   | Minimum level to emit (`debug`, `info`, `warning`, ...) |
+| `LOG_SERVICE_NAME` | `logger.service` | Service name stamped on every log line                  |
 
 ### Frontend Datadog RUM & Browser Logs
 

@@ -1,50 +1,55 @@
-from typing import Union
-
 from modules.config.config_service import ConfigService
 from modules.logger.internal.console_logger import ConsoleLogger
-from modules.logger.internal.datadog_logger import DatadogLogger
-from modules.logger.internal.types import LoggerTransports
+from modules.logger.internal.types import RETIRED_LOGGER_TRANSPORTS, LoggerTransports
 
 
 class Loggers:
-    _LOGGERS: list[Union[ConsoleLogger, DatadogLogger]] = []
+    _LOGGERS: list[ConsoleLogger] = []
 
     @staticmethod
     def initialize_loggers() -> None:
         if Loggers._LOGGERS:
             return
-        logger_transports = ConfigService[list[str]].get_value(key="logger.transports")
-        for logger_transport in logger_transports:
-            if logger_transport == LoggerTransports.CONSOLE:
-                Loggers._LOGGERS.append(Loggers.__get_console_logger())
 
-            if logger_transport == LoggerTransports.DATADOG:
-                Loggers._LOGGERS.append(Loggers.__get_datadog_logger())
+        Loggers._LOGGERS.append(ConsoleLogger())
+
+        for logger_transport in Loggers.__configured_transports():
+            if logger_transport in RETIRED_LOGGER_TRANSPORTS:
+                Loggers.warn(
+                    message=(
+                        f"logger.transports lists '{logger_transport}', which no longer exists. "
+                        f"Logs are written to stdout as JSON and collected by the platform. "
+                        f"Set logger.transports to ['{LoggerTransports.CONSOLE}']."
+                    )
+                )
+            elif logger_transport != LoggerTransports.CONSOLE:
+                Loggers.warn(message=f"logger.transports lists unknown transport '{logger_transport}'; ignoring it.")
 
     @staticmethod
     def info(*, message: str) -> None:
-        [logger.info(message=message) for logger in Loggers._LOGGERS]
+        for logger in Loggers._LOGGERS:
+            logger.info(message=message)
 
     @staticmethod
     def debug(*, message: str) -> None:
-        [logger.debug(message=message) for logger in Loggers._LOGGERS]
+        for logger in Loggers._LOGGERS:
+            logger.debug(message=message)
 
     @staticmethod
     def error(*, message: str) -> None:
-        [logger.error(message=message) for logger in Loggers._LOGGERS]
+        for logger in Loggers._LOGGERS:
+            logger.error(message=message)
 
     @staticmethod
     def warn(*, message: str) -> None:
-        [logger.warn(message=message) for logger in Loggers._LOGGERS]
+        for logger in Loggers._LOGGERS:
+            logger.warn(message=message)
 
     @staticmethod
     def critical(*, message: str) -> None:
-        [logger.critical(message=message) for logger in Loggers._LOGGERS]
+        for logger in Loggers._LOGGERS:
+            logger.critical(message=message)
 
     @staticmethod
-    def __get_console_logger() -> ConsoleLogger:
-        return ConsoleLogger()
-
-    @staticmethod
-    def __get_datadog_logger() -> DatadogLogger:
-        return DatadogLogger()
+    def __configured_transports() -> list[str]:
+        return ConfigService[list[str]].get_value(key="logger.transports", default=[LoggerTransports.CONSOLE])

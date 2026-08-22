@@ -1,7 +1,7 @@
 logger:
   transports:
     - 'console'
-    - 'datadog'
+  level: 'info'
 
 sms:
   enabled: true
