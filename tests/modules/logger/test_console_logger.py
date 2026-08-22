@@ -120,12 +120,13 @@ class TestConsoleLogger(BaseTestLogger):
     @contextmanager
     def __configured_value(self, *, key: str, value: object) -> Iterator[None]:
         overridden_key = key
-        real_get_value = ConfigService.get_value
+        config_manager = ConfigService.config_manager
 
         def get_value(key: str, default: object = None) -> object:
             if key == overridden_key:
                 return value
-            return real_get_value(key=key, default=default)
+            resolved = config_manager.get(key)
+            return default if resolved is None else resolved
 
         with patch.object(ConfigService, "get_value", get_value):
             yield
