@@ -120,46 +120,148 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 - Audit existing modules, services, and hooks before writing new ones.
 - Extract shared logic rather than duplicating code across modules or components.
 
+#### 8. No Swallowed Errors
+
+An `except` block does one of three things and never a fourth:
+
+1. Re-raises.
+2. Raises a different typed error in its place.
+3. Logs enough detail to act on and continues, for a reason the surrounding code makes obvious.
+
+Catching broadly is fine when the handler re-raises or converts. The problem is a handler that ends
+without raising and without logging, because the failure then looks exactly like success to everything
+upstream.
+
+`AccessTokenUtil.verify_access_token` is the converting form: it catches the library's
+`jwt.exceptions.DecodeError` and `jwt.ExpiredSignatureError` and raises `AccessTokenInvalidError` /
+`AccessTokenExpiredError`, so callers depend on our error types rather than on JWT internals.
+
+The third form needs the surrounding code to justify it. In `AccountView.get`, a missing
+`AccountNotificationPreferencesNotFoundError` is caught and passed over because the preferences block
+is an optional add-on to the response and its absence is a real state, not a failure. That is
+deliberate, and it is visible from the two lines around it.
+
+**Background jobs are a special case.** `Job` (`modules/core/job.py`) registers its Celery task with
+`autoretry_for=(Exception,)`. An exception leaving `perform` is retried automatically, the `job_run`
+row is marked `failed`, and a persistent failure stays visible. A job that catches its own error and
+returns normally tells Celery the work succeeded: no retry, a `job_run` row marked `succeeded`, and
+nothing anywhere saying the work did not happen. Let the exception out of `perform`, or log it and be
+explicit that you are choosing not to retry.
+
+#### 9. Nothing Ships Without a Caller
+
+Every public name a change adds has a caller in the same change. Before opening a pull request, grep
+for each new public name. If the only matches are the definition and its own passthrough (a service
+method that only forwards to a reader nobody else calls), delete both.
+
+Unused surface is not free. The next reader assumes it is load bearing, works around it, keeps it
+compiling, and writes tests for it. A speculative helper added "for the next feature" costs more to
+carry than it costs to write again when the next feature actually arrives.
+
+#### 10. Imports Go at the Top
+
+Never import inside a function body. A module's import list is the honest statement of what it depends
+on; an import buried in a method hides the dependency and turns a load-time error into a call-time one
+that only shows up on the path that reaches it.
+
+An import inside a function is almost always working around a circular import. Fix the cycle instead:
+move the shared type into `modules/core/common/types.py`, or invert the direction so the lower layer
+stops importing the higher one. `make run-lint` runs a `pylint` cyclic-import check for exactly this
+reason.
+
+The same applies to `if TYPE_CHECKING:` blocks added so a module can annotate a type it is not allowed
+to import at runtime. That is the same cycle, deferred to the type checker.
+
+#### 11. An Entity Has One Shape
+
+One type per entity, used everywhere that entity is read, with every field always populated.
+
+- No optional fields added because one caller happens to know less. An `Optional` on a domain type
+  should mean the value is genuinely absent in the domain, the way `Account.phone_number` is optional
+  because an account created by username has no phone number.
+- No second near-identical class. `Task` is the task, whether it came from a list, a detail read, or a
+  create.
+
+If a read genuinely needs more than the entity, that is a composition named for what it adds, and it
+holds the entity rather than being a variant of it. Never name it after the route or the caller:
+`TaskWithAssignee`, not `TaskListItem` or `DashboardTask`. A type named after its consumer stops being
+reusable the moment a second consumer appears.
+
+#### 12. A Module Names What It Serves, Never Who Calls It
+
+A view, service method, or file with a role in its name states an assumption it has no business
+holding. Access control is decided by middleware at the boundary, and the domain layer should not
+encode a guess about it.
+
+The same goes for URLs: a path segment names a resource, never a permission or an audience.
+`/admin/accounts` is wrong. Our routes are `/accounts/<account_id>` and
+`/accounts/<account_id>/tasks`: the noun is the resource, and `enforce_account_ownership` decides who
+gets an answer. When the permission model changes, a resource-named route keeps working and a
+role-named route has to be renamed everywhere.
+
+#### 13. Name the Mutation
+
+A function that changes something outside itself says so in its name. Use a verb that names the
+change: `create`, `write`, `update`, `delete`, `send`, `publish`, `archive`, `record`, `enqueue`,
+`revoke`. `AccountWriter.create_account_by_username_and_password` and
+`AuditService.record_audit` read as the writes they are.
+
+Functions that compute and return without touching anything can be named for what they answer:
+`AccountReader.get_account_by_username`, `AccessTokenUtil.verify_access_token`.
+
+The exception is framework entry points, which keep the names their frameworks gave them. `Job.perform`
+stays `perform`.
+
+#### 14. A Pull Request Contains Only What Its Issue Asked For
+
+If you trip over an unrelated problem, file it. Do not fix it here.
+
+The check is mechanical: run `git diff --stat origin/main...HEAD` and confirm every file in the list
+belongs to the issue. A file you cannot justify is the signal.
+
+Being right that the other problem is real is not the question. Where it gets fixed is. A mixed diff is
+slower to review, harder to revert cleanly, and hides the change the reviewer was asked to look at.
+
 ---
 
 ### Backend-Specific Guidelines
 
-#### 8. Module Independence
+#### 15. Module Independence
 
 - **DON'T** import from another module's `internal/` packages.
 - **DO** rely on the public service API (`*_service.py`) or shared types.
 
-#### 9. Database Indexes & Data Access
+#### 16. Database Indexes & Data Access
 
 - Ensure MongoDB indexes cover every `find`, `find_one`, aggregation `$match`, or `sort` pattern.
 - Declare indexes in the repository layer (`internal/store/*_repository.py`).
 - A repository is pure storage. It inherits the CRUD verbs from `ApplicationRepository` (`modules/core/repository.py`); don't add `find_by_<field>` / `update_<field>` / `count_<thing>` methods—those belong on the module's reader or writer.
 - No MongoDB syntax crosses a repository's public surface. Callers pass a typed query object, never a `{"field": ...}` filter, an `ObjectId`, or a `$set`; every verb returns a domain dataclass, never a raw BSON document.
 
-#### 10. API Design
+#### 17. API Design
 
 - Favor RESTful CRUD semantics: `GET`, `POST`, `PATCH`, `DELETE` on resource nouns.
 - Provide a single `update` method per resource that accepts a well-defined DTO instead of field-specific methods.
 
-#### 11. Business Logic Placement
+#### 18. Business Logic Placement
 
 - Keep business rules in the module, not in an execution layer. Avoid embedding domain logic inside Flask views, routers, workers, or CLI scripts—delegate to the module's service.
 - Service methods are thin: they call the right reader or writer. Logic needed only internally (password hashing, OTP generation, validation) lives in the module's `internal/*_writer.py` or `*_util.py`, not in the service itself.
 - Build a typed object from a request body with a `from_dict()`-style factory on the DTO (`types.py`), not with parsing code in the view.
 
-#### 12. Background Jobs
+#### 19. Background Jobs
 
 - A **job** is the unit of async work; a **worker** is the Celery process that runs it. Define jobs in the public `modules/<module>/jobs/` package of the domain that owns them, inheriting from `Job` (`modules/core/job.py`). Do not put them under `internal/`.
 - The Celery app object lives in `modules/core/celery_app.py`. The process entrypoints are `web_app.py` (gunicorn `web_app:app`) and `worker_app.py` (celery `-A worker_app worker|beat|flower`); both import downward into modules. `JobRegistry` discovers jobs by importing every `modules/*/jobs/` package and registering each immediate `Job` subclass, so registration happens at entrypoint import, before the worker snapshots its task table.
 - Use cron schedules for recurring tasks (e.g., `cron_schedule = "*/10 * * * *"`). Cron entries persist to the RedBeat Redis schedule.
-- Every execution records a `job_run` row (job name, redacted arguments, start/end time, status `running`→`succeeded|failed`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure; the run's id becomes the job's audit actor (see §14). `perform` receives an `actor: AuditActor` keyword and threads it into every repository call so the writes attribute to that run.
+- Every execution records a `job_run` row (job name, redacted arguments, start/end time, status `running`→`succeeded|failed`, retry count). The `Job` base creates it at the start of the run and finalizes it on completion or failure; the run's id becomes the job's audit actor (see §21). `perform` receives an `actor: AuditActor` keyword and threads it into every repository call so the writes attribute to that run.
 
-#### 13. Query Efficiency
+#### 20. Query Efficiency
 
 - Guard against N+1 queries by batching lookups or using aggregation pipelines.
 - Push filtering into Mongo queries instead of post-processing large in-memory lists.
 
-#### 14. Auditing (SOC2)
+#### 21. Auditing (SOC2)
 
 - Every write through `ApplicationRepository` (`create`, `update`, `update_fields`, `delete`) is audited automatically. You do not add audit calls in views, services, readers, or writers — the base repository records the resource type, resource id, actor, action, and (on update) the changed fields. Keep audit code out of the execution and domain layers.
 - Every mutating repository method takes a required `actor: AuditActor` keyword argument, threaded explicitly from the boundary through the service and writer. There is no ambient context; the type checker proves at compile time that no write happens without an actor. Choose the actor by whether identity is proven at the write: `AuditActor(ActorType.ACCOUNT, account_id)` when the credential/token in hand identifies an account (authenticated mutations, login OTP verify and access-token creation, password-reset completion); `AuditActor(ActorType.JOB, job_run_id)` for a background job execution, where the id is the `job_run` record for that run so every write the job makes joins back to a concrete run (the `Job` base builds this actor and passes it into `perform`, never a class name); `AuditActor(ActorType.WORKER, "<name>")` for a seed or system flow with no job run, and for the `job_run` record's own first write before its id exists; `AuditActor(ActorType.ANONYMOUS, None)` for a request with no proven identity yet (signup, OTP request/creation, forgot-password token request). There is no opt-out — completeness is the point.
@@ -171,7 +273,7 @@ Use `pipenv install --dev` (from `src/apps/backend`) to bootstrap backend toolin
 
 ### Frontend-Specific Guidelines
 
-#### 14. Styling Practices (Design System)
+#### 22. Styling Practices (Design System)
 
 The frontend uses a token-driven design system. The full contract is in [Frontend Design System](docs/frontend-design-system.md). In review:
 
@@ -179,7 +281,7 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - **DON'T** reach for raw Tailwind spacing or color on a page. Use layout primitives (`Stack`, `Inline`, `Grid`) with `Spacing` gap tokens, and the semantic theme colors in `tailwind.config.js`.
 - **DO** assemble pages from design-system components imported from `frontend/components`.
 
-#### 15. Component Contracts & Variants
+#### 23. Component Contracts & Variants
 
 - Presentation is selected through tokens — `variant`, `size`, `gap` — not class strings. A look an existing component does not offer is a missing variant: add it to the component, do not inline it on the page.
 - Interfaces are idiomatic, not consumer-shaped. Follow shadcn / Radix / Bootstrap / MUI: `variant` for status colour (the `Status` token), native events on form `onChange`, `checked` / `onCheckedChange` for `Switch` and `Checkbox`, `src` / `fallback` for `Avatar`, `DataTable` for the data grid.
@@ -189,13 +291,13 @@ The frontend uses a token-driven design system. The full contract is in [Fronten
 - Every component declares an optional `testId?: string` and renders it as `data-testid` on its root element, icons and decorative primitives included. Tests address the UI through stable `data-testid` hooks, never brittle text or class selectors.
 - Every component is accessible. An icon or shape that carries meaning exposes an accessible name (`ariaLabel` / `label`) and drops `aria-hidden`; a purely decorative glyph stays `aria-hidden`. An interactive element is a real semantic element (`button`, `a`, `input`) or carries the correct `role` plus keyboard handling. A form control associates its label and its error (`htmlFor` / `aria-describedby` / `aria-invalid`).
 
-#### 16. Data Fetching & State
+#### 24. Data Fetching & State
 
 - Fetch data through service modules under `services/` or `api/`.
 - Normalize API responses into typed models before storing them in state.
 - Avoid performing side-effectful data fetching inside render without hooks.
 
-#### 17. List Rendering Performance
+#### 25. List Rendering Performance
 
 - Batch API requests when rendering collections. Never fire N network calls for N items within a render loop.
 
@@ -235,6 +337,61 @@ Each rule below is the generic form of a real, shipped, exploitable bug. Follow 
 - Add or update pytest coverage for new backend endpoints or services (`tests/modules/...`).
 - Place integration tests alongside module directories under `tests/modules/<module>/`.
 - Target ≥60% coverage (80% preferred). Pytest runs with coverage reporting via `npm run test` or `make run-test`.
+
+### Never mock MongoDB or Redis
+
+The test stack runs both for real. `npm run test` brings up Mongo, and `tests/conftest.py` purges the
+Celery broker queues around every test so the broker is a live one, not a stand-in. A test that patches
+a repository, the Mongo client, or the broker proves nothing about the integration it stands in for: it
+asserts that the mock was called the way the test author expected, which is the same thing the test
+author already believed.
+
+### Never mock our own code
+
+Not a service, reader, writer, repository, or client class. Those are the code under test. Mocking one
+means the test passes whether or not the real thing works, and it goes on passing after the real thing
+is refactored into something broken.
+
+Build the state the test needs by going through the real path. `tests/modules/task/test_task_service.py`
+creates a second account and a real task through the API, then makes a cross-account request against it.
+Nothing is patched, so the test exercises the actual auth middleware, the actual repository, and the
+actual ownership check.
+
+For third-party APIs, replace them at the HTTP boundary with a fake server rather than patching the
+client class. `tests/modules/core/test_health_check_job.py` stands up a real `HTTPServer` on a random
+local port, points config at it, and asserts on what `HealthCheckJob` logs. The `requests` call is real
+all the way to a socket; only the far end is ours.
+
+### Prove the test can fail
+
+A test that passes against broken code proves nothing. After writing it, break the thing it guards and
+watch it go red before trusting it.
+
+This is not optional for anything guarding an access control boundary. Comment out the ownership check,
+run the test, confirm it fails, restore the check. A test asserting a 401 that would also pass against a
+route with no check at all is worse than no test, because it reads as coverage.
+
+### Cover the refusals
+
+A feature whose tests only prove it works for the intended user has not been tested. Access control
+does not fail loudly; it fails by quietly returning 200 to the wrong person.
+
+Every route that takes an owner-scoped path parameter needs a test for the other account. The task suite
+does this: it asserts the cross-account `PATCH` and `DELETE` are rejected, and then reads the record back
+as its real owner to prove the data was not modified or deleted on the way to the rejection. The status
+code alone is not the assertion; the unchanged record is.
+
+## Writing Style
+
+Documentation, pull request bodies, and commit messages use plain, simple English.
+
+- Short paragraphs. One idea each.
+- No emoji.
+- No marketing tone. Describe what the change does and why, not how significant it is.
+- No em-dashes. Use a period, a comma, a colon, or parentheses instead.
+
+Write for a reader who has no background on the change. Say what the situation was, what the change does
+about it, and what a reviewer should look at.
 
 ## Commit and PR Guidelines
 

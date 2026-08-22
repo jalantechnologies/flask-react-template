@@ -41,7 +41,7 @@ class AuditWriter:
     @staticmethod
     def record_many(*, actor: AuditActor, resource_type: str, resource_ids: list[str], action: ResourceAction) -> None:
         # One insert for the whole batch: a multi-document read emits an entry per resource id without a
-        # Mongo round trip per document (see AGENTS.md §13 on N+1 access).
+        # Mongo round trip per document (see AGENTS.md §20 on N+1 access).
         if not resource_ids:
             return
         records = [
