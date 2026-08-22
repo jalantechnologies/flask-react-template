@@ -34,7 +34,7 @@ class AccessTokenUtil:
 
     @staticmethod
     def generate_access_token(*, account: Account) -> AccessToken:
-        jwt_signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
+        jwt_signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY).strip()
         jwt_expiry = timedelta(days=ConfigService[int].get_value(key="accounts.token_expiry_days"))
         expiry_time = datetime.now() + jwt_expiry
 
@@ -53,7 +53,7 @@ class AccessTokenUtil:
 
     @staticmethod
     def _get_accepted_verification_keys() -> list[str]:
-        signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
+        signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY).strip()
 
         accepted_keys = [signing_key]
         for key in AccessTokenUtil._get_configured_verification_keys():

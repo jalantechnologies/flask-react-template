@@ -104,6 +104,14 @@ class TestAccessTokenVerificationKeys(unittest.TestCase):
         with _keys(signing_key=NEW_SIGNING_KEY, verification_keys=["   ", ""]):
             assert AccessTokenUtil._get_accepted_verification_keys() == [NEW_SIGNING_KEY]
 
+    def test_padded_signing_key_signs_and_verifies_with_the_trimmed_key(self) -> None:
+        with _keys(signing_key=f"  {NEW_SIGNING_KEY}  "):
+            token = AccessTokenUtil.generate_access_token(account=_account()).token
+            payload = AccessTokenUtil.verify_access_token(token=token)
+
+        assert payload.account_id == ACCOUNT_ID
+        assert jwt.decode(token, NEW_SIGNING_KEY, algorithms=["HS256"])["account_id"] == ACCOUNT_ID
+
     def test_padded_verification_key_is_trimmed_and_accepted(self) -> None:
         token = _token(OLD_SIGNING_KEY, timedelta(days=1))
 
