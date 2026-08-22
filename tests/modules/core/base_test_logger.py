@@ -4,7 +4,7 @@ import logging
 import unittest
 from typing import Callable
 
-from modules.logger.internal.json_formatter import JsonFormatter
+from modules.core.logger.internal.json_formatter import JsonFormatter
 
 
 class BaseTestLogger(unittest.TestCase):

@@ -4,11 +4,11 @@ from typing import Any, cast
 
 import yaml
 
-from modules.config.internal.types import Config
+from modules.core.config.internal.types import Config
 
 
 class ConfigUtil:
-    DIR_LEVELS_FROM_BASE_DIR_TO_CONFIG_UTILS: int = 6
+    DIR_LEVELS_FROM_BASE_DIR_TO_CONFIG_UTILS: int = 7
     CURRENT_FILE: str = __file__
 
     @staticmethod

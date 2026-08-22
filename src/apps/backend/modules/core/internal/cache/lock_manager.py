@@ -4,7 +4,7 @@ from redis.exceptions import RedisError
 
 from modules.core.internal.cache.cache_client import CacheClient
 from modules.core.internal.cache.cache_manager import namespaced_key
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 RELEASE_IF_HELD_BY_TOKEN = """
 if redis.call('get', KEYS[1]) == ARGV[1] then

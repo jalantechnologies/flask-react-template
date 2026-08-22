@@ -1,9 +1,9 @@
 import logging
 import sys
 
-from modules.logger.internal.base_logger import BaseLogger
-from modules.logger.internal.json_formatter import JsonFormatter
-from modules.logger.internal.log_level import LogLevel
+from modules.core.logger.internal.base_logger import BaseLogger
+from modules.core.logger.internal.json_formatter import JsonFormatter
+from modules.core.logger.internal.log_level import LogLevel
 
 
 class ConsoleLogger(BaseLogger):

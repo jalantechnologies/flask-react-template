@@ -14,12 +14,10 @@ KNOWN_CYCLES: frozenset[tuple[str, ...]] = frozenset(
         ("account", "authentication"),
         ("account", "authentication", "notification"),
         ("account", "notification"),
-        ("config", "core"),
-        ("config", "core", "logger"),
     }
 )
 
-KNOWN_FOUNDATION_IMPORTS: frozenset[str] = frozenset({"config", "logger"})
+KNOWN_FOUNDATION_IMPORTS: frozenset[str] = frozenset()
 
 
 ModuleGraph = dict[str, dict[str, set[str]]]

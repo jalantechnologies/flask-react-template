@@ -3,8 +3,8 @@ from typing import Optional
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
+from modules.core.logger.logger import Logger
 from modules.core.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
-from modules.logger.logger import Logger
 from modules.task.internal.store.task_model import TaskDocument, TaskModel
 from modules.task.types import Task, TaskQuery
 

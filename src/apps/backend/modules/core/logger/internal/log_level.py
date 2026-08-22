@@ -1,7 +1,7 @@
 import logging
 
-from modules.config.config_service import ConfigService
-from modules.logger.internal.logger_enum import Levels
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.internal.logger_enum import Levels
 
 
 class LogLevel:

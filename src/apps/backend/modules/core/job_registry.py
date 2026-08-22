@@ -5,7 +5,7 @@ from types import ModuleType
 from typing import Iterator, Optional, Type
 
 from modules.core.job import Job
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 
 @dataclass(frozen=True)

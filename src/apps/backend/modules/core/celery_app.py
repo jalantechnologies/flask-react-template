@@ -1,6 +1,6 @@
 from celery import Celery
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 app = Celery("foundation")
 

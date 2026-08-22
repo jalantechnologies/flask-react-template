@@ -5,8 +5,8 @@ from typing import ClassVar, Optional
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
-from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.logger import Logger
 
 
 class ApplicationRepositoryClient:

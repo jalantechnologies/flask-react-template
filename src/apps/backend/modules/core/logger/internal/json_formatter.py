@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timezone
 from logging import Formatter, LogRecord
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 TRACE_CORRELATION_ATTRIBUTES = ("dd.trace_id", "dd.span_id", "trace_id", "span_id")
 

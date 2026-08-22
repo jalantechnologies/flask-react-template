@@ -9,11 +9,11 @@ from unittest.mock import patch
 
 import pytest
 
-from modules.config.config_service import ConfigService
-from modules.logger.internal.console_logger import ConsoleLogger
-from modules.logger.internal.log_level import LogLevel
-from modules.logger.internal.loggers import Loggers
-from tests.modules.logger.base_test_logger import BaseTestLogger
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.internal.console_logger import ConsoleLogger
+from modules.core.logger.internal.log_level import LogLevel
+from modules.core.logger.internal.loggers import Loggers
+from tests.modules.core.base_test_logger import BaseTestLogger
 
 
 @pytest.fixture(autouse=True)

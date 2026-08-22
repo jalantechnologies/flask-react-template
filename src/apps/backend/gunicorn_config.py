@@ -27,7 +27,7 @@ errorlog = "-"
 def post_fork(_server: "Arbiter", _worker: "Worker") -> None:
     import logging
 
-    from modules.logger.internal.json_formatter import JsonFormatter
+    from modules.core.logger.internal.json_formatter import JsonFormatter
 
     formatter = JsonFormatter()
     for name in ("gunicorn.access", "gunicorn.error"):

@@ -5,10 +5,10 @@ from typing import List
 import pytest
 import yaml
 
-from modules.config.config_service import ConfigService
-from modules.config.errors import MissingKeyError
-from modules.config.types import ErrorCode
-from tests.modules.config.base_test_config import BaseTestConfig
+from modules.core.config.config_service import ConfigService
+from modules.core.config.errors import MissingKeyError
+from modules.core.config.types import ErrorCode
+from tests.modules.core.base_test_config import BaseTestConfig
 
 
 class TestConfig(BaseTestConfig):

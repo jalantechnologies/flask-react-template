@@ -1,7 +1,7 @@
 import secrets
 import string
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 
 class OTPUtil:

@@ -7,7 +7,7 @@ from modules.account.types import Account
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreatePasswordResetTokenParams
 from modules.core.common.types import ActorType, AuditActor
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)
 PASSWORD_RESET_REQUESTED_MESSAGE = "If an account exists for that email, a reset link has been sent."

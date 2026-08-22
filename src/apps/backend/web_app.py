@@ -10,11 +10,11 @@ from bin.blueprints import api_blueprint, img_assets_blueprint, react_blueprint
 from modules.account.rest_api.account_rest_api_server import AccountRestApiServer
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.rest_api.authentication_rest_api_server import AuthenticationRestApiServer
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 from modules.core.errors import AppError
 from modules.core.job_registry import JobRegistry
+from modules.core.logger.logger_manager import LoggerManager
 from modules.core.security_headers import SecurityHeaders
-from modules.logger.logger_manager import LoggerManager
 from modules.task.rest_api.task_rest_api_server import TaskRestApiServer
 from scripts.bootstrap_app import BootstrapApp
 

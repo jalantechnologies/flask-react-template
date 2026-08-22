@@ -16,7 +16,7 @@ MISSING_STATIC_ROOT_ERR_MESSAGE = "Unable to resolve react root path"
 
 @react_blueprint.route("/config.js")
 def serve_config() -> Response:
-    from modules.config.config_service import ConfigService
+    from modules.core.config.config_service import ConfigService
 
     public_config: dict[str, Any] = (
         ConfigService[dict[str, Any]].get_value("public") if ConfigService.has_value("public") else {}

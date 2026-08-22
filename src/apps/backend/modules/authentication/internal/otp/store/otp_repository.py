@@ -3,8 +3,8 @@ from pymongo.errors import OperationFailure
 
 from modules.authentication.internal.otp.store.otp_model import OTPDocument, OTPModel
 from modules.authentication.types import OTP, OTPQuery
+from modules.core.logger.logger import Logger
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
-from modules.logger.logger import Logger
 
 OTP_VALIDATION_SCHEMA = {
     "$jsonSchema": {

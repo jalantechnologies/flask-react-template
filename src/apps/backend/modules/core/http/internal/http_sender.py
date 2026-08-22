@@ -4,7 +4,7 @@ from modules.core.errors import AppError
 from modules.core.http.errors import HttpConflictingBodyError, HttpTransportError
 from modules.core.http.internal.http_url_validator import HttpUrlValidator
 from modules.core.http.types import HttpRequest, HttpResponse
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 
 class HttpSender:

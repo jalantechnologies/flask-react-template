@@ -3,8 +3,8 @@ from typing import Optional
 from twilio.base.exceptions import TwilioException, TwilioRestException
 from twilio.rest import Client
 
-from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.logger import Logger
 from modules.notification.errors import ServiceError
 from modules.notification.internal.twilio_params import SMSParams
 from modules.notification.types import NotificationErrorCode, SendSMSParams

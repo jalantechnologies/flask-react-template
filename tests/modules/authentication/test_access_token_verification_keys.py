@@ -8,8 +8,8 @@ import jwt
 from modules.account.types import Account
 from modules.authentication.errors import AccessTokenExpiredError, AccessTokenInvalidError
 from modules.authentication.internal.access_token.access_token_util import AccessTokenUtil
-from modules.config.config_service import ConfigService
-from modules.config.internal.config_manager import ConfigManager
+from modules.core.config.config_service import ConfigService
+from modules.core.config.internal.config_manager import ConfigManager
 
 ACCOUNT_ID = "665a1f2b3c4d5e6f70819243"
 OLD_SIGNING_KEY = "old-high-entropy-signing-key"

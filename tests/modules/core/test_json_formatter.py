@@ -2,9 +2,9 @@ import json
 import logging
 import os
 
-from modules.config.config_service import ConfigService
-from modules.logger.internal.json_formatter import JsonFormatter
-from tests.modules.logger.base_test_logger import BaseTestLogger
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.internal.json_formatter import JsonFormatter
+from tests.modules.core.base_test_logger import BaseTestLogger
 
 
 class TestJsonFormatter(BaseTestLogger):
