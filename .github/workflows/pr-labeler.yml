@@ -19,28 +19,44 @@ jobs:
             const title = context.payload.pull_request.title;
             const prNumber = context.payload.pull_request.number;
 
-            // Define label mappings based on PR title prefix (with optional scope)
-            const labelMappings = [
-              { pattern: /^feat!(\(.+?\))?:/i, typeLabel: 'type: feat', semverLabel: 'semver: major' },
-              { pattern: /^fix!(\(.+?\))?:/i, typeLabel: 'type: fix', semverLabel: 'semver: major' },
-              { pattern: /^feat(\(.+?\))?:/i, typeLabel: 'type: feat', semverLabel: 'semver: minor' },
-              { pattern: /^fix(\(.+?\))?:/i, typeLabel: 'type: fix', semverLabel: 'semver: patch' },
-              { pattern: /^perf(\(.+?\))?:/i, typeLabel: 'type: perf', semverLabel: 'semver: patch' },
-              { pattern: /^docs(\(.+?\))?:/i, typeLabel: 'type: docs', semverLabel: null },
-              { pattern: /^style(\(.+?\))?:/i, typeLabel: 'type: style', semverLabel: null },
-              { pattern: /^refactor(\(.+?\))?:/i, typeLabel: 'type: refactor', semverLabel: null },
-              { pattern: /^test(\(.+?\))?:/i, typeLabel: 'type: test', semverLabel: null },
-              { pattern: /^chore(\(.+?\))?:/i, typeLabel: 'type: chore', semverLabel: null },
-              { pattern: /^build(\(.+?\))?:/i, typeLabel: 'type: build', semverLabel: null },
-              { pattern: /^ci(\(.+?\))?:/i, typeLabel: 'type: ci', semverLabel: null },
-              { pattern: /^revert(\(.+?\))?:/i, typeLabel: 'type: revert', semverLabel: null },
+            // Conventional commit types and the semver bump each implies when not breaking
+            const commitTypes = [
+              { type: 'feat', semverLabel: 'semver: minor' },
+              { type: 'fix', semverLabel: 'semver: patch' },
+              { type: 'perf', semverLabel: 'semver: patch' },
+              { type: 'docs', semverLabel: null },
+              { type: 'style', semverLabel: null },
+              { type: 'refactor', semverLabel: null },
+              { type: 'test', semverLabel: null },
+              { type: 'chore', semverLabel: null },
+              { type: 'build', semverLabel: null },
+              { type: 'ci', semverLabel: null },
+              { type: 'revert', semverLabel: null },
             ];
+
+            // A breaking change marks the title with "!", either after the scope
+            // (feat(api)!:, the Conventional Commits form) or before it (feat!(api):).
+            // Breaking patterns are tested first so "feat(api)!:" is not caught by the
+            // plain "feat" pattern and mislabelled minor.
+            const breakingMappings = commitTypes.map(({ type }) => ({
+              pattern: new RegExp(`^${type}(!(\\(.+?\\))?|(\\(.+?\\))!):`, 'i'),
+              typeLabel: `type: ${type}`,
+              semverLabel: 'semver: major',
+            }));
+
+            const standardMappings = commitTypes.map(({ type, semverLabel }) => ({
+              pattern: new RegExp(`^${type}(\\(.+?\\))?:`, 'i'),
+              typeLabel: `type: ${type}`,
+              semverLabel,
+            }));
+
+            const labelMappings = [...breakingMappings, ...standardMappings];
 
             // Find matching prefix
             const match = labelMappings.find(mapping => mapping.pattern.test(title));
 
             if (!match) {
-              core.setFailed(`❌ PR title does not follow conventional commit format. Expected format: type(scope): description\nValid types: feat, fix, perf, docs, style, refactor, test, chore, build, ci, revert\nExample: feat(api): add new endpoint`);
+              core.setFailed(`❌ PR title does not follow conventional commit format. Expected format: type(scope): description\nValid types: ${commitTypes.map(({ type }) => type).join(', ')}\nMark a breaking change with "!": feat(api)!: remove the legacy endpoint\nExample: feat(api): add new endpoint`);
               return;
             }
 
@@ -59,7 +75,7 @@ jobs:
             const existingLabelNames = existingLabels.map(label => label.name);
 
             // Remove old type and semver labels if they differ
-            const typeLabels = ['type: feat', 'type: fix', 'type: perf', 'type: docs', 'type: style', 'type: refactor', 'type: test', 'type: chore', 'type: build', 'type: ci', 'type: revert'];
+            const typeLabels = commitTypes.map(({ type }) => `type: ${type}`);
             const semverLabels = ['semver: major', 'semver: minor', 'semver: patch'];
 
             for (const label of existingLabelNames) {
