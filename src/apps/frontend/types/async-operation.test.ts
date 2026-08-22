@@ -36,17 +36,17 @@ describe('AsyncOperationError.fromUnknown', () => {
     expect(error.message).toBe('Network Error');
   });
 
-  it('reads a plain Error message and leaves the code unset', () => {
+  it('reads a plain Error message and leaves the code empty', () => {
     const error = AsyncOperationError.fromUnknown(new Error('Boom'), FALLBACK);
 
-    expect(error.code).toBeUndefined();
+    expect(error.code).toBe('');
     expect(error.message).toBe('Boom');
   });
 
   it('adopts a thrown string as the message', () => {
     const error = AsyncOperationError.fromUnknown('Just a string', FALLBACK);
 
-    expect(error.code).toBeUndefined();
+    expect(error.code).toBe('');
     expect(error.message).toBe('Just a string');
   });
 
@@ -71,7 +71,7 @@ describe('AsyncOperationError.fromUnknown', () => {
       FALLBACK,
     );
 
-    expect(error.code).toBeUndefined();
+    expect(error.code).toBe('');
     expect(error.message).toBe(FALLBACK);
   });
 
@@ -90,5 +90,25 @@ describe('AsyncOperationError.fromUnknown', () => {
     const error = AsyncOperationError.fromUnknown(new Error('Boom'), FALLBACK);
 
     expect(error).toBeInstanceOf(AsyncOperationError);
+  });
+
+  it('always exposes string code and message so consumers can call string methods', () => {
+    const thrownValues: unknown[] = [
+      undefined,
+      null,
+      42,
+      'Just a string',
+      {},
+      new Error('Boom'),
+      { code: 500, message: { nested: true } },
+    ];
+
+    thrownValues.forEach((thrown) => {
+      const error = AsyncOperationError.fromUnknown(thrown, FALLBACK);
+
+      expect(typeof error.code).toBe('string');
+      expect(typeof error.message).toBe('string');
+      expect(() => error.code.startsWith('ERR')).not.toThrow();
+    });
   });
 });

@@ -53,8 +53,8 @@ export class AsyncOperationError implements AsyncError {
   message: string;
 
   constructor(json: JsonObject) {
-    this.code = json.code as string;
-    this.message = json.message as string;
+    this.code = isString(json.code) ? json.code : '';
+    this.message = isString(json.message) ? json.message : '';
   }
 
   static fromUnknown(
@@ -64,7 +64,7 @@ export class AsyncOperationError implements AsyncError {
     const code =
       readNestedResponseField(thrown, 'code') ??
       readStringField(thrown, 'code') ??
-      undefined;
+      '';
 
     const message =
       readNestedResponseField(thrown, 'message') ??
