@@ -28,8 +28,9 @@ class AccessTokenUtil:
             return
 
         signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY, default="")
-        if signing_key.strip() in AccessTokenUtil.INSECURE_SIGNING_KEYS:
-            raise AccessTokenSigningKeyInsecureError()
+        for key in [signing_key, *AccessTokenUtil._get_configured_verification_keys()]:
+            if key.strip() in AccessTokenUtil.INSECURE_SIGNING_KEYS:
+                raise AccessTokenSigningKeyInsecureError()
 
     @staticmethod
     def generate_access_token(*, account: Account) -> AccessToken:
@@ -43,15 +44,20 @@ class AccessTokenUtil:
         return AccessToken(token=jwt_token, account_id=account.id, expires_at=expiry_time.isoformat())
 
     @staticmethod
-    def _get_accepted_verification_keys() -> list[str]:
-        signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
-        additional_keys = ConfigService[list[str]].get_value(
+    def _get_configured_verification_keys() -> list[str]:
+        configured_keys = ConfigService[list[str]].get_value(
             key=AccessTokenUtil.VERIFICATION_KEYS_CONFIG_KEY, default=[]
         )
 
+        return [stripped_key for key in configured_keys if (stripped_key := key.strip())]
+
+    @staticmethod
+    def _get_accepted_verification_keys() -> list[str]:
+        signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
+
         accepted_keys = [signing_key]
-        for key in additional_keys:
-            if key and key not in accepted_keys:
+        for key in AccessTokenUtil._get_configured_verification_keys():
+            if key not in accepted_keys:
                 accepted_keys.append(key)
 
         return accepted_keys

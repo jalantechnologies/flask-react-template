@@ -100,6 +100,18 @@ class TestAccessTokenVerificationKeys(unittest.TestCase):
             with self.assertRaises(AccessTokenInvalidError):
                 AccessTokenUtil.verify_access_token(token="not-a-jwt")
 
+    def test_blank_verification_keys_are_discarded(self) -> None:
+        with _keys(signing_key=NEW_SIGNING_KEY, verification_keys=["   ", ""]):
+            assert AccessTokenUtil._get_accepted_verification_keys() == [NEW_SIGNING_KEY]
+
+    def test_padded_verification_key_is_trimmed_and_accepted(self) -> None:
+        token = _token(OLD_SIGNING_KEY, timedelta(days=1))
+
+        with _keys(signing_key=NEW_SIGNING_KEY, verification_keys=[f"  {OLD_SIGNING_KEY}  "]):
+            payload = AccessTokenUtil.verify_access_token(token=token)
+
+        assert payload.account_id == ACCOUNT_ID
+
     def test_no_verification_keys_accepts_only_signing_key(self) -> None:
         token = _token(OLD_SIGNING_KEY, timedelta(days=1))
 

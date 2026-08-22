@@ -105,6 +105,10 @@ Both variables are read at boot, so a running process keeps its old values until
 verification list is a fallback for rotation, not a place to park keys permanently: a leaked key stays
 usable for as long as it is listed, so complete step 6 rather than leaving the list to grow.
 
+The boot guard covers the verification list as well as the signing key. A deployed environment refuses
+to start if any key in `ACCOUNTS_TOKEN_VERIFICATION_KEYS` is empty or left at a placeholder, so rotating
+a placeholder key out of the signing slot and into the verification list does not keep it usable.
+
 ### Backend Datadog Logging
 
 Required for backend log forwarding to Datadog (when `logger.transports` includes `'datadog'`):
