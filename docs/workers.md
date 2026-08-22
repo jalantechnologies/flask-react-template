@@ -48,7 +48,7 @@ from typing import Any
 
 from modules.core.common.types import AuditActor
 from modules.core.job import Job
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 
 class MyBackgroundJob(Job):
@@ -267,7 +267,7 @@ LRANGE default 0 -1  # View all jobs in default queue
 Jobs use the application's logging system:
 
 ```python
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 class MyJob(Job):
     @classmethod
@@ -460,8 +460,8 @@ from typing import Any
 import requests
 from modules.core.common.types import AuditActor
 from modules.core.job import Job
-from modules.config.config_service import ConfigService
-from modules.logger.logger import Logger
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.logger import Logger
 
 class HealthCheckJob(Job):
     queue = "default"
@@ -503,7 +503,7 @@ Example job for processing user data:
 from typing import Any, Dict
 from modules.core.common.types import AuditActor
 from modules.core.job import Job
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 class DataProcessingJob(Job):
     queue = "default"

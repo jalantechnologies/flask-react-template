@@ -1,4 +1,4 @@
-from modules.logger.internal.loggers import Loggers
+from modules.core.logger.internal.loggers import Loggers
 
 
 class Logger:

@@ -3,7 +3,7 @@ from typing import List
 from flask import Flask
 from flask.wrappers import Response
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 
 class SecurityHeaders:

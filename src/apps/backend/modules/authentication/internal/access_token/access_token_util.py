@@ -12,7 +12,7 @@ from modules.authentication.errors import (
     OTPIncorrectError,
 )
 from modules.authentication.types import OTP, AccessToken, AccessTokenPayload, OTPStatus
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 
 class AccessTokenUtil:

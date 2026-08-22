@@ -1,11 +1,11 @@
 from typing import Optional, cast
 
-from modules.config.internal.config_files.app_env_config_file import AppEnvConfig
-from modules.config.internal.config_files.custom_env_config_file import CustomEnvConfig
-from modules.config.internal.config_files.default_config_file import DefaultConfig
-from modules.config.internal.config_utils import ConfigUtil
-from modules.config.internal.types import Config
-from modules.config.types import ConfigType
+from modules.core.config.internal.config_files.app_env_config_file import AppEnvConfig
+from modules.core.config.internal.config_files.custom_env_config_file import CustomEnvConfig
+from modules.core.config.internal.config_files.default_config_file import DefaultConfig
+from modules.core.config.internal.config_utils import ConfigUtil
+from modules.core.config.internal.types import Config
+from modules.core.config.types import ConfigType
 
 
 class ConfigManager:

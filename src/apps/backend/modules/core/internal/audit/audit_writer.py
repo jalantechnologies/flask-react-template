@@ -12,7 +12,7 @@ from modules.core.common.types import (
     ResourceAction,
 )
 from modules.core.internal.audit.store.audit_log_repository import AuditLogRepository
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 SENSITIVE_FIELD_KEYWORDS = ("password", "token", "secret", "otp", "mfa", "hashed")
 

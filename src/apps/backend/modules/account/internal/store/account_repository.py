@@ -5,8 +5,8 @@ from modules.account.errors import AccountWithUserNameExistsError
 from modules.account.internal.store.account_model import AccountDocument, AccountModel
 from modules.account.types import Account, AccountQuery
 from modules.core.common.types import AuditActor
+from modules.core.logger.logger import Logger
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
-from modules.logger.logger import Logger
 
 NAMESPACE_NOT_FOUND_ERROR_CODE = 26
 

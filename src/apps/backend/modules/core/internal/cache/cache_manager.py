@@ -2,10 +2,10 @@ from typing import Optional, cast
 
 from redis.exceptions import RedisError
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 from modules.core.errors import CacheDiscardFailedError, CacheNonPositiveTTLError
 from modules.core.internal.cache.cache_client import CacheClient
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 DEFAULT_KEY_PREFIX = "flask-react-template"
 KEY_PREFIX_SEPARATOR = ":"

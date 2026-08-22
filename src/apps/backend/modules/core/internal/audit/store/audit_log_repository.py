@@ -7,8 +7,8 @@ from pymongo.errors import OperationFailure
 from modules.core.base_model import StoredDocument
 from modules.core.common.types import AuditLogEntry
 from modules.core.internal.audit.store.audit_log_model import AuditLogDocument, AuditLogModel
+from modules.core.logger.logger import Logger
 from modules.core.repository_client import ApplicationRepositoryClient
-from modules.logger.logger import Logger
 
 AUDIT_LOG_VALIDATION_SCHEMA = {
     "$jsonSchema": {

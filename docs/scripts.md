@@ -22,7 +22,7 @@ Create a Python file under `src/apps/backend/scripts`, for example:
 
 ```python
 # src/apps/backend/scripts/sample_script.py
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 def main():
     Logger.info(message="Running sample script")

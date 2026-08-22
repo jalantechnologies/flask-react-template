@@ -11,7 +11,7 @@ from modules.core.internal.job_run.store.job_run_repository import JobRunReposit
 from modules.core.job import JOB_LOCK_KEY_PREFIX, Job
 from modules.core.lock_service import LockService
 
-JOB_LOGGER = "modules.logger.internal.console_logger"
+JOB_LOGGER = "modules.core.logger.internal.console_logger"
 
 RUN_LOG: list[str] = []
 REENTRANT_ARGUMENTS: list[str] = []

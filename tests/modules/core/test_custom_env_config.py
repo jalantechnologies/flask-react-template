@@ -1,10 +1,10 @@
 import os
 from typing import Callable
 
-from modules.config.internal.config_files.custom_env_config_file import CustomEnvConfig
-from modules.config.internal.config_utils import ConfigUtil
-from modules.config.internal.types import Config
-from tests.modules.config.base_test_config import BaseTestConfig
+from modules.core.config.internal.config_files.custom_env_config_file import CustomEnvConfig
+from modules.core.config.internal.config_utils import ConfigUtil
+from modules.core.config.internal.types import Config
+from tests.modules.core.base_test_config import BaseTestConfig
 
 
 class TestCustomEnvConfig(BaseTestConfig):

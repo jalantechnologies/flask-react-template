@@ -5,14 +5,14 @@ from typing import Iterator
 
 import pytest
 
-from modules.config.config_service import ConfigService
-from modules.config.internal.config_manager import ConfigManager
 from modules.core.cache_service import CacheService
+from modules.core.config.config_service import ConfigService
+from modules.core.config.internal.config_manager import ConfigManager
 from modules.core.errors import CacheDiscardFailedError, CacheNonPositiveTTLError
 from modules.core.internal.cache.cache_client import CacheClient
 from modules.core.internal.cache.cache_manager import DEFAULT_KEY_PREFIX
 
-CACHE_LOGGER = "modules.logger.internal.console_logger"
+CACHE_LOGGER = "modules.core.logger.internal.console_logger"
 UNREACHABLE_REDIS_URL = "redis://127.0.0.1:1/0"
 
 

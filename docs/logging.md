@@ -26,7 +26,7 @@ Each line carries `timestamp`, `message`, `status`, `level`, `logger`, `service`
   "message": "Started background job",
   "status": "info",
   "level": "INFO",
-  "logger": "modules.logger.internal.console_logger",
+  "logger": "modules.core.logger.internal.console_logger",
   "service": "flask-react-template",
   "environment": "production"
 }
@@ -55,7 +55,7 @@ Frontend Datadog RUM and browser logs are controlled by the `public.datadog.enab
 Import the unified wrapper and log at the desired level:
 
 ```python
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 # Example usage
 item_id = 123

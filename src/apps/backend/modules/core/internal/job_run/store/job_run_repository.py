@@ -4,8 +4,8 @@ from pymongo.errors import OperationFailure
 
 from modules.core.common.types import JobRun, JobRunQuery
 from modules.core.internal.job_run.store.job_run_model import JobRunDocument, JobRunModel
+from modules.core.logger.logger import Logger
 from modules.core.repository import ApplicationRepository, StoredDocument, StoreFilter
-from modules.logger.logger import Logger
 
 JOB_RUN_VALIDATION_SCHEMA = {
     "$jsonSchema": {

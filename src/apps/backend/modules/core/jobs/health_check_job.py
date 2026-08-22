@@ -1,11 +1,11 @@
 from typing import Any
 
-from modules.config.config_service import ConfigService
 from modules.core.common.types import AuditActor
+from modules.core.config.config_service import ConfigService
 from modules.core.errors import AppError
 from modules.core.http.http_service import HttpService
 from modules.core.job import Job
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 HEALTH_CHECK_TIMEOUT_SECONDS = 3.0
 

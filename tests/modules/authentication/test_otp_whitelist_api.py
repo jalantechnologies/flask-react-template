@@ -9,8 +9,8 @@ from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByPhoneNumberParams, PhoneNumber
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
-from modules.config.config_service import ConfigService
-from modules.config.internal.config_manager import ConfigManager
+from modules.core.config.config_service import ConfigService
+from modules.core.config.internal.config_manager import ConfigManager
 from modules.notification.sms_service import SMSService
 from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken

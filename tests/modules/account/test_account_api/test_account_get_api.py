@@ -6,7 +6,7 @@ from web_app import app
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
 from modules.authentication.types import AccessTokenErrorCode
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 

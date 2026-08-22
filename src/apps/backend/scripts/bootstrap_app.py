@@ -1,9 +1,9 @@
 from modules.account.account_service import AccountService
 from modules.account.types import CreateAccountByUsernameAndPasswordParams
-from modules.config.config_service import ConfigService
-from modules.config.errors import MissingKeyError
 from modules.core.common.types import ActorType, AuditActor
-from modules.logger.logger import Logger
+from modules.core.config.config_service import ConfigService
+from modules.core.config.errors import MissingKeyError
+from modules.core.logger.logger import Logger
 
 
 class BootstrapApp:

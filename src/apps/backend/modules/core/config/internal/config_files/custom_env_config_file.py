@@ -1,8 +1,8 @@
 import os
 from typing import Any, Callable, Optional, cast
 
-from modules.config.internal.config_utils import ConfigUtil
-from modules.config.internal.types import Config
+from modules.core.config.internal.config_utils import ConfigUtil
+from modules.core.config.internal.types import Config
 
 
 class CustomEnvConfig:

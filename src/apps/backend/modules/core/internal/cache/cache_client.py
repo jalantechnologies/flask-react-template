@@ -4,7 +4,7 @@ from typing import Optional
 
 from redis import Redis
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 
 class CacheClient:

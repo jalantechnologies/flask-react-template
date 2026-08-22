@@ -125,9 +125,9 @@ class TestGivenProxyFlagIsReadOnce:
 
 class TestGivenCorsIsConfigured:
     class TestWhenReadingCorsOrigin:
-        @patch("modules.config.config_service.ConfigService.get_value")
+        @patch("modules.core.config.config_service.ConfigService.get_value")
         def test_then_origin_reflects_config_and_is_not_wildcard(self, mock_get_value: MagicMock) -> None:
-            from modules.config.config_service import ConfigService
+            from modules.core.config.config_service import ConfigService
 
             mock_get_value.return_value = "https://app.example.com"
             origin = ConfigService[str].get_value(key="web.cors_allowed_origin", default="http://localhost:3000")

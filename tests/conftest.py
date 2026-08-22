@@ -5,7 +5,7 @@ import pytest
 
 from modules.core.celery_app import app as celery_app
 from modules.core.common.types import ActorType, AuditActor
-from modules.logger.logger_manager import LoggerManager
+from modules.core.logger.logger_manager import LoggerManager
 
 TESTING_APP_ENV = "testing"
 

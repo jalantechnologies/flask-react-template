@@ -12,8 +12,8 @@ from modules.authentication.internal.password_reset_token.store.password_reset_t
 )
 from modules.authentication.types import PasswordResetToken, PasswordResetTokenQuery
 from modules.core.common.types import AuditActor, ResourceAction
+from modules.core.logger.logger import Logger
 from modules.core.repository import ApplicationRepository, SortSpec, StoredDocument, StoreFilter
-from modules.logger.logger import Logger
 
 PASSWORD_RESET_TOKEN_VALIDATION_SCHEMA = {
     "$jsonSchema": {

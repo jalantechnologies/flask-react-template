@@ -5,8 +5,8 @@ from typing import Callable, Iterator, List, Optional
 
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.errors import AccessTokenSigningKeyInsecureError
-from modules.config.config_service import ConfigService
-from modules.config.internal.config_manager import ConfigManager
+from modules.core.config.config_service import ConfigService
+from modules.core.config.internal.config_manager import ConfigManager
 
 
 @contextmanager

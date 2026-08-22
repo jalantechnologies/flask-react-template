@@ -4,13 +4,13 @@ from typing import Iterator
 
 import pytest
 
-from modules.config.config_service import ConfigService
-from modules.config.internal.config_manager import ConfigManager
 from modules.core.common.types import ActorType, AuditActor
+from modules.core.config.config_service import ConfigService
+from modules.core.config.internal.config_manager import ConfigManager
 from modules.core.jobs.health_check_job import HealthCheckJob
 
 JOB_ACTOR = AuditActor(actor_type=ActorType.JOB, actor_id="test-run")
-HEALTH_CHECK_LOGGER = "modules.logger.internal.console_logger"
+HEALTH_CHECK_LOGGER = "modules.core.logger.internal.console_logger"
 
 
 class _StatusHandler(BaseHTTPRequestHandler):

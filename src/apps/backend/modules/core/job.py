@@ -12,7 +12,7 @@ from modules.core.celery_app import app as celery_app
 from modules.core.common.types import ActorType, AuditActor, JobArguments
 from modules.core.internal.job_run.job_run_service import JobRunService
 from modules.core.lock_service import LockService
-from modules.logger.logger import Logger
+from modules.core.logger.logger import Logger
 
 DEFAULT_UNIQUE_FOR_SECONDS = 3600
 JOB_LOCK_KEY_PREFIX = "job-lock"

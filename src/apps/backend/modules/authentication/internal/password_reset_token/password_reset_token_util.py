@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import bcrypt
 
-from modules.config.config_service import ConfigService
+from modules.core.config.config_service import ConfigService
 
 
 class PasswordResetTokenUtil:

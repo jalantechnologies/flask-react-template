@@ -1,6 +1,6 @@
-from modules.config.config_service import ConfigService
-from modules.logger.internal.console_logger import ConsoleLogger
-from modules.logger.internal.types import RETIRED_LOGGER_TRANSPORTS, LoggerTransports
+from modules.core.config.config_service import ConfigService
+from modules.core.logger.internal.console_logger import ConsoleLogger
+from modules.core.logger.internal.types import RETIRED_LOGGER_TRANSPORTS, LoggerTransports
 
 
 class Loggers:

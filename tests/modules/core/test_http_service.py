@@ -16,7 +16,7 @@ from modules.core.http.errors import (
 from modules.core.http.http_service import HttpService
 from modules.core.http.types import DEFAULT_TIMEOUT_SECONDS, HttpMethod, HttpRequest, HttpResponse
 
-HTTP_LOGGER = "modules.logger.internal.console_logger"
+HTTP_LOGGER = "modules.core.logger.internal.console_logger"
 
 UNROUTABLE_URL = "http://127.0.0.1:1/private/path"
 SECRET_QUERY_PARAM = "access_token=super-secret-token"
