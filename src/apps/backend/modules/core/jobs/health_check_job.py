@@ -20,7 +20,9 @@ class HealthCheckJob(Job):
         health_check_url = ConfigService[str].get_value("worker.health_check_url", default="http://localhost:8080/api/")
 
         try:
-            response = HttpService.get(url=health_check_url, timeout_seconds=HEALTH_CHECK_TIMEOUT_SECONDS)
+            response = HttpService.get(
+                url=health_check_url, timeout_seconds=HEALTH_CHECK_TIMEOUT_SECONDS, allow_internal_target=True
+            )
         except AppError as err:
             Logger.error(message=f"Backend is unhealthy: {err.message}")
             return

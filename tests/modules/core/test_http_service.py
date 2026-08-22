@@ -6,9 +6,15 @@ from typing import Iterator
 
 import pytest
 
-from modules.core.http.errors import HttpConflictingBodyError, HttpTransportError
+from modules.core.http.errors import (
+    HttpBlockedTargetError,
+    HttpConflictingBodyError,
+    HttpInvalidJsonBodyError,
+    HttpTransportError,
+    HttpUnsupportedSchemeError,
+)
 from modules.core.http.http_service import HttpService
-from modules.core.http.types import DEFAULT_TIMEOUT_SECONDS, HttpMethod, HttpRequest
+from modules.core.http.types import DEFAULT_TIMEOUT_SECONDS, HttpMethod, HttpRequest, HttpResponse
 
 HTTP_LOGGER = "modules.logger.internal.console_logger"
 
@@ -18,11 +24,12 @@ SECRET_QUERY_PARAM = "access_token=super-secret-token"
 
 class _EchoHandler(BaseHTTPRequestHandler):
     sleep_seconds = 0.0
+    body_override: str | None = None
 
     def _respond(self, payload: dict[str, object]) -> None:
         if self.sleep_seconds:
             time.sleep(self.sleep_seconds)
-        body = json.dumps(payload).encode()
+        body = (self.body_override or json.dumps(payload)).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -44,6 +51,7 @@ class _EchoHandler(BaseHTTPRequestHandler):
 @pytest.fixture
 def echo_server() -> Iterator[str]:
     _EchoHandler.sleep_seconds = 0.0
+    _EchoHandler.body_override = None
     server = HTTPServer(("127.0.0.1", 0), _EchoHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -58,7 +66,9 @@ def echo_server() -> Iterator[str]:
 class TestGivenAReachableServer:
     class TestWhenSendingAGetRequest:
         def test_then_returns_a_successful_typed_response(self, echo_server: str) -> None:
-            response = HttpService.get(url=f"{echo_server}/health", query_params={"probe": "yes"})
+            response = HttpService.get(
+                url=f"{echo_server}/health", query_params={"probe": "yes"}, allow_internal_target=True
+            )
 
             assert response.is_success
             assert response.status_code == 200
@@ -68,7 +78,9 @@ class TestGivenAReachableServer:
 
     class TestWhenPostingAJsonBody:
         def test_then_sends_json_content(self, echo_server: str) -> None:
-            response = HttpService.post_json(url=f"{echo_server}/items", body={"name": "widget"})
+            response = HttpService.post_json(
+                url=f"{echo_server}/items", body={"name": "widget"}, allow_internal_target=True
+            )
 
             assert response.is_success
             assert response.json()["content_type"] == "application/json"
@@ -76,7 +88,9 @@ class TestGivenAReachableServer:
 
     class TestWhenPostingAFormBody:
         def test_then_sends_form_encoded_content(self, echo_server: str) -> None:
-            response = HttpService.post_form(url=f"{echo_server}/items", body={"name": "widget"})
+            response = HttpService.post_form(
+                url=f"{echo_server}/items", body={"name": "widget"}, allow_internal_target=True
+            )
 
             assert response.is_success
             assert response.json()["content_type"] == "application/x-www-form-urlencoded"
@@ -87,7 +101,7 @@ class TestGivenAReachableServer:
             _EchoHandler.sleep_seconds = 1.0
 
             with pytest.raises(HttpTransportError) as raised:
-                HttpService.get(url=f"{echo_server}/slow", timeout_seconds=0.1)
+                HttpService.get(url=f"{echo_server}/slow", timeout_seconds=0.1, allow_internal_target=True)
 
             assert raised.value.http_code == 503
             assert raised.value.reason == "the request timed out"
@@ -97,7 +111,7 @@ class TestGivenAnUnreachableServer:
     class TestWhenTheConnectionIsRefused:
         def test_then_raises_a_transport_error_mapping_to_503(self) -> None:
             with pytest.raises(HttpTransportError) as raised:
-                HttpService.get(url=UNROUTABLE_URL)
+                HttpService.get(url=UNROUTABLE_URL, allow_internal_target=True)
 
             assert raised.value.http_code == 503
             assert raised.value.host == "127.0.0.1"
@@ -109,7 +123,7 @@ class TestGivenAnUnreachableServer:
 
             with caplog.at_level("ERROR", logger=HTTP_LOGGER):
                 with pytest.raises(HttpTransportError):
-                    HttpService.get(url=url)
+                    HttpService.get(url=url, allow_internal_target=True)
 
             logged = " ".join(record.getMessage() for record in caplog.records)
             assert "host=127.0.0.1" in logged
@@ -120,7 +134,7 @@ class TestGivenAnUnreachableServer:
     class TestWhenTheErrorMessageIsRead:
         def test_then_it_names_only_the_host(self) -> None:
             with pytest.raises(HttpTransportError) as raised:
-                HttpService.get(url=f"{UNROUTABLE_URL}?{SECRET_QUERY_PARAM}")
+                HttpService.get(url=f"{UNROUTABLE_URL}?{SECRET_QUERY_PARAM}", allow_internal_target=True)
 
             assert "super-secret-token" not in raised.value.message
             assert "/private/path" not in raised.value.message
@@ -135,6 +149,7 @@ class TestGivenARequestCarryingBothBodies:
                 method=HttpMethod.POST,
                 json_body={"name": "widget"},
                 form_body={"name": "widget"},
+                allow_internal_target=True,
             )
 
             with pytest.raises(HttpConflictingBodyError) as raised:
@@ -148,3 +163,95 @@ class TestGivenARequestWithNoExplicitTimeout:
         def test_then_it_carries_the_default_timeout(self) -> None:
             assert HttpRequest(url="https://example.com").timeout_seconds == DEFAULT_TIMEOUT_SECONDS
             assert DEFAULT_TIMEOUT_SECONDS == 15.0
+
+
+class TestGivenARequestWithNoExplicitInternalFlag:
+    class TestWhenItIsBuilt:
+        def test_then_internal_targets_are_disallowed_by_default(self) -> None:
+            assert HttpRequest(url="https://example.com").allow_internal_target is False
+
+
+class TestGivenAUrlWithADangerousScheme:
+    class TestWhenItIsSent:
+        @pytest.mark.parametrize(
+            "url", ["file:///etc/passwd", "ftp://example.com/data", "javascript:alert(1)", "data:text/plain,hello"]
+        )
+        def test_then_it_is_rejected_before_any_call(self, url: str) -> None:
+            with pytest.raises(HttpUnsupportedSchemeError) as raised:
+                HttpService.get(url=url)
+
+            assert raised.value.http_code == 400
+
+
+class TestGivenAUrlPointingAtAnInternalAddress:
+    class TestWhenTheCallerHasNotOptedIn:
+        @pytest.mark.parametrize(
+            "url",
+            [
+                "http://127.0.0.1:6379/",
+                "http://localhost:8080/",
+                "http://169.254.169.254/latest/meta-data/",
+                "http://10.0.0.5/admin",
+                "http://192.168.1.1/",
+                "http://172.16.0.1/",
+                "http://[::1]:8080/",
+            ],
+        )
+        def test_then_it_is_blocked_before_any_call(self, url: str) -> None:
+            with pytest.raises(HttpBlockedTargetError) as raised:
+                HttpService.get(url=url)
+
+            assert raised.value.http_code == 400
+            assert raised.value.reason == "the host resolves to an internal address"
+
+
+class TestGivenAnInternalTargetTheCallerOptedInto:
+    class TestWhenItIsSent:
+        def test_then_the_call_goes_out(self, echo_server: str) -> None:
+            response = HttpService.get(url=f"{echo_server}/health", allow_internal_target=True)
+
+            assert response.is_success
+
+
+class TestGivenAUrlWithNoHost:
+    class TestWhenItIsSent:
+        def test_then_it_is_blocked_before_any_call(self) -> None:
+            with pytest.raises(HttpBlockedTargetError) as raised:
+                HttpService.get(url="http:///no-host-here")
+
+            assert raised.value.http_code == 400
+
+
+class TestGivenAHostThatDoesNotResolve:
+    class TestWhenItIsSent:
+        def test_then_it_fails_with_a_module_error(self) -> None:
+            with pytest.raises((HttpBlockedTargetError, HttpTransportError)):
+                HttpService.get(url="https://this-host-does-not-exist.invalid/path")
+
+
+class TestGivenAResponseWithANonJsonBody:
+    class TestWhenJsonIsRead:
+        def test_then_it_raises_a_typed_error(self) -> None:
+            response = HttpResponse(status_code=502, headers={}, body="<html>bad gateway</html>")
+
+            with pytest.raises(HttpInvalidJsonBodyError) as raised:
+                response.json()
+
+            assert raised.value.http_code == 502
+            assert raised.value.status_code == 502
+
+    class TestWhenTheBodyIsEmpty:
+        def test_then_it_raises_a_typed_error(self) -> None:
+            response = HttpResponse(status_code=204, headers={}, body="")
+
+            with pytest.raises(HttpInvalidJsonBodyError):
+                response.json()
+
+    class TestWhenTheServerReturnsHtml:
+        def test_then_the_caller_sees_the_module_error_type(self, echo_server: str) -> None:
+            _EchoHandler.body_override = "<html>not json</html>"
+
+            response = HttpService.get(url=f"{echo_server}/page", allow_internal_target=True)
+
+            with pytest.raises(HttpInvalidJsonBodyError):
+                response.json()

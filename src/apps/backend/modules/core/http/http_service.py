@@ -25,6 +25,7 @@ class HttpService:
         headers: Optional[HttpHeaders] = None,
         query_params: Optional[HttpQueryParams] = None,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+        allow_internal_target: bool = False,
     ) -> HttpResponse:
         return HttpSender.send(
             HttpRequest(
@@ -33,6 +34,7 @@ class HttpService:
                 headers=headers or {},
                 query_params=query_params or {},
                 timeout_seconds=timeout_seconds,
+                allow_internal_target=allow_internal_target,
             )
         )
 
@@ -44,6 +46,7 @@ class HttpService:
         headers: Optional[HttpHeaders] = None,
         query_params: Optional[HttpQueryParams] = None,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+        allow_internal_target: bool = False,
     ) -> HttpResponse:
         return HttpSender.send(
             HttpRequest(
@@ -53,6 +56,7 @@ class HttpService:
                 query_params=query_params or {},
                 json_body=body,
                 timeout_seconds=timeout_seconds,
+                allow_internal_target=allow_internal_target,
             )
         )
 
@@ -64,6 +68,7 @@ class HttpService:
         headers: Optional[HttpHeaders] = None,
         query_params: Optional[HttpQueryParams] = None,
         timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+        allow_internal_target: bool = False,
     ) -> HttpResponse:
         return HttpSender.send(
             HttpRequest(
@@ -73,5 +78,6 @@ class HttpService:
                 query_params=query_params or {},
                 form_body=body,
                 timeout_seconds=timeout_seconds,
+                allow_internal_target=allow_internal_target,
             )
         )
