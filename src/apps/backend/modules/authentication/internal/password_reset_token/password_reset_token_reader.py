@@ -1,5 +1,4 @@
-from modules.account.errors import AccountBadRequestError
-from modules.authentication.errors import PasswordResetTokenNotFoundError
+from modules.authentication.errors import PasswordResetTokenInvalidError, PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
     PasswordResetTokenRepository,
@@ -26,11 +25,11 @@ class PasswordResetTokenReader:
         password_reset_token = PasswordResetTokenReader.get_password_reset_token_by_account_id(account_id, actor=actor)
 
         if password_reset_token.is_expired:
-            raise AccountBadRequestError(
+            raise PasswordResetTokenInvalidError(
                 f"Password reset link is expired for accountId {account_id}. Please retry with new link"
             )
         if password_reset_token.is_used:
-            raise AccountBadRequestError(
+            raise PasswordResetTokenInvalidError(
                 f"Password reset is already used for accountId {account_id}. Please retry with new link"
             )
 
@@ -38,7 +37,7 @@ class PasswordResetTokenReader:
             password=token, hashed_password=password_reset_token.token
         )
         if not is_token_valid:
-            raise AccountBadRequestError(
+            raise PasswordResetTokenInvalidError(
                 f"Password reset link is invalid for accountId {account_id}. Please retry with new link."
             )
 

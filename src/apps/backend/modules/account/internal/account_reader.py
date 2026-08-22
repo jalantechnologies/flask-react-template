@@ -16,8 +16,8 @@ from modules.account.types import (
     AccountSearchByIdParams,
     AccountSearchParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
 )
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import AuditActor
 
 

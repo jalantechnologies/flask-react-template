@@ -11,10 +11,10 @@ from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams, OTPErrorCode, VerifyOTPParams
+from modules.core.common.phone_number import PhoneNumber
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.conftest import TEST_ACTOR

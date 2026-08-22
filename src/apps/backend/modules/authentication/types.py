@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Optional, Union
 
-from modules.account.types import AccountErrorCode, PhoneNumber
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import QueryParams
 from modules.core.errors import AppError
 
@@ -30,7 +30,7 @@ class EmailBasedAuthAccessTokenRequestParams:
         for field in ["password", "username"]:
             if not isinstance(request_data.get(field), str):
                 raise AppError(
-                    code=AccountErrorCode.BAD_REQUEST, http_status_code=400, message=f"{field} must be a string"
+                    code=AccessTokenErrorCode.BAD_REQUEST, http_status_code=400, message=f"{field} must be a string"
                 )
         return cls(password=request_data["password"], username=request_data["username"])
 
@@ -52,6 +52,7 @@ class AccessTokenErrorCode:
     INVALID_AUTHORIZATION_HEADER: str = "ACCESS_TOKEN_ERR_04"
     ACCESS_TOKEN_INVALID: str = "ACCESS_TOKEN_ERR_05"
     SIGNING_KEY_INSECURE: str = "ACCESS_TOKEN_ERR_06"
+    BAD_REQUEST: str = "ACCESS_TOKEN_ERR_07"
 
 
 from dataclasses import dataclass
@@ -82,6 +83,7 @@ class CreatePasswordResetTokenParams:
 @dataclass(frozen=True)
 class PasswordResetTokenErrorCode:
     PASSWORD_RESET_TOKEN_NOT_FOUND: str = "PASSWORD_RESET_TOKEN_ERR_01"
+    PASSWORD_RESET_TOKEN_INVALID: str = "PASSWORD_RESET_TOKEN_ERR_02"
 
 
 @dataclass(frozen=True)
@@ -115,7 +117,6 @@ class OTPQuery(QueryParams):
 class OTPErrorCode:
     INCORRECT_OTP: str = "OTP_ERR_01"
     OTP_EXPIRED: str = "OTP_ERR_02"
-    REQUEST_FAILED: str = "OTP_ERR_03"
 
 
 @dataclass(frozen=True)

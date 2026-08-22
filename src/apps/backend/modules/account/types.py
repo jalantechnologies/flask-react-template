@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional, Union
 
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import QueryParams
 from modules.core.errors import AppError
 
@@ -37,30 +38,6 @@ class CreateAccountByUsernameAndPasswordParams:
             password=request_data["password"],
             username=request_data["username"],
         )
-
-
-@dataclass(frozen=True)
-class PhoneNumber:
-    country_code: str
-    phone_number: str
-
-    def __str__(self) -> str:
-        return f"{self.country_code} {self.phone_number}"
-
-    @classmethod
-    def from_dict(cls, phone_number_data: Any) -> "PhoneNumber":
-        if not isinstance(phone_number_data, dict):
-            raise AppError(
-                code=AccountErrorCode.BAD_REQUEST, http_status_code=400, message="phone_number must be a JSON object"
-            )
-        for field in ["country_code", "phone_number"]:
-            if not isinstance(phone_number_data.get(field), str):
-                raise AppError(
-                    code=AccountErrorCode.BAD_REQUEST,
-                    http_status_code=400,
-                    message=f"phone_number.{field} must be a string",
-                )
-        return cls(country_code=phone_number_data["country_code"], phone_number=phone_number_data["phone_number"])
 
 
 @dataclass(frozen=True)

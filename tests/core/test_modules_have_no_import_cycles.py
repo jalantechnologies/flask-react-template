@@ -9,13 +9,7 @@ MODULES_ROOT = BACKEND_ROOT / "modules"
 MODULES_PACKAGE = "modules"
 FOUNDATION_MODULE = "core"
 
-KNOWN_CYCLES: frozenset[tuple[str, ...]] = frozenset(
-    {
-        ("account", "authentication"),
-        ("account", "authentication", "notification"),
-        ("account", "notification"),
-    }
-)
+KNOWN_CYCLES: frozenset[tuple[str, ...]] = frozenset({("account", "authentication")})
 
 KNOWN_FOUNDATION_IMPORTS: frozenset[str] = frozenset()
 

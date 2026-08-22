@@ -9,9 +9,9 @@ from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
 )
-from modules.authentication.types import OTPErrorCode
+from modules.core.common.phone_number import PhoneNumber
+from modules.core.common.types import PhoneNumberErrorCode
 from modules.notification.sms_service import SMSService
 from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
@@ -155,7 +155,7 @@ class TestAccountPostApi(BaseTestAccount):
 
             assert response.status_code == 400
             assert response.json
-            assert response.json.get("code") == OTPErrorCode.REQUEST_FAILED
+            assert response.json.get("code") == PhoneNumberErrorCode.INVALID
             assert response.json.get("message") == "Please provide a valid phone number."
             assert mock_send_sms.called is False
 
@@ -208,7 +208,7 @@ class TestAccountPostApi(BaseTestAccount):
 
             assert response.status_code == 400
             assert response.json
-            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+            assert response.json.get("code") == PhoneNumberErrorCode.MALFORMED
 
     def test_given_phone_number_without_country_code_when_creating_account_then_returns_bad_request(self) -> None:
         request_body = json.dumps({"phone_number": {"phone_number": "9999999999"}})
@@ -218,7 +218,7 @@ class TestAccountPostApi(BaseTestAccount):
 
             assert response.status_code == 400
             assert response.json
-            assert response.json.get("code") == AccountErrorCode.BAD_REQUEST
+            assert response.json.get("code") == PhoneNumberErrorCode.MALFORMED
 
     def test_given_unrecognized_request_body_when_creating_account_then_returns_bad_request(self) -> None:
         request_body = json.dumps({"unrecognized_field": "value"})

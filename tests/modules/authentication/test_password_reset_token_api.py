@@ -7,10 +7,10 @@ from urllib.parse import parse_qs, urlparse
 from web_app import app
 
 from modules.account.account_service import AccountService
-from modules.account.errors import AccountBadRequestError, AccountNotFoundError
+from modules.account.errors import AccountNotFoundError
 from modules.account.types import CreateAccountByUsernameAndPasswordParams, ResetPasswordParams
 from modules.authentication.authentication_service import AuthenticationService
-from modules.authentication.errors import PasswordResetTokenNotFoundError
+from modules.authentication.errors import PasswordResetTokenInvalidError, PasswordResetTokenNotFoundError
 from modules.authentication.internal.password_reset_token.password_reset_token_util import PasswordResetTokenUtil
 from modules.authentication.internal.password_reset_token.password_reset_token_writer import PasswordResetTokenWriter
 from modules.authentication.internal.password_reset_token.store.password_reset_token_repository import (
@@ -417,7 +417,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertIn("message", response.json)
             self.assertEqual(
                 response.json["message"],
-                AccountBadRequestError(
+                PasswordResetTokenInvalidError(
                     f"Password reset is already used for accountId {account.id}. Please retry with new link"
                 ).message,
             )
@@ -448,7 +448,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertIn("message", response.json)
             self.assertEqual(
                 response.json["message"],
-                AccountBadRequestError(
+                PasswordResetTokenInvalidError(
                     f"Password reset link is invalid for accountId {account.id}. Please retry with new link."
                 ).message,
             )
@@ -484,7 +484,7 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
             self.assertIn("message", response.json)
             self.assertEqual(
                 response.json["message"],
-                AccountBadRequestError(
+                PasswordResetTokenInvalidError(
                     f"Password reset link is expired for accountId {account.id}. Please retry with new link"
                 ).message,
             )

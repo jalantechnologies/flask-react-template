@@ -6,9 +6,10 @@ from unittest.mock import MagicMock
 from web_app import app
 
 from modules.account.account_service import AccountService
-from modules.account.types import CreateAccountByPhoneNumberParams, PhoneNumber
+from modules.account.types import CreateAccountByPhoneNumberParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.config.config_service import ConfigService
 from modules.core.config.internal.config_manager import ConfigManager
 from modules.notification.sms_service import SMSService

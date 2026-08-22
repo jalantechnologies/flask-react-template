@@ -51,6 +51,13 @@ class PasswordResetTokenNotFoundError(AppError):
         )
 
 
+class PasswordResetTokenInvalidError(AppError):
+    def __init__(self, message: str) -> None:
+        super().__init__(
+            code=PasswordResetTokenErrorCode.PASSWORD_RESET_TOKEN_INVALID, http_status_code=400, message=message
+        )
+
+
 class OTPIncorrectError(AppError):
     def __init__(self) -> None:
         super().__init__(
@@ -64,11 +71,4 @@ class OTPExpiredError(AppError):
             code=OTPErrorCode.OTP_EXPIRED,
             http_status_code=400,
             message="The OTP has expired. Please request a new OTP.",
-        )
-
-
-class OTPRequestFailedError(AppError):
-    def __init__(self) -> None:
-        super().__init__(
-            code=OTPErrorCode.REQUEST_FAILED, http_status_code=400, message="Please provide a valid phone number."
         )

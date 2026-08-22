@@ -161,3 +161,9 @@ class JobRunQuery(QueryParams):
 class CacheErrorCode:
     NON_POSITIVE_TTL: str = "CACHE_ERR_01"
     DISCARD_FAILED: str = "CACHE_ERR_02"
+
+
+@dataclass(frozen=True)
+class PhoneNumberErrorCode:
+    MALFORMED: str = "PHONE_NUMBER_ERR_01"
+    INVALID: str = "PHONE_NUMBER_ERR_02"
