@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator, Optional, cast
 
 import pytest
 
@@ -62,7 +62,7 @@ class TtlObservingJob(Job):
     @classmethod
     def perform(cls, *args: Any, actor: AuditActor, **kwargs: Any) -> str:
         argument = str(args[0])
-        OBSERVED_TTLS.append(CacheClient.get_client().ttl(namespaced_key(_lock_key(cls.__name__, argument))))
+        OBSERVED_TTLS.append(_lock_ttl(cls.__name__, argument))
         return argument
 
 
@@ -111,6 +111,10 @@ def _lock_key(job_name: str, key: str) -> str:
 
 def _lock_exists(job_name: str, key: str) -> bool:
     return bool(CacheClient.get_client().exists(namespaced_key(_lock_key(job_name, key))))
+
+
+def _lock_ttl(job_name: str, key: str) -> int:
+    return cast(int, CacheClient.get_client().ttl(namespaced_key(_lock_key(job_name, key))))
 
 
 def _reader_actor() -> AuditActor:
