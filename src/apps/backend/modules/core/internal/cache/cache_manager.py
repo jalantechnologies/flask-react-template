@@ -11,14 +11,19 @@ DEFAULT_KEY_PREFIX = "flask-react-template"
 KEY_PREFIX_SEPARATOR = ":"
 
 
+def namespaced_key(key: str) -> str:
+    prefix = ConfigService[str].get_value(key="cache.key_prefix", default=DEFAULT_KEY_PREFIX)
+    return f"{prefix}{KEY_PREFIX_SEPARATOR}{key}"
+
+
 class CacheManager:
     @staticmethod
     def get(key: str) -> Optional[str]:
-        namespaced_key = CacheManager._namespaced(key)
+        key_in_store = namespaced_key(key)
         try:
-            value = CacheClient.get_client().get(namespaced_key)
+            value = CacheClient.get_client().get(key_in_store)
         except (RedisError, OSError) as exc:
-            Logger.warn(message=f"cache read failed for {namespaced_key}, treating as a miss: {exc}")
+            Logger.warn(message=f"cache read failed for {key_in_store}, treating as a miss: {exc}")
             return None
         return cast(Optional[str], value)
 
@@ -27,22 +32,17 @@ class CacheManager:
         if ttl_seconds <= 0:
             raise CacheNonPositiveTTLError(ttl_seconds=ttl_seconds)
 
-        namespaced_key = CacheManager._namespaced(key)
+        key_in_store = namespaced_key(key)
         try:
-            CacheClient.get_client().set(namespaced_key, value, ex=ttl_seconds)
+            CacheClient.get_client().set(key_in_store, value, ex=ttl_seconds)
         except (RedisError, OSError) as exc:
-            Logger.warn(message=f"cache write failed for {namespaced_key}, entry not stored: {exc}")
+            Logger.warn(message=f"cache write failed for {key_in_store}, entry not stored: {exc}")
 
     @staticmethod
     def discard(key: str) -> None:
-        namespaced_key = CacheManager._namespaced(key)
+        key_in_store = namespaced_key(key)
         try:
-            CacheClient.get_client().delete(namespaced_key)
+            CacheClient.get_client().delete(key_in_store)
         except (RedisError, OSError) as exc:
-            Logger.error(message=f"cache invalidation failed for {namespaced_key}: {exc}")
-            raise CacheDiscardFailedError(key=namespaced_key, reason=str(exc)) from exc
-
-    @staticmethod
-    def _namespaced(key: str) -> str:
-        prefix = ConfigService[str].get_value(key="cache.key_prefix", default=DEFAULT_KEY_PREFIX)
-        return f"{prefix}{KEY_PREFIX_SEPARATOR}{key}"
+            Logger.error(message=f"cache invalidation failed for {key_in_store}: {exc}")
+            raise CacheDiscardFailedError(key=key_in_store, reason=str(exc)) from exc

@@ -29,6 +29,10 @@ class JobRunService:
         JobRunService._finalize(job_run_id=job_run_id, status=JobRunStatus.FAILED)
 
     @staticmethod
+    def mark_skipped(*, job_run_id: str) -> None:
+        JobRunService._finalize(job_run_id=job_run_id, status=JobRunStatus.SKIPPED)
+
+    @staticmethod
     def _finalize(*, job_run_id: str, status: JobRunStatus) -> None:
         JobRunRepository.update(
             job_run_id,
