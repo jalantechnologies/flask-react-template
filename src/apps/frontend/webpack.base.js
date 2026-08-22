@@ -50,7 +50,14 @@ module.exports = {
       {
         test: /\.ts(x)?$/,
         loader: 'ts-loader',
-        exclude: /node_modules/,
+        exclude: [
+          /node_modules/,
+          /\.test\.tsx?$/,
+          /vitest\.(config|setup)\.ts$/,
+        ],
+        options: {
+          configFile: path.resolve(__dirname, 'tsconfig.build.json'),
+        },
       },
       {
         test: /\.css$/i,
