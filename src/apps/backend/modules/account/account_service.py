@@ -9,12 +9,12 @@ from modules.account.types import (
     AccountSearchParams,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
     ResetPasswordParams,
     UpdateAccountProfileParams,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import AuditActor
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import (

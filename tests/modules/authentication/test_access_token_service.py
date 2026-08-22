@@ -4,13 +4,10 @@ from web_app import app
 
 from modules.account.account_service import AccountService
 from modules.account.internal.account_writer import AccountWriter
-from modules.account.types import (
-    CreateAccountByPhoneNumberParams,
-    CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
-)
+from modules.account.types import CreateAccountByPhoneNumberParams, CreateAccountByUsernameAndPasswordParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.core.common.phone_number import PhoneNumber
 from tests.conftest import TEST_ACTOR
 from tests.modules.authentication.base_test_access_token import BaseTestAccessToken
 

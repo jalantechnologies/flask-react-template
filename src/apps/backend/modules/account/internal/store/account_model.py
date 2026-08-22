@@ -3,8 +3,8 @@ from typing import NotRequired, Optional, TypedDict
 
 from bson import ObjectId
 
-from modules.account.types import PhoneNumber
 from modules.core.base_model import BaseModel, StoredDocument, StoredDocumentBase
+from modules.core.common.phone_number import PhoneNumber
 
 
 class PhoneNumberDocument(TypedDict):

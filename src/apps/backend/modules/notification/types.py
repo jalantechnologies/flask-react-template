@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from modules.account.types import PhoneNumber
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import QueryParams
 
 

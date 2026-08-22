@@ -5,13 +5,14 @@ from flask.typing import ResponseReturnValue
 from flask.views import MethodView
 
 from modules.account.account_service import AccountService
-from modules.account.types import AccountSearchParams, PhoneNumber
+from modules.account.types import AccountSearchParams
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import (
     CreateAccessTokenParams,
     EmailBasedAuthAccessTokenRequestParams,
     OTPBasedAuthAccessTokenRequestParams,
 )
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import ActorType, AuditActor
 
 ANONYMOUS_ACTOR = AuditActor(actor_type=ActorType.ANONYMOUS, actor_id=None)

@@ -1,4 +1,5 @@
-from modules.account.types import AccountErrorCode, PhoneNumber
+from modules.account.types import AccountErrorCode
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.errors import AppError
 
 

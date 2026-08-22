@@ -13,11 +13,11 @@ from modules.account.types import (
     AccountQuery,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
     UpdateAccountProfileParams,
 )
-from modules.authentication.errors import OTPRequestFailedError
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import AuditActor, ResourceAction
+from modules.core.errors import InvalidPhoneNumberError
 from modules.core.repository import FieldUpdates
 
 
@@ -44,7 +44,7 @@ class AccountWriter:
         is_valid_phone_number = is_valid_number(parse(str(phone_number)))
 
         if not is_valid_phone_number:
-            raise OTPRequestFailedError()
+            raise InvalidPhoneNumberError()
 
         AccountReader.check_phone_number_not_exist(phone_number=params.phone_number, actor=actor)
         account = Account(

@@ -13,10 +13,10 @@ from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
     CreateAccountByUsernameAndPasswordParams,
-    PhoneNumber,
 )
 from modules.authentication.authentication_service import AuthenticationService
 from modules.authentication.types import CreateOTPParams
+from modules.core.common.phone_number import PhoneNumber
 from tests.conftest import TEST_ACTOR
 from tests.modules.account.base_test_account import BaseTestAccount
 

@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from modules.core.common.types import CacheErrorCode
+from modules.core.common.types import CacheErrorCode, PhoneNumberErrorCode
 
 
 class AppError(Exception):
@@ -39,4 +39,16 @@ class CacheDiscardFailedError(AppError):
             code=CacheErrorCode.DISCARD_FAILED,
             http_status_code=503,
             message=f"Cache entry {key} could not be discarded and may still be served: {reason}",
+        )
+
+
+class MalformedPhoneNumberError(AppError):
+    def __init__(self, message: str) -> None:
+        super().__init__(code=PhoneNumberErrorCode.MALFORMED, http_status_code=400, message=message)
+
+
+class InvalidPhoneNumberError(AppError):
+    def __init__(self) -> None:
+        super().__init__(
+            code=PhoneNumberErrorCode.INVALID, http_status_code=400, message="Please provide a valid phone number."
         )

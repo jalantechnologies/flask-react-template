@@ -1,7 +1,7 @@
 import urllib.parse
 from dataclasses import asdict
 
-from modules.account.types import Account, PhoneNumber
+from modules.account.types import Account
 from modules.authentication.internal.access_token.access_token_util import AccessTokenUtil
 from modules.authentication.internal.otp.otp_util import OTPUtil
 from modules.authentication.internal.otp.otp_writer import OTPWriter
@@ -17,6 +17,7 @@ from modules.authentication.types import (
     PasswordResetToken,
     VerifyOTPParams,
 )
+from modules.core.common.phone_number import PhoneNumber
 from modules.core.common.types import AuditActor
 from modules.core.config.config_service import ConfigService
 from modules.notification.email_service import EmailService
