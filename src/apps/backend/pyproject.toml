@@ -41,5 +41,6 @@ allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
 name = "core is the foundation and imports no other module"
-type = "layers"
-layers = ["modules.account | modules.authentication | modules.notification | modules.task", "modules.core"]
+type = "forbidden"
+source_modules = ["modules.core"]
+forbidden_modules = ["modules.account", "modules.authentication", "modules.notification", "modules.task"]
