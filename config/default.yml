@@ -15,11 +15,8 @@ web:
 
 logger:
   transports: ['console']
-
-datadog:
-  app_name: 'flask-react-template'
-  site_name: 'datadoghq.com'
-  log_level: 'info'
+  level: 'info'
+  service: 'flask-react-template'
 
 accounts:
   token_expiry_days: 1

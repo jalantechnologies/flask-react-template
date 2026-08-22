@@ -7,9 +7,8 @@ from modules.logger.internal.logger_enum import Levels
 class LogLevel:
     @staticmethod
     def get_level() -> int:
-        ddconfig_level = ConfigService[str].get_value(key="datadog.log_level")
-        datadog_level = ddconfig_level.lower()
+        configured_level = ConfigService[str].get_value(key="logger.level").lower()
         for level in Levels:
-            if datadog_level.lower() == level.name:
+            if configured_level == level.name:
                 return level.value
-        return logging.DEBUG
+        return logging.INFO

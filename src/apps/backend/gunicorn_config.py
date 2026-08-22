@@ -25,21 +25,14 @@ errorlog = "-"
 
 
 def post_fork(_server: "Arbiter", _worker: "Worker") -> None:
-    """Hook to configure Gunicorn access logger to use Datadog handler after worker fork"""
     import logging
 
-    from modules.logger.internal.datadog_handler import DatadogHandler
-    from modules.logger.internal.datadog_handler_level import LogLevel
+    from modules.logger.internal.json_formatter import JsonFormatter
 
-    # Get Gunicorn's access logger
-    gunicorn_logger = logging.getLogger("gunicorn.access")
-
-    # Add Datadog handler to Gunicorn's access logger
-    datadog_handler = DatadogHandler("flask")
-    datadog_handler.setLevel(LogLevel.get_level())
-    formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
-    datadog_handler.setFormatter(formatter)
-    gunicorn_logger.addHandler(datadog_handler)
+    formatter = JsonFormatter()
+    for name in ("gunicorn.access", "gunicorn.error"):
+        for handler in logging.getLogger(name).handlers:
+            handler.setFormatter(formatter)
 
 
 # Timeout

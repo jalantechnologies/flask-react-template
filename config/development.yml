@@ -1,5 +1,6 @@
 logger:
   transports: ['console']
+  level: 'debug'
 
 accounts:
   token_signing_key: 'insecure-local-development-signing-key'

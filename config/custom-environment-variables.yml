@@ -24,11 +24,9 @@ web:
 inspectlet:
   key: 'INSPECTLET_KEY'
 
-datadog:
-  api_key: 'DATADOG_API_KEY'
-  site_name: 'DATADOG_SITE_NAME'
-  app_name: 'DATADOG_APP_NAME'
-  log_level: 'DATADOG_LOG_LEVEL'
+logger:
+  level: 'LOG_LEVEL'
+  service: 'LOG_SERVICE_NAME'
 
 sendgrid:
   api_key: 'SENDGRID_API_KEY'
