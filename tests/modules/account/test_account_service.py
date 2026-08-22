@@ -1,9 +1,14 @@
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
 
 from web_app import app
 
 from modules.account.account_service import AccountService
+from modules.account.errors import AccountWithUserNameExistsError
 from modules.account.internal.account_writer import AccountWriter
+from modules.account.internal.store.account_repository import AccountRepository
 from modules.account.types import (
     AccountErrorCode,
     CreateAccountByPhoneNumberParams,
@@ -341,3 +346,69 @@ class TestAccountService(BaseTestAccount):
         assert create_response.json is not None
         assert create_response.json.get("phone_number") == phone_number
         assert create_response.json.get("id") != original_account_id
+
+    def test_concurrent_account_creation_with_same_username_creates_only_one_account(self) -> None:
+        username = "concurrent_username"
+        thread_count = 8
+        barrier = threading.Barrier(thread_count)
+
+        def create_account() -> Optional[BaseException]:
+            barrier.wait()
+            try:
+                AccountService.create_account_by_username_and_password(
+                    params=CreateAccountByUsernameAndPasswordParams(
+                        first_name="first_name", last_name="last_name", password="password", username=username
+                    ),
+                    actor=TEST_ACTOR,
+                )
+                return None
+            except BaseException as error:
+                return error
+
+        with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            outcomes = [future.result() for future in [executor.submit(create_account) for _ in range(thread_count)]]
+
+        successes = [outcome for outcome in outcomes if outcome is None]
+        failures = [outcome for outcome in outcomes if outcome is not None]
+
+        assert len(successes) == 1
+        assert len(failures) == thread_count - 1
+        assert all(isinstance(failure, AccountWithUserNameExistsError) for failure in failures)
+        assert AccountRepository.collection().count_documents({"username": username, "active": True}) == 1
+
+    def test_username_is_reusable_after_soft_delete(self) -> None:
+        username = "reusable_username"
+        account_id, token = self._create_account_and_get_token(username, "password")
+
+        with app.test_client() as client:
+            delete_response = client.delete(f"{ACCOUNT_URL}/{account_id}", headers={"Authorization": f"Bearer {token}"})
+            assert delete_response.status_code == 204
+
+        recreated_account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username=username
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        assert recreated_account.id != account_id
+        assert recreated_account.username == username
+        assert AccountRepository.collection().count_documents({"username": username, "active": False}) == 1
+
+    def test_multiple_phone_number_accounts_coexist_despite_blank_usernames(self) -> None:
+        first_account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(
+                phone_number=PhoneNumber(country_code="+91", phone_number="9999999991")
+            ),
+            actor=TEST_ACTOR,
+        )
+        second_account = AccountWriter.create_account_by_phone_number(
+            params=CreateAccountByPhoneNumberParams(
+                phone_number=PhoneNumber(country_code="+91", phone_number="9999999992")
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        assert first_account.id != second_account.id
+        assert first_account.username == ""
+        assert second_account.username == ""
