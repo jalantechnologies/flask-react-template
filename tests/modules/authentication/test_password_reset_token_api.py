@@ -19,6 +19,7 @@ from modules.authentication.internal.password_reset_token.store.password_reset_t
 from modules.authentication.rest_api.password_reset_token_view import PASSWORD_RESET_REQUESTED_MESSAGE
 from modules.authentication.types import PasswordResetTokenQuery
 from modules.notification.email_service import EmailService
+from modules.notification.errors import ServiceError
 from modules.notification.notification_service import NotificationService
 from modules.notification.types import CreateOrUpdateAccountNotificationPreferencesParams
 from tests.conftest import TEST_ACTOR
@@ -115,6 +116,82 @@ class TestAccountPasswordReset(BaseTestPasswordResetToken):
         self.assertEqual(unknown_username.status_code, known_username.status_code)
         self.assertEqual(unknown_username.data, known_username.data)
         self.assertEqual(mock_send_email.call_count, 1)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_known_username_response_is_unchanged_when_sending_the_reset_email_fails(
+        self, mock_send_email: MagicMock
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            unknown_username = client.post(
+                PASSWORD_RESET_TOKEN_URL,
+                headers=HEADERS,
+                data=json.dumps({"username": "nonexistent_username@example.com"}),
+            )
+
+            mock_send_email.side_effect = ServiceError("sendgrid is unavailable")
+            known_username = client.post(
+                PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username})
+            )
+
+        self.assertTrue(mock_send_email.called)
+        self.assertEqual(known_username.status_code, 200)
+        self.assertEqual(known_username.status_code, unknown_username.status_code)
+        self.assertEqual(known_username.data, unknown_username.data)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_known_username_response_is_unchanged_when_the_email_transport_times_out(
+        self, mock_send_email: MagicMock
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        with app.test_client() as client:
+            unknown_username = client.post(
+                PASSWORD_RESET_TOKEN_URL,
+                headers=HEADERS,
+                data=json.dumps({"username": "nonexistent_username@example.com"}),
+            )
+
+            mock_send_email.side_effect = TimeoutError("connection to the mail transport timed out")
+            known_username = client.post(
+                PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username})
+            )
+
+        self.assertTrue(mock_send_email.called)
+        self.assertEqual(known_username.status_code, 200)
+        self.assertEqual(known_username.status_code, unknown_username.status_code)
+        self.assertEqual(known_username.data, unknown_username.data)
+
+    @mock.patch.object(EmailService, "send_email_for_account")
+    def test_a_programming_error_while_sending_the_reset_email_is_not_turned_into_a_neutral_response(
+        self, mock_send_email: MagicMock
+    ) -> None:
+        account = AccountService.create_account_by_username_and_password(
+            params=CreateAccountByUsernameAndPasswordParams(
+                first_name="first_name", last_name="last_name", password="password", username="username"
+            ),
+            actor=TEST_ACTOR,
+        )
+
+        mock_send_email.side_effect = TypeError("send_email_for_account() got an unexpected keyword argument")
+
+        with app.test_client() as client:
+            response = client.post(
+                PASSWORD_RESET_TOKEN_URL, headers=HEADERS, data=json.dumps({"username": account.username})
+            )
+
+        self.assertEqual(response.status_code, 500)
 
     @mock.patch.object(EmailService, "send_email_for_account")
     def test_emailed_password_reset_token_still_resets_the_password(self, mock_send_email: MagicMock) -> None:
