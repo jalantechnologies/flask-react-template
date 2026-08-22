@@ -6,6 +6,9 @@ is_server_running_behind_proxy: false
 mongodb:
   connection_caching: true
 
+cache:
+  key_prefix: 'flask-react-template'
+
 web_app_host: 'http://localhost:3000'
 
 web:

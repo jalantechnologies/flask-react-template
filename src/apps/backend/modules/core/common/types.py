@@ -154,3 +154,9 @@ class JobRunQuery(QueryParams):
     id: Optional[str] = None
     job_name: Optional[str] = None
     status: Optional[JobRunStatus] = None
+
+
+@dataclass(frozen=True)
+class CacheErrorCode:
+    NON_POSITIVE_TTL: str = "CACHE_ERR_01"
+    DISCARD_FAILED: str = "CACHE_ERR_02"

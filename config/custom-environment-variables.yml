@@ -13,6 +13,9 @@ celery:
   broker_url: 'CELERY_BROKER_URL'
   result_backend: 'CELERY_RESULT_BACKEND'
 
+cache:
+  key_prefix: 'CACHE_KEY_PREFIX'
+
 worker:
   health_check_url: 'HEALTH_CHECK_URL'
 

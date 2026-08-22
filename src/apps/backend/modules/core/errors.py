@@ -1,5 +1,7 @@
 from typing import Any, Optional
 
+from modules.core.common.types import CacheErrorCode
+
 
 class AppError(Exception):
     def __init__(self, message: str, code: str, http_status_code: Optional[int] = None) -> None:
@@ -20,3 +22,21 @@ class AppError(Exception):
             "with_traceback": self.with_traceback,
         }
         return error_dict
+
+
+class CacheNonPositiveTTLError(AppError):
+    def __init__(self, ttl_seconds: int) -> None:
+        super().__init__(
+            code=CacheErrorCode.NON_POSITIVE_TTL,
+            http_status_code=400,
+            message=f"Cache writes require a time to live greater than zero seconds, got {ttl_seconds}.",
+        )
+
+
+class CacheDiscardFailedError(AppError):
+    def __init__(self, key: str, reason: str) -> None:
+        super().__init__(
+            code=CacheErrorCode.DISCARD_FAILED,
+            http_status_code=503,
+            message=f"Cache entry {key} could not be discarded and may still be served: {reason}",
+        )
