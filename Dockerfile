@@ -47,7 +47,7 @@ RUN npm install -g npm@12.0.1 && \
     mkdir -p "$TAR_DIR" && \
     cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
     rm -rf /tmp/tar-fix && \
-    grep -q '"version": "7.5.21"' "$TAR_DIR/package.json"
+    TAR_DIR="$TAR_DIR" node -e 'process.exit(require(process.env.TAR_DIR + "/package.json").version === "7.5.21" ? 0 : 1)'
 
 # Stage the Node runtime at a fixed path so the runtime stage can COPY it without
 # depending on where this image happens to put global modules ("npm root -g"
