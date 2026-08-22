@@ -31,3 +31,30 @@ class ServiceError(AppError):
         self.original_error = original_error
         self.original_error_message = str(original_error) if original_error else None
         self.stack = getattr(original_error, "stack", None)
+
+
+class EmailRejectedError(AppError):
+    def __init__(self, recipient: str, reason: str, status_code: Optional[int] = None) -> None:
+        super().__init__(
+            code=NotificationErrorCode.EMAIL_REJECTED,
+            http_status_code=502,
+            message=f"The email to {recipient} was rejected by the email provider: {reason}.",
+        )
+        self.recipient = recipient
+        self.reason = reason
+        self.status_code = status_code
+
+
+class EmailServiceUnavailableError(AppError):
+    def __init__(self, recipient: str, reason: str, status_code: Optional[int] = None) -> None:
+        super().__init__(
+            code=NotificationErrorCode.EMAIL_SERVICE_UNAVAILABLE,
+            http_status_code=503,
+            message=(
+                f"The email to {recipient} could not be delivered "
+                f"because the email provider is unavailable: {reason}."
+            ),
+        )
+        self.recipient = recipient
+        self.reason = reason
+        self.status_code = status_code
