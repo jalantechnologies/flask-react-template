@@ -31,7 +31,9 @@ RUN if [ "$APP_ENV" = "testing" ]; then \
     fi
 
 # Stage 2: Node.js dependencies and frontend builder
-FROM node:22-alpine AS node-builder
+# Debian release must match the python:3.12-slim base (trixie) so the Node binary
+# copied into the runtime stage links against the same system libraries.
+FROM node:22-trixie-slim AS node-builder
 
 WORKDIR /build
 
@@ -46,6 +48,13 @@ RUN npm install -g npm@12.0.1 && \
     cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
     rm -rf /tmp/tar-fix && \
     grep -q '"version": "7.5.21"' "$TAR_DIR/package.json"
+
+# Stage the Node runtime at a fixed path so the runtime stage can COPY it without
+# depending on where this image happens to put global modules ("npm root -g"
+# differs between the Debian and Alpine variants).
+RUN mkdir -p /node-dist/lib && \
+    cp "$(command -v node)" /node-dist/node && \
+    cp -R "$(npm root -g)" /node-dist/lib/node_modules
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
@@ -72,7 +81,6 @@ WORKDIR /app
 # Install only runtime system dependencies
 # Note: Removed GUI libraries (libgtk, xvfb, xauth) as they're not used
 # make is needed for npm start (runs make run-engine)
-# Node.js is needed for npm commands
 # procps provides ps command needed by concurrently for process management
 # jq is needed by Makefile serve script to enumerate serve:* scripts
 # apt-get upgrade applies security patches for base image vulnerabilities (e.g., OpenSSL CVEs)
@@ -80,24 +88,20 @@ RUN apt-get update -y && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
         make \
-        curl \
         tzdata \
         procps \
         jq \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g npm@12.0.1 && \
-    npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
-    TAR_DIR="$(npm root -g)/npm/node_modules/tar" && \
-    rm -rf "$TAR_DIR" && \
-    mkdir -p "$TAR_DIR" && \
-    cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
-    rm -rf /tmp/tar-fix && \
-    grep -q '"version": "7.5.21"' "$TAR_DIR/package.json" && \
-    apt-get remove -y curl && \
-    apt-get autoremove -y && \
-    apt-get clean && \
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Copy Node.js from the official image rather than installing it from NodeSource.
+# The node-builder stage shares this stage's Debian release, so the binary and its
+# bundled npm run against the same system libraries.
+COPY --from=node-builder /node-dist/node /usr/local/bin/node
+COPY --from=node-builder /node-dist/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
+    ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install pipenv for runtime
 # Fix GHSA-58pv-8j8x-9vj2: setuptools vendors jaraco.context 5.3.0 which has a path traversal
