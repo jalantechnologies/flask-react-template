@@ -41,13 +41,20 @@ demo:
   port:
     __name: 'DEMO_PORT'
     __format: 'number'
+  regions:
+    __name: 'DEMO_REGIONS'
+    __format: 'list'
 ```
 
-| Doppler Secret | Overrides Config Key    | Notes                                 |
-| -------------- | ----------------------- | ------------------------------------- |
-| `MONGODB_URI`  | `mongodb.uri`           | String value                          |
-| `DEMO_HOST`    | `demo.host`             | String value                          |
-| `DEMO_PORT`    | `demo.port` (as number) | Cast to number via `__format: number` |
+| Doppler Secret | Overrides Config Key     | Notes                                       |
+| -------------- | ------------------------ | ------------------------------------------- |
+| `MONGODB_URI`  | `mongodb.uri`            | String value                                |
+| `DEMO_HOST`    | `demo.host`              | String value                                |
+| `DEMO_PORT`    | `demo.port` (as number)  | Cast to number via `__format: number`       |
+| `DEMO_REGIONS` | `demo.regions` (as list) | Comma separated, split via `__format: list` |
+
+Supported `__format` values are `boolean`, `number`, and `list`. A `list` value is split on commas with
+surrounding whitespace trimmed and empty entries dropped, so `a, b ,` becomes `['a', 'b']`.
 
 _Empty or unset secrets are ignored and fallback to the value defined in the corresponding YAML config._
 
@@ -68,9 +75,35 @@ _Empty or unset secrets are ignored and fallback to the value defined in the cor
 
 Required in **every deployed environment** (preview, production). This key signs and verifies JWT access tokens. `default.yml` ships no value, so deployed environments resolve it only from this secret. Use a high-entropy random value that is unique per environment; the app refuses to boot when it is missing or left at a placeholder.
 
-| Doppler Secret               | Config Key                   | Description                                  |
-| ---------------------------- | ---------------------------- | -------------------------------------------- |
-| `ACCOUNTS_TOKEN_SIGNING_KEY` | `accounts.token_signing_key` | High-entropy JWT signing key, unique per env |
+| Doppler Secret                     | Config Key                         | Description                                                |
+| ---------------------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `ACCOUNTS_TOKEN_SIGNING_KEY`       | `accounts.token_signing_key`       | High-entropy JWT signing key, unique per env               |
+| `ACCOUNTS_TOKEN_VERIFICATION_KEYS` | `accounts.token_verification_keys` | Optional comma separated list of older keys still accepted |
+
+#### Rotating the JWT signing key
+
+Tokens are signed with `ACCOUNTS_TOKEN_SIGNING_KEY` only, but they are verified against that key plus
+every key listed in `ACCOUNTS_TOKEN_VERIFICATION_KEYS`. That split is what makes rotation possible
+without logging everyone out: tokens issued under the previous key keep working until they expire on
+their own.
+
+Rotate one environment at a time:
+
+1. Generate a new high-entropy key, for example `openssl rand -base64 48`.
+2. Set `ACCOUNTS_TOKEN_VERIFICATION_KEYS` to the key currently in `ACCOUNTS_TOKEN_SIGNING_KEY`. If the
+   variable already holds keys from an earlier rotation, prepend the current one to the list.
+3. Set `ACCOUNTS_TOKEN_SIGNING_KEY` to the new key.
+4. Deploy. New logins are signed with the new key; existing sessions still verify against the old one.
+5. Wait longer than `accounts.token_expiry_days` (one day by default) so every token signed with the old
+   key has expired.
+6. Remove the old key from `ACCOUNTS_TOKEN_VERIFICATION_KEYS` and deploy again.
+
+Steps 2 and 3 belong in the same deploy. Swapping the signing key without first moving the old key into
+the verification list invalidates every live session immediately.
+
+Both variables are read at boot, so a running process keeps its old values until it restarts. The
+verification list is a fallback for rotation, not a place to park keys permanently: a leaked key stays
+usable for as long as it is listed, so complete step 6 rather than leaving the list to grow.
 
 ### Backend Datadog Logging
 

@@ -54,13 +54,14 @@ class CustomEnvConfig:
         return os.getenv(key)
 
     @staticmethod
-    def _parse_value(value: Optional[str], value_format: str) -> int | float | bool | None:
+    def _parse_value(value: Optional[str], value_format: str) -> int | float | bool | list[str] | None:
         if value is None:
             return None
 
-        parsers: dict[str, Callable[[str], int | float | bool]] = {
+        parsers: dict[str, Callable[[str], int | float | bool | list[str]]] = {
             "boolean": lambda x: x.lower() in ["true", "1"],
             "number": lambda x: int(x) if x.isdigit() else float(x),
+            "list": lambda x: [item.strip() for item in x.split(",") if item.strip()],
         }
 
         parser = parsers.get(value_format)

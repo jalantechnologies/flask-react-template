@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import jwt
 
@@ -17,6 +17,7 @@ from modules.config.config_service import ConfigService
 
 class AccessTokenUtil:
     SIGNING_KEY_CONFIG_KEY: ClassVar[str] = "accounts.token_signing_key"
+    VERIFICATION_KEYS_CONFIG_KEY: ClassVar[str] = "accounts.token_verification_keys"
     LOCAL_APP_ENVS: ClassVar[frozenset[str]] = frozenset({"development", "testing"})
     INSECURE_SIGNING_KEYS: ClassVar[frozenset[str]] = frozenset({"", "JWT_TOKEN"})
 
@@ -42,15 +43,38 @@ class AccessTokenUtil:
         return AccessToken(token=jwt_token, account_id=account.id, expires_at=expiry_time.isoformat())
 
     @staticmethod
-    def verify_access_token(*, token: str) -> AccessTokenPayload:
-        jwt_signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
+    def _get_accepted_verification_keys() -> list[str]:
+        signing_key = ConfigService[str].get_value(key=AccessTokenUtil.SIGNING_KEY_CONFIG_KEY)
+        additional_keys = ConfigService[list[str]].get_value(
+            key=AccessTokenUtil.VERIFICATION_KEYS_CONFIG_KEY, default=[]
+        )
 
-        try:
-            verified_token = jwt.decode(token, jwt_signing_key, algorithms=["HS256"])
-        except jwt.exceptions.DecodeError:
-            raise AccessTokenInvalidError("Invalid access token")
-        except jwt.ExpiredSignatureError:
-            raise AccessTokenExpiredError(message="Access token has expired. Please login again.")
+        accepted_keys = [signing_key]
+        for key in additional_keys:
+            if key and key not in accepted_keys:
+                accepted_keys.append(key)
+
+        return accepted_keys
+
+    @staticmethod
+    def _decode_with_accepted_keys(token: str) -> dict[str, Any]:
+        accepted_keys = AccessTokenUtil._get_accepted_verification_keys()
+
+        for key in accepted_keys:
+            try:
+                return jwt.decode(token, key, algorithms=["HS256"])
+            except jwt.exceptions.InvalidSignatureError:
+                continue
+            except jwt.ExpiredSignatureError:
+                raise AccessTokenExpiredError(message="Access token has expired. Please login again.")
+            except jwt.exceptions.DecodeError:
+                raise AccessTokenInvalidError("Invalid access token")
+
+        raise AccessTokenInvalidError("Invalid access token")
+
+    @staticmethod
+    def verify_access_token(*, token: str) -> AccessTokenPayload:
+        verified_token = AccessTokenUtil._decode_with_accepted_keys(token)
 
         account_id = verified_token.get("account_id")
         if not account_id or not isinstance(account_id, str):

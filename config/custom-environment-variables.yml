@@ -5,6 +5,9 @@ mailer:
 
 accounts:
   token_signing_key: 'ACCOUNTS_TOKEN_SIGNING_KEY'
+  token_verification_keys:
+    __name: 'ACCOUNTS_TOKEN_VERIFICATION_KEYS'
+    __format: 'list'
 
 mongodb:
   uri: 'MONGODB_URI'

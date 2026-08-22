@@ -35,6 +35,35 @@ class TestCustomEnvConfig(BaseTestConfig):
 
         assert overrides["feature"] == "from-env"
 
+    def test_list_format_splits_comma_separated_value(self) -> None:
+        os.environ[self.UNSET_ENV_VAR] = "first, second ,third"
+        try:
+            overrides = CustomEnvConfig._apply_environment_overrides(
+                {"keys": {"__name": self.UNSET_ENV_VAR, "__format": "list"}}
+            )
+        finally:
+            os.environ.pop(self.UNSET_ENV_VAR, None)
+
+        assert overrides["keys"] == ["first", "second", "third"]
+
+    def test_list_format_drops_empty_entries(self) -> None:
+        os.environ[self.UNSET_ENV_VAR] = " , only ,"
+        try:
+            overrides = CustomEnvConfig._apply_environment_overrides(
+                {"keys": {"__name": self.UNSET_ENV_VAR, "__format": "list"}}
+            )
+        finally:
+            os.environ.pop(self.UNSET_ENV_VAR, None)
+
+        assert overrides["keys"] == ["only"]
+
+    def test_unset_list_format_omits_key(self) -> None:
+        overrides = CustomEnvConfig._apply_environment_overrides(
+            {"keys": {"__name": self.UNSET_ENV_VAR, "__format": "list"}}
+        )
+
+        assert "keys" not in overrides
+
     def test_nested_dict_without_name_still_merges(self) -> None:
         os.environ[self.UNSET_ENV_VAR] = "child-value"
         try:
