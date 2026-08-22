@@ -22,6 +22,7 @@ lib-cov
 
 # coverage directory used by tools like istanbul
 coverage
+.coverage
 .nyc_output
 output
 
@@ -71,9 +72,6 @@ terraform/terraform.tfstate
 terraform/.terraform.tfstate.lock.info
 terraform/terraform.tfstate.backup
 terraform/*.tfvars
-
-# asdf npm version manager
-.tool-versions
 
 # python cache
 *.pyc

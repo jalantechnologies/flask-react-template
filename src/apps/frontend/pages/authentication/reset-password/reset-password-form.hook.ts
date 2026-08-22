@@ -42,18 +42,17 @@ const useResetPasswordForm = ({
         .oneOf([Yup.ref('password')], constant.PASSWORD_MATCH_VALIDATION_ERROR)
         .required(constant.PASSWORD_MATCH_VALIDATION_ERROR),
     }),
-    onSubmit: (values) => {
-      resetPassword({
-        accountId: accountId || '',
-        newPassword: values.password,
-        token: token || '',
-      })
-        .then(() => {
-          onSuccess();
-        })
-        .catch((err) => {
-          onError(err as AsyncError);
+    onSubmit: async (values) => {
+      try {
+        await resetPassword({
+          accountId: accountId || '',
+          newPassword: values.password,
+          token: token || '',
         });
+        onSuccess();
+      } catch (err) {
+        onError(err as AsyncError);
+      }
     },
   });
 

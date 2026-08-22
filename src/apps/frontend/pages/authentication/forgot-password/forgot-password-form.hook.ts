@@ -29,14 +29,13 @@ const useForgotPasswordForm = ({
         .email(constant.EMAIL_VALIDATION_ERROR)
         .required(constant.EMAIL_VALIDATION_ERROR),
     }),
-    onSubmit: (values) => {
-      sendForgotPasswordEmail(values.username)
-        .then(() => {
-          onSuccess(values.username);
-        })
-        .catch((err) => {
-          onError(err as AsyncError);
-        });
+    onSubmit: async (values) => {
+      try {
+        await sendForgotPasswordEmail(values.username);
+        onSuccess(values.username);
+      } catch (err) {
+        onError(err as AsyncError);
+      }
     },
   });
 

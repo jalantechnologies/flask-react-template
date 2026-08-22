@@ -1,3 +1,5 @@
+COVERAGE_XML ?= output/coverage.xml
+
 run-lint:
 	cd src/apps/backend && \
 	MYPYPATH=. pipenv run mypy --config-file mypy.ini . ../../../tests && \
@@ -48,7 +50,8 @@ run-flower:
 
 
 run-test:
-	APP_ENV=testing PYTHONPATH=src/apps/backend pipenv run pytest --disable-warnings -s -x -v --cov=src/apps/backend --cov-report=xml:/app/output/coverage.xml tests
+	mkdir -p $(dir $(COVERAGE_XML))
+	APP_ENV=testing PYTHONPATH=src/apps/backend pipenv run pytest --disable-warnings -s -x -v --cov=src/apps/backend --cov-report=xml:$(COVERAGE_XML) tests
 
 run-engine-winx86:
 	echo "This command is specifically for Windows platform \

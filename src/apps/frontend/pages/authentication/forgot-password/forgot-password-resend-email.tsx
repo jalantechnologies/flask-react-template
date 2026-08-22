@@ -31,15 +31,18 @@ const ForgotPasswordResendEmail: React.FC<ForgotPasswordResendEmailProps> = ({
   const { isSendForgotPasswordEmailLoading, sendForgotPasswordEmail } =
     useResetPasswordContext();
 
+  const resendPasswordResetEmail = async () => {
+    try {
+      await sendForgotPasswordEmail(username);
+      onSuccess();
+    } catch (error) {
+      onError(error as AsyncError);
+    }
+  };
+
   const handleResendPasswordResetEmail = (e: React.FormEvent<EventTarget>) => {
     e.preventDefault();
-    sendForgotPasswordEmail(username)
-      .then(() => {
-        onSuccess();
-      })
-      .catch((error: AsyncError) => {
-        onError(error);
-      });
+    void resendPasswordResetEmail();
   };
 
   return (

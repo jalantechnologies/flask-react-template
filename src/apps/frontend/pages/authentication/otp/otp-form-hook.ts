@@ -39,38 +39,40 @@ const useOTPForm = ({
       otp: Yup.array().of(Yup.string().required('')),
     }),
 
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       const otp = values.otp.join('');
 
-      verifyOTP(
+      try {
+        await verifyOTP(
+          new PhoneNumber({
+            country_code: countryCode,
+            phone_number: phoneNumber,
+          }),
+          otp,
+        );
+        onVerifyOTPSuccess();
+      } catch (error) {
+        onError(error as AsyncError);
+      }
+    },
+  });
+
+  const resendOTP = async () => {
+    try {
+      await sendOTP(
         new PhoneNumber({
           country_code: countryCode,
           phone_number: phoneNumber,
         }),
-        otp,
-      )
-        .then(() => {
-          onVerifyOTPSuccess();
-        })
-        .catch((error) => {
-          onError(error as AsyncError);
-        });
-    },
-  });
+      );
+      onResendOTPSuccess();
+    } catch (error) {
+      onError(error as AsyncError);
+    }
+  };
 
   const handleResendOTP = () => {
-    sendOTP(
-      new PhoneNumber({
-        country_code: countryCode,
-        phone_number: phoneNumber,
-      }),
-    )
-      .then(() => {
-        onResendOTPSuccess();
-      })
-      .catch((error) => {
-        onError(error as AsyncError);
-      });
+    void resendOTP();
   };
 
   return {
