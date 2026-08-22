@@ -36,7 +36,14 @@ FROM node:22-alpine AS node-builder
 WORKDIR /build
 
 # Upgrade npm to fix bundled dependency vulnerabilities (glob, minimatch, tar CVEs)
-RUN npm install -g npm@12.0.1
+# npm 12.0.2 still bundles tar 7.5.19 (CVE-2026-73566), so replace that copy with the
+# fixed release and fail the build if the vulnerable version survives.
+RUN npm install -g npm@12.0.1 && \
+    npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
+    rm -rf /usr/local/lib/node_modules/npm/node_modules/tar && \
+    cp -R /tmp/tar-fix/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar && \
+    rm -rf /tmp/tar-fix && \
+    grep -q '"version": "7.5.21"' /usr/local/lib/node_modules/npm/node_modules/tar/package.json
 
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
@@ -78,6 +85,11 @@ RUN apt-get update -y && \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g npm@12.0.1 && \
+    npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
+    rm -rf /usr/local/lib/node_modules/npm/node_modules/tar && \
+    cp -R /tmp/tar-fix/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar && \
+    rm -rf /tmp/tar-fix && \
+    grep -q '"version": "7.5.21"' /usr/local/lib/node_modules/npm/node_modules/tar/package.json && \
     apt-get remove -y curl && \
     apt-get autoremove -y && \
     apt-get clean && \
