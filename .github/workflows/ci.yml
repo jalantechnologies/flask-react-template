@@ -410,12 +410,31 @@ jobs:
           repository: jalantechnologies/github-ci
           path: platform
 
-      - name: Download coverage report
+      - name: Download backend coverage report
         uses: actions/download-artifact@v8
         with:
           name: coverage-report
-          path: output/
-        continue-on-error: true
+          path: src/apps/backend/coverage/
+
+      - name: Download frontend coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-coverage-report
+          path: src/apps/frontend/coverage/
+
+      - name: Rebase frontend coverage paths onto the frontend module
+        run: |
+          sed -i 's|^SF:src/apps/frontend/|SF:|' src/apps/frontend/coverage/lcov.info
+
+      - name: Verify coverage reports are present and non-empty
+        run: |
+          for report in src/apps/backend/coverage/coverage.xml src/apps/frontend/coverage/lcov.info; do
+            if [ ! -s "$report" ]; then
+              echo "::error::Missing or empty coverage report: $report. SonarQube would report no coverage."
+              exit 1
+            fi
+            echo "Found coverage report: $report ($(wc -c < "$report") bytes)"
+          done
 
       - name: Run SonarQube analysis
         id: sonar_analysis
@@ -739,7 +758,7 @@ jobs:
           sed -i \
             -e 's|/app/src/apps/backend/||g' \
             -e 's|<source>/app/src/apps/backend</source>|<source>.</source>|g' \
-            output/coverage.xml || true
+            output/coverage.xml
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
@@ -747,7 +766,7 @@ jobs:
           name: coverage-report
           path: output/coverage.xml
           retention-days: 1
-        continue-on-error: true
+          if-no-files-found: error
 
       - name: Coverage report
         id: backend_coverage
@@ -809,7 +828,7 @@ jobs:
           name: frontend-coverage-report
           path: output/frontend-coverage/lcov.info
           retention-days: 1
-        continue-on-error: true
+          if-no-files-found: error
 
       - name: Coverage report
         id: frontend_coverage
