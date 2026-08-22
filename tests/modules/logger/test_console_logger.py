@@ -3,11 +3,13 @@ import json
 import logging
 import socket
 import sys
+from contextlib import contextmanager
 from typing import Iterator
 from unittest.mock import patch
 
 import pytest
 
+from modules.config.config_service import ConfigService
 from modules.logger.internal.console_logger import ConsoleLogger
 from modules.logger.internal.log_level import LogLevel
 from modules.logger.internal.loggers import Loggers
@@ -44,7 +46,7 @@ class TestConsoleLogger(BaseTestLogger):
         assert [line["message"] for line in lines] == ["hidden debug", "visible info", "visible warning"]
 
     def test_unknown_configured_level_falls_back_to_info(self) -> None:
-        with patch("modules.logger.internal.log_level.ConfigService.get_value", return_value="not-a-level"):
+        with self.__configured_value(key="logger.level", value="not-a-level"):
             assert LogLevel.get_level() == logging.INFO
 
     def test_logging_opens_no_network_connection(self) -> None:
@@ -110,10 +112,23 @@ class TestConsoleLogger(BaseTestLogger):
         Loggers._LOGGERS.clear()
         logging.getLogger(ConsoleLogger.__module__).handlers.clear()
 
-        with patch("modules.logger.internal.loggers.ConfigService.get_value", return_value=transports):
+        with self.__configured_value(key="logger.transports", value=transports):
             Loggers.initialize_loggers()
 
         return list(Loggers._LOGGERS)
+
+    @contextmanager
+    def __configured_value(self, *, key: str, value: object) -> Iterator[None]:
+        overridden_key = key
+        real_get_value = ConfigService.get_value
+
+        def get_value(key: str, default: object = None) -> object:
+            if key == overridden_key:
+                return value
+            return real_get_value(key=key, default=default)
+
+        with patch.object(ConfigService, "get_value", get_value):
+            yield
 
     def __console_logger_at(self, level: int) -> ConsoleLogger:
         logging.getLogger(ConsoleLogger.__module__).handlers.clear()
