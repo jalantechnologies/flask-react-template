@@ -55,7 +55,8 @@ jobs:
       ANTHROPIC_BASE_URL: ${{ vars.CODE_REVIEW_BASE_URL }}
       ANTHROPIC_CUSTOM_HEADERS: 'x-do-key: ${{ secrets.CODE_REVIEW_API_KEY }}'
     steps:
-      - name: Verify review configuration
+      - name: Check review configuration
+        id: config
         env:
           CODE_REVIEW_API_KEY: ${{ secrets.CODE_REVIEW_API_KEY }}
           CODE_REVIEW_BASE_URL: ${{ vars.CODE_REVIEW_BASE_URL }}
@@ -67,17 +68,30 @@ jobs:
           [ -n "$CODE_REVIEW_BASE_URL" ] || missing="$missing CODE_REVIEW_BASE_URL (variable)"
           [ -n "$CODE_REVIEW_MODEL" ] || missing="$missing CODE_REVIEW_MODEL (variable)"
           if [ -n "$missing" ]; then
-            echo "::error::Code review is not configured. Missing:$missing. Set these in repo Settings -> Secrets and variables -> Actions, then re-run."
-            exit 1
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=AI code review skipped::Not configured for this repository, so the review was skipped and this check passes. Missing:$missing. To enable it, set these under Settings -> Secrets and variables -> Actions, then re-run this job."
+            {
+              echo "### AI code review skipped"
+              echo
+              echo "This job is a no-op because the repository has no AI code review configuration."
+              echo
+              echo "Missing:$missing"
+              echo
+              echo "To enable it, add these under **Settings -> Secrets and variables -> Actions** and re-run the job."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
           echo "Review configuration present."
 
       - name: Checkout code
+        if: steps.config.outputs.enabled == 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           fetch-depth: 0
 
       - name: Restore PR review cost total
+        if: steps.config.outputs.enabled == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .codereview-cost
@@ -87,6 +101,7 @@ jobs:
 
       - name: Compute review scope
         id: scope
+        if: steps.config.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -116,6 +131,7 @@ jobs:
 
       - name: Code review
         id: review
+        if: steps.config.outputs.enabled == 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@f87768c6d25f92ae6efa7175e223ef77d4cbf97f # v1.0.166
         with:
@@ -170,7 +186,7 @@ jobs:
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(cat:*)"
 
       - name: Account review cost
-        if: always() && steps.review.outputs.execution_file != ''
+        if: always() && steps.config.outputs.enabled == 'true' && steps.review.outputs.execution_file != ''
         continue-on-error: true
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
@@ -313,7 +329,7 @@ jobs:
           fi
 
       - name: Save PR review cost total
-        if: always() && steps.review.outputs.execution_file != ''
+        if: always() && steps.config.outputs.enabled == 'true' && steps.review.outputs.execution_file != ''
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .codereview-cost
@@ -321,7 +337,7 @@ jobs:
 
       - name: Detect workflow file changes
         id: workflow_changes
-        if: always()
+        if: always() && steps.config.outputs.enabled == 'true'
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
@@ -333,7 +349,7 @@ jobs:
           fi
 
       - name: Fail if the review posted findings
-        if: always()
+        if: always() && steps.config.outputs.enabled == 'true'
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           WORKFLOW_CHANGED: ${{ steps.workflow_changes.outputs.changed }}
