@@ -87,6 +87,74 @@ jobs:
           echo "enabled=true" >> "$GITHUB_OUTPUT"
           echo "Review configuration present."
 
+      - name: Check the review account
+        id: account_check
+        if: steps.config.outputs.enabled == 'true'
+        env:
+          CODE_REVIEW_API_KEY: ${{ secrets.CODE_REVIEW_API_KEY }}
+          CODE_REVIEW_BASE_URL: ${{ vars.CODE_REVIEW_BASE_URL }}
+          CODE_REVIEW_MODEL: ${{ vars.CODE_REVIEW_MODEL }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          body_file="$(mktemp)"
+          payload=$(jq -nc --arg m "$CODE_REVIEW_MODEL" \
+            '{model: $m, max_tokens: 1, messages: [{role: "user", content: "ping"}]}')
+          http_status=$(curl -s -o "$body_file" -w '%{http_code}' --max-time 30 \
+            -X POST "$CODE_REVIEW_BASE_URL/v1/messages" \
+            -H "x-do-key: $CODE_REVIEW_API_KEY" \
+            -H "x-api-key: $CODE_REVIEW_API_KEY" \
+            -H 'anthropic-version: 2023-06-01' \
+            -H 'content-type: application/json' \
+            -d "$payload") || http_status="000"
+          response_snippet=$(tr '\n\r' '  ' < "$body_file" | cut -c1-300)
+          rm -f "$body_file"
+
+          marker="<!-- codereview-skipped -->"
+
+          if [ "$http_status" = "200" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "Review account is reachable, running the review."
+            stale_comment_id=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+              --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -n1) || stale_comment_id=""
+            if [ -n "$stale_comment_id" ]; then
+              gh api --method DELETE "repos/$REPO/issues/comments/$stale_comment_id" >/dev/null || true
+            fi
+            exit 0
+          fi
+
+          if [ "$http_status" = "402" ]; then
+            reason="credits"
+            heading="Code review skipped: out of credit."
+            detail="The DigitalOcean account that funds code review has no credit remaining. Add credit to it, then re-run this check."
+          else
+            reason="unavailable"
+            heading="Code review skipped: gateway unreachable (HTTP $http_status)."
+            detail="The code-review gateway, which routes reviews to DigitalOcean models, did not respond. Confirm the service is running, then re-run this check."
+            echo "Gateway returned HTTP $http_status: $response_snippet"
+          fi
+
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+          annotation_detail=$(printf '%s' "$detail" | tr -d '`')
+          echo "::warning title=Code review skipped::$heading $annotation_detail"
+          printf '**%s**\n\n%s\n' "$heading" "$detail" >> "$GITHUB_STEP_SUMMARY"
+
+          comment_body=$(printf '%s\n\n**%s**\n\n%s\n' "$marker" "$heading" "$detail")
+          comment_id=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -n1) || comment_id=""
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$comment_id" -f body="$comment_body" >/dev/null \
+              || echo "::warning::Could not update the skip notice on the PR. It is still shown in the job summary."
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -f body="$comment_body" >/dev/null \
+              || echo "::warning::Could not post the skip notice on the PR. It is still shown in the job summary."
+          fi
+
       - name: Checkout code
         if: steps.config.outputs.enabled == 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
@@ -134,7 +202,7 @@ jobs:
 
       - name: Code review
         id: review
-        if: steps.config.outputs.enabled == 'true'
+        if: steps.config.outputs.enabled == 'true' && steps.account_check.outputs.ok == 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@f87768c6d25f92ae6efa7175e223ef77d4cbf97f # v1.0.166
         with:
@@ -356,10 +424,23 @@ jobs:
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           WORKFLOW_CHANGED: ${{ steps.workflow_changes.outputs.changed }}
+          ACCOUNT_CHECK_OK: ${{ steps.account_check.outputs.ok }}
+          ACCOUNT_CHECK_REASON: ${{ steps.account_check.outputs.reason }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
         run: |
           node <<'EOF'
           const fs = require("fs");
           const path = process.env.EXECUTION_FILE;
+
+          if (process.env.ACCOUNT_CHECK_OK !== "true") {
+            console.log(
+              "Code review was skipped. See the pull request for why. This check passes so it " +
+                "does not block the merge.",
+            );
+            process.exit(0);
+          }
 
           if (!path || !fs.existsSync(path)) {
             if (process.env.WORKFLOW_CHANGED === "true") {
@@ -409,6 +490,47 @@ jobs:
             );
             process.exit(1);
           }
+
+          const result = [...turns].reverse().find((t) => t.type === "result");
+          if (result && result.is_error === true) {
+            const heading = "Code review skipped: the review did not complete.";
+            const detail =
+              "Re-run this check; if the problem persists, check the code-review gateway, which routes reviews to DigitalOcean models.";
+            console.log(`::warning title=Code review skipped::${heading} ${detail.replace(/`/g, "")}`);
+            if (process.env.GITHUB_STEP_SUMMARY) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `**${heading}**\n\n${detail}\n`);
+            }
+            const marker = "<!-- codereview-skipped -->";
+            const comment_body = `${marker}\n\n**${heading}**\n\n${detail}\n`;
+            const repo = process.env.REPO;
+            const pr = process.env.PR_NUMBER;
+            try {
+              const { execFileSync } = require("child_process");
+              const existing_comment_id = execFileSync(
+                "gh",
+                ["api", `repos/${repo}/issues/${pr}/comments`, "--paginate",
+                  "--jq", `.[] | select(.body | contains("${marker}")) | .id`],
+                { encoding: "utf-8" },
+              )
+                .split("\n")
+                .filter(Boolean)[0];
+              if (existing_comment_id) {
+                execFileSync("gh", ["api", "--method", "PATCH",
+                  `repos/${repo}/issues/comments/${existing_comment_id}`, "-f", `body=${comment_body}`],
+                  { stdio: "ignore" });
+              } else {
+                execFileSync("gh", ["api", "--method", "POST",
+                  `repos/${repo}/issues/${pr}/comments`, "-f", `body=${comment_body}`],
+                  { stdio: "ignore" });
+              }
+            } catch (e) {
+              console.log(
+                "::warning::Could not post the skip notice on the PR. It is still shown in the job summary.",
+              );
+            }
+            process.exit(0);
+          }
+
           console.log("Code review completed with no findings. Passing the gate.");
           process.exit(0);
           EOF
