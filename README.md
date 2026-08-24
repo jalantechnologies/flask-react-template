@@ -1,6 +1,6 @@
 # Flask React Template
 
-Boilerplate project for Flask, React & MongoDB based projects. This README documents the steps necessary to get the application up and running, and various components of the application.
+Boilerplate project for Flask, React, and MongoDB based projects. This README documents the steps necessary to get the application up and running, along with the various components of the application.
 
 | Code Coverage                                                                                                                                                                                                                                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
