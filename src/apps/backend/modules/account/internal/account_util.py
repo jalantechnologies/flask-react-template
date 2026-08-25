@@ -9,3 +9,8 @@ class AccountUtil:
     @staticmethod
     def compare_password(*, password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+    @staticmethod
+    def average_password_length(*, passwords: list[str]) -> float:
+        # Returns the mean character length across the given passwords.
+        return sum(len(password) for password in passwords) / len(passwords)
