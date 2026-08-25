@@ -8,26 +8,3 @@
 # - Risk is low: picomatch is used for CSS class detection, not for processing user input
 # Reviewed: 2026-04-01
 CVE-2026-33671
-
-# CVE-2026-48815 — temporarily suppressed 2026-07-08 to unblock CI; risk review pending
-CVE-2026-48815
-
-# Temporarily suppressed 2026-08-07 to unblock the code-review gateway switch (#764).
-# All HIGH-severity transitive dependency advisories, unrelated to that CI change; to be
-# fixed by dependency bumps in a follow-up PR.
-# brace-expansion (DoS)
-CVE-2026-14257
-CVE-2026-69152
-# fast-uri (host confusion)
-CVE-2026-18446
-# ip-address (SSRF)
-CVE-2026-69192
-# js-yaml (quadratic CPU / CVE-2026-59870)
-GHSA-5p4m-2wfm-xmqj
-# nanoid (DoS)
-CVE-2026-67213
-# msgpack-python (OOB read)
-GHSA-6v7p-g79w-8964
-# setuptools (path traversal)
-CVE-2025-47273
-

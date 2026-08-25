@@ -13,8 +13,9 @@ RUN apt-get update -y && \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pipenv and upgrade setuptools to fix pymongo build issue
-RUN pip install --no-cache-dir --upgrade pip setuptools pipenv
+# Install pipenv and upgrade setuptools to fix pymongo build issue.
+# setuptools is pinned to >=78.1.1 to clear CVE-2025-47273 (path traversal in PackageIndex).
+RUN pip install --no-cache-dir --upgrade pip 'setuptools>=78.1.1' pipenv
 
 # Copy Python dependency files
 COPY Pipfile Pipfile.lock ./
@@ -40,6 +41,9 @@ WORKDIR /build
 # Upgrade npm to fix bundled dependency vulnerabilities (glob, minimatch, tar CVEs)
 # npm 12.0.2 still bundles tar 7.5.19 (CVE-2026-73566), so replace that copy with the
 # fixed release and fail the build if the vulnerable version survives.
+# npm 12.0.2 likewise still bundles ip-address 10.2.0 (CVE-2026-69192, SSRF filter bypass);
+# ip-address 10.3.1 has no runtime dependencies, so the same copy-over-and-assert pattern
+# clears it. Both are replaced here so no vulnerable copy survives in the image.
 RUN npm install -g npm@12.0.1 && \
     npm install -g --prefix /tmp/tar-fix tar@7.5.21 && \
     TAR_DIR="$(npm root -g)/npm/node_modules/tar" && \
@@ -47,7 +51,14 @@ RUN npm install -g npm@12.0.1 && \
     mkdir -p "$TAR_DIR" && \
     cp -R /tmp/tar-fix/lib/node_modules/tar/. "$TAR_DIR/" && \
     rm -rf /tmp/tar-fix && \
-    TAR_DIR="$TAR_DIR" node -e 'process.exit(require(process.env.TAR_DIR + "/package.json").version === "7.5.21" ? 0 : 1)'
+    TAR_DIR="$TAR_DIR" node -e 'process.exit(require(process.env.TAR_DIR + "/package.json").version === "7.5.21" ? 0 : 1)' && \
+    npm install -g --prefix /tmp/ip-fix ip-address@10.3.1 && \
+    IP_DIR="$(npm root -g)/npm/node_modules/ip-address" && \
+    rm -rf "$IP_DIR" && \
+    mkdir -p "$IP_DIR" && \
+    cp -R /tmp/ip-fix/lib/node_modules/ip-address/. "$IP_DIR/" && \
+    rm -rf /tmp/ip-fix && \
+    IP_DIR="$IP_DIR" node -e 'process.exit(require(process.env.IP_DIR + "/package.json").version === "10.3.1" ? 0 : 1)'
 
 # Stage the Node runtime at a fixed path so the runtime stage can COPY it without
 # depending on where this image happens to put global modules ("npm root -g"
@@ -103,11 +114,13 @@ RUN ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
     ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
     ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
-# Install pipenv for runtime
+# Install pipenv for runtime.
+# setuptools is upgraded to >=78.1.1 to clear CVE-2025-47273 (path traversal in PackageIndex)
+# in the final runtime image's system site-packages.
 # Fix GHSA-58pv-8j8x-9vj2: setuptools vendors jaraco.context 5.3.0 which has a path traversal
 # vulnerability fixed in 6.1.0. Remove the vulnerable vendored copy's metadata so Trivy
 # doesn't flag it, and install the fixed version as a regular package for setuptools to use.
-RUN pip install --no-cache-dir pipenv 'jaraco.context>=6.1.0' && \
+RUN pip install --no-cache-dir --upgrade 'setuptools>=78.1.1' pipenv 'jaraco.context>=6.1.0' && \
     rm -rf /usr/local/lib/python3.12/site-packages/setuptools/_vendor/jaraco.context-*.dist-info
 
 # Copy Pipfile first (needed for pipenv virtualenv detection)
