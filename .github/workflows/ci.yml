@@ -181,13 +181,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          last_sha=""
-          if [ -f .codereview-cost ]; then
+          stored=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+                --jq '.[] | select(.body | contains("<!-- codereview-cost -->")) | .body' \
+              | grep -oE '<!-- codereview-last-sha: [0-9a-f]{7,40} -->' \
+              | tail -n1 | grep -oE '[0-9a-f]{7,40}' || true)
+
+          if [ -z "$stored" ] && [ -f .codereview-cost ]; then
             stored=$(jq -r '.last_reviewed_sha // ""' .codereview-cost)
-            if [ -n "$stored" ] && git cat-file -e "${stored}^{commit}" 2>/dev/null \
-                && git merge-base --is-ancestor "$stored" "$HEAD_SHA" 2>/dev/null; then
-              last_sha="$stored"
-            fi
+          fi
+
+          last_sha=""
+          if [ -n "$stored" ] && git cat-file -e "${stored}^{commit}" 2>/dev/null \
+              && git merge-base --is-ancestor "$stored" "$HEAD_SHA" 2>/dev/null; then
+            last_sha="$stored"
           fi
           echo "last_sha=$last_sha" >> "$GITHUB_OUTPUT"
 
@@ -364,6 +370,7 @@ jobs:
                else [] end) as $warn
             | [
                 $marker,
+                "<!-- codereview-last-sha: \(.last_reviewed_sha // "") -->",
                 "### AI code review cost (PR total)",
                 "",
                 "Across **\($n)** review(s) on this PR. Estimated from DigitalOcean'"'"'s published per-token pricing for the configured model, not an authoritative bill.",
