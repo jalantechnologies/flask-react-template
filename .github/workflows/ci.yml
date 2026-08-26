@@ -10,7 +10,45 @@ permissions:
   pull-requests: write # Allow workflow to comment on, label, and update pull request as part of automation
   id-token: write # Allow OIDC tokens for secure cloud authentication
 
+# Cancel an in-progress run when a newer commit is pushed to the same PR, so we
+# don't pay for runs that are already superseded.
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
+  # Detect whether a PR touches only documentation. Heavy jobs (tests, scan,
+  # SonarQube, code review) are gated on this so a docs-only change doesn't run
+  # the full test-and-scan pipeline. dorny/paths-filter reads the PR's file list
+  # from the API on pull_request events, so this job needs no checkout.
+  changes:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    outputs:
+      doc_only: ${{ steps.doc_only.outputs.value }}
+    steps:
+      - name: Filter changed paths
+        id: filter
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+              - '**/*.md'
+            code:
+              - '**'
+              - '!docs/**'
+              - '!**/*.md'
+
+      - name: Determine if the PR is documentation-only
+        id: doc_only
+        run: |
+          if [[ "${{ steps.filter.outputs.docs }}" == "true" && "${{ steps.filter.outputs.code }}" != "true" ]]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
@@ -48,7 +86,8 @@ jobs:
         run: node .github/workflows/pr-labeler.test.js
 
   codereview:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    needs: changes
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
@@ -543,8 +582,8 @@ jobs:
           EOF
 
   sonarqube:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-    needs: [test-backend, test-frontend]
+    needs: [changes, test-backend, test-frontend]
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -677,7 +716,8 @@ jobs:
           fi
 
   scan:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    needs: changes
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -866,7 +906,8 @@ jobs:
           exit 1
 
   test-backend:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    needs: changes
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -945,7 +986,8 @@ jobs:
           exit 1
 
   test-frontend:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    needs: changes
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
