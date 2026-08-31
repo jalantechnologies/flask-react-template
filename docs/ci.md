@@ -70,9 +70,9 @@ edits documentation is wasted compute, and compute minutes are the entire cost o
 So the first thing CI does is look at **what the pull request touched**. A small `changes` job
 classifies the pull request as _documentation-only_ when every changed file is under `docs/` or is a
 `*.md` file, and _code_ otherwise. On a documentation-only pull request the heavy checks —
-`test-backend`, `test-frontend`, `scan`, `sonarqube`, and `codereview` — are **skipped**. Only the
-checks that are actually relevant to prose run: `lint` (which formats and checks the markdown) and
-`label`.
+`test-backend`, `test-frontend`, `scan`, and `sonarqube` — are **skipped**. The checks that are still
+useful on prose run: `lint` (which formats and checks the markdown), `label`, and `codereview` (which
+can fact-check and read the documentation itself).
 
 A skipped check is not a failed or missing check. Because the workflow still runs and simply declines
 those jobs, GitHub records them as _skipped_, which counts as passing — so a documentation-only pull
@@ -144,8 +144,9 @@ is rewriting.
 
 The review runs on a cost-efficient model through a shared review gateway, and each pull request gets
 a single comment with the running cost of its reviews — updated in place on every commit and priced
-from the gateway's published rates. It is skipped on documentation-only pull requests, since there is
-no code for it to read.
+from the gateway's published rates. It runs on documentation-only pull requests too — at a cost of a
+few cents it can fact-check and sanity-read the prose — so it is one of the few checks that are not
+skipped for docs.
 
 **Why it matters:** every code change gets a careful second read, every time, without waiting for a
 person to be free.

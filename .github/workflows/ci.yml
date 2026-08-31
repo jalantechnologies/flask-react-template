@@ -82,8 +82,7 @@ jobs:
         run: node .github/workflows/pr-labeler.test.js
 
   codereview:
-    needs: changes
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && needs.changes.outputs.doc_only == 'false'
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
