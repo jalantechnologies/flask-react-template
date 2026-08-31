@@ -10,18 +10,13 @@ permissions:
   pull-requests: write # Allow workflow to comment on, label, and update pull request as part of automation
   id-token: write # Allow OIDC tokens for secure cloud authentication
 
-# Cancel an in-progress run when a newer commit is pushed to the same PR, so we
-# don't pay for runs that are already superseded.
 concurrency:
   group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  # Detect whether a PR touches only documentation. Heavy jobs (tests, scan,
-  # SonarQube, code review) are gated on this so a docs-only change doesn't run
-  # the full test-and-scan pipeline. dorny/paths-filter reads the PR's file list
-  # from the API on pull_request events, so this job needs no checkout.
   changes:
+    name: Detect changed files
     if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     outputs:
@@ -56,19 +51,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
+      - name: Install pipenv
+        run: pipx install pipenv
+
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
+          cache: 'pipenv'
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: '22.13.1'
           cache: 'npm'
-
-      - name: Install pipenv
-        run: pip install pipenv
 
       - name: Install Python dependencies
         run: pipenv install --dev --deploy
@@ -862,9 +858,17 @@ jobs:
           docker image prune -af
           df -h
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
       - name: Build Docker image for scanning
-        run: |
-          docker build -t flask-react-app:${{ steps.extract_branch.outputs.branch_hash }} .
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          load: true
+          tags: flask-react-app:${{ steps.extract_branch.outputs.branch_hash }}
+          cache-from: type=gha,scope=scan
+          cache-to: type=gha,mode=max,scope=scan
 
       - name: Run Trivy scan on docker images
         id: trivy_docker
@@ -916,8 +920,22 @@ jobs:
       - name: Prepare coverage directory
         run: mkdir -p output
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build test image (cached)
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          load: true
+          tags: flask-react-template
+          build-args: |
+            APP_ENV=testing
+          cache-from: type=gha,scope=test-backend
+          cache-to: type=gha,mode=max,scope=test-backend
+
       - name: Run integration tests
-        run: docker compose -f docker-compose.test.yml up --exit-code-from app
+        run: docker compose -f docker-compose.test.yml up --no-build --exit-code-from app
 
       - name: Copy coverage artifacts from container
         if: always()
