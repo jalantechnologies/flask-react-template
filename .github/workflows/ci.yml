@@ -22,23 +22,18 @@ jobs:
     outputs:
       doc_only: ${{ steps.doc_only.outputs.value }}
     steps:
-      - name: Filter changed paths
-        id: filter
-        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
-        with:
-          filters: |
-            docs:
-              - 'docs/**'
-              - '**/*.md'
-            code:
-              - '**'
-              - '!docs/**'
-              - '!**/*.md'
-
       - name: Determine if the PR is documentation-only
         id: doc_only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [[ "${{ steps.filter.outputs.docs }}" == "true" && "${{ steps.filter.outputs.code }}" != "true" ]]; then
+          files=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
+          echo "Changed files:"
+          echo "$files"
+          non_doc=$(echo "$files" | grep -vE '(^docs/|\.md$)' || true)
+          if [ -n "$files" ] && [ -z "$non_doc" ]; then
             echo "value=true" >> "$GITHUB_OUTPUT"
           else
             echo "value=false" >> "$GITHUB_OUTPUT"
