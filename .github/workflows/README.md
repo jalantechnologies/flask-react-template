@@ -1,27 +1,114 @@
-# Workflows
+## Configuring Cloud Provider for CI/CD Workflows
 
-GitHub Actions workflow definitions for this template. For a plain-language walkthrough of what the
-pull-request checks do and why, see [`docs/ci.md`](../../docs/ci.md).
+This project supports deployment and cleanup on **both DigitalOcean and AWS** using GitHub Actions.  
+You can easily switch the cloud provider for any environment by updating the `hosting_provider` input in the workflow files.
 
-| Workflow           | Trigger                         | What it does                                                                                                                                                     |
-| ------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`           | pull request                    | Runs the merge-gate checks: `lint`, `codereview`, `test-backend`, `test-frontend`, `sonarqube`, `scan`. A `changes` job skips the heavy checks on docs-only PRs. |
-| `pr-labeler.yml`   | pull request (title)            | Validates the conventional-commit title and applies the `type:` / `semver:` labels. Lightweight — no checkout or dependency install.                             |
-| `version-bump.yml` | pull request merged into `main` | Bumps the `package.json` version according to the merged PR's `semver:` label.                                                                                   |
+---
 
-## Matching CI work to the change
+### How to Select the Cloud Provider
 
-`ci.yml` cancels a superseded run when a newer commit is pushed to the same pull request
-(`concurrency` with `cancel-in-progress`), and its `changes` job classifies each pull request as
-documentation-only when every changed file is under `docs/` or is a `*.md` file. On a
-documentation-only pull request the heavy checks (`test-backend`, `test-frontend`, `scan`,
-`sonarqube`, `codereview`) are skipped via `needs: changes` + `if: needs.changes.outputs.doc_only ==
-'false'`; `lint` and `pr-labeler` still run. See [`docs/ci.md`](../../docs/ci.md) for the full
-rationale, including how products built from this template extend the same signal to skip their
-preview deployment.
+Each workflow file (such as `.github/workflows/production_on_push.yml`, `.github/workflows/preview_on_dispatch.yml`, `.github/workflows/clean_on_delete.yml`, etc.) contains a `hosting_provider` input.
 
-## Deployment
+Set this value to choose your cloud provider:
 
-This template runs its checks in `ci.yml`; application deployment (preview and production) is handled
-by the shared [`jalantechnologies/github-ci`](https://github.com/jalantechnologies/github-ci)
-reusable workflows that products wire in. See [`docs/deployment.md`](../../docs/deployment.md).
+- For **DigitalOcean**:  
+  `hosting_provider: DIGITAL_OCEAN`
+- For **AWS**:  
+  `hosting_provider: AWS`
+
+You can pass the `hosting_provider` value:
+
+- **Directly** in the workflow `with:` block
+- Or define it globally using **repository/environment variables** for easier management
+
+**Example for DigitalOcean:**
+
+```yaml
+with:
+  hosting_provider: DIGITAL_OCEAN
+  # ...other inputs...
+secrets:
+  do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+  # ...other secrets...
+```
+
+**Example for AWS:**
+
+```yaml
+with:
+  hosting_provider: AWS
+  aws_cluster_name: <your-eks-cluster-name>
+  aws_region: <your-aws-region>
+  # ...other inputs...
+secrets:
+  aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # ...other secrets...
+```
+
+---
+
+### Required Inputs and Secrets
+
+#### For DigitalOcean:
+
+- **Inputs:**
+  - `do_cluster_id`
+- **Secrets:**
+  - `do_access_token`
+
+#### For AWS:
+
+- **Inputs:**
+  - `aws_cluster_name`
+  - `aws_region`
+- **Secrets:**
+  - `aws_access_key_id`
+  - `aws_secret_access_key`
+
+---
+
+### Steps to Change the Cloud Provider
+
+1. **Open the workflow file** you want to update (e.g., `production_on_push.yml`).
+2. **Change the value of `hosting_provider`** to either `DIGITAL_OCEAN` or `AWS`.
+3. **Add or update the required inputs and secrets** for your chosen provider.
+4. **Remove or comment out** any inputs/secrets not needed for your selected provider (optional, for clarity).
+5. **Commit and push** your changes.
+
+---
+
+### Example: Switching from DigitalOcean to AWS
+
+**Before (DigitalOcean):**
+
+```yaml
+with:
+  hosting_provider: DIGITAL_OCEAN
+  do_cluster_id: ${{ vars.DO_CLUSTER_ID }}
+secrets:
+  do_access_token: ${{ secrets.DO_ACCESS_TOKEN }}
+```
+
+**After (AWS):**
+
+```yaml
+with:
+  hosting_provider: AWS
+  aws_cluster_name: <your-eks-cluster-name>
+  aws_region: <your-aws-region>
+secrets:
+  aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+```
+
+---
+
+### Notes
+
+- The value for `hosting_provider` is **case-sensitive** and must match what the workflow expects.
+- Make sure the required secrets are added in your GitHub repository settings under **Settings → Secrets and variables → Actions**.
+- If you are using AWS, ensure your EKS cluster and IAM credentials are set up correctly.
+- If you are using DigitalOcean, ensure your Kubernetes cluster and API token are set up correctly.
+
+---
