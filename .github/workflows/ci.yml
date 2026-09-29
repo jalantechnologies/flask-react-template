@@ -285,10 +285,17 @@ jobs:
             For each issue, post an inline comment on the exact line by calling the
             mcp__github_inline_comment__create_inline_comment tool with confirmed: true so it
             posts immediately. Give a concrete, committable suggestion where possible. Post only
-            inline comments — do not post a summary comment on the PR. If you find nothing, post
-            nothing.
+            inline comments, and only for findings. Never post a comment that reports no findings,
+            summarises the review, or praises the change.
+
+            When you are done, return your verdict as structured output. List every finding you
+            posted in `findings`, with the file path and the line you commented on, and put a short
+            summary of the review in `summary`. The summary is shown on the job page, so it never
+            needs to be posted as a comment. If there is nothing to flag, post nothing and return
+            an empty `findings` list.
           claude_args: |
             --model ${{ vars.CODE_REVIEW_MODEL }}
+            --json-schema '{"type":"object","properties":{"findings":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"line":{"type":"integer"}},"required":["path","line"],"additionalProperties":false}},"summary":{"type":"string"}},"required":["findings","summary"],"additionalProperties":false}'
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(cat:*)"
 
       - name: Account review cost
@@ -459,6 +466,7 @@ jobs:
         if: always() && steps.config.outputs.enabled == 'true'
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
           WORKFLOW_CHANGED: ${{ steps.workflow_changes.outputs.changed }}
           ACCOUNT_CHECK_OK: ${{ steps.account_check.outputs.ok }}
           ACCOUNT_CHECK_REASON: ${{ steps.account_check.outputs.reason }}
@@ -497,32 +505,28 @@ jobs:
 
           const turns = JSON.parse(fs.readFileSync(path, "utf-8"));
 
-          const errored = new Map();
-          for (const turn of turns) {
-            for (const item of turn?.message?.content ?? []) {
-              if (item.type === "tool_result" && item.tool_use_id) {
-                errored.set(item.tool_use_id, item.is_error === true);
-              }
-            }
-          }
-
-          let findings = 0;
-          for (const turn of turns) {
-            for (const item of turn?.message?.content ?? []) {
-              if (
-                item.type === "tool_use" &&
-                typeof item.name === "string" &&
-                item.name.endsWith("create_inline_comment") &&
-                errored.get(item.id) !== true
-              ) {
-                findings++;
-              }
-            }
-          }
-
-          if (findings > 0) {
+          let verdict = null;
+          try {
+            verdict = JSON.parse(process.env.STRUCTURED_OUTPUT || "null");
+          } catch {}
+          if (!Array.isArray(verdict?.findings)) {
             console.log(
-              `Code review posted ${findings} inline finding(s). Address them, then push to re-trigger the review.`,
+              "The review did not return a verdict, so the gate cannot tell whether it found " +
+                "anything. Re-run the job. Failing the gate.",
+            );
+            process.exit(1);
+          }
+
+          if (verdict.summary && process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### AI code review\n\n${verdict.summary}\n`);
+          }
+
+          if (verdict.findings.length > 0) {
+            for (const finding of verdict.findings) {
+              console.log(`Finding: ${finding.path}:${finding.line}`);
+            }
+            console.log(
+              `Code review reported ${verdict.findings.length} finding(s). Address them, then push to re-trigger the review.`,
             );
             process.exit(1);
           }
